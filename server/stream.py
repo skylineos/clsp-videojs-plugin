@@ -403,7 +403,8 @@ class Streamer:
 
         # prestine
         #                       
-        moovflags = "-movflags  empty_moov+default_base_moof+frag_keyframe -frag_duration 2000000 "
+        # moovflags = "-movflags  empty_moov+default_base_moof+frag_keyframe -frag_duration 2000000 "
+        moovflags = "-movflags  empty_moov+default_base_moof+frag_keyframe -frag_duration 250000"
         if self.url == "testsrc":
             self.cmdfmt = config.FFMPEG_PATH + " -nostdin -y -loglevel -8 "+\
                          " -re -f lavfi -i testsrc=size=%(w)dx%(h)d:rate=15 "+\
@@ -416,7 +417,7 @@ class Streamer:
                       " scale=%(w)d:%(h)d -c:v libx264 "+\
                       " -profile:v  "+\
                       " baseline -level 3.0  -tune zerolatency -b:v "+\
-                      " %(bitrate)dk "+moovflags+" -an  -f mp4 pipe:%(vpw)d "
+                      " %(bitrate)dk "+moovflags+" -an -g 15 -f mp4 pipe:%(vpw)d "
 
         
 
@@ -451,7 +452,3 @@ class Streamer:
         })) 
         self.mqtt_thread.connect("localhost", 1883, 60)
         self.mqtt_thread.loop_start()  
- 
-        
-
-

@@ -1,0 +1,106 @@
+<html>
+   <script src="jquery.min.js"></script>
+   <script src="mqttws31.js"></script>
+
+<script>
+if (typeof Object.assign != 'function') {
+  Object.assign = function(target, varArgs) { // .length of function is 2
+    'use strict';
+    if (target == null) { // TypeError if undefined or null
+      throw new TypeError('Cannot convert undefined or null to object');
+    }
+
+    var to = Object(target);
+
+    for (var index = 1; index < arguments.length; index++) {
+      var nextSource = arguments[index];
+
+      if (nextSource != null) { // Skip over if undefined or null
+        for (var nextKey in nextSource) {
+          // Avoid bugs when hasOwnProperty is shadowed
+          if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+            to[nextKey] = nextSource[nextKey];
+          }
+        }
+      }
+    }
+    return to;
+  };
+}
+</script>
+
+   <script src="iov.js"></script>
+  <script>
+
+// create module, all default dettings
+
+function main(){
+   var self = this;
+   IOV({
+       appStart: function(iov) {
+           // create a player for video.
+           self.p = iov.player();
+           iov.getAvailableStreams(function(resp){
+               var streamNames = resp.names;
+               var html = "";
+               streamNames.forEach(function(n){
+                   html += '<option value="'+n+'">';   
+               });
+               $('#streamNames').html(html); 
+           });
+           $('#play').click(function(){
+               var elm = $('#names');
+               var selected = elm.val();
+               if ((typeof selected != 'undefined') && (selected.length > 0)) {
+                   self.p.play("v1",selected);
+               }           
+           });
+           $('#stop').click(function(){
+               self.p.stop();
+           });
+
+
+           $('#logvideo').change(function () {
+               if ($(this).is(':checked')) {
+                    self.p.LogSourceBuffer = true;
+                    self.p.LogSourceBufferTopic = $('#logvideo_topic').val();
+               } else {
+                    self.p.LogSourceBuffer = false;
+               }
+           });
+
+
+       }
+   });
+} 
+  </script>       
+
+
+<body onload="main()">
+ <video id="v1"
+   controls
+   autoplay
+   width="1024"
+   height="740"
+ >
+</video>
+
+
+<div>
+  <input list="streamNames" name="streamName" id="names">
+  <datalist id="streamNames">
+  </datalist>
+  <button id="play">Play</button>
+  <button id="stop">Stop</button>
+</div>
+
+
+
+<p>
+  MQTT Log video topic: <input type="text" value="" id="logvideo_topic"><br>
+  <input type="checkbox" id="logvideo"> 
+</p>
+
+
+</body>
+</html>
