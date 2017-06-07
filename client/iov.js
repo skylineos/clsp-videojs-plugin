@@ -28,8 +28,14 @@ Message Topics:
 
 */
 
+// polyfill for older browsers.
+if (!Date.now) {
+  Date.now = function now() {
+    return new Date().getTime();
+  };
+}
 
-
+// Not a true UUID but a best attempt at a unique identfier 
 function fake_guid() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
@@ -56,11 +62,13 @@ var _mqtt_transport = function(iov) {
 
         // perhaps the busiest function in this module ;)
         MQTTClient.onMessageArrived = function(message) {
-            console.log(message);
+            //console.log(message);
             try {
                 iov.events.on_message(message);
             }catch(e) {
-                console.log(e);
+                if (e) {
+                    console.log(e.message);
+                }
             }
         };
          
@@ -109,12 +117,12 @@ var _mqtt_transport = function(iov) {
 
     self.subscribe = function( topic, callback ) {
         iov.mqttTopicHandlers.register(topic, callback);
-        console.log("subscribing to " + topic); 
+        //console.log("subscribing to " + topic); 
         MQTTClient.subscribe(topic);
     };
 
     self.unsubscribe = function(topic) {
-        console.log("unsubscribing to " + topic); 
+        //console.log("unsubscribing to " + topic); 
         MQTTClient.unsubscribe(topic);  
         iov.mqttTopicHandlers.unregister(topic);
     };
@@ -164,7 +172,6 @@ var _mqtt_topic_handlers = function(iov) {
             console.log("No handler for " + topic);
             console.log("message dropped");
             console.log(message);
-            
         }   
     };  
 
@@ -185,14 +192,27 @@ var _mqtt_topic_handlers = function(iov) {
 var _player = function(iov){
     var self = this;
         
+    /*
+    Used for determining the size of the internal buffer hidden from the MSE
+    api by recording the size and time of each chunk of video upon buffer append
+    and recording the time when the updateend event is called.
+ 
+     */
+
     self.LogSourceBuffer = false;
     self.LogSourceBufferTopic = null;
     self.state = "idle";
     self.seqnum = 1;
+    self.seqnumProcessed = 1; // last sequence number processed 
+    self.MAX_SEQ_PROC = 2;
+    self.dropCounter = 0;
+
     self.moovBox = null;
     self.moofBox = null;
     // -1 is forever 
     self.retry_count = 3;
+
+    
 
     self._fault = function(err) {
         //TODO: Change the video poster to a failure image
@@ -213,11 +233,11 @@ var _player = function(iov){
         self.transport.transaction(topic,self._start_play,request);
     };
 
-    self._log_buffer_data = function(bytearray) {
+    self._appendBuffer_event = function(bytearray) {
         if ((self.LogSourceBuffer === true) && 
             (self.LogSourceBufferTopic !== null)) 
         {
-            console.log("recording "+parseInt(bytearray.length)+" bytes of data"); 
+            //console.log("recording "+parseInt(bytearray.length)+" bytes of data"); 
             var mqtt_msg = new Paho.MQTT.Message(bytearray);
             mqtt_msg.destinationName = self.LogSourceBufferTopic;
             MQTTClient.send(mqtt_msg);
@@ -270,8 +290,8 @@ var _player = function(iov){
         iov.transport.subscribe(initSegmentTopic, function(mqtt_msg) {
             // capture the initial segment
             self.moovBox = mqtt_msg.payloadBytes;
-            console.log(typeof mqtt_msg.payloadBytes);
-            console.log("received moov from server");
+            //console.log(typeof mqtt_msg.payloadBytes);
+            //console.log("received moov from server");
 
             self.state = "waiting-for-moof";
             // unsubscribe to this group
@@ -300,25 +320,13 @@ var _player = function(iov){
             chunk of video/audio tracks.  
          */
 
+        // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
+        // the source buffer.
+        if ((self.seqnum - self.seqnumProcessed) > self.MAX_SEQ_PROC) {
+            console.log("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
+            return; // DROP this frame since the borwser is falling 
+        }
 
-        // first 4 bytes will be the position within the video of the sequence number
-        //var data = mqtt_msg.payloadBytes;
-        /*
-           var seqnum_pos = 
-            data[0] << 24 |  
-            data[1] << 16 | 
-            data[2] << 8  | 
-            data[3]
-        ;
-        // encode as big endian 32 bit
-        
-        // replace sequence number with our own.
-        var moofBox = data.slice(4);
-        moofBox[seqnum_pos  ] = (self.seqnum & 0xFF000000) >> 24;
-        moofBox[seqnum_pos+1] = (self.seqnum & 0x00FF0000) >> 16;
-        moofBox[seqnum_pos+2] = (self.seqnum & 0x0000FF00) >> 8;
-        moofBox[seqnum_pos+3] = self.seqnum & 0xFF;
-        */
           
         var moofBox = mqtt_msg.payloadBytes;
         moofBox[20] = (self.seqnum & 0xFF000000) >> 24;
@@ -326,14 +334,14 @@ var _player = function(iov){
         moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
         moofBox[23] = self.seqnum & 0xFF;
         
-        console.log("moof handler: data seqnum chunk ");
-        console.log(self.seqnum);
+        //console.log("moof handler: data seqnum chunk ");
+        //console.log(self.seqnum);
  
         if ( self.sourceBuffer.updating === false ) {
             try {
-                console.log(typeof moofBox);
-                console.log("calling append buffer"); 
-                self._log_buffer_data(moofBox);
+                //console.log(typeof moofBox);
+                //console.log("calling append buffer"); 
+                self._appendBuffer_event(moofBox);
                 self.sourceBuffer.appendBuffer( moofBox );
                 self.seqnum += 1; // increment sequence number for next chunk
             } catch(e) {
@@ -349,20 +357,20 @@ var _player = function(iov){
     self._on_sourceopen = function() {
         /** New media source opened. Add a buffer and append the moov MP4 video data. 
         */
-        console.log("sourceopen"); 
+        //console.log("sourceopen"); 
         self.sourceBuffer = mediaSource.addSourceBuffer(self.mimeCodec);
         self.sourceBuffer.mode = "sequence";
         self.sourceBuffer.addEventListener('updateend', self._on_updateend);
         self.sourceBuffer.addEventListener('update', function() {
             if ( (self.sourceBuffer.updating === false) && (self.vqueue.length > 0) ) {
-                self._log_buffer_data(self.vqueue[0]);
+                self._appendBuffer_event(self.vqueue[0]);
                 self.sourceBuffer.appendBuffer( self.vqueue[0] );
                 self.vqueue = self.vqueue.slice(1);
             }  
         }); 
 
         self.sourceBuffer.addEventListener('updatestart',function(){
-            console.log("On update start");
+            //console.log("On update start");
         });
 
         self.sourceBuffer.addEventListener('error',function(e){
@@ -371,17 +379,23 @@ var _player = function(iov){
         });
 
         // send ftype+moov segments of video
-        console.log("sending moov atom ");
-        self._log_buffer_data(self.moovBox);
+        //console.log("sending moov atom ");
+        self._appendBuffer_event(self.moovBox);
         self.sourceBuffer.appendBuffer( self.moovBox );
     };
 
     self._on_sourceended = function() {
-        console.log("sourceended");
+        //console.log("sourceended");
         self.stop();   
     };
 
     self._on_updateend = function() {
+
+        // identify what seqnum of the MOOF message has actually been processed. 
+        self.seqnumProcessed += 1;
+
+       
+        /* 
         var logmsg =
            "_on_updateend: " +   
            ((self.video.paused) ? " video is paused,": "video is playing,")   +
@@ -389,16 +403,33 @@ var _player = function(iov){
            " video queue size = " + parseInt(self.vqueue.length)   
         ;
         console.log(logmsg);
+        */   
         if (self.mediaSource.readyState === "open") {
             if (self.vqueue.length > 0){
-                // deqeue next prepared moof atom
-                self._log_buffer_data(self.vqueue[0]);
-                self.sourceBuffer.appendBuffer(self.vqueue[0]);
-                self.vqueue = self.vqueue.slice(1);
+                self._appendBuffer_event(self.vqueue[0]);
+                setTimeout(function() {        
+                    // deqeue next prepared moof atom
+                    if (self.sourceBuffer.updating === false) {
+                        try {
+                            self.sourceBuffer.appendBuffer(self.vqueue[0]);
+                        } catch( ex ) {
+                            // internal error, this has been observed to happen the tab 
+                            // in the browser where this video player lives is hidden
+                            // then reselected. 'ex' is undefined the error is bug
+                            // within the MSE C++ implementation in the browser.                              
+                        }  
+                    }
+                    // regardless we must proceed to the frame. 
+                    self.vqueue = self.vqueue.slice(1);
+                },0);
             }  
             if (self.video.paused === true) {
-                self.video.play();
-                console.log("setting video player from paused to play"); 
+                try { 
+                    self.video.play();
+                } catch( ex ) {
+                    console.log("Exception while trying to play:" + ex.message );
+                }
+                //console.log("setting video player from paused to play"); 
             } 
         }
     };
@@ -458,16 +489,3 @@ var IOV = function(config) {
 
 
 
-
-/*
-if (  self.moovBox !== null ) {
-            console.log("sending moov+first moof" ); 
-            var box = new Uint8Array(self.moovBox.length+moofBox.length);
-            box.set(self.moovBox,0);
-            box.set(moofBox, self.moovBox.length);
-            self.sourceBuffer.appendBuffer(box);
-            //self.sourceBuffer.appendBuffer( self.moovBox + moofBox );
-            self.moovBox = null; 
-        }
-        else 
-*/

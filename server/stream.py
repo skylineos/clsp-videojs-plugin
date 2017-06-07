@@ -31,7 +31,7 @@ import traceback
 import base64
 import shlex
 import config
-
+import atexit
 
 class MP4FragmentError(RuntimeError):
     pass
@@ -169,6 +169,10 @@ class VideoRouter(threading.Thread):
         self.plist = select.poll()
         self.plist.register(self.cmd_r, select.POLLIN)
         self.plist.register(vpr, select.POLLIN)
+
+
+        atexit.register( self.stop )
+
         
     def handle_pipe_activity(self, fd):
 
@@ -276,6 +280,7 @@ class Streamer:
         if self.proc:
             if not self.proc.poll():
                 self.proc.kill()
+                self.proc.communicate( b'' ) 
         cmd = self.cmdfmt % vars(self)
         logging.debug(cmd)
         self.proc = subprocess.Popen(shlex.split(cmd),shell=False)
@@ -287,6 +292,7 @@ class Streamer:
         if self.proc:
             if not self.proc.poll():
                 self.proc.kill()
+                self.proc.communicate( b'' ) 
         cmd = self.cmdfmt % vars(self)
         logging.debug(cmd)
         self.proc = subprocess.Popen(shlex.split(cmd),shell=False)
@@ -294,13 +300,17 @@ class Streamer:
             self.vr.stop()
         self.vr = VideoRouter(self.vpr, self.mqtt_thread, self.live_topic, self.onInitSegment, self._vr_restart_stream )
         self.vr.start()
+        atexit.register( self.stop )
+
 
     def stop(self):
         logging.info("stream %s stopped" % self.name)
         if self.proc:
             if not self.proc.poll():
                 self.proc.kill()
-        if self.vr.running:
+                self.proc.communicate( b'' ) 
+                self.proc = None 
+        if self.vr and self.vr.running:
             self.vr.stop()
 
     def stop_msg_handler(self, cid):                          
@@ -400,26 +410,36 @@ class Streamer:
         self.clients = {
         }
         
+        self.re = ""
 
         # prestine
         #                       
         # moovflags = "-movflags  empty_moov+default_base_moof+frag_keyframe -frag_duration 2000000 "
         moovflags = "-movflags  empty_moov+default_base_moof+frag_keyframe -frag_duration 250000"
+        self._P = '%' # python having issues with a '%' in a string thinking its a formatting character 
+        timestampOverlay =\
+            ' -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf: '+\
+            ' text=\'%(_P)s{localtime}\': fontcolor=#9F9F9F@0.8: x=7: y=7"  '
+
         if self.url == "testsrc":
             self.cmdfmt = config.FFMPEG_PATH + " -nostdin -y -loglevel -8 "+\
-                         " -re -f lavfi -i testsrc=size=%(w)dx%(h)d:rate=15 "+\
+                         " -re -f lavfi -i testsrc=size=%(w)dx%(h)d:rate=15 " +\
+                         timestampOverlay+\
                          "  -c:v libx264 -x264-params "+\
                       " keyint=%(keyint)d:no-scenecut "+\
                       "  -preset medium  -tune zerolatency -b:v "+\
-                      " %(bitrate)dk "+moovflags+" -f mp4 pipe:%(vpw)d "
+                      " %(bitrate)dk "+moovflags+" -g 15  -f mp4 pipe:%(vpw)d "
         else:
-            self.cmdfmt = config.FFMPEG_PATH + " -nostdin -y -loglevel -8 -i %(url)s -vf "+\
-                      " scale=%(w)d:%(h)d -c:v libx264 "+\
+            self.cmdfmt = config.FFMPEG_PATH + " -nostdin -y -loglevel -8 %(re)s  -i %(url)s "+\
+                      " -vf scale=%(w)d:%(h)d,drawtext=\"fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf: text=\'%(_P)s{localtime}\': fontcolor=#9F9F9F@0.8: x=7: y=7\" -c:v libx264 "+\
                       " -profile:v  "+\
                       " baseline -level 3.0  -tune zerolatency -b:v "+\
                       " %(bitrate)dk "+moovflags+" -an -g 15 -f mp4 pipe:%(vpw)d "
 
-        
+        file_proto="file:/"
+        if self.url.startswith(file_proto):
+            self.url = self.url[len(file_proto):]
+            self.re = " -re "  
 
 
     def __init__(self, name, cfg):
@@ -452,3 +472,4 @@ class Streamer:
         })) 
         self.mqtt_thread.connect("localhost", 1883, 60)
         self.mqtt_thread.loop_start()  
+

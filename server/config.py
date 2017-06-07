@@ -2,11 +2,12 @@ import requests
 import uuid
 import logging
 import json
+import os
 
 USE_VLC_TEST_FEEDS=False
 USE_SKYLINE_FEEDS=True
 
-FFMPEG_PATH='/usr/bin/ffmpeg'
+FFMPEG_PATH=os.popen('which ffmpeg').read()[:-1]
 
 
 if __name__ == '__main__':
@@ -23,7 +24,7 @@ streamTable = {
         "keyint": 30,
         "bitrate": 192,
         "onDemand": True # these are test feeds be courteous   
-    }, 
+    },
     "DevCohu" : {
         "url": "rtsp://172.28.12.70/stream1",
         "guid": uuid.uuid1().hex,
@@ -33,12 +34,12 @@ streamTable = {
         "onDemand": True # these are test feeds be courteous   
     }, 
     "color-bars-and-counter" : {
-        "url": "udp://127.0.0.1:12345" ,
+        "url": "testsrc" ,
         "guid": uuid.uuid1().hex,
         "scale": [352,240],
         "keyint": 30,
         "bitrate": 192,
-        "onDemand": True # these are test feeds be courteous   
+        "onDemand": False # these are test feeds be courteous   
     }       
 }
 
@@ -139,7 +140,7 @@ rtsp://root:robot@172.28.137.206/axis-media/media.amp""".split("\n")
             "scale": [352,240],
             "keyint": 30,
             "bitrate": 192,
-            "onDemand": False
+            "onDemand": True
         }
 
 
