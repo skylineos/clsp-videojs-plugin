@@ -1,0 +1,157 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>videojs-mse-over-mqtt Demo</title>
+  <link href="http://vjs.zencdn.net/6.2.5/video-js.css" rel="stylesheet">
+  <link href="videojs-mse-over-mqtt.css" rel="stylesheet">
+
+  <script src="http://vjs.zencdn.net/6.2.5/video.js"></script>
+  <script src="videojs-mse-over-mqtt.js"></script>
+
+  <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous">
+   </script>
+<style>
+video-container {
+    width: 356,
+    height: 244
+}
+</style>      
+
+
+
+
+<script>
+
+function setupVwallCell(eid, src, cellId) {
+    if (document.getElementById(eid) === null) {
+        alert("(1) No match for " + eid);
+        return;
+    }  
+
+    // return markup for 
+    var cell = document.getElementById('cell');
+    var html = cell.innerHTML.replace(/\$cellId/g,parseInt(cellId));
+    var html = html.replace("$src",src);    
+
+    $('#'+eid).html(html);
+    $(function(){
+        var celm = document.getElementById('video-'+parseInt(cellId));
+        if (celm !== null){
+            window.videojs(celm).clsp();
+        } else {
+            alert("(2) No match for video-"+parseInt(cellId));
+        }
+    });
+}
+
+function setupVwall(eid, urlList) {
+    var html = "<table>";
+    for(var cellId = 0; cellId < urlList.length; cellId++){
+        if (cellId % 4 === 0) {
+            html += "<tr>";
+        }
+        
+        var vwcel = 'vwcell-'+parseInt(cellId);
+        html += '<td id="'+vwcel+'"></td>';
+        if (cellId % 4 === 3) {
+            html += "</tr>";
+        }  
+    }  
+    if (urlList.length < 4) {
+        html += "</tr>";
+    }
+    html += "</table>";
+    console.log(html);
+    $('#'+eid).html(html);
+
+    $(function(){  
+        for(cellId = 0; cellId < urlList.length; cellId++){
+            var vwcel = 'vwcell-'+parseInt(cellId);
+            var url = urlList[cellId]; 
+            setupVwallCell(vwcel, url, cellId);
+        }
+    });
+
+}
+
+
+function main() {
+    var urlList = [];
+    var eid = "videowall";
+
+    for(var i = 0; i < 32; i++) {
+        urlList.push("clsp://172.29.7.15:9001/SCDOT10022");
+    }
+    setupVwall(eid,urlList);
+
+
+/*
+    $('#submit').click(function(){
+        var x = $('#urlText').val().split(/[\r\n\t ,]+/);
+        var eid = "videowall";
+        $('#videowall').empty();
+        var urlList = [];
+        x.forEach(function(url){
+            if (url.length > 0) {
+                urlList.push(url);
+            }
+        });
+        setupVwall(eid,urlList);
+    });
+*/
+
+}
+
+</script>
+
+<body onload="main();">
+
+
+<template id="cell">
+    <div  class="video-container">
+     <video
+       id="video-$cellId"
+       width="352"
+       height="240"
+       class="video-js vjs-default-skin"
+       controls
+       autoplay  
+     > 
+       <source id="src-$cellId" src="$src" 
+              type="video/mp4; codecs='avc1.42E01E'"/>
+     </video>
+    </div>
+</template>
+
+<div>
+Urls:
+ <ul>
+  <textarea 
+      id="urlText" rows="8" cols="64" value=""
+      style="overflow: auto;" align="center">
+  </textarea>
+ </ul>
+</div>
+
+<div>
+  <button id="submit">Submit</button> 
+</div>
+ 
+<hr>
+
+<div id="videowall">
+</div>
+
+
+
+
+
+
+</body>
+</html>
+
+

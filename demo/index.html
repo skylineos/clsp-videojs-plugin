@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>videojs-mse-over-mqtt Demo</title>
+  <link href="http://vjs.zencdn.net/6.2.5/video-js.css" rel="stylesheet">
+  <link href="videojs-mse-over-mqtt.css" rel="stylesheet">
+  <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous">
+   </script>
+<style>
+video-container {
+    width: 356,
+    height: 244
+}
+</style>      
+
+
+</head>
+<body>
+  <table>
+   <tr>
+    <td class="video-container">
+     <video
+       id="vw1"
+       width="352"
+       height="240"
+       class="video-js vjs-default-skin"
+       controls
+     > 
+       <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'"/>
+
+       <source id="hls1"  src=""
+           type="application/x-mpegURL" />
+     </video>
+    </td>
+    <td  class="video-container">
+     <video
+       id="vw2"
+       width="352"
+       height="240"
+       class="video-js vjs-default-skin"
+       controls
+     > 
+       <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'"/>
+     </video>
+
+    </td>
+   </tr>
+   <tr>
+    <td  class="video-container">
+      <video
+       id="vw3"
+       width="352"
+       height="240"
+       class="video-js vjs-default-skin"
+       controls
+       autoplay
+     > 
+       <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'"/>
+     </video>
+    </td>
+    <td  class="video-container">
+      <video
+       id="vw4"
+       width="352"
+       height="240"
+       class="video-js vjs-default-skin"
+       controls
+       autoplay
+     > 
+       <source id="src4" src="" type="video/mp4; codecs='avc1.42E01E'"/>
+     </video>
+ 
+    </td>
+   </tr>
+  
+
+
+   <tr><td colspan="2"><hr></td></tr> 
+
+   <tr><td colspan="2">URL format:   clsp://(sfs ip):9001/(stream name) </td></tr> 
+   <tr><td>CLSP URL</td><td ><input id="url1" style="width: 352;"></td></tr>
+   <tr><td>CLSP URL</td><td><input id="url2" width="48" ></td></tr>
+   <tr><td>CLSP URL</td><td><input id="url3" width="48" > (autoplay)</td></tr>
+    <tr><td>CLSP URL</td><td><input id="url4" width="48" > (autoplay)</td></tr>
+    <tr><td colspan="2"><button id="submit">Submit</button></td></tr>
+    <tr><td colspan="2"><div id="message"></div></td></tr>
+  </table>
+
+  <script src="http://vjs.zencdn.net/6.2.5/video.js"></script>
+  <script src="videojs-mse-over-mqtt.js"></script>
+  <script>
+    $('#submit').click(function(){
+        var ip = $('#ip').val();
+        var vwallsrc = ['','','',''];
+        vwallsrc[0] = $('#src1').val();
+        vwallsrc[1] = $('#name2').val();
+        vwallsrc[2] = $('#name3').val();
+        vwallsrc[3] = $('#name4').val();
+
+        setTimeout(function(){
+           var srcCount = 1;
+           vwallsrc.forEach(function(name){
+               var url = $( '#url'+parseInt(srcCount) ).val();
+               if (url.length > 0) {
+                   $( '#src'+parseInt(srcCount) ).attr('src',url);
+                   var hls = "http://"+ip+":1935/rtplive/SCDOT10022/playlist.m3u8";
+                   $( '#hls1' ).attr('src', hls);  
+
+                   window.videojs('vw'+parseInt(srcCount)).clsp({
+                       onPlayFailed: function(player) {
+                           console.log("failed to play");
+                           console.log(player); 
+                       }
+                   });
+                   srcCount++;    
+               }
+           });
+
+           $('#message').html('videos configured');
+        },0);
+             
+    });
+  </script>
+
+</body>
+</html>
