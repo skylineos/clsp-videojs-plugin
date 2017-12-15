@@ -77,7 +77,7 @@ set qos(a){this._setQos(a)},get retained(){return this._getRetained()},set retai
 
 
   <script> 
-function _mqttRouter() {
+function _clspRouter() {
     /* this function gets converted to a string then injected into the
        iframe.
     */
@@ -202,9 +202,9 @@ function _mqttRouter() {
 
 
 
-function mqttRouter() {
+function clspRouter() {
     try {
-        _mqttRouter();
+        _clspRouter();
     } catch(e) {
         console.log("IFRAME error");
         console.log(e);

@@ -38,18 +38,18 @@ gulp.task('build', (done) => {
     if (err) throw err; 
     var iframeCode = iframeCode_.toString('utf8');
 
-    fs.readFile('src/mqttConduit.template', (err, mqttConduitCode_)=>{
+    fs.readFile('src/clspConduit.template', (err, clspConduitCode_)=>{
       if (err) throw err; 
-      var mqttConduitCode = mqttConduitCode_.toString('utf8'); 
+      var clspConduitCode = clspConduitCode_.toString('utf8'); 
 
       var token = "__IFRAME_CODE__";
       var frame_code = jsStringEscape(iframeCode);
-      var code = mqttConduitCode.replace(token,frame_code);
+      var code = clspConduitCode.replace(token,frame_code);
 
-      fs.writeFile('src/mqttConduit.js', code, (err)=>{
+      fs.writeFile('src/clspConduit.js', code, (err)=>{
         if (err) throw err; 
 
-        // src/mqttConduit.js generated
+        // src/clspConduit.js generated
         runSequence(
           'build-dev',
           'build-prod'

@@ -1,6 +1,4 @@
-# videojs-mse-over-mqtt
-
-Uses MQTT (iot) as a video distribution system, video is is received via the MQTT client then rendered using the media source extensions.
+# videojs-mse-over-clsp
 
 This plugin adds a new network protocol for the videojs player. It is activated by adding
 the following source tag to your video tag in HTML5:
@@ -19,9 +17,9 @@ Example:
 
 The new network protocol is handled by specifying the following URI format:
 
-mqtt:// ip-address-of-the-mqtt-service : port-number-of-web-socket / stream-id
+clsp:// ip-address-of-the-clsp-service : port-number-of-web-socket / stream-id
 
-In the above case, the mqtt service lives on a Skyline SFS.  In this case, the ip
+In the above case, the clsp service lives on a Skyline SFS.  In this case, the ip
 address is the SFS's ip address, the web socket port is 9001, and the stream name
 on the SFS is called "mse".
 
@@ -91,11 +89,11 @@ http://localhost:9999/walltest.html plays a 4x4 video wall using
 
 ## Usage
 
-To include videojs-mse-over-mqtt on your website or web application, use any of the following methods.
+To include videojs-mse-over-clsp on your website or web application, use any of the following methods.
 
 ### `<style>` Tag
 
-In the `<head>` of your page, include a line for the videojs and videojs-mse-over-mqtt styles:
+In the `<head>` of your page, include a line for the videojs and videojs-mse-over-clsp styles:
 
 ```html
 <head>
@@ -155,7 +153,7 @@ import videojs from 'video.js';
 
 window.videojs = videojs;
 
-require('videojs-mse-over-mqtt');
+require('videojs-mse-over-clsp');
 
 const player = videojs('my-video');
 
@@ -164,7 +162,7 @@ player.clsp();
 
 ### Browserify/CommonJS
 
-When using with Browserify, install videojs-mse-over-mqtt via npm and `require` the plugin as you would any other module.
+When using with Browserify, install videojs-mse-over-clsp via npm and `require` the plugin as you would any other module.
 
 ```javascript
 const videojs = require('video.js');
@@ -172,7 +170,7 @@ const videojs = require('video.js');
 // The actual plugin function is exported by this module, but it is also
 // attached to the `Player.prototype`; so, there is no need to assign it
 // to a variable.
-require('videojs-mse-over-mqtt');
+require('videojs-mse-over-clsp');
 
 var player = videojs('my-video');
 
@@ -184,7 +182,7 @@ player.clsp();
 When using with RequireJS (or another AMD library), get the script in whatever way you prefer and `require` the plugin as you normally would:
 
 ```js
-require(['video.js', 'videojs-mse-over-mqtt'], function(videojs) {
+require(['video.js', 'videojs-mse-over-clsp'], function(videojs) {
   var player = videojs('my-video');
 
   player.clsp();
