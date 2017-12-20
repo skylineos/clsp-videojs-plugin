@@ -123,7 +123,7 @@ window.mqttConduit = function( config, onReady ){
         jscode +
         '</script>' +
         iframe_code + 
-        '</head><body onload="mqttRouter();" onunload="onunload();"><body>'+
+        '</head><body onload="clspRouter();" onunload="onunload();"><body>'+
         '<div id="message"></div>'+
         '</body></html>'
     ;
