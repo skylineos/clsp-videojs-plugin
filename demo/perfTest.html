@@ -1,0 +1,72 @@
+<html>
+<head>
+ <script src="video_perf.js"></script>
+  <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous">
+   </script>
+
+<script>
+function main()
+{
+    var state = "stopped";
+    $('#control').click(function(){
+        if (state === 'stopped') {
+            var names = $('#streamNames').val().split(/\s+/);
+            var i;
+            var ip = $('#ip').val();
+            var html = "";
+            for(i = 0; i < names.length; i++) {
+                var t = document.getElementById('cellTemplate').innerHTML;
+                t = t.replace("__ip__",ip);
+                t = t.replace("__guid__",names[i]);
+                if ((i % 4) === 0){
+                    html += "<br><hr>";
+                }  
+                html += t;
+            }
+
+            $('#grid').html(html);                
+            $('#controlText').html('Stop');      
+        } else {
+            $('#grid').html("");
+            $('#controlText').html('Start');      
+        }
+
+        state = (state === 'stopped') ? 'started': 'stopped';
+         
+    });
+}
+</script>
+
+</head>
+<body onload="main()">
+
+<template id="cellTemplate">
+  <iframe width="300" height="150" src="perfCellIframe.html?ip=__ip__&guid=__guid__"></iframe>
+</template>
+
+
+  <table cellpadding="10">
+   <tr>
+    <td>SFS IP</td><td><input name="ipaddr" type="text" id="ip"></td>
+   </tr>
+
+   <tr>
+    <td>New line delimited streams</td>
+    <td>
+     <textarea style="height: 200px;" id="streamNames"></textarea>
+    </td>
+   </tr> 
+
+   <tr>
+    <td colspan="2"><button id="control"><div id="controlText">Start</div></button></td>
+   </tr>
+
+  </table>
+
+  <div id="grid"></div>
+  
+</body>
+</html>
