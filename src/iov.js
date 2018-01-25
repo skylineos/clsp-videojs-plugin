@@ -265,7 +265,6 @@ var _player = function(iov){
         var request = { clientId: iov.config.clientId };
         var topic = "iov/video/"+window.btoa(self.streamName)+"/request";
         iov.transport.transaction(topic,self._start_play,request);
-        console.log(topic);
     };
 
     self.resume = function(onFirstChunk, onVideoRecv) {
@@ -275,7 +274,6 @@ var _player = function(iov){
         var request = { clientId: iov.config.clientId };
         var topic = "iov/video/"+window.btoa(self.streamName)+"/request";
         iov.transport.transaction(topic,self._start_play,request);
-        console.log(topic);
     };
 
     self._appendBuffer_event = function(bytearray) {
@@ -309,14 +307,11 @@ var _player = function(iov){
         }
         var request = { clientId: iov.config.clientId };
         iov.transport.publish("iov/video/"+self.guid+"/stop",request);
-        console.log("iov/video/"+self.guid+"/stop");
     };
 
     self._start_play = function(resp) {
         self.mimeCodec = resp.mimeCodec;
         self.guid = resp.guid; // stream guid
-
-        console.log("_start_play mimeCodec="+self.mimeCodec);
 
         if ('MediaSource' in window && MediaSource.isTypeSupported(self.mimeCodec)) {
             var initseg_topic = iov.config.clientId + "/init-segment/" +
@@ -328,8 +323,6 @@ var _player = function(iov){
                 initSegmentTopic: initseg_topic,
                 clientId: iov.config.clientId
             });
-            console.log(play_request_topic);
-
         } else {
             // the browser does not support this video format
             self._fault("Unsuppored mime codec " + self.mimeCodec);
@@ -342,19 +335,21 @@ var _player = function(iov){
         self.vqueue = []; // used if the media source buffer is busy
 
         self.state = "waiting-for-moov";
-
+        
         iov.transport.subscribe(initSegmentTopic, function(mqtt_msg) {
+
             // capture the initial segment
             self.moovBox = mqtt_msg.payloadBytes;
             //console.log(typeof mqtt_msg.payloadBytes);
             //console.log("received moov from server");
 
+
             self.state = "waiting-for-moof";
             // unsubscribe to this group
             iov.transport.unsubscribe(initSegmentTopic);
+
             // subscribe to the live video topic.
             self.state = "playing";
-            console.log("listening to " + "iov/video/"+self.guid+"/live");
             iov.transport.subscribe("iov/video/"+self.guid+"/live", self._on_moof);
             // create media source buffer and start routing video traffic.
 
@@ -364,23 +359,25 @@ var _player = function(iov){
             self.mediaSource = new MediaSource();
 
 
-            // blow away event handlers on the video tag
-            
             var clone = self.video.cloneNode();
             var parent = self.video.parentNode;
-            parent.replaceChild(clone,self.video);
-            self.video = clone;           
-            
-            // now assign media source extensions
-            console.log("Disregard: The play() request was interrupted ... its not an error!");
-            self.video.src = URL.createObjectURL(self.mediaSource);
-
+            if (parent !== null) { 
+                parent.replaceChild(clone,self.video);
+                self.video = clone;
+            }
+               
+          
             self.mediaSource.addEventListener('sourceopen' ,self._on_sourceopen);
             self.mediaSource.addEventListener('sourceended',self._on_sourceended);
             self.mediaSource.addEventListener('error',function(e) {
                 console.log("MSE error");
                 console.log(e);
             });
+            
+            // now assign media source extensions
+            //console.log("Disregard: The play() request was interrupted ... its not an error!");
+            self.video.src = URL.createObjectURL(self.mediaSource);
+
 
         });
 
@@ -391,7 +388,7 @@ var _player = function(iov){
 
 
         if (self.source_buffer_ready == false) {
-            console.log("media source not yet open dropping frame");
+            //console.log("media source not yet open dropping frame");
             return;
         }
 
@@ -402,7 +399,7 @@ var _player = function(iov){
         // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
         // the source buffer.
         if ((self.seqnum - self.seqnumProcessed) > self.MAX_SEQ_PROC) {
-            console.log("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
+            //console.log("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
             return; // DROP this frame since the borwser is falling
         }
 
@@ -440,7 +437,9 @@ var _player = function(iov){
         /** New media source opened. Add a buffer and append the moov MP4 video data.
         */
 
-
+        
+        
+        // add buffer  
         self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
         self.sourceBuffer.mode = "sequence";
         self.sourceBuffer.addEventListener('updateend', self._on_updateend);
@@ -511,14 +510,20 @@ var _player = function(iov){
                     self.vqueue = self.vqueue.slice(1);
                 },0);
             }
+
+            
             if (self.video.paused === true) {
                 try {
-                    self.video.play();
+                    var promise = self.video.play();
+                    if (typeof promise !== 'undefined') {
+                        promise.then(function(_){}).catch(function(e){});
+                    }  
                 } catch( ex ) {
                     console.log("Exception while trying to play:" + ex.message );
                 }
                 //console.log("setting video player from paused to play");
             }
+            
         }
     };
 
@@ -568,7 +573,7 @@ function IOV(config) {
 
     // return an instance of a player
     self.player = function() {
-        console.log("creating player");
+        //console.log("creating player");
         return _player(self);
     };
 

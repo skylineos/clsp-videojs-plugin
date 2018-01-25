@@ -22,7 +22,9 @@ function pframe_client(iframe, config, onReady) {
 
     function command(m) {
         // primitive function that routes message to iframe
-        iframe.contentWindow.postMessage(m,"*");
+        setTimeout(function(){ 
+            iframe.contentWindow.postMessage(m,"*");
+        },0);
     }
 
 

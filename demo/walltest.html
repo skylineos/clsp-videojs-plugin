@@ -80,29 +80,22 @@ function setupVwall(eid, urlList) {
 
 
 function main() {
-    var urlList = [];
-    var eid = "videowall";
 
-    for(var i = 0; i < 32; i++) {
-        urlList.push("clsp://172.29.7.15:9001/SCDOT10022");
-    }
-    setupVwall(eid,urlList);
-
-
-/*
     $('#submit').click(function(){
-        var x = $('#urlText').val().split(/[\r\n\t ,]+/);
-        var eid = "videowall";
-        $('#videowall').empty();
+        var url = $('#url').val();
         var urlList = [];
-        x.forEach(function(url){
-            if (url.length > 0) {
-                urlList.push(url);
-            }
-        });
+        var eid = "videowall";
+        var numvideos = parseInt($('#numvideos').val());
+
+        console.log("creating video wall for ",url);
+        for(var i = 0; i < numvideos; i++) {
+            urlList.push(url);
+        }
         setupVwall(eid,urlList);
+
     });
-*/
+
+
 
 }
 
@@ -128,13 +121,17 @@ function main() {
 </template>
 
 <div>
-Urls:
+Url:
  <ul>
-  <textarea 
-      id="urlText" rows="8" cols="64" value=""
-      style="overflow: auto;" align="center">
-  </textarea>
+  <input type="text" id="url">
  </ul>
+</div>
+
+<div>
+Number of videos:<br>
+ <url>
+  <input value="16" type="number" id="numvideos">
+ </url>
 </div>
 
 <div>

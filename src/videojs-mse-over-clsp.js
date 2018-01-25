@@ -97,8 +97,6 @@ class MqttHandler extends Component {
         this.streamName = streamName;
         this.enabled = true;
 
-        console.log('address = ' + hostname);
-        console.log('port = ' + parseInt(port));  
         SrcsLookupTable[_src] = this;
     }
 
@@ -114,7 +112,6 @@ class MqttHandler extends Component {
             appStart: (iov) => {
                 // connected to MQTT procede to setting up callbacks
                 //console.log("iov.player() called")
-                console.log("connected to mqtt");
                 var mqtt_player = iov.player();
                 var evt = new CustomEvent("mqttReady");
                 this.player().el().dispatchEvent( evt );
@@ -170,7 +167,6 @@ const MqttSourceHandler = function(mode) {
                     console.log("clsp type='" + type + "' rejected");
                 }
             }
-            console.log('canPlayType: ' + r);
             return r;
         },
         canHandleSource: function(srcObj, options={}){
@@ -282,16 +278,12 @@ const mseOverMqtt = function(options) {
         //console.log("play");
         var spinner = this.player_.loadingSpinner;
         var videojs_player = this.player_;
-
         
-
-        console.log("play event");
-
         // work around bogus error code.
-        videojs_player.old_error = videojs_player.error;
+        var old_error = Object.assign({}, videojs_player.error());
         videojs_player.error = function(evt) {
             if (typeof evt === 'undefined') {
-                return videojs_player.old_error();
+                return old_error;
             }
             else if (evt === null) {
                 return;
@@ -300,6 +292,7 @@ const mseOverMqtt = function(options) {
                 videojs_player.old_error(evt);
             }
         };
+
 
         var source_tag = this.currentSource();
         if (source_tag.src in SrcsLookupTable) {
@@ -321,7 +314,6 @@ const mseOverMqtt = function(options) {
                     var playToggle = videojs_player.controlBar.children_[0].el_;
                     playToggle.addEventListener("click", function() {
                         setTimeout(function() {
-                            console.log("play toggle");
                             if (iov_player.playing === true) {
                                 iov_player.stop();
                                 iov_player.playing = false;
@@ -376,7 +368,10 @@ const mseOverMqtt = function(options) {
         videoTag.addEventListener("mqttReady", function(evt) {
             if (videoTag.getAttribute('autoplay') !== null) {
                 //playButton.trigger('click');
-                player.trigger('play', videoTag);
+                try {
+                    player.trigger('play', videoTag);
+                } catch(e) {
+                }
             }
         });
 

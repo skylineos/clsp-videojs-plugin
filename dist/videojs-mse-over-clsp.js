@@ -200,8 +200,6 @@ var MqttHandler = function (_Component) {
             this.streamName = streamName;
             this.enabled = true;
 
-            console.log('address = ' + hostname);
-            console.log('port = ' + parseInt(port));
             SrcsLookupTable[_src] = this;
         }
     }, {
@@ -217,7 +215,6 @@ var MqttHandler = function (_Component) {
                 appStart: function appStart(iov) {
                     // connected to MQTT procede to setting up callbacks
                     //console.log("iov.player() called")
-                    console.log("connected to mqtt");
                     var mqtt_player = iov.player();
                     var evt = new CustomEvent("mqttReady");
                     _this2.player().el().dispatchEvent(evt);
@@ -270,7 +267,6 @@ var MqttSourceHandler = function MqttSourceHandler(mode) {
                     console.log("clsp type='" + type + "' rejected");
                 }
             }
-            console.log('canPlayType: ' + r);
             return r;
         },
         canHandleSource: function canHandleSource(srcObj) {
@@ -381,13 +377,11 @@ var mseOverMqtt = function mseOverMqtt(options) {
         var spinner = this.player_.loadingSpinner;
         var videojs_player = this.player_;
 
-        console.log("play event");
-
         // work around bogus error code.
-        videojs_player.old_error = videojs_player.error;
+        var old_error = Object.assign({}, videojs_player.error());
         videojs_player.error = function (evt) {
             if (typeof evt === 'undefined') {
-                return videojs_player.old_error();
+                return old_error;
             } else if (evt === null) {
                 return;
             } else if (evt.code !== -2) {
@@ -415,7 +409,6 @@ var mseOverMqtt = function mseOverMqtt(options) {
                     var playToggle = videojs_player.controlBar.children_[0].el_;
                     playToggle.addEventListener("click", function () {
                         setTimeout(function () {
-                            console.log("play toggle");
                             if (iov_player.playing === true) {
                                 iov_player.stop();
                                 iov_player.playing = false;
@@ -468,7 +461,9 @@ var mseOverMqtt = function mseOverMqtt(options) {
         videoTag.addEventListener("mqttReady", function (evt) {
             if (videoTag.getAttribute('autoplay') !== null) {
                 //playButton.trigger('click');
-                player.trigger('play', videoTag);
+                try {
+                    player.trigger('play', videoTag);
+                } catch (e) {}
             }
         });
 
@@ -1501,7 +1496,9 @@ function pframe_client(iframe, config, onReady) {
 
     function command(m) {
         // primitive function that routes message to iframe
-        iframe.contentWindow.postMessage(m, "*");
+        setTimeout(function () {
+            iframe.contentWindow.postMessage(m, "*");
+        }, 0);
     }
 
     // called when mqtt has connected
@@ -1879,7 +1876,6 @@ var _player = function _player(iov) {
         var request = { clientId: iov.config.clientId };
         var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
         iov.transport.transaction(topic, self._start_play, request);
-        console.log(topic);
     };
 
     self.resume = function (onFirstChunk, onVideoRecv) {
@@ -1889,7 +1885,6 @@ var _player = function _player(iov) {
         var request = { clientId: iov.config.clientId };
         var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
         iov.transport.transaction(topic, self._start_play, request);
-        console.log(topic);
     };
 
     self._appendBuffer_event = function (bytearray) {
@@ -1920,14 +1915,11 @@ var _player = function _player(iov) {
         }
         var request = { clientId: iov.config.clientId };
         iov.transport.publish("iov/video/" + self.guid + "/stop", request);
-        console.log("iov/video/" + self.guid + "/stop");
     };
 
     self._start_play = function (resp) {
         self.mimeCodec = resp.mimeCodec;
         self.guid = resp.guid; // stream guid
-
-        console.log("_start_play mimeCodec=" + self.mimeCodec);
 
         if ('MediaSource' in window && MediaSource.isTypeSupported(self.mimeCodec)) {
             var initseg_topic = iov.config.clientId + "/init-segment/" + parseInt(Math.random() * 1000000);
@@ -1938,7 +1930,6 @@ var _player = function _player(iov) {
                 initSegmentTopic: initseg_topic,
                 clientId: iov.config.clientId
             });
-            console.log(play_request_topic);
         } else {
             // the browser does not support this video format
             self._fault("Unsuppored mime codec " + self.mimeCodec);
@@ -1952,17 +1943,19 @@ var _player = function _player(iov) {
         self.state = "waiting-for-moov";
 
         iov.transport.subscribe(initSegmentTopic, function (mqtt_msg) {
+
             // capture the initial segment
             self.moovBox = mqtt_msg.payloadBytes;
             //console.log(typeof mqtt_msg.payloadBytes);
             //console.log("received moov from server");
 
+
             self.state = "waiting-for-moof";
             // unsubscribe to this group
             iov.transport.unsubscribe(initSegmentTopic);
+
             // subscribe to the live video topic.
             self.state = "playing";
-            console.log("listening to " + "iov/video/" + self.guid + "/live");
             iov.transport.subscribe("iov/video/" + self.guid + "/live", self._on_moof);
             // create media source buffer and start routing video traffic.
 
@@ -1971,16 +1964,12 @@ var _player = function _player(iov) {
 
             self.mediaSource = new MediaSource();
 
-            // blow away event handlers on the video tag
-
             var clone = self.video.cloneNode();
             var parent = self.video.parentNode;
-            parent.replaceChild(clone, self.video);
-            self.video = clone;
-
-            // now assign media source extensions
-            console.log("Disregard: The play() request was interrupted ... its not an error!");
-            self.video.src = URL.createObjectURL(self.mediaSource);
+            if (parent !== null) {
+                parent.replaceChild(clone, self.video);
+                self.video = clone;
+            }
 
             self.mediaSource.addEventListener('sourceopen', self._on_sourceopen);
             self.mediaSource.addEventListener('sourceended', self._on_sourceended);
@@ -1988,13 +1977,17 @@ var _player = function _player(iov) {
                 console.log("MSE error");
                 console.log(e);
             });
+
+            // now assign media source extensions
+            //console.log("Disregard: The play() request was interrupted ... its not an error!");
+            self.video.src = URL.createObjectURL(self.mediaSource);
         });
     };
 
     self._on_moof = function (mqtt_msg) {
 
         if (self.source_buffer_ready == false) {
-            console.log("media source not yet open dropping frame");
+            //console.log("media source not yet open dropping frame");
             return;
         }
 
@@ -2005,7 +1998,7 @@ var _player = function _player(iov) {
         // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
         // the source buffer.
         if (self.seqnum - self.seqnumProcessed > self.MAX_SEQ_PROC) {
-            console.log("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
+            //console.log("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
             return; // DROP this frame since the borwser is falling
         }
 
@@ -2040,6 +2033,7 @@ var _player = function _player(iov) {
         /** New media source opened. Add a buffer and append the moov MP4 video data.
         */
 
+        // add buffer  
         self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
         self.sourceBuffer.mode = "sequence";
         self.sourceBuffer.addEventListener('updateend', self._on_updateend);
@@ -2109,9 +2103,13 @@ var _player = function _player(iov) {
                     self.vqueue = self.vqueue.slice(1);
                 }, 0);
             }
+
             if (self.video.paused === true) {
                 try {
-                    self.video.play();
+                    var promise = self.video.play();
+                    if (typeof promise !== 'undefined') {
+                        promise.then(function (_) {}).catch(function (e) {});
+                    }
                 } catch (ex) {
                     console.log("Exception while trying to play:" + ex.message);
                 }
@@ -2163,7 +2161,7 @@ function IOV(config) {
 
     // return an instance of a player
     self.player = function () {
-        console.log("creating player");
+        //console.log("creating player");
         return _player(self);
     };
 
