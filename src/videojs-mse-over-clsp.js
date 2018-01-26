@@ -368,10 +368,7 @@ const mseOverMqtt = function(options) {
         videoTag.addEventListener("mqttReady", function(evt) {
             if (videoTag.getAttribute('autoplay') !== null) {
                 //playButton.trigger('click');
-                try {
-                    player.trigger('play', videoTag);
-                } catch(e) {
-                }
+                player.trigger('play', videoTag);
             }
         });
 
