@@ -57,7 +57,7 @@ To run the development server:
 ## Installation
 
 ```
-git clone https://gitlab.skylinenet.net/dschere/videojs.git
+git clone https://github.com/skylineos/clsp-videojs-plugin.git
 cd clsp-videojs-plugin 
 npm install
 ```
