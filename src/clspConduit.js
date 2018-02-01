@@ -20,11 +20,20 @@ function pframe_client(iframe, config, onReady) {
     };
 
 
+    // primitive function that routes message to iframe
     function command(m) {
-        // primitive function that routes message to iframe
-        setTimeout(function(){ 
+
+        if (iframe.contentWindow !== null) {
             iframe.contentWindow.postMessage(m,"*");
-        },0);
+            return;
+        }        
+
+        var t = setInterval(function(){
+            if (iframe.contentWindow !== null) {  
+                iframe.contentWindow.postMessage(m,"*");
+                clearInterval(t);  
+            }
+        },1000);
     }
 
 
