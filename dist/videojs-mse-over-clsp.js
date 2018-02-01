@@ -1494,11 +1494,20 @@ function pframe_client(iframe, config, onReady) {
         dispatch: {}
     };
 
+    // primitive function that routes message to iframe
     function command(m) {
-        // primitive function that routes message to iframe
-        setTimeout(function () {
+
+        if (iframe.contentWindow !== null) {
             iframe.contentWindow.postMessage(m, "*");
-        }, 0);
+            return;
+        }
+
+        var t = setInterval(function () {
+            if (iframe.contentWindow !== null) {
+                iframe.contentWindow.postMessage(m, "*");
+                clearInterval(t);
+            }
+        }, 1000);
     }
 
     // called when mqtt has connected
@@ -1622,7 +1631,7 @@ window.mqttConduit = function (config, onReady) {
 /* 9 */
 /***/ (function(module, exports) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.1.8","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"rm -rf ./dist && gulp build","build-dev":"webpack-dev-server","postversion":"git push && git push --tags","build-prod":"rm -rf ./dist && gulp build-prod"},"keywords":["videojs","videojs-plugin"],"author":"David Schere <dave.avantgarde@gmail.com>","license":"UNLICENSED","dependencies":{"gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","paho-mqtt":"^1.0.3","run-sequence":"^2.2.0","videojs-errors":"^3.0.3"},"devDependencies":{"babel-core":"^6.26.0","babel-eslint":"^8.0.1","babel-loader":"^7.1.2","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.6.0","css-loader":"^0.28.5","extract-text-webpack-plugin":"^3.0.0","js-string-escape":"^1.0.1","node-sass":"^4.5.3","sass-loader":"^6.0.6","style-loader":"^0.18.2","webpack":"^3.1.0","webpack-dev-server":"^2.7.1"}}
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.1.8","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"rm -rf ./dist && gulp build","build-dev":"webpack-dev-server","postversion":"git push && git push --tags","build-prod":"rm -rf ./dist && gulp build-prod"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","paho-mqtt":"^1.0.3","run-sequence":"^2.2.0","videojs-errors":"^3.0.3"},"devDependencies":{"babel-core":"^6.26.0","babel-eslint":"^8.0.1","babel-loader":"^7.1.2","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.6.0","css-loader":"^0.28.5","extract-text-webpack-plugin":"^3.0.0","js-string-escape":"^1.0.1","node-sass":"^4.5.3","sass-loader":"^6.0.6","style-loader":"^0.18.2","webpack":"^3.1.0","webpack-dev-server":"^2.7.1"}}
 
 /***/ }),
 /* 10 */
@@ -2029,7 +2038,24 @@ var _player = function _player(iov) {
         }
     };
 
+    // found when stress testing many videos, it is possible for the
+    // media source ready state not to be open even though
+    // source open callback is being called.   
     self._on_sourceopen = function () {
+        if (self.mediaSource.readyState === "open") {
+            self._do_on_sourceopen();
+            return;
+        }
+
+        var t = setInterval(function () {
+            if (self.mediaSource.readyState === "open") {
+                self._do_on_sourceopen();
+                clearInterval(t);
+            }
+        }, 1000);
+    };
+
+    self._do_on_sourceopen = function () {
         /** New media source opened. Add a buffer and append the moov MP4 video data.
         */
 

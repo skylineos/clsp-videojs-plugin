@@ -433,11 +433,26 @@ var _player = function(iov){
 
     };
 
+    // found when stress testing many videos, it is possible for the
+    // media source ready state not to be open even though
+    // source open callback is being called.   
     self._on_sourceopen = function() {
+        if (self.mediaSource.readyState === "open") {
+            self._do_on_sourceopen();
+            return;
+        }
+
+        var t = setInterval(function(){
+            if (self.mediaSource.readyState === "open") {
+                self._do_on_sourceopen();
+                clearInterval(t);
+            }
+        },  1000);
+    };
+
+    self._do_on_sourceopen = function() {
         /** New media source opened. Add a buffer and append the moov MP4 video data.
         */
-
-        
         
         // add buffer  
         self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
