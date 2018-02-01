@@ -1,6 +1,5 @@
 import videojs from 'video.js';
 import videojsErrors from 'videojs-errors';
-videojs.plugin('errors', videojsErrors);
 import 'paho-mqtt';
 
 import './srcdoc-polyfill';
