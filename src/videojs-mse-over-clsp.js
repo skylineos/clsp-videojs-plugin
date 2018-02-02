@@ -4,7 +4,6 @@ import videojsErrors from 'videojs-errors';
 import './srcdoc-polyfill';
 import clspConduit from './clspConduit.generated.js';
 
-
 import {version as VERSION} from '../package.json';
 import IOV from './iov/IOV';
 
