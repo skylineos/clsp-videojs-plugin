@@ -58,7 +58,7 @@ To run the development server:
 
 ```
 git clone https://github.com/skylineos/clsp-videojs-plugin.git
-cd clsp-videojs-plugin 
+cd clsp-videojs-plugin
 npm install
 ```
 
@@ -75,15 +75,14 @@ The generated files will be available in the `dist` directory.
 ## Run test server
 
 ```
-cp webpack.config.dev.js webpack.config.js
 npm run build-dev
 
 This starts a development server on port 9999 to access the demos:
 
-http://localhost:9999 >>> interactive demo site 
+http://localhost:9999 >>> interactive demo site
 
-http://localhost:9999/walltest.html plays a 4x4 video wall using 
-   a feed clsp://172.29.7.15:9001/SCDOT10022. 
+http://localhost:9999/walltest.html plays a 4x4 video wall using
+   a feed @todo.
 
 ```
 

@@ -1,10 +1,11 @@
 'use strict';
 
-const config = require('./webpack.config.dev');
 const webpack = require('webpack');
 
+const config = require('./webpack.config');
+
 // Minify
-config[0].output.filename = 'videojs-clsp.min.js'
+config[0].output.filename = '[name].min.js'
 config[0].plugins.push(new webpack.optimize.UglifyJsPlugin({
   compress: {
     dead_code: true,

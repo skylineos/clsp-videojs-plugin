@@ -15,7 +15,7 @@ video-container {
     width: 356,
     height: 244
 }
-</style>      
+</style>
 
 
 </head>
@@ -29,7 +29,7 @@ video-container {
        height="240"
        class="video-js vjs-default-skin"
        controls
-     > 
+     >
        <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'"/>
 
        <source id="hls1"  src=""
@@ -43,7 +43,7 @@ video-container {
        height="240"
        class="video-js vjs-default-skin"
        controls
-     > 
+     >
        <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'"/>
      </video>
 
@@ -58,7 +58,7 @@ video-container {
        class="video-js vjs-default-skin"
        controls
        autoplay
-     > 
+     >
        <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'"/>
      </video>
     </td>
@@ -70,18 +70,18 @@ video-container {
        class="video-js vjs-default-skin"
        controls
        autoplay
-     > 
+     >
        <source id="src4" src="" type="video/mp4; codecs='avc1.42E01E'"/>
      </video>
- 
+
     </td>
    </tr>
-  
 
 
-   <tr><td colspan="2"><hr></td></tr> 
 
-   <tr><td colspan="2">URL format:   clsp://(sfs ip):9001/(stream name) </td></tr> 
+   <tr><td colspan="2"><hr></td></tr>
+
+   <tr><td colspan="2">URL format:   clsp://(sfs ip):9001/(stream name) </td></tr>
    <tr><td>CLSP URL</td><td ><input id="url1" style="width: 352;"></td></tr>
    <tr><td>CLSP URL</td><td><input id="url2" width="48" ></td></tr>
    <tr><td>CLSP URL</td><td><input id="url3" width="48" > (autoplay)</td></tr>
@@ -107,22 +107,23 @@ video-container {
                var url = $( '#url'+parseInt(srcCount) ).val();
                if (url.length > 0) {
                    $( '#src'+parseInt(srcCount) ).attr('src',url);
-                   var hls = "http://"+ip+":1935/rtplive/SCDOT10022/playlist.m3u8";
-                   $( '#hls1' ).attr('src', hls);  
+                   // @todo
+                   var hls = "";
+                   $( '#hls1' ).attr('src', hls);
 
                    window.videojs('vw'+parseInt(srcCount)).clsp({
                        onPlayFailed: function(player) {
                            console.log("failed to play");
-                           console.log(player); 
+                           console.log(player);
                        }
                    });
-                   srcCount++;    
+                   srcCount++;
                }
            });
 
            $('#message').html('videos configured');
         },0);
-             
+
     });
   </script>
 
