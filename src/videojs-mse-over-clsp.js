@@ -1,13 +1,12 @@
 import videojs from 'video.js';
 import videojsErrors from 'videojs-errors';
-import 'paho-mqtt';
 
 import './srcdoc-polyfill';
 import clspConduit from './clspConduit.generated.js';
 
 
 import {version as VERSION} from '../package.json';
-import IOV from './iov';
+import IOV from './iov/IOV';
 
 import './videojs-mse-over-clsp.scss';
 
@@ -127,7 +126,7 @@ class MqttHandler extends Component {
             videoElement: velm
         });
 
-
+        iov.initialize();
     }
 
 
