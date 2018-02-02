@@ -188,6 +188,7 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
+* fix autoplay - it makes LOTS of requests...
 * review files in `_legacy` and delete if not needed
 * implement linter and styles
 * minify css
