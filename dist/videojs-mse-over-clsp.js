@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,13 +71,40 @@ module.exports = videojs;
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var g;
+
+// This works in non-strict mode
+g = function () {
+	return this;
+}();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1, eval)("this");
+} catch (e) {
+	// This works if the window reference is available
+	if ((typeof window === "undefined" ? "undefined" : _typeof(window)) === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+/***/ }),
+/* 2 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_video_js__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_video_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_video_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_videojs_errors__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_videojs_errors__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_paho_mqtt__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_paho_mqtt___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_paho_mqtt__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__srcdoc_polyfill__ = __webpack_require__(7);
@@ -87,8 +114,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__package_json__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__package_json___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__package_json__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__iov__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__iov___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__iov__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__videojs_mse_over_clsp_scss__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__videojs_mse_over_clsp_scss__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__videojs_mse_over_clsp_scss___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__videojs_mse_over_clsp_scss__);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -134,6 +160,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
    Html5.registerSourceHandler(mqttSourceHandler);
 
 */
+
 var Component = __WEBPACK_IMPORTED_MODULE_0_video_js___default.a.getComponent('Component');
 
 var SrcsLookupTable = {};
@@ -208,7 +235,7 @@ var MqttHandler = function (_Component) {
 
             var velm = this.player().el();
 
-            IOV({
+            var iov = new __WEBPACK_IMPORTED_MODULE_6__iov__["a" /* default */]({
                 port: this.port,
                 address: this.address,
                 appStart: function appStart(iov) {
@@ -477,13 +504,13 @@ mseOverMqtt.VERSION = __WEBPACK_IMPORTED_MODULE_5__package_json__["version"];
 /* harmony default export */ __webpack_exports__["default"] = (mseOverMqtt);
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_video_js__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_video_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_video_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_global_document__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_global_document__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_global_document___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_global_document__);
 
 
@@ -805,7 +832,7 @@ registerPlugin('errors', errors);
 /* unused harmony default export */ var _unused_webpack_default_export = (errors);
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var topLevel = typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : {};
@@ -824,34 +851,7 @@ if (typeof document !== 'undefined') {
 }
 
 module.exports = doccy;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var g;
-
-// This works in non-strict mode
-g = function () {
-	return this;
-}();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1, eval)("this");
-} catch (e) {
-	// This works if the window reference is available
-	if ((typeof window === "undefined" ? "undefined" : _typeof(window)) === "object") g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
 /* 5 */
@@ -1619,580 +1619,1508 @@ window.mqttConduit = function (config, onReady) {
 /* 9 */
 /***/ (function(module, exports) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.1.8","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","postversion":"git push && git push --tags","start-dev":"webpack-dev-server"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"paho-mqtt":"^1.0.3","videojs-errors":"^3.0.3"},"devDependencies":{"babel-core":"^6.26.0","babel-eslint":"^8.0.1","babel-loader":"^7.1.2","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.6.0","css-loader":"^0.28.5","extract-text-webpack-plugin":"^3.0.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","node-sass":"^4.5.3","run-sequence":"^2.2.0","sass-loader":"^6.0.6","style-loader":"^0.18.2","webpack":"^3.1.0","webpack-dev-server":"^2.7.1"}}
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.1.8","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","postversion":"git push && git push --tags","start-dev":"webpack-dev-server"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","paho-mqtt":"^1.0.3","videojs-errors":"^3.0.3"},"devDependencies":{"babel-core":"^6.26.0","babel-eslint":"^8.0.1","babel-loader":"^7.1.2","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.6.0","css-loader":"^0.28.5","extract-text-webpack-plugin":"^3.0.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","node-sass":"^4.5.3","run-sequence":"^2.2.0","sass-loader":"^6.0.6","style-loader":"^0.18.2","webpack":"^3.1.0","webpack-dev-server":"^2.7.1"}}
 
 /***/ }),
 /* 10 */
-/***/ (function(module, exports) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_debug__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_debug___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_debug__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_uuid_v4__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_uuid_v4___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_uuid_v4__);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+
+
+
+var DEBUG_PREFIX = 'clsp:iov:';
+var debug = __WEBPACK_IMPORTED_MODULE_0_debug___default()(DEBUG_PREFIX + ':main');
 
 /**
-Internet of Video client. This module uses the MediaSource API to deliver
-video content streamed through MQTT from distributed sources.
+ * Internet of Video client. This module uses the MediaSource API to
+ * deliver video content streamed through MQTT from distributed sources.
+ */
 
-Dependancies:
-    mqttws31.js
+function mediaSourceCheck() {
+  // For the MAC
+  var NoMediaSourceAlert = false;
 
+  window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 
-Message Topics:
-
-  iov/video/name/request { clientId, resp_topic }
-    server sends the mimeCodec to the resp_topic
-  iov/video/guid/play { clientId, resp_topic }
-    server sends the initSegment (containing moov) to resp_topic
-  iov/video/guid/stop { clientId }
-    server decrements a reference count for this stream if configured for
-    on demand stops playing.
-
-  iov/video/list
-    return a list of video titles
-  iov/video/publish
-    publish a video url
-
-
-
-<video autoplay id="required-id"></video>
-
-
-*/
-
-// polyfill for older browsers.
-if (!Date.now) {
-    Date.now = function now() {
-        return new Date().getTime();
-    };
-}
-
-// Not a true UUID but a best attempt at a unique identfier
-function fake_guid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0,
-            v = c == 'x' ? r : r & 0x3 | 0x8;
-        return v.toString(16);
-    });
-}
-
-// For the MAC 
-NoMediaSourceAlert = false;
-window.MediaSource = window.MediaSource || window.WebKitMediaSource;
-if (typeof window.MediaSource === 'undefined') {
+  if (!window.MediaSource) {
     if (NoMediaSourceAlert === false) {
-        alert("Media Source Extensions not supported in your browser" + ": Claris Live Streaming will not work!");
+      alert("Media Source Extensions not supported in your browser" + ": Claris Live Streaming will not work!");
     }
+
     NoMediaSourceAlert = true;
+  }
 }
 
-// handle IE legacy
-function bindEvent(element, eventName, eventHandler) {
-    if (element.addEventListener) {
-        element.addEventListener(eventName, eventHandler, false);
-    } else if (element.attachEvent) {
-        element.attachEvent('on' + eventName, eventHandler);
+var MqttConduitCollection = function () {
+  function MqttConduitCollection() {
+    _classCallCheck(this, MqttConduitCollection);
+
+    this._conduits = {};
+  }
+
+  _createClass(MqttConduitCollection, [{
+    key: 'set',
+    value: function set(id, conduit) {
+      this._conduits[id] = conduit;
     }
-}
-
-var MqttConduitLookup = {};
-
-/* route inbound data from a frame running mqtt to the appropriate player */
-bindEvent(window, 'message', function (e) {
-    var msg = e.data;
-    var clientId = e.data.clientId;
-    var c = MqttConduitLookup[clientId];
-    var event = e.data.event;
-
-    if (typeof c !== 'undefined') {
-        var handlers = {
-            data: function data() {
-                c.inboundHandler(e.data);
-            },
-            ready: function ready() {
-                c.onReady();
-            },
-            fail: function fail() {
-                console.log();
-            }
-        };
-        var h = handlers[event];
-        if (typeof h !== 'undefined') {
-            h();
-        } else {
-            console.log("No match for event = " + event);
-        }
-    }
-});
-
-/**
-   Sets up communication between MQTT and this module.
-*/
-var _mqtt_transport = function _mqtt_transport(iov) {
-    var self = {};
-
-    // setup stats
-    iov.statsMsg = {
-        byteCount: 0,
-        inkbps: 0,
-        host: document.location.host,
-        clientId: iov.config.clientId
-    };
-
-    function onReady() {
+  }, {
+    key: 'addFromIov',
+    value: function addFromIov(iov) {
+      this.set(iov.config.clientId, mqttConduit(iov.config, function () {
         iov.config.appStart(iov);
 
         // the mse service will stop streaming to us if we don't send
         // a message to iov/stats within 1 minute.
         iov._statsTimer = setInterval(function () {
-            iov.statsMsg.inkbps = iov.statsMsg.byteCount * 8 / 30000.0;
-            iov.statsMsg.byteCount = 0;
-            self.publish("iov/stats", iov.statsMsg);
+          iov.statsMsg.inkbps = iov.statsMsg.byteCount * 8 / 30000.0;
+          iov.statsMsg.byteCount = 0;
 
-            //console.log(iov.statsMsg);
+          self.publish("iov/stats", iov.statsMsg);
+
+          debug('iov status', iov.statsMsg);
         }, 5000);
+      }));
+    }
+  }, {
+    key: 'getById',
+    value: function getById(id) {
+      return this._conduits[id];
+    }
+  }, {
+    key: 'exists',
+    value: function exists(id) {
+      return this._conduits.hasOwnProperty(id);
+    }
+  }]);
+
+  return MqttConduitCollection;
+}();
+
+var MqttTransport = function () {
+  function MqttTransport(iov) {
+    _classCallCheck(this, MqttTransport);
+
+    this.debug = __WEBPACK_IMPORTED_MODULE_0_debug___default()(DEBUG_PREFIX + ':MqttTransport');
+
+    this.debug('constructing...');
+
+    // setup stats
+    iov.statsMsg = {
+      byteCount: 0,
+      inkbps: 0,
+      host: document.location.host,
+      clientId: iov.config.clientId
+    };
+
+    this.clientId = iov.config.clientId;
+    this.iov = iov;
+
+    this.conduit = iov.mqttConduitCollection.addFromIov(iov);
+  }
+
+  // create a temporary resp_topic to receive a query response
+  // upon response remove the temporary topic. Assume both request
+  // and response are json formateed text.
+
+
+  _createClass(MqttTransport, [{
+    key: 'transaction',
+    value: function transaction(topic, callback, data) {
+      var _this = this;
+
+      this.debug('transaction...');
+
+      this.conduit.transaction(topic, function (event) {
+        _this.debug('transaction callback...', event);
+        if (callback) {
+          callback(event);
+        }
+      }, data);
+    }
+  }, {
+    key: 'subscribe',
+    value: function subscribe(topic, callback) {
+      var _this2 = this;
+
+      this.debug('subscribe...');
+
+      this.conduit.subscribe(topic, function (event) {
+        _this2.debug('subscribe callback...', event);
+        if (callback) {
+          callback(event);
+        }
+      });
+    }
+  }, {
+    key: 'unsubscribe',
+    value: function unsubscribe(topic, callback) {
+      var _this3 = this;
+
+      this.debug('unsubscribe...');
+
+      this.conduit.unsubscribe(topic, function (event) {
+        _this3.debug('unsubscribe callback...', event);
+        if (callback) {
+          callback(event);
+        }
+      });
+    }
+  }, {
+    key: 'publish',
+    value: function publish(topic, data, callback) {
+      var _this4 = this;
+
+      this.debug('publish...');
+
+      this.conduit.publish(topic, data, function (event) {
+        _this4.debug('publish callback...', event);
+        if (callback) {
+          callback(event);
+        }
+      });
+    }
+  }]);
+
+  return MqttTransport;
+}();
+
+/**
+ * route inbound messages/data to player's event handlers.
+ */
+
+
+var MqttTopicHandlers = function () {
+  function MqttTopicHandlers(iov) {
+    _classCallCheck(this, MqttTopicHandlers);
+
+    this.iov = iov;
+    this._handlers = {};
+  }
+
+  _createClass(MqttTopicHandlers, [{
+    key: 'get',
+    value: function get(topic) {
+      return this._handlers[topic];
+    }
+  }, {
+    key: 'register',
+    value: function register(topic, callback) {
+      this._handlers[topic] = callback;
+    }
+  }, {
+    key: 'unregister',
+    value: function unregister(topic) {
+      if (this.exists(topic)) {
+        delete this._handlers[topic];
+      }
+    }
+  }, {
+    key: 'exists',
+    value: function exists(topic) {
+      return this._handlers.hasOwnProperty(topic);
     }
 
-    // create hidden iframe
-    MqttConduitLookup[iov.config.clientId] = mqttConduit(iov.config, onReady);
-
-    // create a temporary resp_topic to receive a query response
-    // upon response remove the temporary topic. Assume both request
-    // and response are json formateed text.
-    self.transaction = function (topic, callback, data) {
-        MqttConduitLookup[iov.config.clientId].transaction(topic, callback, data);
-    };
-
-    self.subscribe = function (topic, callback) {
-        MqttConduitLookup[iov.config.clientId].subscribe(topic, callback);
-    };
-
-    self.unsubscribe = function (topic) {
-        MqttConduitLookup[iov.config.clientId].unsubscribe(topic);
-    };
-
-    self.publish = function (topic, data) {
-        MqttConduitLookup[iov.config.clientId].publish(topic, data);
-    };
-
-    return self;
-};
-
-/**
-    route inbound messages/data to player's event handlers.
-*/
-var _mqtt_topic_handlers = function _mqtt_topic_handlers(iov) {
-    var self = {};
-
-    self.topic_handlers = {};
-
-    self.register = function (topic, callback) {
-        self.topic_handlers[topic] = callback;
-    };
-    self.unregister = function (topic) {
-        if (typeof self.topic_handlers[topic] !== "undefined") {
-            delete self.topic_handlers[topic];
-        }
-    };
-
     // central entry point for all MQTT inbound traffic.
-    self.msghandler = function (message) {
-        var topic = message.destinationName;
-        var callback = self.topic_handlers[topic];
-        if (typeof callback !== "undefined") {
-            // execute outside of MQTT handler, ensure that we are outside of any
-            // javascript libraries.
-            setTimeout(function () {
-                try {
-                    callback(message);
-                } catch (e) {
-                    iov.events.exception(topic + " handler exception", e);
-                }
-            }, 0);
-        } else {
-            console.log("No handler for " + topic);
-            console.log("message dropped");
-            console.log(message);
-        }
-    };
 
-    return self;
-};
+  }, {
+    key: 'msghandler',
+    value: function msghandler(message) {
+      var topic = message.destinationName;
+
+      if (!this.exists(topic)) {
+        console.log("No handler for " + topic);
+        console.log("message dropped");
+        console.log(message);
+
+        return;
+      }
+
+      try {
+        this.get(topic)(message);
+      } catch (e) {
+        this.iov.events.exception(topic + ' handler exception', e);
+      }
+    }
+  }]);
+
+  return MqttTopicHandlers;
+}();
 
 /**
-   Responsible for receiving stream input and routing it to the media source
-   buffer for rendering on the video tag. There is some 'light' reworking of
-   the binary data that is required.
-
-   var p = iov.player();
-   // play live stream.
-   p.play( video_element_id, stream_name );
-
-
+ * Responsible for receiving stream input and routing it to the media source
+ * buffer for rendering on the video tag. There is some 'light' reworking of
+ * the binary data that is required.
+ *
+ * var player = iov.player();
+ * player.play( video_element_id, stream_name );
 */
+
+
 var _player = function _player(iov) {
-    var self = {};
+  var self = {};
 
-    /*
-    Used for determining the size of the internal buffer hidden from the MSE
-    api by recording the size and time of each chunk of video upon buffer append
-    and recording the time when the updateend event is called.
-      */
+  /*
+  Used for determining the size of the internal buffer hidden from the MSE
+  api by recording the size and time of each chunk of video upon buffer append
+  and recording the time when the updateend event is called.
+    */
 
-    self.LogSourceBuffer = false;
-    self.LogSourceBufferTopic = null;
+  self.LogSourceBuffer = false;
+  self.LogSourceBufferTopic = null;
+  self.state = "idle";
+  self.seqnum = 1;
+  self.seqnumProcessed = 1; // last sequence number processed
+  self.MAX_SEQ_PROC = 2;
+  self.dropCounter = 0;
+
+  self.moovBox = null;
+  self.moofBox = null;
+  // -1 is forever
+  self.retry_count = 3;
+  self.source_buffer_ready = false;
+
+  self._fault = function (err) {
+    //TODO: Change the video poster to a failure image
+    console.log(err);
+    self.state = "fault";
+  };
+
+  self.restart = function () {
+    self.stop();
+    self.play(self.eid, self.streamName, self.onFirstChunk, self.onVideoRecv);
+  };
+
+  self.play = function (eid, streamName, onFirstChunk, onVideoRecv) {
+    self.eid = eid;
+    self.streamName = streamName;
+    self.onFirstChunk = onFirstChunk;
+    self.video = document.getElementById(eid);
+    self.onVideoRecv = onVideoRecv;
+
+    if (typeof self.video === 'undefined') {
+      self._fault("Unable to match id '" + eid + "'");
+      return;
+    }
+    var request = { clientId: iov.config.clientId };
+    var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
+    iov.transport.transaction(topic, self._start_play, request);
+  };
+
+  self.resume = function (onFirstChunk, onVideoRecv) {
+    self.onFirstChunk = onFirstChunk;
+    self.onVideoRecv = onVideoRecv;
+
+    var request = { clientId: iov.config.clientId };
+    var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
+    iov.transport.transaction(topic, self._start_play, request);
+  };
+
+  self._appendBuffer_event = function (bytearray) {
+    if (self.LogSourceBuffer === true && self.LogSourceBufferTopic !== null) {
+      //console.log("recording "+parseInt(bytearray.length)+" bytes of data");
+      var mqtt_msg = new Paho.MQTT.Message(bytearray);
+      mqtt_msg.destinationName = self.LogSourceBufferTopic;
+      MQTTClient.send(mqtt_msg);
+    }
+    // increment bytecount stats
+    iov.statsMsg.byteCount += bytearray.length;
+  };
+
+  self.stop = function () {
+    // stop streaming live video
+    if (typeof self.guid !== 'undefined') {
+      iov.transport.unsubscribe("iov/video/" + self.guid + "/live");
+    }
+
     self.state = "idle";
-    self.seqnum = 1;
-    self.seqnumProcessed = 1; // last sequence number processed
-    self.MAX_SEQ_PROC = 2;
-    self.dropCounter = 0;
 
+    // free resources associated with player
+    self.seqnum = 1;
     self.moovBox = null;
     self.moofBox = null;
-    // -1 is forever
-    self.retry_count = 3;
+    if (typeof self.video !== 'undefined') {
+      self.video.paused = true;
+    }
+    var request = { clientId: iov.config.clientId };
+    iov.transport.publish("iov/video/" + self.guid + "/stop", request);
+  };
+
+  self._start_play = function (resp) {
+    self.mimeCodec = resp.mimeCodec;
+    self.guid = resp.guid; // stream guid
+
+    if ('MediaSource' in window && MediaSource.isTypeSupported(self.mimeCodec)) {
+      var initseg_topic = iov.config.clientId + "/init-segment/" + parseInt(Math.random() * 1000000);
+
+      self._async_play_loop(resp, initseg_topic);
+      var play_request_topic = "iov/video/" + self.guid + "/play";
+      iov.transport.publish(play_request_topic, {
+        initSegmentTopic: initseg_topic,
+        clientId: iov.config.clientId
+      });
+    } else {
+      // the browser does not support this video format
+      self._fault("Unsuppored mime codec " + self.mimeCodec);
+    }
+  };
+
+  self._async_play_loop = function (resp, initSegmentTopic) {
+    // setup handlers for video
+    self.vqueue = []; // used if the media source buffer is busy
+
+    self.state = "waiting-for-moov";
+
+    iov.transport.subscribe(initSegmentTopic, function (mqtt_msg) {
+
+      // capture the initial segment
+      self.moovBox = mqtt_msg.payloadBytes;
+      //console.log(typeof mqtt_msg.payloadBytes);
+      //console.log("received moov from server");
+
+
+      self.state = "waiting-for-moof";
+      // unsubscribe to this group
+      iov.transport.unsubscribe(initSegmentTopic);
+
+      // subscribe to the live video topic.
+      self.state = "playing";
+      iov.transport.subscribe("iov/video/" + self.guid + "/live", self._on_moof);
+      // create media source buffer and start routing video traffic.
+
+
+      self.onFirstChunk(); // first chunk of video received.
+
+      self.mediaSource = new MediaSource();
+
+      var clone = self.video.cloneNode();
+      var parent = self.video.parentNode;
+      if (parent !== null) {
+        parent.replaceChild(clone, self.video);
+        self.video = clone;
+      }
+
+      self.mediaSource.addEventListener('sourceopen', self._on_sourceopen);
+      self.mediaSource.addEventListener('sourceended', self._on_sourceended);
+      self.mediaSource.addEventListener('error', function (e) {
+        console.log("MSE error");
+        console.log(e);
+      });
+
+      // now assign media source extensions
+      //console.log("Disregard: The play() request was interrupted ... its not an error!");
+      self.video.src = URL.createObjectURL(self.mediaSource);
+    });
+  };
+
+  self._on_moof = function (mqtt_msg) {
+
+    if (self.source_buffer_ready == false) {
+      //console.log("media source not yet open dropping frame");
+      return;
+    }
+
+    /**
+        Enqueues or sends to the media source buffer an MP4 moof atom. This contains a
+        chunk of video/audio tracks.
+     */
+    // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
+    // the source buffer.
+    if (self.seqnum - self.seqnumProcessed > self.MAX_SEQ_PROC) {
+      //console.log("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
+      return; // DROP this frame since the borwser is falling
+    }
+
+    var moofBox = mqtt_msg.payloadBytes;
+    moofBox[20] = (self.seqnum & 0xFF000000) >> 24;
+    moofBox[21] = (self.seqnum & 0x00FF0000) >> 16;
+    moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
+    moofBox[23] = self.seqnum & 0xFF;
+
+    //console.log("moof handler: data seqnum chunk ");
+    //console.log(self.seqnum);
+
+    if (self.sourceBuffer.updating === false) {
+      try {
+        //console.log(typeof moofBox);
+        //console.log("calling append buffer");
+        self._appendBuffer_event(moofBox);
+        self.sourceBuffer.appendBuffer(moofBox);
+        self.seqnum += 1; // increment sequence number for next chunk
+      } catch (e) {
+        self.stop();
+        console.log(e.stack);
+        //var mseErrorEvt = new Event("mse-error-event");
+        //self.video.dispatchEvent(mseErrorEvt);
+      }
+    } else {
+      self.vqueue.push(moofBox.slice(0));
+    }
+  };
+
+  // found when stress testing many videos, it is possible for the
+  // media source ready state not to be open even though
+  // source open callback is being called.
+  self._on_sourceopen = function () {
+    if (self.mediaSource.readyState === "open") {
+      self._do_on_sourceopen();
+      return;
+    }
+
+    var t = setInterval(function () {
+      if (self.mediaSource.readyState === "open") {
+        self._do_on_sourceopen();
+        clearInterval(t);
+      }
+    }, 1000);
+  };
+
+  self._do_on_sourceopen = function () {
+    /** New media source opened. Add a buffer and append the moov MP4 video data.
+    */
+
+    // add buffer
+    self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
+    self.sourceBuffer.mode = "sequence";
+    self.sourceBuffer.addEventListener('updateend', self._on_updateend);
+    self.sourceBuffer.addEventListener('update', function () {
+      if (self.sourceBuffer.updating === false && self.vqueue.length > 0) {
+        self._appendBuffer_event(self.vqueue[0]);
+        self.sourceBuffer.appendBuffer(self.vqueue[0]);
+        self.vqueue = self.vqueue.slice(1);
+      }
+    });
+
+    self.sourceBuffer.addEventListener('updatestart', function () {
+      //console.log("On update start");
+    });
+
+    self.sourceBuffer.addEventListener('error', function (e) {
+      console.log("MSE sourceBffer error");
+      console.log(e);
+    });
+
+    // send ftype+moov segments of video
+    //console.log("sending moov atom ");
+
+    // we are now able to process video
+    self.source_buffer_ready = true;
+
+    self._appendBuffer_event(self.moovBox);
+    self.sourceBuffer.appendBuffer(self.moovBox);
+  };
+
+  self._on_sourceended = function () {
+    //console.log("sourceended");
+    self.stop();
     self.source_buffer_ready = false;
+  };
 
-    self._fault = function (err) {
-        //TODO: Change the video poster to a failure image
-        console.log(err);
-        self.state = "fault";
-    };
+  self._on_updateend = function () {
 
-    self.restart = function () {
-        self.stop();
-        self.play(self.eid, self.streamName, self.onFirstChunk, self.onVideoRecv);
-    };
+    // identify what seqnum of the MOOF message has actually been processed.
+    self.seqnumProcessed += 1;
 
-    self.play = function (eid, streamName, onFirstChunk, onVideoRecv) {
-        self.eid = eid;
-        self.streamName = streamName;
-        self.onFirstChunk = onFirstChunk;
-        self.video = document.getElementById(eid);
-        self.onVideoRecv = onVideoRecv;
-
-        if (typeof self.video === 'undefined') {
-            self._fault("Unable to match id '" + eid + "'");
-            return;
-        }
-        var request = { clientId: iov.config.clientId };
-        var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
-        iov.transport.transaction(topic, self._start_play, request);
-    };
-
-    self.resume = function (onFirstChunk, onVideoRecv) {
-        self.onFirstChunk = onFirstChunk;
-        self.onVideoRecv = onVideoRecv;
-
-        var request = { clientId: iov.config.clientId };
-        var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
-        iov.transport.transaction(topic, self._start_play, request);
-    };
-
-    self._appendBuffer_event = function (bytearray) {
-        if (self.LogSourceBuffer === true && self.LogSourceBufferTopic !== null) {
-            //console.log("recording "+parseInt(bytearray.length)+" bytes of data");
-            var mqtt_msg = new Paho.MQTT.Message(bytearray);
-            mqtt_msg.destinationName = self.LogSourceBufferTopic;
-            MQTTClient.send(mqtt_msg);
-        }
-        // increment bytecount stats
-        iov.statsMsg.byteCount += bytearray.length;
-    };
-
-    self.stop = function () {
-        // stop streaming live video
-        if (typeof self.guid !== 'undefined') {
-            iov.transport.unsubscribe("iov/video/" + self.guid + "/live");
-        }
-
-        self.state = "idle";
-
-        // free resources associated with player
-        self.seqnum = 1;
-        self.moovBox = null;
-        self.moofBox = null;
-        if (typeof self.video !== 'undefined') {
-            self.video.paused = true;
-        }
-        var request = { clientId: iov.config.clientId };
-        iov.transport.publish("iov/video/" + self.guid + "/stop", request);
-    };
-
-    self._start_play = function (resp) {
-        self.mimeCodec = resp.mimeCodec;
-        self.guid = resp.guid; // stream guid
-
-        if ('MediaSource' in window && MediaSource.isTypeSupported(self.mimeCodec)) {
-            var initseg_topic = iov.config.clientId + "/init-segment/" + parseInt(Math.random() * 1000000);
-
-            self._async_play_loop(resp, initseg_topic);
-            var play_request_topic = "iov/video/" + self.guid + "/play";
-            iov.transport.publish(play_request_topic, {
-                initSegmentTopic: initseg_topic,
-                clientId: iov.config.clientId
-            });
-        } else {
-            // the browser does not support this video format
-            self._fault("Unsuppored mime codec " + self.mimeCodec);
-        }
-    };
-
-    self._async_play_loop = function (resp, initSegmentTopic) {
-        // setup handlers for video
-        self.vqueue = []; // used if the media source buffer is busy
-
-        self.state = "waiting-for-moov";
-
-        iov.transport.subscribe(initSegmentTopic, function (mqtt_msg) {
-
-            // capture the initial segment
-            self.moovBox = mqtt_msg.payloadBytes;
-            //console.log(typeof mqtt_msg.payloadBytes);
-            //console.log("received moov from server");
-
-
-            self.state = "waiting-for-moof";
-            // unsubscribe to this group
-            iov.transport.unsubscribe(initSegmentTopic);
-
-            // subscribe to the live video topic.
-            self.state = "playing";
-            iov.transport.subscribe("iov/video/" + self.guid + "/live", self._on_moof);
-            // create media source buffer and start routing video traffic.
-
-
-            self.onFirstChunk(); // first chunk of video received.
-
-            self.mediaSource = new MediaSource();
-
-            var clone = self.video.cloneNode();
-            var parent = self.video.parentNode;
-            if (parent !== null) {
-                parent.replaceChild(clone, self.video);
-                self.video = clone;
-            }
-
-            self.mediaSource.addEventListener('sourceopen', self._on_sourceopen);
-            self.mediaSource.addEventListener('sourceended', self._on_sourceended);
-            self.mediaSource.addEventListener('error', function (e) {
-                console.log("MSE error");
-                console.log(e);
-            });
-
-            // now assign media source extensions
-            //console.log("Disregard: The play() request was interrupted ... its not an error!");
-            self.video.src = URL.createObjectURL(self.mediaSource);
-        });
-    };
-
-    self._on_moof = function (mqtt_msg) {
-
-        if (self.source_buffer_ready == false) {
-            //console.log("media source not yet open dropping frame");
-            return;
-        }
-
-        /**
-            Enqueues or sends to the media source buffer an MP4 moof atom. This contains a
-            chunk of video/audio tracks.
-         */
-        // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
-        // the source buffer.
-        if (self.seqnum - self.seqnumProcessed > self.MAX_SEQ_PROC) {
-            //console.log("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
-            return; // DROP this frame since the borwser is falling
-        }
-
-        var moofBox = mqtt_msg.payloadBytes;
-        moofBox[20] = (self.seqnum & 0xFF000000) >> 24;
-        moofBox[21] = (self.seqnum & 0x00FF0000) >> 16;
-        moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
-        moofBox[23] = self.seqnum & 0xFF;
-
-        //console.log("moof handler: data seqnum chunk ");
-        //console.log(self.seqnum);
-
-        if (self.sourceBuffer.updating === false) {
+    /*
+    var logmsg =
+       "_on_updateend: " +
+       ((self.video.paused) ? " video is paused,": "video is playing,")   +
+       " ready state = '" + self.mediaSource.readyState + "', " +
+       " video queue size = " + parseInt(self.vqueue.length)
+    ;
+    console.log(logmsg);
+    */
+    if (self.mediaSource.readyState === "open") {
+      if (self.vqueue.length > 0) {
+        self._appendBuffer_event(self.vqueue[0]);
+        setTimeout(function () {
+          // deqeue next prepared moof atom
+          if (self.sourceBuffer.updating === false) {
             try {
-                //console.log(typeof moofBox);
-                //console.log("calling append buffer");
-                self._appendBuffer_event(moofBox);
-                self.sourceBuffer.appendBuffer(moofBox);
-                self.seqnum += 1; // increment sequence number for next chunk
-            } catch (e) {
-                self.stop();
-                console.log(e.stack);
-                //var mseErrorEvt = new Event("mse-error-event");
-                //self.video.dispatchEvent(mseErrorEvt);
+              self.sourceBuffer.appendBuffer(self.vqueue[0]);
+            } catch (ex) {
+              // internal error, this has been observed to happen the tab
+              // in the browser where this video player lives is hidden
+              // then reselected. 'ex' is undefined the error is bug
+              // within the MSE C++ implementation in the browser.
             }
-        } else {
-            self.vqueue.push(moofBox.slice(0));
+          }
+          // regardless we must proceed to the frame.
+          self.vqueue = self.vqueue.slice(1);
+        }, 0);
+      }
+
+      if (self.video.paused === true) {
+        try {
+          var promise = self.video.play();
+          if (typeof promise !== 'undefined') {
+            promise.then(function (_) {}).catch(function (e) {});
+          }
+        } catch (ex) {
+          console.log("Exception while trying to play:" + ex.message);
         }
-    };
+        //console.log("setting video player from paused to play");
+      }
+    }
+  };
 
-    // found when stress testing many videos, it is possible for the
-    // media source ready state not to be open even though
-    // source open callback is being called.   
-    self._on_sourceopen = function () {
-        if (self.mediaSource.readyState === "open") {
-            self._do_on_sourceopen();
-            return;
-        }
-
-        var t = setInterval(function () {
-            if (self.mediaSource.readyState === "open") {
-                self._do_on_sourceopen();
-                clearInterval(t);
-            }
-        }, 1000);
-    };
-
-    self._do_on_sourceopen = function () {
-        /** New media source opened. Add a buffer and append the moov MP4 video data.
-        */
-
-        // add buffer  
-        self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
-        self.sourceBuffer.mode = "sequence";
-        self.sourceBuffer.addEventListener('updateend', self._on_updateend);
-        self.sourceBuffer.addEventListener('update', function () {
-            if (self.sourceBuffer.updating === false && self.vqueue.length > 0) {
-                self._appendBuffer_event(self.vqueue[0]);
-                self.sourceBuffer.appendBuffer(self.vqueue[0]);
-                self.vqueue = self.vqueue.slice(1);
-            }
-        });
-
-        self.sourceBuffer.addEventListener('updatestart', function () {
-            //console.log("On update start");
-        });
-
-        self.sourceBuffer.addEventListener('error', function (e) {
-            console.log("MSE sourceBffer error");
-            console.log(e);
-        });
-
-        // send ftype+moov segments of video
-        //console.log("sending moov atom ");
-
-        // we are now able to process video
-        self.source_buffer_ready = true;
-
-        self._appendBuffer_event(self.moovBox);
-        self.sourceBuffer.appendBuffer(self.moovBox);
-    };
-
-    self._on_sourceended = function () {
-        //console.log("sourceended");
-        self.stop();
-        self.source_buffer_ready = false;
-    };
-
-    self._on_updateend = function () {
-
-        // identify what seqnum of the MOOF message has actually been processed.
-        self.seqnumProcessed += 1;
-
-        /*
-        var logmsg =
-           "_on_updateend: " +
-           ((self.video.paused) ? " video is paused,": "video is playing,")   +
-           " ready state = '" + self.mediaSource.readyState + "', " +
-           " video queue size = " + parseInt(self.vqueue.length)
-        ;
-        console.log(logmsg);
-        */
-        if (self.mediaSource.readyState === "open") {
-            if (self.vqueue.length > 0) {
-                self._appendBuffer_event(self.vqueue[0]);
-                setTimeout(function () {
-                    // deqeue next prepared moof atom
-                    if (self.sourceBuffer.updating === false) {
-                        try {
-                            self.sourceBuffer.appendBuffer(self.vqueue[0]);
-                        } catch (ex) {
-                            // internal error, this has been observed to happen the tab
-                            // in the browser where this video player lives is hidden
-                            // then reselected. 'ex' is undefined the error is bug
-                            // within the MSE C++ implementation in the browser.
-                        }
-                    }
-                    // regardless we must proceed to the frame.
-                    self.vqueue = self.vqueue.slice(1);
-                }, 0);
-            }
-
-            if (self.video.paused === true) {
-                try {
-                    var promise = self.video.play();
-                    if (typeof promise !== 'undefined') {
-                        promise.then(function (_) {}).catch(function (e) {});
-                    }
-                } catch (ex) {
-                    console.log("Exception while trying to play:" + ex.message);
-                }
-                //console.log("setting video player from paused to play");
-            }
-        }
-    };
-
-    return self;
+  return self;
 };
 
-function IOV(config) {
-    var self = {};
+var IOV = function () {
+  function IOV(config) {
+    _classCallCheck(this, IOV);
 
-    // default configuration
-    self.config = {
-        // web socket address defaults to the address of the server that loaded this page.
-        wsbroker: config.address,
-        // default port number
-        wsport: config.port,
-        // default clientId
-        clientId: fake_guid(),
-        // to be overriden by user.
-        appStart: config.appStart,
-        useSSL: config.useSSL || false,
-        videoElement: config.videoElement
+    this.config = {
+      // web socket address defaults to the address of the server that loaded this page.
+      wsbroker: config.address,
+      // default port number
+      wsport: config.port,
+      // default clientId
+      clientId: __WEBPACK_IMPORTED_MODULE_1_uuid_v4___default()(),
+      // to be overriden by user.
+      appStart: config.appStart,
+      useSSL: config.useSSL || false,
+      videoElement: config.videoElement
     };
 
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
-    self.mqttTopicHandlers = _mqtt_topic_handlers(self);
+    this.mqttTopicHandlers = new MqttTopicHandlers(this);
 
-    self.events = {
-        connection_lost: function connection_lost(responseObject) {
-            //TODO close all players and display an error message
-            console.log("MQTT connection lost");
-            console.log(responseObject);
-        },
-        on_message: self.mqttTopicHandlers.msghandler,
+    this.mqttConduitCollection = new MqttConduitCollection();
+    this.transport = new MqttTransport(this);
 
-        // generic exception handler
-        exception: function exception(text, e) {
-            console.log(text);
-            if (typeof e !== 'undefined') {
-                console.log(e.stack);
-            }
+    this.events = {
+      connection_lost: function connection_lost(responseObject) {
+        //TODO close all players and display an error message
+        console.log("MQTT connection lost");
+        console.log(responseObject);
+      },
+
+      on_message: this.mqttTopicHandlers.msghandler,
+
+      // generic exception handler
+      exception: function exception(text, e) {
+        console.log(text);
+        if (typeof e !== 'undefined') {
+          console.log(e.stack);
         }
+      }
     };
+  }
 
-    // return an instance of a player
-    self.player = function () {
-        //console.log("creating player");
-        return _player(self);
-    };
+  _createClass(IOV, [{
+    key: 'initialize',
+    value: function initialize() {
+      var _this5 = this;
 
-    self.transport = _mqtt_transport(self);
+      mediaSourceCheck();
+
+      // route inbound data from a frame running mqtt to the appropriate player
+      window.addEventListener('message', function (event) {
+        debug('message received', event.data);
+
+        var clientId = event.data.clientId;
+
+        if (!_this5.mqttConduitCollection.exists(clientId)) {
+          return;
+        }
+
+        var conduit = _this5.mqttConduitCollection.get(clientId);
+        var eventType = event.data.event;
+
+        switch (eventType) {
+          case 'data':
+            conduit.inboundHandler(event.data);
+            break;
+          case 'ready':
+            conduit.onReady();
+            break;
+          case 'fail':
+            console.error('Failure Message!');
+            console.error(event);
+            break;
+          default:
+            console.log("No match for event = " + eventType);
+        }
+      });
+    }
+  }, {
+    key: 'player',
+    value: function player() {
+      return _player(this);
+    }
 
     // query remote server and get a list of all stream names
-    self.getAvailableStreams = function (respHandler) {
-        self.transport.transaction("iov/video/list", respHandler, {});
-    };
 
-    return self;
-};
+  }, {
+    key: 'getAvailableStreams',
+    value: function getAvailableStreams(callback) {
+      this.transport.transaction('iov/video/list', callback, {});
+    }
+  }]);
 
-window.IOV = IOV;
+  return IOV;
+}();
+
+/* harmony default export */ __webpack_exports__["a"] = (IOV);
 
 /***/ }),
 /* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/**
+ * This is the web browser implementation of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = __webpack_require__(13);
+exports.log = log;
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = 'undefined' != typeof chrome && 'undefined' != typeof chrome.storage ? chrome.storage.local : localstorage();
+
+/**
+ * Colors.
+ */
+
+exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066FF', '#0099CC', '#0099FF', '#00CC00', '#00CC33', '#00CC66', '#00CC99', '#00CCCC', '#00CCFF', '#3300CC', '#3300FF', '#3333CC', '#3333FF', '#3366CC', '#3366FF', '#3399CC', '#3399FF', '#33CC00', '#33CC33', '#33CC66', '#33CC99', '#33CCCC', '#33CCFF', '#6600CC', '#6600FF', '#6633CC', '#6633FF', '#66CC00', '#66CC33', '#9900CC', '#9900FF', '#9933CC', '#9933FF', '#99CC00', '#99CC33', '#CC0000', '#CC0033', '#CC0066', '#CC0099', '#CC00CC', '#CC00FF', '#CC3300', '#CC3333', '#CC3366', '#CC3399', '#CC33CC', '#CC33FF', '#CC6600', '#CC6633', '#CC9900', '#CC9933', '#CCCC00', '#CCCC33', '#FF0000', '#FF0033', '#FF0066', '#FF0099', '#FF00CC', '#FF00FF', '#FF3300', '#FF3333', '#FF3366', '#FF3399', '#FF33CC', '#FF33FF', '#FF6600', '#FF6633', '#FF9900', '#FF9933', '#FFCC00', '#FFCC33'];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+function useColors() {
+  // NB: In an Electron preload script, document will be defined but not fully
+  // initialized. Since we know we're in Chrome, we'll just detect this case
+  // explicitly
+  if (typeof window !== 'undefined' && window.process && window.process.type === 'renderer') {
+    return true;
+  }
+
+  // Internet Explorer and Edge do not support colors.
+  if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
+    return false;
+  }
+
+  // is webkit? http://stackoverflow.com/a/16459606/376773
+  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+  return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance ||
+  // is firebug? http://stackoverflow.com/a/398120/376773
+  typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) ||
+  // is firefox >= v31?
+  // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 ||
+  // double check webkit in userAgent just in case we are in a worker
+  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
+}
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+exports.formatters.j = function (v) {
+  try {
+    return JSON.stringify(v);
+  } catch (err) {
+    return '[UnexpectedJSONParseError]: ' + err.message;
+  }
+};
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs(args) {
+  var useColors = this.useColors;
+
+  args[0] = (useColors ? '%c' : '') + this.namespace + (useColors ? ' %c' : ' ') + args[0] + (useColors ? '%c ' : ' ') + '+' + exports.humanize(this.diff);
+
+  if (!useColors) return;
+
+  var c = 'color: ' + this.color;
+  args.splice(1, 0, c, 'color: inherit');
+
+  // the final "%c" is somewhat tricky, because there could be other
+  // arguments passed either before or after the %c, so we need to
+  // figure out the correct index to insert the CSS into
+  var index = 0;
+  var lastC = 0;
+  args[0].replace(/%[a-zA-Z%]/g, function (match) {
+    if ('%%' === match) return;
+    index++;
+    if ('%c' === match) {
+      // we only are interested in the *last* %c
+      // (the user may have provided their own)
+      lastC = index;
+    }
+  });
+
+  args.splice(lastC, 0, c);
+}
+
+/**
+ * Invokes `console.log()` when available.
+ * No-op when `console.log` is not a "function".
+ *
+ * @api public
+ */
+
+function log() {
+  // this hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return 'object' === (typeof console === 'undefined' ? 'undefined' : _typeof(console)) && console.log && Function.prototype.apply.call(console.log, console, arguments);
+}
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+
+function save(namespaces) {
+  try {
+    if (null == namespaces) {
+      exports.storage.removeItem('debug');
+    } else {
+      exports.storage.debug = namespaces;
+    }
+  } catch (e) {}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+
+function load() {
+  var r;
+  try {
+    r = exports.storage.debug;
+  } catch (e) {}
+
+  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+  if (!r && typeof process !== 'undefined' && 'env' in process) {
+    r = process.env.DEBUG;
+  }
+
+  return r;
+}
+
+/**
+ * Enable namespaces listed in `localStorage.debug` initially.
+ */
+
+exports.enable(load());
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage() {
+  try {
+    return window.localStorage;
+  } catch (e) {}
+}
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12)))
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout() {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+})();
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch (e) {
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch (e) {
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e) {
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e) {
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while (len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) {
+    return [];
+};
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () {
+    return '/';
+};
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function () {
+    return 0;
+};
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = createDebug.debug = createDebug['default'] = createDebug;
+exports.coerce = coerce;
+exports.disable = disable;
+exports.enable = enable;
+exports.enabled = enabled;
+exports.humanize = __webpack_require__(14);
+
+/**
+ * Active `debug` instances.
+ */
+exports.instances = [];
+
+/**
+ * The currently active debug mode names, and names to skip.
+ */
+
+exports.names = [];
+exports.skips = [];
+
+/**
+ * Map of special "%n" handling functions, for the debug "format" argument.
+ *
+ * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+ */
+
+exports.formatters = {};
+
+/**
+ * Select a color.
+ * @param {String} namespace
+ * @return {Number}
+ * @api private
+ */
+
+function selectColor(namespace) {
+  var hash = 0,
+      i;
+
+  for (i in namespace) {
+    hash = (hash << 5) - hash + namespace.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+
+  return exports.colors[Math.abs(hash) % exports.colors.length];
+}
+
+/**
+ * Create a debugger with the given `namespace`.
+ *
+ * @param {String} namespace
+ * @return {Function}
+ * @api public
+ */
+
+function createDebug(namespace) {
+
+  var prevTime;
+
+  function debug() {
+    // disabled?
+    if (!debug.enabled) return;
+
+    var self = debug;
+
+    // set `diff` timestamp
+    var curr = +new Date();
+    var ms = curr - (prevTime || curr);
+    self.diff = ms;
+    self.prev = prevTime;
+    self.curr = curr;
+    prevTime = curr;
+
+    // turn the `arguments` into a proper Array
+    var args = new Array(arguments.length);
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i];
+    }
+
+    args[0] = exports.coerce(args[0]);
+
+    if ('string' !== typeof args[0]) {
+      // anything else let's inspect with %O
+      args.unshift('%O');
+    }
+
+    // apply any `formatters` transformations
+    var index = 0;
+    args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
+      // if we encounter an escaped % then don't increase the array index
+      if (match === '%%') return match;
+      index++;
+      var formatter = exports.formatters[format];
+      if ('function' === typeof formatter) {
+        var val = args[index];
+        match = formatter.call(self, val);
+
+        // now we need to remove `args[index]` since it's inlined in the `format`
+        args.splice(index, 1);
+        index--;
+      }
+      return match;
+    });
+
+    // apply env-specific formatting (colors, etc.)
+    exports.formatArgs.call(self, args);
+
+    var logFn = debug.log || exports.log || console.log.bind(console);
+    logFn.apply(self, args);
+  }
+
+  debug.namespace = namespace;
+  debug.enabled = exports.enabled(namespace);
+  debug.useColors = exports.useColors();
+  debug.color = selectColor(namespace);
+  debug.destroy = destroy;
+
+  // env-specific initialization logic for debug instances
+  if ('function' === typeof exports.init) {
+    exports.init(debug);
+  }
+
+  exports.instances.push(debug);
+
+  return debug;
+}
+
+function destroy() {
+  var index = exports.instances.indexOf(this);
+  if (index !== -1) {
+    exports.instances.splice(index, 1);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * Enables a debug mode by namespaces. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} namespaces
+ * @api public
+ */
+
+function enable(namespaces) {
+  exports.save(namespaces);
+
+  exports.names = [];
+  exports.skips = [];
+
+  var i;
+  var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+  var len = split.length;
+
+  for (i = 0; i < len; i++) {
+    if (!split[i]) continue; // ignore empty strings
+    namespaces = split[i].replace(/\*/g, '.*?');
+    if (namespaces[0] === '-') {
+      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+    } else {
+      exports.names.push(new RegExp('^' + namespaces + '$'));
+    }
+  }
+
+  for (i = 0; i < exports.instances.length; i++) {
+    var instance = exports.instances[i];
+    instance.enabled = exports.enabled(instance.namespace);
+  }
+}
+
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
+
+function disable() {
+  exports.enable('');
+}
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+function enabled(name) {
+  if (name[name.length - 1] === '*') {
+    return true;
+  }
+  var i, len;
+  for (i = 0, len = exports.skips.length; i < len; i++) {
+    if (exports.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (i = 0, len = exports.names.length; i < len; i++) {
+    if (exports.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Coerce `val`.
+ *
+ * @param {Mixed} val
+ * @return {Mixed}
+ * @api private
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/**
+ * Helpers.
+ */
+
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var y = d * 365.25;
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} [options]
+ * @throws {Error} throw an error if val is not a non-empty string or a number
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function (val, options) {
+  options = options || {};
+  var type = typeof val === 'undefined' ? 'undefined' : _typeof(val);
+  if (type === 'string' && val.length > 0) {
+    return parse(val);
+  } else if (type === 'number' && isNaN(val) === false) {
+    return options.long ? fmtLong(val) : fmtShort(val);
+  }
+  throw new Error('val is not a non-empty string or a valid number. val=' + JSON.stringify(val));
+};
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  str = String(str);
+  if (str.length > 100) {
+    return;
+  }
+  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
+  if (!match) {
+    return;
+  }
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y;
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h;
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m;
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s;
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtShort(ms) {
+  if (ms >= d) {
+    return Math.round(ms / d) + 'd';
+  }
+  if (ms >= h) {
+    return Math.round(ms / h) + 'h';
+  }
+  if (ms >= m) {
+    return Math.round(ms / m) + 'm';
+  }
+  if (ms >= s) {
+    return Math.round(ms / s) + 's';
+  }
+  return ms + 'ms';
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtLong(ms) {
+  return plural(ms, d, 'day') || plural(ms, h, 'hour') || plural(ms, m, 'minute') || plural(ms, s, 'second') || ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, n, name) {
+  if (ms < n) {
+    return;
+  }
+  if (ms < n * 1.5) {
+    return Math.floor(ms / n) + ' ' + name;
+  }
+  return Math.ceil(ms / n) + ' ' + name + 's';
+}
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var rng = __webpack_require__(16);
+var bytesToUuid = __webpack_require__(17);
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof options == 'string') {
+    buf = options == 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = rnds[6] & 0x0f | 0x40;
+  rnds[8] = rnds[8] & 0x3f | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {// Unique ID creation requires a high quality random # generator.  In the
+// browser this is a little complicated due to unknown quality of Math.random()
+// and inconsistent support for the `crypto` API.  We do the best we can via
+// feature-detection
+var rng;
+
+var crypto = global.crypto || global.msCrypto; // for IE 11
+if (crypto && crypto.getRandomValues) {
+  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
+  var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
+  rng = function whatwgRNG() {
+    crypto.getRandomValues(rnds8);
+    return rnds8;
+  };
+}
+
+if (!rng) {
+  // Math.random()-based (RNG)
+  //
+  // If all else fails, use Math.random().  It's fast, but is of unspecified
+  // quality.
+  var rnds = new Array(16);
+  rng = function rng() {
+    for (var i = 0, r; i < 16; i++) {
+      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
+      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+    }
+
+    return rnds;
+  };
+}
+
+module.exports = rng;
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports) {
+
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
+}
+
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  return bth[buf[i++]] + bth[buf[i++]] + bth[buf[i++]] + bth[buf[i++]] + '-' + bth[buf[i++]] + bth[buf[i++]] + '-' + bth[buf[i++]] + bth[buf[i++]] + '-' + bth[buf[i++]] + bth[buf[i++]] + '-' + bth[buf[i++]] + bth[buf[i++]] + bth[buf[i++]] + bth[buf[i++]] + bth[buf[i++]] + bth[buf[i++]];
+}
+
+module.exports = bytesToUuid;
+
+/***/ }),
+/* 18 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
