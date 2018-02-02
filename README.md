@@ -71,7 +71,7 @@ The generated files will be available in the `dist` directory.
 ## Run test server
 
 1. `npm run start-dev`
-1. navigate to [http://localhost:9999/walltest.html](http://localhost:9999/walltest.html) in Chrome
+1. navigate to [http://localhost:9999/demo.html](http://localhost:9999/demo.html) in Chrome
 1. add a `clsp` url to any of the inputs, then click submit
 1. click play on the video element (if not using an autoplay player)
 
@@ -188,6 +188,7 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
+* set LICENSE to MIT
 * review files in `_legacy` and delete if not needed
 * implement linter and styles
 * minify css

@@ -1,18 +1,12 @@
+// These need to be injected as text into the iframe markup
+import mqttLibrary from '!raw-loader!../../node_modules/paho-mqtt/mqttws31-min.js'
+import clspRouterLibrary from '!raw-loader!./clspRouter.js'
+
 /*
 Creates a hidden iframe that is used to establish a dedicated mqtt websocket
 for a single video. This is basically an in browser micro service which
 uses cross document communication to route data to and from the iframe.
 */
-
-
-// The below string literals allow the iframe to be created completely withinjavascript allowing
-// the videojs to be completely protable.
-
-
-// this code is filled in by the gulpfile.js
-var iframe_code = "__IFRAME_CODE__";
-
-
 
 function pframe_client(iframe, config, onReady) {
     var self = {
@@ -104,8 +98,7 @@ function pframe_client(iframe, config, onReady) {
     return self;
 }
 
-
-window.mqttConduit = function( config, onReady ){
+export default function (config, onReady) {
     /*
         config = {
             ip: ... mqtt ip address
@@ -115,24 +108,25 @@ window.mqttConduit = function( config, onReady ){
     */
     var client = {};
     var iframe = document.createElement('iframe');
-    var MqttUseSSL = (config.useSSL || false) ? "true": "false";
 
+    // @todo - there is a way to use webpack to import this...
     var markup =
         '<html><head>'+
         '<script>\n' +
             "var MqttIp = '" + config.wsbroker + "' ; \n" +
             "var MqttPort = " + config.wsport + "; \n" +
-            "var MqttUseSSL = " + MqttUseSSL + "; \n" +
+            "var MqttUseSSL = " + ((config.useSSL || false) ? 'true' : 'false') + "; \n" +
             "var MqttClientId = '" + config.clientId + "' ; \n" +
             "var Origin = '" + window.location.origin + "' ; \n" +
-            iframe_code + '\n' +
+        '</script>\n' +
+        '<script>\n' +
+            mqttLibrary + '\n' +
+            clspRouterLibrary + '\n' +
         '</script>\n' +
         '</head><body onload="clspRouter();" onunload="onunload();"><body>'+
         '<div id="message"></div>'+
         '</body></html>'
     ;
-
-
 
     // inject code into iframe
     if (typeof iframe.srcdoc !== 'undefined' ) {
@@ -160,4 +154,4 @@ window.mqttConduit = function( config, onReady ){
     }
 
     return pframe_client(iframe,config,onReady);
-}
+};

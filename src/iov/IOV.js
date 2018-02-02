@@ -6,8 +6,6 @@ import MqttConduitCollection from './MqttConduitCollection';
 import MqttTransport from './MqttTransport';
 import _player from './player';
 
-import 'paho-mqtt';
-
 const DEBUG_PREFIX = 'clsp:iov';
 
 /**

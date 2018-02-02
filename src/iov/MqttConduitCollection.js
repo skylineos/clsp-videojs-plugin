@@ -1,5 +1,7 @@
 import Debug from 'debug';
 
+import mqttConduit from './mqttConduit';
+
 const DEBUG_PREFIX = 'clsp:iov';
 
 export default class MqttConduitCollection {
