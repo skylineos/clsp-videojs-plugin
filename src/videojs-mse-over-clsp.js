@@ -3,7 +3,7 @@ import videojsErrors from 'videojs-errors';
 import 'paho-mqtt';
 
 import './srcdoc-polyfill';
-import clspConduit from './clspConduit.js'; 
+import clspConduit from './clspConduit.generated.js';
 
 
 import {version as VERSION} from '../package.json';
@@ -56,8 +56,8 @@ class MqttHandler extends Component {
         var parser = document.createElement('a');
 
         // firefox/ie hack!
-        var kluged_src = _src.replace('clsp','http'); 
-        
+        var kluged_src = _src.replace('clsp','http');
+
 
         parser.href = kluged_src;
         //parser.href = "http:" + parser.pathname;
@@ -66,7 +66,7 @@ class MqttHandler extends Component {
         var port = parser.port;
         var t = parser.pathname.split("/");
         var streamName = t[t.length-1];
-        
+
         this.useSSL = false;
 
         // clsp://.../name?[secure=1]
@@ -77,9 +77,9 @@ class MqttHandler extends Component {
             if ( n === 'secure' && v !== '0' )
             {
                 useSSL = true;
-            } 
+            }
         });
-        
+
 
         if (port.length === 0) {
             port = "9001";
@@ -99,9 +99,9 @@ class MqttHandler extends Component {
         SrcsLookupTable[_src] = this;
     }
 
-    
+
     launchIovPlayer(onMqttReady) {
- 
+
         var velm = this.player().el();
 
 
@@ -114,7 +114,7 @@ class MqttHandler extends Component {
                 var mqtt_player = iov.player();
                 var evt = new CustomEvent("mqttReady");
                 this.player().el().dispatchEvent( evt );
-                onMqttReady(mqtt_player); 
+                onMqttReady(mqtt_player);
 
                 velm.addEventListener("mse-error-event",function(e){
                     mqtt_player.restart();
@@ -137,9 +137,9 @@ class MqttHandler extends Component {
 function browserIsCompatable() {
     // Chrome 1+
     var isChrome = !!window.chrome && !!window.chrome.webstore;
-    var r = false; 
+    var r = false;
 
-    function getChromeVersion() {     
+    function getChromeVersion() {
         var raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
 
         return raw ? parseInt(raw[2], 10) : -1;
@@ -149,7 +149,7 @@ function browserIsCompatable() {
     if (isChrome === true) {
         if (getChromeVersion() >= 52) {
             r = true;
-        }  
+        }
     }
 
     return r;
@@ -184,7 +184,7 @@ const MqttSourceHandler = function(mode) {
                 return false;
             }
 
-            
+
             if (srcObj.src.startsWith("clsp:") === false) {
                 console.log("srcObj.src is not clsp protocol");
                 return false;
@@ -258,7 +258,7 @@ const onPlayerReady = (player, options) => {
  */
 const mseOverMqtt = function(options) {
     var onMseFault = null;
-    
+
     this.errors({
       errors: {
 		PLAYER_ERR_NOT_COMPAT: {
@@ -266,8 +266,8 @@ const mseOverMqtt = function(options) {
 			message: 'Chrome 52+ is required.'
 		}
       }
-    }); 
-    
+    });
+
     if (browserIsCompatable() === false) {
         this.error({code: 'PLAYER_ERR_NOT_COMPAT', dismiss: false});
         return;
@@ -277,7 +277,7 @@ const mseOverMqtt = function(options) {
         //console.log("play");
         var spinner = this.player_.loadingSpinner;
         var videojs_player = this.player_;
-        
+
         // work around bogus error code.
         var old_error = Object.assign({}, videojs_player.error());
         videojs_player.error = function(evt) {
@@ -324,7 +324,7 @@ const mseOverMqtt = function(options) {
                                         spinner.hide();
                                     }, 0);
                                 }, function() {
-                                    // reset the timeout monitor 
+                                    // reset the timeout monitor
                                     videojs_player.trigger('timeupdate');
                                 });
                                 iov_player.playing = true;
@@ -339,7 +339,7 @@ const mseOverMqtt = function(options) {
                     var player_html = document.getElementById(e.target.id);
                     var video_tag = document.getElementById(e.target.firstChild.id);
 
-                    // dispose of spinner after page refresh.               
+                    // dispose of spinner after page refresh.
                     setTimeout(function() {
                         //spinner.dispose();
                         spinner.hide();
@@ -350,7 +350,7 @@ const mseOverMqtt = function(options) {
                     }, 0);
 
                 }, function() {
-                    // reset the timeout monitor 
+                    // reset the timeout monitor
                     videojs_player.trigger('timeupdate');
                 });
             });

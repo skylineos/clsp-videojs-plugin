@@ -1,27 +1,17 @@
 # videojs-mse-over-clsp
 
-This plugin adds a new network protocol for the videojs player. It is activated by adding
-the following source tag to your video tag in HTML5:
+A videojs plugin that adds support for video served over the `clsp` protocol.
+Currently, this protocol is available only via Skyline SFS solutions.
 
-Example:
-
-```html
- <video ... >
-    <source
-       src="clsp://<SFS IP address>:9001/<SFS stream name>"
-       type="video/mp4; codecs='avc1.42E01E'"
-    >
- </video>
-
-```
+Note - this plugin currently only works in Chrome.
 
 The new network protocol is handled by specifying the following URI format:
 
-clsp:// ip-address-of-the-clsp-service : port-number-of-web-socket / stream-id
+`clsp:// sfs-ip-address : port-number-of-web-socket / stream-id`
 
-In the above case, the clsp service lives on a Skyline SFS.  In this case, the ip
-address is the SFS's ip address, the web socket port is 9001, and the stream name
-on the SFS is called "mse".
+* the ip address is that of the SFS
+* the web socket port is 9001
+* the stream name as defined on the SFS
 
 The `type` attribute must be the following string:
 
@@ -33,18 +23,10 @@ which tells the browser exactly what codec to use to decode and play the video.
 H.264 baseline 3.0 is a least common denominator codec supported on all browsers
 (according to the MSE development page).
 
-To run the development server:
-
-1. edit `demo/index.html` and change the `src` attribute if needed
-2. npm run build-dev
-3. launch a browsers and goto http://localhost:9999
-4. click play on the video element
-
 
 ## Table of Contents
 
-## Installation
-
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
   - [`<style>` Tag](#style-tag)
@@ -53,6 +35,19 @@ To run the development server:
   - [Browserify/CommonJS](#browserifycommonjs)
   - [RequireJS/AMD](#requirejsamd)
 - [License](#license)
+- [@todos](#@todos)
+
+
+## Requirements
+
+### Browsers
+
+Chrome 52+ is required to run this videojs extension.
+
+### Development Environment
+
+Node 8.9.x is required to run the necessary build and development scripts.
+
 
 ## Installation
 
@@ -72,19 +67,20 @@ npm run build
 
 The generated files will be available in the `dist` directory.
 
+
 ## Run test server
 
-```
-npm run build-dev
+1. `npm run start-dev`
+1. navigate to [http://localhost:9999/walltest.html](http://localhost:9999/walltest.html) in Chrome
+1. add a `clsp` url to any of the inputs, then click submit
+1. click play on the video element (if not using an autoplay player)
 
-This starts a development server on port 9999 to access the demos:
+Note that this dev server will NOT re-generate the `clspConduit.generated.js` file.
+If you make changes to this file, you will need to run `npm run build` and then
+restart the dev server to get your changes to be recognized:
 
-http://localhost:9999 >>> interactive demo site
+`npm run build && npm run start-dev`
 
-http://localhost:9999/walltest.html plays a 4x4 video wall using
-   a feed @todo.
-
-```
 
 ## Usage
 
@@ -97,7 +93,7 @@ In the `<head>` of your page, include a line for the videojs and videojs-mse-ove
 ```html
 <head>
   <link href="//path/to/videojs.min.css" rel="stylesheet">
-  <link href="//path/to/videojs-clsp.min.css" rel="stylesheet">
+  <link href="//path/to/videojs-mse-over-clsp.min.css" rel="stylesheet">
 <head>
 ```
 
@@ -106,24 +102,21 @@ In the `<head>` of your page, include a line for the videojs and videojs-mse-ove
 This is the simplest case. Get the script in whatever way you prefer and include the plugin _after_ you include [video.js][videojs], so that the `videojs` global is available.
 
 ```html
-
 <video
-       id="my-video"
-       width="352"
-       height="240"
-       class="video-js vjs-default-skin"
-       controls
+  id="my-video"
+  width="352"
+  height="240"
+  class="video-js vjs-default-skin"
+  controls
 >
-   <source  src="clsp://<the ip address of sfs>:9001/<stream name>" type="video/mp4; codecs='avc1.42E01E'"/>
-
- </video>
-
-
+  <source
+    src="clsp://<SFS IP address>:9001/<stream name>"
+    type="video/mp4; codecs='avc1.42E01E'"
+  />
+</video>
 
 <script src="//path/to/videojs.min.js"></script>
-<script src="//path/to/videojs-clsp.min.js"></script>
-
-
+<script src="//path/to/videojs-mse-over-clsp.min.js"></script>
 
 <script>
   var player = videojs('my-video');
@@ -187,3 +180,14 @@ require(['video.js', 'videojs-mse-over-clsp'], function(videojs) {
   player.clsp();
 });
 ```
+
+## License
+
+See the LICENSE file at the root of this repository.
+
+
+## @todos
+
+* review files in `_legacy` and delete if not needed
+* implement linter and styles
+* minify css

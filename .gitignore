@@ -1,2 +1,5 @@
 node_modules/
 package-lock.json
+
+# This needs to be built every time and should not be tracked
+clspConduit.generated.js
