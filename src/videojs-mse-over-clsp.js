@@ -7,7 +7,7 @@ import clspConduit from './clspConduit.generated.js';
 
 
 import {version as VERSION} from '../package.json';
-import './iov';
+import IOV from './iov';
 
 import './videojs-mse-over-clsp.scss';
 
@@ -35,6 +35,7 @@ import './videojs-mse-over-clsp.scss';
    Html5.registerSourceHandler(mqttSourceHandler);
 
 */
+
 const Component = videojs.getComponent('Component');
 
 const SrcsLookupTable = {};
@@ -105,7 +106,7 @@ class MqttHandler extends Component {
         var velm = this.player().el();
 
 
-        IOV({
+        var iov = new IOV({
             port: this.port,
             address: this.address,
             appStart: (iov) => {
