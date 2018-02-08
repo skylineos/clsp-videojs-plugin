@@ -48,6 +48,10 @@ Chrome 52+ is required to run this videojs extension.
 
 Node 8.9.x is required to run the necessary build and development scripts.
 
+One option for installing node in a development environment is to use the
+node version manager ["n"](https://github.com/tj/n).  If you're using
+Windows, you can get an installer from [Node's website](https://nodejs.org/en/download/).
+
 
 ## Installation
 
