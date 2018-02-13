@@ -174,6 +174,14 @@ export default function (iov) {
             //console.log("Disregard: The play() request was interrupted ... its not an error!");
             self.video.src = URL.createObjectURL(self.mediaSource);
 
+            // subscribe to a sync topic that will be called if the stream that is feeding
+            // the mse service dies and has to be restarted that this player should restart the stream
+            iov.transport.subscribe("iov/video/"+self.guid+"/resync", 
+                function(mqtt_msg) {
+                    console.log("sync received from server restarting stream");
+                    self.restart();
+                }
+            );  
 
         });
 
