@@ -98,9 +98,7 @@ export default function (iov) {
         self.seqnum = 1;
         self.moovBox = null;
         self.moofBox = null;
-        if (typeof self.video !== 'undefined') {
-            self.video.paused = true;
-        }
+
         var request = { clientId: iov.config.clientId };
         iov.transport.publish("iov/video/"+self.guid+"/stop",request);
     };
