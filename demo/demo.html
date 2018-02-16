@@ -125,5 +125,120 @@ video-container {
     });
   </script>
 
+
+  <hr>
+
+<script>
+
+function setupVwallCell(eid, src, cellId) {
+    if (document.getElementById(eid) === null) {
+        alert("(1) No match for " + eid);
+        return;
+    }  
+
+    // return markup for 
+    var cell = document.getElementById('cell');
+    var html = cell.innerHTML.replace(/\$cellId/g,parseInt(cellId));
+    var html = html.replace("$src",src);    
+
+    $('#'+eid).html(html);
+    $(function(){
+        var celm = document.getElementById('video-'+parseInt(cellId));
+        if (celm !== null){
+            $(function(){
+                window.videojs(celm).clsp({
+                       onPlayFailed: function(player) {
+                           console.log("failed to play");
+                           console.log(player);
+                       }
+                });
+            });
+
+            //window.videojs(celm).clsp();
+        } else {
+            alert("(2) No match for video-"+parseInt(cellId));
+        }
+    });
+}
+
+function setupVwall(eid, urlList) {
+    var html = "<table>";
+    for(var cellId = 0; cellId < urlList.length; cellId++){
+        if (cellId % 4 === 0) {
+            html += "<tr>";
+        }
+        
+        var vwcel = 'vwcell-'+parseInt(cellId);
+        html += '<td id="'+vwcel+'"></td>';
+        if (cellId % 4 === 3) {
+            html += "</tr>";
+        }  
+    }  
+    if (urlList.length < 4) {
+        html += "</tr>";
+    }
+    html += "</table>";
+    console.log(html);
+    $('#'+eid).html(html);
+
+    $(function(){  
+        for(cellId = 0; cellId < urlList.length; cellId++){
+            var vwcel = 'vwcell-'+parseInt(cellId);
+            var url = urlList[cellId]; 
+            setupVwallCell(vwcel, url, cellId);
+        }
+    });
+
+}
+
+
+function onclick() {
+    var urlList = [];
+    var eid = "videowall";
+
+    var numvideos = $('#numvideos').val();
+    for(var i = 0; i < numvideos; i++) {
+        urlList.push( $('#url').val() );
+    }
+    setupVwall(eid,urlList);
+}
+
+
+$(function(){
+   $('#walltest').click(onclick);
+});
+
+</script>
+
+
+
+
+<div>Url:<input id="url" value="clsp://172.28.12.247:9001/testpattern"></div>
+<div>Number of videos: <input id="numvideos" value="4" type="number"></div>
+<br>
+
+<button id="walltest">video wall</button>
+<div id="videowall">
+</div>
+
+<template id="cell">
+    <div  class="video-container">
+     <video
+       id="video-$cellId"
+       width="352"
+       height="240"
+       class="video-js vjs-default-skin"
+       controls
+       autoplay  
+     > 
+       <source id="src-$cellId" src="$src" 
+              type="video/mp4; codecs='avc1.42E01E'"/>
+     </video>
+    </div>
+</template>
+
+
+
 </body>
+
 </html>
