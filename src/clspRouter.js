@@ -98,7 +98,7 @@ function _clspRouter() {
 
     // setup connection options
     var options = {
-        timeout: 3,
+        timeout: 60,
         onSuccess:  AppReady,
         onFailure: AppFail
     };

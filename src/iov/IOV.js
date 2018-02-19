@@ -98,8 +98,7 @@ export default class IOV {
           conduit.onReady();
           break;
         case 'fail':
-          console.error('Failure Message!');
-          console.error(event);
+          console.error('network error', event.reason);
           break;
         default:
           console.log("No match for event = " + eventType);
