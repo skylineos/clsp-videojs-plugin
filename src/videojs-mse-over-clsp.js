@@ -285,7 +285,7 @@ const mseOverMqtt = function(options) {
             play_in_progress[e.target.firstChild.id] = true;
         } else {
             // prevent the launching of multiple bogus iframes. 
-            console.log("play already exists for ", e.target.firstChild.id);
+            //console.log("play already exists for ", e.target.firstChild.id);
             return;
         } 
 
