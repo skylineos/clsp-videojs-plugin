@@ -32,7 +32,7 @@ export default class IOV {
     }
   }
 
-  constructor (config) {
+  constructor (config, MqttConduitLookup) {
     this.id = uuidv4();
     this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
 
@@ -52,7 +52,7 @@ export default class IOV {
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
     this.mqttTopicHandlers = new MqttTopicHandlers(this.id, this);
-    this.mqttConduitCollection = new MqttConduitCollection(this.id);
+    this.mqttConduitCollection = new MqttConduitCollection(this.id, MqttConduitLookup);
     this.transport = new MqttTransport(this.id, this);
 
     this.events = {

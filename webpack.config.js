@@ -17,7 +17,7 @@ module.exports = [
   {
     name,
     entry: {
-      [name]: `./src/${name}.js`,
+      [name]: `./src/js/${name}.js`,
     },
     output: {
       filename: '[name].js',

@@ -3,27 +3,28 @@ import Debug from 'debug';
 const DEBUG_PREFIX = 'clsp:iov';
 
 export default class MqttConduitCollection {
-  constructor (id) {
+  constructor (id, MqttConduitLookup) {
     this.id = id;
     this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:MqttConduitCollection`);
 
     this.debug('constructing...');
 
-    this._conduits = {};
+    this.MqttConduitLookup = MqttConduitLookup;
   }
 
   set (id, conduit) {
     this.debug('setting...', id, conduit);
 
-    this._conduits[id] = conduit;
+    this.MqttConduitLookup[id] = conduit;
 
     return conduit;
   }
 
   addFromIov (transport, iov) {
+    console.log('add from IOV')
     this.debug('adding from iov...', iov);
 
-    return this.set(iov.config.clientId, mqttConduit(iov.config, () => {
+    return this.set(iov.config.clientId, window.mqttConduit(iov.config, () => {
       this.debug('onReady...', iov.config.clientId);
 
       iov.config.appStart(iov);
@@ -44,12 +45,12 @@ export default class MqttConduitCollection {
   getById (id) {
     this.debug('getting...', id);
 
-    return this._conduits[id];
+    return this.MqttConduitLookup[id];
   }
 
   exists (id) {
     this.debug('exists?', id);
 
-    return this._conduits.hasOwnProperty(id);
+    return this.MqttConduitLookup.hasOwnProperty(id);
   }
 }
