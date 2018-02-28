@@ -192,7 +192,9 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
-* fix autoplay - it makes LOTS of requests...
-* review files in `_legacy` and delete if not needed
+* create demo for failover
 * implement linter and styles
 * minify css
+* minify conduit
+* expose utils
+* conduit should return rather than modifying window
