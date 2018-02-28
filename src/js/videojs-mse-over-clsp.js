@@ -34,7 +34,6 @@ function onPlayerReady (player, options) {
 }
 
 const SrcsLookupTable = {};
-
 const MqttConduitLookup = {};
 
 // Initialize the plugin components
