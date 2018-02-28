@@ -2,12 +2,13 @@ import videojs from 'video.js';
 import videojsErrors from 'videojs-errors';
 
 import './srcdoc-polyfill';
-import clspConduit from './clspConduit.generated.js';
+// import clspConduit from './conduit/clspConduit.generated.js';
+import clspConduit from './conduit/clspConduit.generated.min.js';
 
-import {version as VERSION} from '../package.json';
+import {version as VERSION} from '../../package.json';
 import IOV from './iov/IOV';
 
-import './videojs-mse-over-clsp.scss';
+import '../styles/videojs-mse-over-clsp.scss';
 
 /*
    source handler for the source tag in html5:
@@ -277,17 +278,17 @@ const mseOverMqtt = function(options) {
 
     this.on('play', function(e) {
         // play gets called continously until videojs realises it is playing.
-        // stop is hadled internally so this function only gets called once 
+        // stop is hadled internally so this function only gets called once
         // the page is renderd. Associate the play with the dom element of the video
         // if the it exists in play_in_progress then leave.
         var in_progress = play_in_progress[e.target.firstChild.id];
         if ((typeof in_progress === 'undefined') || in_progress === false) {
             play_in_progress[e.target.firstChild.id] = true;
         } else {
-            // prevent the launching of multiple bogus iframes. 
+            // prevent the launching of multiple bogus iframes.
             //console.log("play already exists for ", e.target.firstChild.id);
             return;
-        } 
+        }
 
 
         var spinner = this.player_.loadingSpinner;
