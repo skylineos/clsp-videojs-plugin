@@ -192,9 +192,9 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
+* expose utils
 * create demo for failover
-* implement linter and styles
+* add lint precommit
+* do we need videojs errors?
 * minify css
 * minify conduit
-* expose utils
-* conduit should return rather than modifying window

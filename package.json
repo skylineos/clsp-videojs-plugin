@@ -23,6 +23,7 @@
     "debug": "^3.1.0",
     "paho-mqtt": "1.0.3",
     "pre-commit": "^1.2.2",
+    "srcdoc-polyfill": "^1.0.0",
     "videojs-errors": "^3.0.3"
   },
   "devDependencies": {
