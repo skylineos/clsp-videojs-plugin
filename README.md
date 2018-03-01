@@ -195,6 +195,5 @@ See the LICENSE file at the root of this repository.
 * expose utils
 * create demo for failover
 * add lint precommit
-* do we need videojs errors?
 * minify css
 * minify conduit
