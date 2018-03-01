@@ -1,22 +1,19 @@
-function browserIsCompatable() {
-    // Chrome 1+
-    var isChrome = !!window.chrome && !!window.chrome.webstore;
-    var r = false;
+const MINIMUM_CHROME_VERSION = 52;
 
-    function getChromeVersion() {
-        var raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
+function browserIsCompatable () {
+  // Chrome 1+
+  const isChrome = (Boolean(window.chrome) && Boolean(window.chrome.webstore));
 
-        return raw ? parseInt(raw[2], 10) : -1;
-    }
+  if (!isChrome) {
+    return false;
+  }
 
-    // chrome version 52 or greater
-    if (isChrome === true) {
-        if (getChromeVersion() >= 52) {
-            r = true;
-        }
-    }
-
-    return r;
+  try {
+    return (parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10) >= MINIMUM_CHROME_VERSION);
+  }
+  catch (error) {
+    return false;
+  }
 }
 
 export default {

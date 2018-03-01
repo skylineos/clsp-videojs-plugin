@@ -1,7 +1,6 @@
 'use strict';
 
-const webpack = require('webpack');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const config = require('./webpack.config');
 
@@ -21,11 +20,11 @@ const uglifyPlugin = new UglifyJsPlugin({
     output: {
       comments: false,
     },
-  }
+  },
 });
 
 function minifyConfig (config) {
-  config.output.filename = '[name].min.js'
+  config.output.filename = '[name].min.js';
 
   if (!config.plugins) {
     config.plugins = [];

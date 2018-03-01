@@ -1,9 +1,9 @@
 import videojs from 'video.js';
-import videojsErrors from 'videojs-errors';
+import 'videojs-errors';
 
-import './srcdoc-polyfill';
-import clspConduit from './conduit/clspConduit.generated.js';
-// import clspConduit from './conduit/clspConduit.generated.min.js';
+import 'srcdoc-polyfill';
+import './conduit/clspConduit.generated.js';
+// import './conduit/clspConduit.generated.min.js';
 
 import {version as VERSION} from '../../package.json';
 import MqttHandler from './MqttHandler';
@@ -15,10 +15,10 @@ import '../styles/videojs-mse-over-clsp.scss';
 const SrcsLookupTable = {};
 
 const mqttHandler = MqttHandler(SrcsLookupTable);
-const mqttSourceHandler = MqttSourceHandler(mqttHandler)
+const mqttSourceHandler = MqttSourceHandler(mqttHandler);
 
 videojs.mqttSupported = true;
-videojs.mqttHandler =  mqttHandler;
+videojs.mqttHandler = mqttHandler;
 videojs.mqttSourceHandler = mqttSourceHandler;
 videojs.getTech('Html5').registerSourceHandler(mqttSourceHandler('html5'), 0);
 
