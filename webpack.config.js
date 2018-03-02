@@ -5,8 +5,8 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const packageJson = require('./package.json');
 
-const name = packageJson.name;
-const destination = path.resolve(__dirname, 'dist');
+const pluginName = packageJson.name;
+const conduitName = 'clspConduit.generated';
 
 const extractSass = new ExtractTextPlugin({
   filename: '[name].css',
@@ -15,13 +15,14 @@ const extractSass = new ExtractTextPlugin({
 
 module.exports = [
   {
-    name,
+    mode: 'development',
+    name: pluginName,
     entry: {
-      [name]: `./src/${name}.js`,
+      [pluginName]: `./src/js/${pluginName}.js`,
     },
     output: {
       filename: '[name].js',
-      path: destination,
+      path: path.resolve(__dirname, 'dist'),
     },
     module: {
       rules: [
@@ -48,16 +49,37 @@ module.exports = [
         },
       ],
     },
-    plugins: [
-      extractSass,
-    ],
     externals: {
       'video.js': 'videojs',
     },
-    devServer: {
-      contentBase: path.join(__dirname, 'demo'),
-      compress: true,
-      port: 9999,
+    plugins: [
+      extractSass,
+    ],
+  },
+  {
+    mode: 'development',
+    name: conduitName,
+    entry: {
+      [conduitName]: `./src/js/conduit/${conduitName}.js`,
+    },
+    output: {
+      filename: '[name].min.js',
+      path: path.resolve(__dirname, 'src/js/conduit'),
+    },
+    module: {
+      rules: [
+        {
+          test: /\.js$/,
+          loader: 'babel-loader?cacheDirectory=true',
+          options: {
+            plugins: [
+              'transform-object-rest-spread',
+              'transform-class-properties',
+            ],
+            presets: [['env', { modules: false }]],
+          },
+        },
+      ],
     },
   },
 ];

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>videojs-mse-over-clsp Demo</title>
   <link href="http://vjs.zencdn.net/6.2.5/video-js.css" rel="stylesheet">
-  <link href="videojs-mse-over-clsp.css" rel="stylesheet">
+  <link href="/dist/videojs-mse-over-clsp.css" rel="stylesheet">
   <script
       src="https://code.jquery.com/jquery-3.2.1.min.js"
       integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
@@ -89,7 +89,7 @@ video-container {
   </table>
 
   <script src="http://vjs.zencdn.net/6.2.5/video.js"></script>
-  <script src="videojs-mse-over-clsp.js"></script>
+  <script src="/dist/videojs-mse-over-clsp.js"></script>
   <script>
     $('#submit').click(function(){
         var ip = $('#ip').val();
@@ -134,12 +134,12 @@ function setupVwallCell(eid, src, cellId) {
     if (document.getElementById(eid) === null) {
         alert("(1) No match for " + eid);
         return;
-    }  
+    }
 
-    // return markup for 
+    // return markup for
     var cell = document.getElementById('cell');
     var html = cell.innerHTML.replace(/\$cellId/g,parseInt(cellId));
-    var html = html.replace("$src",src);    
+    var html = html.replace("$src",src);
 
     $('#'+eid).html(html);
     $(function(){
@@ -167,13 +167,13 @@ function setupVwall(eid, urlList) {
         if (cellId % 4 === 0) {
             html += "<tr>";
         }
-        
+
         var vwcel = 'vwcell-'+parseInt(cellId);
         html += '<td id="'+vwcel+'"></td>';
         if (cellId % 4 === 3) {
             html += "</tr>";
-        }  
-    }  
+        }
+    }
     if (urlList.length < 4) {
         html += "</tr>";
     }
@@ -181,10 +181,10 @@ function setupVwall(eid, urlList) {
     console.log(html);
     $('#'+eid).html(html);
 
-    $(function(){  
+    $(function(){
         for(cellId = 0; cellId < urlList.length; cellId++){
             var vwcel = 'vwcell-'+parseInt(cellId);
-            var url = urlList[cellId]; 
+            var url = urlList[cellId];
             setupVwallCell(vwcel, url, cellId);
         }
     });
@@ -229,9 +229,9 @@ $(function(){
        height="240"
        class="video-js vjs-default-skin"
        controls
-       autoplay  
-     > 
-       <source id="src-$cellId" src="$src" 
+       autoplay
+     >
+       <source id="src-$cellId" src="$src"
               type="video/mp4; codecs='avc1.42E01E'"/>
      </video>
     </div>
