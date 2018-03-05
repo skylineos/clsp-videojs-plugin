@@ -43,7 +43,7 @@ const onPlayerReady = (player, options) => {
   player.addClass('vjs-mse-over-mqtt');
 };
 
-const clspPlugin = mseOverMqtt(defaults, SrcsLookupTable, play_in_progress, onPlayerReady);
+const clspPlugin = mseOverMqtt(defaults, SrcsLookupTable, onPlayerReady);
 
 // Cross-compatibility for Video.js 5 and 6.
 const registerPlugin = videojs.registerPlugin || videojs.plugin;

@@ -2,7 +2,7 @@ import videojs from 'video.js';
 
 import utils from './utils';
 
-export default function (defaults, SrcsLookupTable, play_in_progress, onPlayerReady) {
+export default function (defaults, SrcsLookupTable, onPlayerReady) {
   /**
    * A video.js plugin.
    *
