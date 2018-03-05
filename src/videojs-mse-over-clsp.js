@@ -274,22 +274,8 @@ const mseOverMqtt = function(options) {
         this.error({code: 'PLAYER_ERR_NOT_COMPAT', dismiss: false});
         return;
     }
-
-    this.on('play', function(e) {
-        // play gets called continously until videojs realises it is playing.
-        // stop is hadled internally so this function only gets called once 
-        // the page is renderd. Associate the play with the dom element of the video
-        // if the it exists in play_in_progress then leave.
-        var in_progress = play_in_progress[e.target.firstChild.id];
-        if ((typeof in_progress === 'undefined') || in_progress === false) {
-            play_in_progress[e.target.firstChild.id] = true;
-        } else {
-            // prevent the launching of multiple bogus iframes. 
-            //console.log("play already exists for ", e.target.firstChild.id);
-            return;
-        } 
-
-
+    
+    this.on('firstplay', function(e) {
         var spinner = this.player_.loadingSpinner;
         var videojs_player = this.player_;
 
