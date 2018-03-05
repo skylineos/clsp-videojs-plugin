@@ -2,7 +2,7 @@ import videojs from 'video.js';
 
 import utils from './utils';
 
-export default function (defaults, SrcsLookupTable, play_in_progress, onPlayerReady) {
+export default function (defaults, SrcsLookupTable, onPlayerReady) {
   /**
    * A video.js plugin.
    *
@@ -30,21 +30,7 @@ export default function (defaults, SrcsLookupTable, play_in_progress, onPlayerRe
       return;
     }
 
-    this.on('play', function (e) {
-      // play gets called continously until videojs realises it is playing.
-      // stop is hadled internally so this function only gets called once
-      // the page is renderd. Associate the play with the dom element of the video
-      // if the it exists in play_in_progress then leave.
-      var in_progress = play_in_progress[e.target.firstChild.id];
-
-      if (in_progress) {
-        // prevent the launching of multiple bogus iframes.
-        // console.log("play already exists for ", e.target.firstChild.id);
-        return;
-      }
-
-      play_in_progress[e.target.firstChild.id] = true;
-
+    this.on('firstplay', function (e) {
       var spinner = this.player_.loadingSpinner;
       var videojs_player = this.player_;
 
