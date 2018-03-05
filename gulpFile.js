@@ -1,9 +1,11 @@
 'use strict';
 
 const gulp = require('gulp');
-const $ = require('gulp-load-plugins')({ lazy: true });
-const runSequence = require('run-sequence');
 const webpack = require('webpack');
+const serve = require('webpack-serve');
+
+const rm = require('gulp-rm');
+const runSequence = require('run-sequence');
 const jsStringEscape = require('js-string-escape');
 const fs = require('fs');
 
@@ -35,32 +37,42 @@ function webpackBuild (pathToConfig) {
       console.log(`${stats.toString()}\n`);
     })
     .catch((err) => {
-      throw new $.util.PluginError('webpack', err);
+      throw err;
     });
 }
 
 gulp.task('pre-build', () => {
   return gulp.src('dist/**/*', { read: false })
-    .pipe($.rm())
+    .pipe(rm())
 });
 
 gulp.task('generate-clsp-conduit', async () => {
   // Construct the iframe contents
   const mqttLibrary = fs.readFileSync('./node_modules/paho-mqtt/mqttws31-min.js', { encoding: 'utf8' });
-  const clspRouterLibrary = fs.readFileSync('./src/clspRouter.js', { encoding: 'utf8' });
+  const clspRouterLibrary = fs.readFileSync('./src/js/conduit/clspRouter.js', { encoding: 'utf8' });
   const iframeContents = jsStringEscape(mqttLibrary + '\n' + clspRouterLibrary);
 
   // Insert the iframe contents into the clsp conduit library
-  const clspConduitLibraryTemplate = fs.readFileSync('./src/clspConduit.js', { encoding: 'utf8' });
+  const clspConduitLibraryTemplate = fs.readFileSync('./src/js/conduit/clspConduit.js', { encoding: 'utf8' });
   const clspConduitLibrary = clspConduitLibraryTemplate.replace("__IFRAME_CODE__", iframeContents);
 
   // Put the resulting library code in /src
-  fs.writeFileSync('src/clspConduit.generated.js', clspConduitLibrary);
+  fs.writeFileSync('src/js/conduit/clspConduit.generated.js', clspConduitLibrary);
 });
 
 gulp.task('build-dev', () => webpackBuild('./webpack.config'));
 
 gulp.task('build-prod', () => webpackBuild('./webpack.config.prod'));
+
+gulp.task('start-dev', (done) => {
+  const webpackConfig = require('./webpack.config');
+
+  serve({
+    config: webpackConfig,
+    content: __dirname,
+    port: 9999,
+  });
+});
 
 gulp.task('build', () => asPromise(
   runSequence,

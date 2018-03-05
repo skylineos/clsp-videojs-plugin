@@ -8,8 +8,10 @@
   },
   "scripts": {
     "build": "gulp build",
+    "lint": "eslint ./ --cache --quiet --ext .jsx --ext .js",
+    "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
     "postversion": "git push && git push --tags",
-    "start-dev": "webpack-dev-server"
+    "start-dev": "gulp start-dev"
   },
   "keywords": [
     "videojs",
@@ -20,18 +22,21 @@
   "dependencies": {
     "debug": "^3.1.0",
     "paho-mqtt": "1.0.3",
+    "pre-commit": "^1.2.2",
+    "srcdoc-polyfill": "^1.0.0",
     "videojs-errors": "^3.0.3"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
-    "babel-eslint": "^8.0.1",
+    "babel-eslint": "^8.2.2",
     "babel-loader": "^7.1.2",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.6.0",
     "css-loader": "^0.28.5",
-    "extract-text-webpack-plugin": "^3.0.0",
+    "eslint": "^4.18.1",
+    "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "gulp": "^3.9.1",
     "gulp-load-plugins": "^1.5.0",
     "gulp-rm": "^1.0.5",
@@ -39,8 +44,10 @@
     "node-sass": "^4.5.3",
     "run-sequence": "^2.2.0",
     "sass-loader": "^6.0.6",
-    "style-loader": "^0.18.2",
-    "webpack": "^3.1.0",
-    "webpack-dev-server": "^2.7.1"
+    "standard": "^11.0.0",
+    "style-loader": "^0.20.2",
+    "uglifyjs-webpack-plugin": "^1.2.2",
+    "webpack": "^4.0.1",
+    "webpack-serve": "^0.1.5"
   }
 }
