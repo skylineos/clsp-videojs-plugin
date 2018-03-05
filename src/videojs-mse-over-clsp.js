@@ -242,10 +242,6 @@ const onPlayerReady = (player, options) => {
 };
 
 
-// Handle the multiple play() calls for the same HTML dom element.
-const play_in_progress = {};
-
-
 /**
  * A video.js plugin.
  *
