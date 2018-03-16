@@ -42,6 +42,21 @@ export default function (iov) {
         self.state = "fault";
     }
 
+    self.reinitializeMse = function() {
+        // reset counters, flags
+        self.seqnum = 1;
+        self.seqnumProcessed = 1; // last sequence number processed
+        self.source_buffer_ready = false;
+        self.dropCounter = 0;
+         
+        // free resource
+        URL.revokeObjectURL(self.mediaSource);
+
+        // reallocate, this will call media source open which will
+        // append the MOOV atom.
+        self.video.src = URL.createObjectURL(self.mediaSource);
+    };
+
     self.restart = function() {
         self.stop();
         self.play(self.eid, self.streamName, self.onFirstChunk, self.onVideoRecv);
@@ -174,10 +189,12 @@ export default function (iov) {
 
             // subscribe to a sync topic that will be called if the stream that is feeding
             // the mse service dies and has to be restarted that this player should restart the stream
-            iov.transport.subscribe("iov/video/"+self.guid+"/resync", 
+            var resync_topic = "iov/video/"+self.guid+"/resync";
+            console.log("Call " + resync_topic + " to resync stream");
+            iov.transport.subscribe(resync_topic, 
                 function(mqtt_msg) {
-                    console.log("sync received from server restarting stream");
-                    self.restart();
+                    console.log("sync received re-initialize media source buffer");
+                    self.reinitializeMse();
                 }
             );  
 
