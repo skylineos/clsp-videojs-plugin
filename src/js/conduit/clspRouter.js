@@ -66,10 +66,10 @@ function _clspRouter() {
           event: 'ready'
         });
 
-        if (Reconnect)
+        if (Reconnect !== -1)
         {
             clearInterval(Reconnect);
-            Reconnect = false;
+            Reconnect = -1;
         }
 
     }// application ready
@@ -93,14 +93,16 @@ function _clspRouter() {
     /*
      * Hold the id of the reconnect interval task
      */
-    Reconnect = false;
+    var Reconnect = -1;
 
     /*
      * Callback which gets called when the connection is lost
      */
     function onConnectionLost(message){ 
 
-        Reconnect = setInterval(() => connect(), 2000);
+        if (Reconnect === -1) {
+           Reconnect = setInterval(() => connect(), 2000);
+        }
     }
     
     MQTTClient.onConnectionLost = onConnectionLost;
