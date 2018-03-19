@@ -48,14 +48,14 @@ function _clspRouter() {
                 MQTTClient.send(mqtt_msg);
             }
         } catch(e) {
-            console.log("mqtt fatal error");
-            console.log(e);
             // we are dead!
             MQTTClient.disconnect();
         }
+
     }
 
     function AppReady() {
+
         if (window.addEventListener) {
             window.addEventListener("message", eventHandler, false);
         } else if (window.attachEvent) {
@@ -65,6 +65,13 @@ function _clspRouter() {
         send({
           event: 'ready'
         });
+
+        if (Reconnect)
+        {
+            clearInterval(Reconnect);
+            Reconnect = false;
+        }
+
     }// application ready
 
 
@@ -83,6 +90,21 @@ function _clspRouter() {
         MqttClientId
     );
 
+    /*
+     * Hold the id of the reconnect interval task
+     */
+    Reconnect = false;
+
+    /*
+     * Callback which gets called when the connection is lost
+     */
+    function onConnectionLost(message){ 
+
+        Reconnect = setInterval(() => connect(), 2000);
+    }
+    
+    MQTTClient.onConnectionLost = onConnectionLost;
+
     // perhaps the busiest function in this module ;)
     MQTTClient.onMessageArrived = function(message) {
         //// console.log(message);
@@ -96,25 +118,31 @@ function _clspRouter() {
         }
     };
 
-    // setup connection options
-    var options = {
-        timeout: 60,
-        onSuccess:  AppReady,
-        onFailure: AppFail
-    };
-    // last will message sent on disconnect
-    var willmsg = new Paho.MQTT.Message(JSON.stringify({
-        clientId: MqttClientId
-    }));
-    willmsg.destinationName = "iov/clientDisconnect";
-    options.willMessage = willmsg;
+    /**
+     * Connect to MQTT...
+     */
+    function connect()
+    {
+        // setup connection options
+        var options = {
+            timeout: 60,
+            onSuccess:  AppReady,
+            onFailure: AppFail
+        };
+        // last will message sent on disconnect
+        var willmsg = new Paho.MQTT.Message(JSON.stringify({
+            clientId: MqttClientId
+        }));
+        willmsg.destinationName = "iov/clientDisconnect";
+        options.willMessage = willmsg;
 
-    if (MqttUseSSL === true) {
-        options.useSSL = true;
+        if (MqttUseSSL === true) {
+            options.useSSL = true;
+        }
+        MQTTClient.connect(options);
     }
 
-
-    MQTTClient.connect(options);
+    connect();
 }
 
 function clspRouter() {
