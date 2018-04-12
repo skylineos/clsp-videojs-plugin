@@ -42,7 +42,13 @@ H.264 baseline 3.0 is a least common denominator codec supported on all browsers
 
 ### Browsers
 
-Chrome 52+ is required to run this videojs extension.
+Chrome 52+ is required to run this videojs extension.  All other browsers are currently not supported.
+
+
+### VideoJS
+
+VideoJS version >= 5 are supported.
+
 
 ### Development Environment
 
