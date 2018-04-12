@@ -9,6 +9,7 @@ import {version as VERSION} from '../../package.json';
 import MqttHandler from './MqttHandler';
 import MqttSourceHandler from './MqttSourceHandler';
 import mseOverMqtt from './mseOverMqtt';
+import utils from './utils';
 
 import '../styles/videojs-mse-over-clsp.scss';
 
@@ -53,5 +54,6 @@ registerPlugin('clsp', clspPlugin);
 
 // Include the version number.
 clspPlugin.VERSION = VERSION;
+clspPlugin.utils = utils;
 
 export default clspPlugin;
