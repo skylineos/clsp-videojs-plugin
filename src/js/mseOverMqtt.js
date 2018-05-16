@@ -34,8 +34,9 @@ export default function (defaults, SrcsLookupTable, onPlayerReady) {
       var spinner = this.player_.loadingSpinner;
       var videojs_player = this.player_;
 
-      // work around bogus error code.
-      var old_error = Object.assign({}, videojs_player.error());
+      //TODO: This seems to screw up the video js error function.  Is this necessary?
+      // work around bogus error code. 
+      /*var old_error = Object.assign({}, videojs_player.error());
       videojs_player.error = function (evt) {
         if (typeof evt === 'undefined') {
           return old_error;
@@ -48,7 +49,7 @@ export default function (defaults, SrcsLookupTable, onPlayerReady) {
         if (evt.code !== -2) {
           videojs_player.old_error(evt);
         }
-      };
+      };*/
 
       var source_tag = this.currentSource();
       if (!(source_tag.src in SrcsLookupTable)) {
