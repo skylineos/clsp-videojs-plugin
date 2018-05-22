@@ -34,7 +34,7 @@ export default function (SrcsLookupTable) {
             var streamName = t[t.length-1];
 
             this.useSSL = false;
-
+            
             // clsp://.../name?[secure=1]
             parser.search.substr(1).split('&').forEach(function(item){
                 var t = item.split('=');
@@ -43,13 +43,22 @@ export default function (SrcsLookupTable) {
                 if ( n === 'secure' && v !== '0' )
                 {
                     useSSL = true;
+                    port = "9002";
                 }
             });
-
+            
 
             if (port.length === 0) {
                 port = "9001";
             }
+
+            if (window.location.href.split(':')[0] === "https") {
+                useSSL = true;
+                port = "9002";
+            }
+
+              
+
 
             // @ is a special address maening the server that loaded the web page.
             if (hostname === '@') {
