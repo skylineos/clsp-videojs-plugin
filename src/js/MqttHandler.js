@@ -44,16 +44,16 @@ export default function (SrcsLookupTable) {
                 var v = t[1];
                 if ( n === 'secure' && v !== '0' )
                 {
-                    useSSL = true;
+                    this.useSSL = true;
                 }
             });
             // if the window that we are in is ssl then we are required to use ssl
             if (window.location.href.split(':')[0] === "https") {
-                useSSL = true;
+                this.useSSL = true;
             }
             
             var default_port = "9001";
-            if (useSSL === true) {
+            if (this.useSSL === true) {
                 default_port = "9003";
             }
 
