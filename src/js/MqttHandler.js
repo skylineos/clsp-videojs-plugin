@@ -32,9 +32,11 @@ export default function (SrcsLookupTable) {
             var port = parser.port;
             var t = parser.pathname.split("/");
             var streamName = t[t.length-1];
-
+            var sslport = "9003";
             this.useSSL = false;
+                        
 
+            // if secure=1 in the clsp url we are using ssl no matter what            
             // clsp://.../name?[secure=1]
             parser.search.substr(1).split('&').forEach(function(item){
                 var t = item.split('=');
@@ -45,11 +47,21 @@ export default function (SrcsLookupTable) {
                     useSSL = true;
                 }
             });
-
+            // if the window that we are in is ssl then we are required to use ssl
+            if (window.location.href.split(':')[0] === "https") {
+                useSSL = true;
+            }
+            
+            var default_port = "9001";
+            if (useSSL === true) {
+                default_port = "9003";
+            }
 
             if (port.length === 0) {
-                port = "9001";
+                port = default_port;
             }
+
+
 
             // @ is a special address maening the server that loaded the web page.
             if (hostname === '@') {
