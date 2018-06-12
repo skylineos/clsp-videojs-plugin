@@ -33,7 +33,7 @@ export default function (SrcsLookupTable) {
             var t = parser.pathname.split("/");
             var streamName = t[t.length-1];
             var sslport = "9003";
-            this.useSSL = false;
+            var useSSL = false;
                         
 
             // if secure=1 in the clsp url we are using ssl no matter what            
@@ -44,12 +44,12 @@ export default function (SrcsLookupTable) {
                 var v = t[1];
                 if ( n === 'secure' && v !== '0' )
                 {
-                    this.useSSL = true;
+                    useSSL = true;
                 }
             });
             // if the window that we are in is ssl then we are required to use ssl
             if (window.location.href.split(':')[0] === "https") {
-                this.useSSL = true;
+                useSSL = true;
             }
             
             var default_port = "9001";
@@ -73,6 +73,7 @@ export default function (SrcsLookupTable) {
             this.address = hostname;
             this.streamName = streamName;
             this.enabled = true;
+            this.useSSL = useSSL;
 
             SrcsLookupTable[_src] = this;
         }
