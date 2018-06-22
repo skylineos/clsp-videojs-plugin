@@ -32,7 +32,7 @@ export default function (SrcsLookupTable) {
             var port = parser.port;
             var t = parser.pathname.split("/");
             var streamName = t[t.length-1];
-            var sslport = "9003";
+            var sslport = "443";
             this.useSSL = false;
                         
 
@@ -54,7 +54,7 @@ export default function (SrcsLookupTable) {
             
             var default_port = "9001";
             if (useSSL === true) {
-                default_port = "9003";
+                default_port = "443";
             }
 
             if (port.length === 0) {
