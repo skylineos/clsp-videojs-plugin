@@ -43,7 +43,7 @@ function webpackBuild (pathToConfig) {
 
 gulp.task('pre-build', () => {
   return gulp.src('dist/**/*', { read: false })
-    .pipe(rm())
+    .pipe(rm());
 });
 
 gulp.task('generate-clsp-conduit', async () => {
