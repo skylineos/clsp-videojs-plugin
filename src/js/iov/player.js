@@ -13,7 +13,7 @@ const debug = Debug(`${DEBUG_PREFIX}:player`);
 */
 export default function (iov) {
     var self = {};
-
+ 
     /*
     Used for determining the size of the internal buffer hidden from the MSE
     api by recording the size and time of each chunk of video upon buffer append
@@ -37,8 +37,13 @@ export default function (iov) {
 
 
     self._fault = function(err) {
-        //TODO: Change the video poster to a failure image
-        console.log(err);
+        _ThePlayer.errors.extend({
+            PLAYER_ERR_IOV: {
+                headline: 'Error Playing Stream',
+                message: err
+            }
+        });
+        _ThePlayer.error({code: 'PLAYER_ERR_IOV'});
         self.state = "fault";
     }
 
@@ -134,7 +139,7 @@ export default function (iov) {
             });
         } else {
             // the browser does not support this video format
-            self._fault("Unsuppored mime codec " + self.mimeCodec);
+            self._fault("Unsupported mime codec " + self.mimeCodec);
         }
     };
 
@@ -241,10 +246,8 @@ export default function (iov) {
                 self.sourceBuffer.appendBuffer( moofBox );
                 self.seqnum += 1; // increment sequence number for next chunk
             } catch(e) {
+                _ThePlayer.error({code: 3});
                 self.stop();
-                console.log(e.stack);
-                //var mseErrorEvt = new Event("mse-error-event");
-                //self.video.dispatchEvent(mseErrorEvt);
             }
         } else {
             self.vqueue.push( moofBox.slice(0) );

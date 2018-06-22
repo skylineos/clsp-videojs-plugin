@@ -121,10 +121,19 @@ This is the simplest case. Get the script in whatever way you prefer and include
   class="video-js vjs-default-skin"
   controls
 >
+  <!-- standard streaming over TCP port 9001 -->
   <source
     src="clsp://<SFS IP address>:9001/<stream name>"
     type="video/mp4; codecs='avc1.42E01E'"
   />
+ 
+  <!-- secure streaming over TCP port 9003 -->
+  <source
+    src="clsp://<SFS IP address>:9003/<stream name>?secure=1"
+    type="video/mp4; codecs='avc1.42E01E'"
+  />
+  
+  
 </video>
 
 <script src="//vjs.zencdn.net/6.2.5/video.min.js"></script>
