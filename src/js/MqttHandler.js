@@ -42,7 +42,6 @@ export default function (SrcsLookupTable) {
             var port = parser.port;
             var t = parser.pathname.split("/");
             var streamName = t[t.length-1];
-                       
 
             if (port.length === 0) {
                 port = default_port;

@@ -3,242 +3,266 @@
 <head>
   <meta charset="utf-8">
   <title>videojs-mse-over-clsp Demo</title>
-  <link href="http://vjs.zencdn.net/6.2.5/video-js.css" rel="stylesheet">
+  <link href="//vjs.zencdn.net/6.2.5/video-js.css" rel="stylesheet">
   <link href="/dist/videojs-mse-over-clsp.css" rel="stylesheet">
   <script
-      src="https://code.jquery.com/jquery-3.2.1.min.js"
-      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-      crossorigin="anonymous">
-   </script>
-<style>
-video-container {
-    width: 356,
-    height: 244
-}
-</style>
-
-
+    src="//code.jquery.com/jquery-3.2.1.min.js"
+    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"
+  ></script>
+  <style>
+    video-container {
+      width: 356,
+      height: 244
+    }
+  </style>
 </head>
 <body>
   <table>
-   <tr>
-    <td class="video-container">
-     <video
-       id="vw1"
-       width="352"
-       height="240"
-       class="video-js vjs-default-skin"
-       controls
-     >
-       <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'"/>
+    <tr>
+      <td class="video-container">
+        <video
+          id="vw1"
+          width="352"
+          height="240"
+          class="video-js vjs-default-skin"
+          controls
+        >
+          <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'"/>
+          <source id="hls1"  src="" type="application/x-mpegURL" />
+        </video>
+      </td>
+      <td  class="video-container">
+        <video
+          id="vw2"
+          width="352"
+          height="240"
+          class="video-js vjs-default-skin"
+          controls
+        >
+          <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'" />
+          <source id="hls2"  src="" type="application/x-mpegURL" />
+        </video>
+      </td>
+    </tr>
+    <tr>
+     <td class="video-container">
+        <video
+          id="vw3"
+          width="352"
+          height="240"
+          class="video-js vjs-default-skin"
+          controls
+        >
+          <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'" />
+          <source id="hls3"  src="" type="application/x-mpegURL" />
+        </video>
+      </td>
+      <td class="video-container">
+        <video
+          id="vw4"
+          width="352"
+          height="240"
+          class="video-js vjs-default-skin"
+          controls
+        >
+          <source id="src4" src="" type="video/mp4; codecs='avc1.42E01E'" />
+          <source id="hls4"  src="" type="application/x-mpegURL" />
+        </video>
+      </td>
+    </tr>
 
-       <source id="hls1"  src=""
-           type="application/x-mpegURL" />
-     </video>
-    </td>
-    <td  class="video-container">
-     <video
-       id="vw2"
-       width="352"
-       height="240"
-       class="video-js vjs-default-skin"
-       controls
-     >
-       <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'"/>
-     </video>
+    <tr><td colspan="2"><hr></td></tr>
 
-    </td>
-   </tr>
-   <tr>
-    <td  class="video-container">
-      <video
-       id="vw3"
-       width="352"
-       height="240"
-       class="video-js vjs-default-skin"
-       controls
-     >
-       <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'"/>
-     </video>
-    </td>
-    <td  class="video-container">
-      <video
-       id="vw4"
-       width="352"
-       height="240"
-       class="video-js vjs-default-skin"
-       controls
-     >
-       <source id="src4" src="" type="video/mp4; codecs='avc1.42E01E'"/>
-     </video>
-
-    </td>
-   </tr>
-
-
-
-   <tr><td colspan="2"><hr></td></tr>
-
-   <tr><td colspan="2">URL format:   clsp://(sfs ip):9001/(stream name) </td></tr>
-   <tr><td>CLSP URL</td><td ><input id="url1" style="width: 352;"></td></tr>
-   <tr><td>CLSP URL</td><td><input id="url2" width="48" ></td></tr>
-   <tr><td>CLSP URL</td><td><input id="url3" width="48" ></td></tr>
+    <tr><td colspan="2">URL format:   clsp://(sfs ip):9001/(stream name)</td></tr>
+    <tr><td>CLSP URL</td><td><input id="url1" value="clsp://172.28.12.247:9001/testpattern" style="width: 352;"></td></tr>
+    <tr><td>CLSP URL</td><td><input id="url2" value="clsp://172.28.12.247:9001/testpattern" width="48" ></td></tr>
+    <tr><td>CLSP URL</td><td><input id="url3" width="48" ></td></tr>
     <tr><td>CLSP URL</td><td><input id="url4" width="48" ></td></tr>
     <tr><td colspan="2"><button id="submit">Submit</button></td></tr>
     <tr><td colspan="2"><div id="message"></div></td></tr>
   </table>
 
-  <script src="http://vjs.zencdn.net/6.2.5/video.js"></script>
+  <script src="//vjs.zencdn.net/6.2.5/video.js"></script>
   <script src="/dist/videojs-mse-over-clsp.js"></script>
   <script>
     $('#submit').click(function(){
-        var ip = $('#ip').val();
-        var vwallsrc = ['','','',''];
-        vwallsrc[0] = $('#src1').val();
-        vwallsrc[1] = $('#name2').val();
-        vwallsrc[2] = $('#name3').val();
-        vwallsrc[3] = $('#name4').val();
+      var ip = $('#ip').val();
+      var vwallsrc = ['','','',''];
+      vwallsrc[0] = $('#src1').val();
+      vwallsrc[1] = $('#name2').val();
+      vwallsrc[2] = $('#name3').val();
+      vwallsrc[3] = $('#name4').val();
 
-        setTimeout(function(){
-           var srcCount = 1;
-           vwallsrc.forEach(function(name){
-               var url = $( '#url'+parseInt(srcCount) ).val();
-               if (url.length > 0) {
-                   $( '#src'+parseInt(srcCount) ).attr('src',url);
-                   // @todo
-                   var hls = "";
-                   $( '#hls1' ).attr('src', hls);
+      function browserIsCompatable () {
+        // Chrome 1+
+        const isChrome = (Boolean(window.chrome) && Boolean(window.chrome.webstore));
 
-                   window.videojs('vw'+parseInt(srcCount)).clsp({
-                       onPlayFailed: function(player) {
-                           console.log("failed to play");
-                           console.log(player);
-                       }
-                   });
-                   srcCount++;
-               }
-           });
+        if (!isChrome) {
+          return false;
+        }
 
-           $('#message').html('videos configured');
-        },0);
+        try {
+          return (parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10) >= 52);
+        }
+        catch (error) {
+          return false;
+        }
+      }
 
+      if (browserIsCompatable()) {
+        console.log('found supported version of chrome!')
+      } else {
+        console.log('browser not supported!!')
+      }
+
+      setTimeout(function(){
+        var srcCount = 1;
+        vwallsrc.forEach(function(name){
+          var url = $( '#url' + srcCount ).val();
+          $( '#src' + srcCount ).attr('src',url);
+
+          // @todo
+          // var hls = "";
+          // $( '#hls' + srcCount ).attr('src', hls);
+
+          if (url) {
+            window.videojs('vw' + srcCount).clsp({
+              onPlayFailed: function(player) {
+                console.log("failed to play");
+                console.log(player);
+              }
+            });
+          } else {
+            // window.videojs('vw' + srcCount, {
+            //   muted: true,
+            //   sources: [{
+            //     src: "http://vjs.zencdn.net/v/oceans.mp4",
+            //     type: "video/mp4"
+            //   }, {
+            //     src: "http://vjs.zencdn.net/v/oceans.webm",
+            //     type: "video/webm"
+            //   }, {
+            //     src: "http://vjs.zencdn.net/v/oceans.ogv",
+            //     type: "video/ogg"
+            //   }]
+            // });
+          }
+
+          srcCount++;
+        });
+      }, 0);
+
+      $('#message').html('videos configured');
     });
   </script>
 
+  <hr />
 
-  <hr>
+  <script>
+    function setupVwallCell(eid, src, cellId) {
+        if (document.getElementById(eid) === null) {
+            alert("(1) No match for " + eid);
+            return;
+        }
 
-<script>
+        // return markup for
+        var cell = document.getElementById('cell');
+        var html = cell.innerHTML.replace(/\$cellId/g,parseInt(cellId));
+        var html = html.replace("$src",src);
 
-function setupVwallCell(eid, src, cellId) {
-    if (document.getElementById(eid) === null) {
-        alert("(1) No match for " + eid);
-        return;
+        $('#'+eid).html(html);
+        $(function(){
+            var celm = document.getElementById('video-'+parseInt(cellId));
+            if (celm !== null){
+                $(function(){
+                    window.videojs(celm).clsp({
+                           onPlayFailed: function(player) {
+                               console.log("failed to play");
+                               console.log(player);
+                           }
+                    });
+                });
+
+                //window.videojs(celm).clsp();
+            } else {
+                alert("(2) No match for video-"+parseInt(cellId));
+            }
+        });
     }
 
-    // return markup for
-    var cell = document.getElementById('cell');
-    var html = cell.innerHTML.replace(/\$cellId/g,parseInt(cellId));
-    var html = html.replace("$src",src);
+    function setupVwall(eid, urlList) {
+        var html = "<table>";
+        for(var cellId = 0; cellId < urlList.length; cellId++){
+            if (cellId % 4 === 0) {
+                html += "<tr>";
+            }
 
-    $('#'+eid).html(html);
-    $(function(){
-        var celm = document.getElementById('video-'+parseInt(cellId));
-        if (celm !== null){
-            $(function(){
-                window.videojs(celm).clsp({
-                       onPlayFailed: function(player) {
-                           console.log("failed to play");
-                           console.log(player);
-                       }
-                });
-            });
-
-            //window.videojs(celm).clsp();
-        } else {
-            alert("(2) No match for video-"+parseInt(cellId));
+            var vwcel = 'vwcell-'+parseInt(cellId);
+            html += '<td id="'+vwcel+'"></td>';
+            if (cellId % 4 === 3) {
+                html += "</tr>";
+            }
         }
-    });
-}
-
-function setupVwall(eid, urlList) {
-    var html = "<table>";
-    for(var cellId = 0; cellId < urlList.length; cellId++){
-        if (cellId % 4 === 0) {
-            html += "<tr>";
-        }
-
-        var vwcel = 'vwcell-'+parseInt(cellId);
-        html += '<td id="'+vwcel+'"></td>';
-        if (cellId % 4 === 3) {
+        if (urlList.length < 4) {
             html += "</tr>";
         }
+        html += "</table>";
+        console.log(html);
+        $('#'+eid).html(html);
+
+        $(function(){
+            for(cellId = 0; cellId < urlList.length; cellId++){
+                var vwcel = 'vwcell-'+parseInt(cellId);
+                var url = urlList[cellId];
+                setupVwallCell(vwcel, url, cellId);
+            }
+        });
+
     }
-    if (urlList.length < 4) {
-        html += "</tr>";
+
+    function onclick() {
+        var urlList = [];
+        var eid = "videowall";
+
+        var numvideos = $('#numvideos').val();
+        for(var i = 0; i < numvideos; i++) {
+            urlList.push( $('#url').val() );
+        }
+        setupVwall(eid,urlList);
     }
-    html += "</table>";
-    console.log(html);
-    $('#'+eid).html(html);
 
     $(function(){
-        for(cellId = 0; cellId < urlList.length; cellId++){
-            var vwcel = 'vwcell-'+parseInt(cellId);
-            var url = urlList[cellId];
-            setupVwallCell(vwcel, url, cellId);
-        }
+       $('#walltest').click(onclick);
     });
+  </script>
 
-}
+  <div>Url:<input id="url" value="clsp://172.28.12.247:9001/testpattern" /></div>
+  <div>Number of videos: <input id="numvideos" value="4" type="number" /></div>
 
+  <br />
 
-function onclick() {
-    var urlList = [];
-    var eid = "videowall";
+  <button id="walltest">video wall</button>
 
-    var numvideos = $('#numvideos').val();
-    for(var i = 0; i < numvideos; i++) {
-        urlList.push( $('#url').val() );
-    }
-    setupVwall(eid,urlList);
-}
+  <div id="videowall"></div>
 
-
-$(function(){
-   $('#walltest').click(onclick);
-});
-
-</script>
-
-
-
-
-<div>Url:<input id="url" value="clsp://172.28.12.247:9001/testpattern"></div>
-<div>Number of videos: <input id="numvideos" value="4" type="number"></div>
-<br>
-
-<button id="walltest">video wall</button>
-<div id="videowall">
-</div>
-
-<template id="cell">
-    <div  class="video-container">
-     <video
-       id="video-$cellId"
-       width="352"
-       height="240"
-       class="video-js vjs-default-skin"
-       controls
-       autoplay
-     >
-       <source id="src-$cellId" src="$src"
-              type="video/mp4; codecs='avc1.42E01E'"/>
-     </video>
+  <template id="cell">
+    <div class="video-container">
+      <video
+        id="video-$cellId"
+        width="352"
+        height="240"
+        class="video-js vjs-default-skin"
+        controls
+        autoplay
+      >
+        <source
+          id="src-$cellId"
+          src="$src"
+          type="video/mp4; codecs='avc1.42E01E'"
+        />
+      </video>
     </div>
-</template>
-
-
-
+  </template>
 </body>
-
 </html>

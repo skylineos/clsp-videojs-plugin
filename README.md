@@ -13,13 +13,13 @@ The new network protocol is handled by specifying the following URI format:
 * the web socket port is 9001
 * the stream name as defined on the SFS
 
-The `type` attribute must be the following string:
+On the HTML `video` tag, the `type` attribute must be the following:
 
 ```
 video/mp4; codecs='avc1.42E01E'
 ```
 
-which tells the browser exactly what codec to use to decode and play the video.
+This tells the browser exactly what codec to use to decode and play the video.
 H.264 baseline 3.0 is a least common denominator codec supported on all browsers
 (according to the MSE development page).
 
@@ -42,7 +42,13 @@ H.264 baseline 3.0 is a least common denominator codec supported on all browsers
 
 ### Browsers
 
-Chrome 52+ is required to run this videojs extension.
+Chrome 52+ is required to run this videojs extension.  All other browsers are currently not supported.
+
+
+### VideoJS
+
+VideoJS version >= 5 are supported.
+
 
 ### Development Environment
 
@@ -75,7 +81,7 @@ The generated files will be available in the `dist` directory.
 ## Run test server
 
 1. `npm run start-dev`
-1. navigate to [http://localhost:9999/walltest.html](http://localhost:9999/walltest.html) in Chrome
+1. navigate to [http://localhost:9999](http://localhost:9999) in Chrome
 1. add a `clsp` url to any of the inputs, then click submit
 1. click play on the video element (if not using an autoplay player)
 
@@ -85,6 +91,8 @@ restart the dev server to get your changes to be recognized:
 
 `npm run build && npm run start-dev`
 
+This is expected to be fixed in an upcoming release.
+
 
 ## Usage
 
@@ -92,12 +100,12 @@ To include videojs-mse-over-clsp on your website or web application, use any of 
 
 ### `<style>` Tag
 
-In the `<head>` of your page, include a line for the videojs and videojs-mse-over-clsp styles:
+In the `<head>` of your page, include a line for the videojs and the clsp plugin styles:
 
 ```html
 <head>
-  <link href="//path/to/videojs.min.css" rel="stylesheet">
-  <link href="//path/to/videojs-mse-over-clsp.min.css" rel="stylesheet">
+  <link href="//vjs.zencdn.net/6.2.5/video-js.min.css" rel="stylesheet">
+  <link href="//path/to/node_modules/clsp-videojs-plugin/dist/videojs-mse-over-clsp.min.css" rel="stylesheet">
 <head>
 ```
 
@@ -113,6 +121,7 @@ This is the simplest case. Get the script in whatever way you prefer and include
   class="video-js vjs-default-skin"
   controls
 >
+  <!-- standard streaming over TCP port 9001 -->
   <source
     src="clsp://<SFS IP address>:9001/<stream name>"
     type="video/mp4; codecs='avc1.42E01E'"
@@ -124,11 +133,11 @@ This is the simplest case. Get the script in whatever way you prefer and include
     type="video/mp4; codecs='avc1.42E01E'"
   />
   
-
+ 
 </video>
 
-<script src="//path/to/videojs.min.js"></script>
-<script src="//path/to/videojs-mse-over-clsp.min.js"></script>
+<script src="//vjs.zencdn.net/6.2.5/video.min.js"></script>
+<script src="//path/to/node_modules/clsp-videojs-plugin/dist/videojs-mse-over-clsp.min.js"></script>
 
 <script>
   var player = videojs('my-video');
@@ -139,7 +148,7 @@ This is the simplest case. Get the script in whatever way you prefer and include
 
 ### Webpack
 
-When using with Webpack, you will need to need to register the global videojs in your `webpack.config.js` file:
+When using with Webpack, you will need to register the global videojs in your `webpack.config.js` file:
 
 ```javascript
 {
@@ -157,6 +166,9 @@ import videojs from 'video.js';
 
 window.videojs = videojs;
 
+// The actual plugin function is exported by this module, but it is also
+// attached to the `Player.prototype`; so, there is no need to assign it
+// to a variable.
 require('videojs-mse-over-clsp');
 
 const player = videojs('my-video');
