@@ -57,8 +57,9 @@ export default function (MqttHandler) {
                   return false;
               }
 
+              
 
-              if (srcObj.src.startsWith("clsp:") === false) {
+              if (srcObj.src.startsWith("clsp") === false) {
                   console.log("srcObj.src is not clsp protocol");
                   return false;
               }

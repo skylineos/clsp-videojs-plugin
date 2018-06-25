@@ -141,6 +141,9 @@ function _clspRouter() {
         if (MqttUseSSL === true) {
             options.useSSL = true;
         }
+
+        console.log('MQTTClient', options);
+
         MQTTClient.connect(options);
     }
 

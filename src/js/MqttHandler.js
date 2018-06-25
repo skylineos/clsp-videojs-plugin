@@ -21,9 +21,19 @@ export default function (SrcsLookupTable) {
             }
             var parser = document.createElement('a');
 
-            // firefox/ie hack!
-            var kluged_src = _src.replace('clsp','http');
+            var useSSL = false;
+            var default_port;
+            var kluged_src;
 
+            if (_src.substring(0,5).toLowerCase() === 'clsps') {
+                useSSL = true;
+                kluged_src = _src.replace('clsps','https');   
+                default_port = 443;              
+            } else { 
+                // firefox/ie hack!
+                kluged_src = _src.replace('clsp','http');
+                default_port = 9001;
+            }
 
             parser.href = kluged_src;
             //parser.href = "http:" + parser.pathname;
@@ -32,35 +42,11 @@ export default function (SrcsLookupTable) {
             var port = parser.port;
             var t = parser.pathname.split("/");
             var streamName = t[t.length-1];
-            var sslport = "9003";
-            this.useSSL = false;
-                        
-
-            // if secure=1 in the clsp url we are using ssl no matter what            
-            // clsp://.../name?[secure=1]
-            parser.search.substr(1).split('&').forEach(function(item){
-                var t = item.split('=');
-                var n = t[0];
-                var v = t[1];
-                if ( n === 'secure' && v !== '0' )
-                {
-                    this.useSSL = true;
-                }
-            });
-            // if the window that we are in is ssl then we are required to use ssl
-            if (window.location.href.split(':')[0] === "https") {
-                this.useSSL = true;
-            }
-            
-            var default_port = "9001";
-            if (this.useSSL === true) {
-                default_port = "9003";
-            }
+                       
 
             if (port.length === 0) {
                 port = default_port;
             }
-
 
 
             // @ is a special address maening the server that loaded the web page.
@@ -73,6 +59,7 @@ export default function (SrcsLookupTable) {
             this.address = hostname;
             this.streamName = streamName;
             this.enabled = true;
+            this.useSSL = useSSL;
 
             SrcsLookupTable[_src] = this;
         }

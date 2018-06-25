@@ -20,6 +20,7 @@ export default class MqttTransport {
     this.clientId = iov.config.clientId;
     this.iov = iov;
 
+    console.log('looking for useSSL', iov);
     this.conduit = iov.mqttConduitCollection.addFromIov(this, iov);
   }
 

@@ -117,6 +117,14 @@ This is the simplest case. Get the script in whatever way you prefer and include
     src="clsp://<SFS IP address>:9001/<stream name>"
     type="video/mp4; codecs='avc1.42E01E'"
   />
+
+  <!-- or for secure clsp -->
+  <source
+    src="clsps://<SFS IP address>[:443]/<stream name>"
+    type="video/mp4; codecs='avc1.42E01E'"
+  />
+  
+
 </video>
 
 <script src="//path/to/videojs.min.js"></script>
