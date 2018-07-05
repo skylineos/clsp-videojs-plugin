@@ -16,6 +16,7 @@ const extractSass = new ExtractTextPlugin({
 module.exports = [
   {
     mode: 'development',
+    devtool: 'source-map',
     name: pluginName,
     entry: {
       [pluginName]: `./src/js/${pluginName}.js`,
