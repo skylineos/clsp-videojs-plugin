@@ -47,7 +47,7 @@ Chrome 52+ is required to run this videojs extension.  All other browsers are cu
 
 ### VideoJS
 
-VideoJS version >= 5 are supported.
+Video JS 6.7.1 is required.  This is the last version that correctly implements autoplay.  This plugin is compatible with the 7.x version of videojs, but due to the missing autoplay feature, its use is not recommended.
 
 
 ### Development Environment
@@ -104,7 +104,7 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
 
 ```html
 <head>
-  <link href="//vjs.zencdn.net/6.2.5/video-js.min.css" rel="stylesheet">
+  <link href="//vjs.zencdn.net/6.7.1/video-js.min.css" rel="stylesheet">
   <link href="//path/to/node_modules/clsp-videojs-plugin/dist/videojs-mse-over-clsp.min.css" rel="stylesheet">
 <head>
 ```
@@ -132,11 +132,11 @@ This is the simplest case. Get the script in whatever way you prefer and include
     src="clsps://<SFS IP address>[:443]/<stream name>"
     type="video/mp4; codecs='avc1.42E01E'"
   />
-  
- 
+
+
 </video>
 
-<script src="//vjs.zencdn.net/6.2.5/video.min.js"></script>
+<script src="//vjs.zencdn.net/6.7.1/video.min.js"></script>
 <script src="//path/to/node_modules/clsp-videojs-plugin/dist/videojs-mse-over-clsp.min.js"></script>
 
 <script>
