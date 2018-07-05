@@ -48,7 +48,7 @@ gulp.task('pre-build', () => {
 
 gulp.task('generate-clsp-conduit', async () => {
   // Construct the iframe contents
-  const mqttLibrary = fs.readFileSync('./node_modules/paho-mqtt/mqttws31-min.js', { encoding: 'utf8' });
+  const mqttLibrary = fs.readFileSync('./node_modules/paho-mqtt/paho-mqtt-min.js', { encoding: 'utf8' });
   const clspRouterLibrary = fs.readFileSync('./src/js/conduit/clspRouter.js', { encoding: 'utf8' });
   const iframeContents = jsStringEscape(mqttLibrary + '\n' + clspRouterLibrary);
 
