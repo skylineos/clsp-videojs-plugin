@@ -329,6 +329,24 @@ export default function (iov) {
         console.log(logmsg);
         */
         if (self.mediaSource.readyState === "open") {
+
+            if (self.sourceBuffer.buffered.length > 0 ) {
+                var start = self.sourceBuffer.buffered.start(0);
+                var end = self.sourceBuffer.buffered.end(0); 
+                var time_buffered =  end - start;
+                var limit = 15.0;
+                if (time_buffered > 30.0) {
+                    try {
+                        // observed this fail during a memry snapshot in chrome
+                        // otherwise no observed failure, so ignore exception.   
+                        self.sourceBuffer.remove(start, start+limit);
+                    } catch(e) {
+                        console.log(e);
+                    } 
+                 }
+            }
+
+
             if (self.vqueue.length > 0){
                 self._appendBuffer_event(self.vqueue[0]);
                 setTimeout(function() {
