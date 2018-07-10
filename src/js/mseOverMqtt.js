@@ -20,9 +20,10 @@ export default function (defaults, SrcsLookupTable, onPlayerReady) {
       errors: {
         PLAYER_ERR_NOT_COMPAT: {
           headline: 'This browser is unsupported.',
-          message: 'Chrome 52+ is required.',
-        },
+          message: 'Chrome 52+ is required.'
+        }
       },
+      timeout: 120 * 1000
     });
 
     if (utils.supported() === false) {
