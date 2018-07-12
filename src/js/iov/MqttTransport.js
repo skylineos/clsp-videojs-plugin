@@ -1,6 +1,6 @@
 import Debug from 'debug';
 
-const DEBUG_PREFIX = 'clsp:iov';
+const DEBUG_PREFIX = 'skyline:clsp:iov';
 
 export default class MqttTransport {
   constructor (id, iov) {
@@ -20,7 +20,7 @@ export default class MqttTransport {
     this.clientId = iov.config.clientId;
     this.iov = iov;
 
-    console.log('looking for useSSL', iov);
+    this.debug('looking for useSSL', iov);
     this.conduit = iov.mqttConduitCollection.addFromIov(this, iov);
   }
 

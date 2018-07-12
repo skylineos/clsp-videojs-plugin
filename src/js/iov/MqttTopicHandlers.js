@@ -1,6 +1,6 @@
 import Debug from 'debug';
 
-const DEBUG_PREFIX = 'clsp:iov';
+const DEBUG_PREFIX = 'skyline:clsp:iov';
 
 /**
  * route inbound messages/data to player's event handlers.

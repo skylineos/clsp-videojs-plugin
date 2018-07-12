@@ -1,3 +1,4 @@
+import Debug from 'debug';
 import videojs from 'video.js';
 
 import IOV from './iov/IOV';
@@ -13,6 +14,7 @@ export default function (SrcsLookupTable) {
             this.source_ = source;
             this.enabled = false;
             this.playing = false;
+            this.debug = Debug('skyline:clsp:MqttHandler');
         }
 
         src(_src) {
@@ -27,9 +29,9 @@ export default function (SrcsLookupTable) {
 
             if (_src.substring(0,5).toLowerCase() === 'clsps') {
                 useSSL = true;
-                kluged_src = _src.replace('clsps','https');   
-                default_port = 443;              
-            } else { 
+                kluged_src = _src.replace('clsps','https');
+                default_port = 443;
+            } else {
                 // firefox/ie hack!
                 kluged_src = _src.replace('clsp','http');
                 default_port = 9001;
@@ -74,7 +76,7 @@ export default function (SrcsLookupTable) {
                 address: this.address,
                 appStart: (iov) => {
                     // connected to MQTT procede to setting up callbacks
-                    //console.log("iov.player() called")
+                    // debug("iov.player() called")
                     var mqtt_player = iov.player();
                     var evt = new CustomEvent("mqttReady");
                     this.player().el().dispatchEvent( evt );

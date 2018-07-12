@@ -39,7 +39,7 @@ function _clspRouter() {
                 try {
                     mqtt_payload = JSON.stringify(m.data);
                 } catch( json_error ) {
-                    console.log("json stringify error: " + m.data);
+                    console.error("json stringify error: " + m.data);
                     return;
                 }
 
@@ -98,24 +98,23 @@ function _clspRouter() {
     /*
      * Callback which gets called when the connection is lost
      */
-    function onConnectionLost(message){ 
+    function onConnectionLost(message){
 
         if (Reconnect === -1) {
            Reconnect = setInterval(() => connect(), 2000);
         }
     }
-    
+
     MQTTClient.onConnectionLost = onConnectionLost;
 
     // perhaps the busiest function in this module ;)
     MQTTClient.onMessageArrived = function(message) {
-        //// console.log(message);
+        // console.log(message);
         try {
              routeInbound(message);
         }catch(e) {
             if (e) {
-                // console.log("Exception");
-                console.log(e);
+                console.error(e);
             }
         }
     };
@@ -142,7 +141,7 @@ function _clspRouter() {
             options.useSSL = true;
         }
 
-        console.log('MQTTClient', options);
+        // console.log('MQTTClient', options);
 
         MQTTClient.connect(options);
     }
@@ -154,8 +153,8 @@ function clspRouter() {
     try {
         _clspRouter();
     } catch(e) {
-        console.log("IFRAME error");
-        console.log(e);
+        console.error("IFRAME error");
+        console.error(e);
     }
 }
 

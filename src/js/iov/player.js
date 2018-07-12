@@ -1,6 +1,6 @@
 import Debug from 'debug';
 
-const DEBUG_PREFIX = 'clsp:iov';
+const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:player`);
 
 /**
@@ -13,7 +13,7 @@ const debug = Debug(`${DEBUG_PREFIX}:player`);
 */
 export default function (iov) {
     var self = {};
- 
+
     /*
     Used for determining the size of the internal buffer hidden from the MSE
     api by recording the size and time of each chunk of video upon buffer append
@@ -53,7 +53,7 @@ export default function (iov) {
         self.seqnumProcessed = 1; // last sequence number processed
         self.source_buffer_ready = false;
         self.dropCounter = 0;
-         
+
         // free resource
         URL.revokeObjectURL(self.mediaSource);
 
@@ -96,7 +96,7 @@ export default function (iov) {
         if ((self.LogSourceBuffer === true) &&
             (self.LogSourceBufferTopic !== null))
         {
-            //console.log("recording "+parseInt(bytearray.length)+" bytes of data");
+            //debug("recording "+parseInt(bytearray.length)+" bytes of data");
             var mqtt_msg = new Paho.MQTT.Message(bytearray);
             mqtt_msg.destinationName = self.LogSourceBufferTopic;
             MQTTClient.send(mqtt_msg);
@@ -154,8 +154,8 @@ export default function (iov) {
 
             // capture the initial segment
             self.moovBox = mqtt_msg.payloadBytes;
-            //console.log(typeof mqtt_msg.payloadBytes);
-            //console.log("received moov from server");
+            //debug(typeof mqtt_msg.payloadBytes);
+            //debug("received moov from server");
 
 
             self.state = "waiting-for-moof";
@@ -184,24 +184,24 @@ export default function (iov) {
             self.mediaSource.addEventListener('sourceopen' ,self._on_sourceopen);
             self.mediaSource.addEventListener('sourceended',self._on_sourceended);
             self.mediaSource.addEventListener('error',function(e) {
-                console.log("MSE error");
-                console.log(e);
+                console.error("MSE error");
+                console.error(e);
             });
 
             // now assign media source extensions
-            //console.log("Disregard: The play() request was interrupted ... its not an error!");
+            //debug("Disregard: The play() request was interrupted ... its not an error!");
             self.video.src = URL.createObjectURL(self.mediaSource);
 
             // subscribe to a sync topic that will be called if the stream that is feeding
             // the mse service dies and has to be restarted that this player should restart the stream
             var resync_topic = "iov/video/"+self.guid+"/resync";
-            console.log("Call " + resync_topic + " to resync stream");
-            iov.transport.subscribe(resync_topic, 
+            debug("Call " + resync_topic + " to resync stream");
+            iov.transport.subscribe(resync_topic,
                 function(mqtt_msg) {
-                    console.log("sync received re-initialize media source buffer");
+                    debug("sync received re-initialize media source buffer");
                     self.reinitializeMse();
                 }
-            );  
+            );
 
         });
 
@@ -212,7 +212,7 @@ export default function (iov) {
 
 
         if (self.source_buffer_ready == false) {
-            //console.log("media source not yet open dropping frame");
+            //debug("media source not yet open dropping frame");
             return;
         }
 
@@ -223,7 +223,7 @@ export default function (iov) {
         // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
         // the source buffer.
         if ((self.seqnum - self.seqnumProcessed) > self.MAX_SEQ_PROC) {
-            //console.log("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
+            //debug("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
             return; // DROP this frame since the borwser is falling
         }
 
@@ -235,13 +235,13 @@ export default function (iov) {
         moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
         moofBox[23] = self.seqnum & 0xFF;
 
-        //console.log("moof handler: data seqnum chunk ");
-        //console.log(self.seqnum);
+        //debug("moof handler: data seqnum chunk ");
+        //debug(self.seqnum);
 
         if ( self.sourceBuffer.updating === false ) {
             try {
-                //console.log(typeof moofBox);
-                //console.log("calling append buffer");
+                //debug(typeof moofBox);
+                //debug("calling append buffer");
                 self._appendBuffer_event(moofBox);
                 self.sourceBuffer.appendBuffer( moofBox );
                 self.seqnum += 1; // increment sequence number for next chunk
@@ -289,16 +289,16 @@ export default function (iov) {
         });
 
         self.sourceBuffer.addEventListener('updatestart',function(){
-            //console.log("On update start");
+            //debug("On update start");
         });
 
         self.sourceBuffer.addEventListener('error',function(e){
-            console.log("MSE sourceBffer error");
-            console.log(e);
+            console.error("MSE sourceBffer error");
+            console.error(e);
         });
 
         // send ftype+moov segments of video
-        //console.log("sending moov atom ");
+        //debug("sending moov atom ");
 
         // we are now able to process video
         self.source_buffer_ready = true;
@@ -308,7 +308,7 @@ export default function (iov) {
     };
 
     self._on_sourceended = function() {
-        //console.log("sourceended");
+        //debug("sourceended");
         self.stop();
         self.source_buffer_ready = false;
     };
@@ -326,23 +326,23 @@ export default function (iov) {
            " ready state = '" + self.mediaSource.readyState + "', " +
            " video queue size = " + parseInt(self.vqueue.length)
         ;
-        console.log(logmsg);
+        debug(logmsg);
         */
         if (self.mediaSource.readyState === "open") {
 
             if (self.sourceBuffer.buffered.length > 0 ) {
                 var start = self.sourceBuffer.buffered.start(0);
-                var end = self.sourceBuffer.buffered.end(0); 
+                var end = self.sourceBuffer.buffered.end(0);
                 var time_buffered =  end - start;
                 var limit = 15.0;
                 if (time_buffered > 30.0) {
                     try {
                         // observed this fail during a memry snapshot in chrome
-                        // otherwise no observed failure, so ignore exception.   
+                        // otherwise no observed failure, so ignore exception.
                         self.sourceBuffer.remove(start, start+limit);
                     } catch(e) {
-                        console.log(e);
-                    } 
+                        console.error(e);
+                    }
                  }
             }
 
@@ -374,9 +374,9 @@ export default function (iov) {
                         promise.then(function(_){}).catch(function(e){});
                     }
                 } catch( ex ) {
-                    console.log("Exception while trying to play:" + ex.message );
+                    console.error("Exception while trying to play:" + ex.message );
                 }
-                //console.log("setting video player from paused to play");
+                //debug("setting video player from paused to play");
             }
 
         }

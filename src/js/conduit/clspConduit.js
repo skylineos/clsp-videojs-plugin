@@ -50,10 +50,10 @@ function pframe_client(iframe, config, onReady) {
              try {
                 handler(message);
              } catch( e ) {
-                console.log( e );
+                console.error( e );
              }
         } else {
-            console.log("No handler for " + message.destinationName);
+            console.error("No handler for " + message.destinationName);
         }
     };
 
