@@ -1,8 +1,11 @@
+import Debug from 'debug';
 import videojs from 'video.js';
 
 import utils from './utils';
 
 export default function (MqttHandler) {
+  const debug = Debug('skyline:clsp:MqttSourceHandler');
+
   /*
      source handler for the source tag in html5:
      <video><source src="..." type="..."></video>
@@ -36,7 +39,7 @@ export default function (MqttHandler) {
                   if (type === "video/mp4; codecs='avc1.42E01E'") {
                       r = 'maybe';
                   } else {
-                      console.log("clsp type='" + type + "' rejected");
+                      debug("clsp type='" + type + "' rejected");
                   }
               }
               return r;
@@ -52,21 +55,21 @@ export default function (MqttHandler) {
                    videojs.mergeOptions(videojs.options, options);
 
               if (!srcObj.src) {
-                  console.log("srcObj doesn't contain src");
-                  console.log(srcObj);
+                  debug("srcObj doesn't contain src");
+                  debug(srcObj);
                   return false;
               }
 
-              
+
 
               if (srcObj.src.startsWith("clsp") === false) {
-                  console.log("srcObj.src is not clsp protocol");
+                  debug("srcObj.src is not clsp protocol");
                   return false;
               }
 
               /// restrict to chrome version 52 or greater
               if (utils.supported() === false) {
-                  console.log("Browser not supported. Chrome 52+ is required.");
+                  debug("Browser not supported. Chrome 52+ is required.");
                   return false;
               }
 

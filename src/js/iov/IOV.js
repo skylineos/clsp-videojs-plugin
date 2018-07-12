@@ -6,7 +6,7 @@ import MqttConduitCollection from './MqttConduitCollection';
 import MqttTransport from './MqttTransport';
 import _player from './player';
 
-const DEBUG_PREFIX = 'clsp:iov';
+const DEBUG_PREFIX = 'skyline:clsp:iov';
 
 /**
  * Internet of Video client. This module uses the MediaSource API to
@@ -56,17 +56,17 @@ export default class IOV {
     this.events = {
       connection_lost : function(responseObject) {
         //TODO close all players and display an error message
-        console.log("MQTT connection lost");
-        console.log(responseObject);
+        console.error("MQTT connection lost");
+        console.error(responseObject);
       },
 
       on_message: this.mqttTopicHandlers.msghandler,
 
       // generic exception handler
       exception: function(text,e) {
-        console.log(text);
+        console.error(text);
         if (typeof e !== 'undefined') {
-          console.log(e.stack);
+          console.error(e.stack);
         }
       }
     };
@@ -99,7 +99,7 @@ export default class IOV {
           console.error('network error', event.reason);
           break;
         default:
-          console.log("No match for event = " + eventType);
+          console.error("No match for event = " + eventType);
       }
     });
   }

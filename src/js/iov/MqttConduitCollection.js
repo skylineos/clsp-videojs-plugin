@@ -1,6 +1,6 @@
 import Debug from 'debug';
 
-const DEBUG_PREFIX = 'clsp:iov';
+const DEBUG_PREFIX = 'skyline:clsp:iov';
 
 export default class MqttConduitCollection {
   constructor (id) {
