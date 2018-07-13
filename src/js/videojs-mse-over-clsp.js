@@ -10,7 +10,7 @@ import MqttHandler from './MqttHandler';
 import MqttSourceHandler from './MqttSourceHandler';
 import mseOverMqtt from './mseOverMqtt';
 import utils from './utils';
-
+import IOV from './iov/IOV';
 import '../styles/videojs-mse-over-clsp.scss';
 
 /**
@@ -41,6 +41,7 @@ function initialize () {
   videojs.mqttHandler = mqttHandler;
   videojs.mqttSourceHandler = mqttSourceHandler;
   videojs.getTech('Html5').registerSourceHandler(mqttSourceHandler('html5'), 0);
+   
 
   // Default options for the plugin.
   const defaults = {};
@@ -52,6 +53,8 @@ function initialize () {
 
   // Register the plugin with video.js.
   // @todo - this is a side effect of
+  clspPlugin.clsp_IOV = IOV;  
+ 
   registerPlugin('clsp', clspPlugin);
 
   return clspPlugin;
@@ -67,3 +70,4 @@ clspPlugin.version = VERSION;
 clspPlugin.utils = utils;
 
 export default clspPlugin;
+
