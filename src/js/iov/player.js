@@ -14,6 +14,63 @@ const debug = Debug(`${DEBUG_PREFIX}:player`);
 export default function (iov) {
     var self = {};
 
+
+    self.change = function(newStream) {
+        var moov = null;
+        var moof = null;
+           
+        var on_req_resp = function (resp) {
+           var new_mimeCodec = resp.mimeCodec;
+           var new_guid = resp.guid; // stream guid
+
+           if ('MediaSource' in window && MediaSource.isTypeSupported(new_mimeCodec)) {
+               var initseg_topic = iov.config.clientId + "/init-segment/" + parseInt(Math.random()*1000000);
+
+                iov.transport.subscribe(initseg_topic, function(mqtt_msg) {
+                    var moov = mqtt_msg.payloadBytes; // store new MOOV atom.
+                    iov.transport.unsubscribe(initseg_topic);
+                    
+                    iov.transport.subscribe("iov/video/"+new_guid+"/live", function(moof_mqtt_msg) {
+                        var moofBox = moof_mqtt_msg.payloadBytes;
+                        self.vqueue.push( moofBox.slice(0) );
+
+                        // unsubscribe to existing live
+                        // 1) unsubscribe to remove avoid callback
+                        iov.transport.unsubscribe("iov/video/"+new_guid+"/live");
+                        // 2) unsubscribe to remove callback   
+                        iov.transport.unsubscribe("iov/video/"+self.guid+"/live");
+                        // 3) resubscribe with different callback           
+                        iov.transport.subscribe("iov/video/"+new_guid+"/live", self._on_moof);
+            
+                        // alter object properties to reflect new stream
+                        self.guid = new_guid;
+                        self.moovBox = moov;
+                        self.mimeCodec = new_mimeCodec;
+
+                        // remove media source buffer, reinitialize 
+                        self.reinitializeMse();
+                    });            
+                });
+
+                var play_request_topic = "iov/video/"+new_guid+"/play";
+                iov.transport.publish(play_request_topic,{
+                    initSegmentTopic: initseg_topic,
+                    clientId: iov.config.clientId
+                });
+
+            } else {
+                // the browser does not support this video format
+                self._fault("Unsupported mime codec " + self.mimeCodec);
+            }
+        };
+
+        var request = { clientId: iov.config.clientId };
+        var topic = "iov/video/"+window.btoa(newStream)+"/request";
+        iov.transport.transaction(topic,on_req_resp,request);
+    };
+    
+
+
     /*
     Used for determining the size of the internal buffer hidden from the MSE
     api by recording the size and time of each chunk of video upon buffer append
