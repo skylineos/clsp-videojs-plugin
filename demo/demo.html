@@ -150,6 +150,8 @@
               onPlayFailed: function(player) {
                 console.log("failed to play");
                 console.log(player);
+                 
+
               }
             });
           } else {
@@ -201,6 +203,7 @@
                                console.log(player);
                            }
                     });
+                     
                 });
 
                 //window.videojs(celm).clsp();
@@ -265,6 +268,97 @@
 
   <div id="videowall"></div>
 
+
+<hr>
+<h2>Video tour</h2>
+Enter a list of clsp urls separated by newline.
+<br>
+<textarea id="tour-list" rows="10" cols="80" style="overflow: scroll;">
+clsp://172.28.12.247/testpattern
+clsp://172.28.12.247:9001/FairfaxVideo0540_1
+clsp://172.28.12.248:9001/FairfaxVideo0350_57
+</textarea>
+
+<h3 id="now-playing"></h3>
+  <video id="tour-video"
+    width="352"
+    height="240"
+    autoplay
+  >
+  <source id="tour-first-source"
+    src=""
+    type="video/mp4; codecs='avc1.42E01E'"
+  />
+
+  </video>
+
+<br>
+
+Play time per <input type="number" id="tour-switch-interval" value="30"/>
+<button id="start-tour">Start Video Tour</button>
+
+
+<script>
+$(function(){
+  var tour = {
+    player: null,
+    plist: [],
+    interval: 30,
+    counter: 0,
+    timer: null
+  };  
+
+  $('#start-tour').click(function(){
+    tour.interval = parseInt($('#tour-switch-interval').val());
+    tour.plist = [];
+
+    var x = $('#tour-list').val().split("\n");
+    for(var i = 0; i < x.length; i++) {
+        if (x[i].length > 0) {
+            tour.plist.push(x[i]);  
+        }
+    }
+    
+
+
+
+    if (tour.plist.length < 2) {
+       alert("at least two source needed!");
+       return;
+    } 
+    $('#tour-first-source').attr('src',tour.plist[0]);
+
+    tour.counter = 1;
+    tour.player = null;
+
+    if (tour.timer !== null) {
+      clearInterval(tour.timer);
+    }
+    
+    $(function(){
+      tour.player = window.videojs('#tour-video');
+      tour.player.clsp(); // start playing first stream    
+      $('#now-playing').html(tour.plist[0]);        
+
+      tour.timer = setInterval(function(){
+        var url = tour.plist[ tour.counter % tour.plist.length ];
+        $('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');        
+
+        tour.counter += 1;
+        console.log("selected url", url, tour.plist);
+        tour.player.trigger('changesrc', {eid: 'tour-video', url:url}); 
+      }, tour.interval * 1000);
+
+    });
+
+  }); 
+
+});
+</script>
+
+
+
+<hr>
   <br>
   <h3>Headless clsp player</h3> 
   <video id="headless"
@@ -283,8 +377,13 @@ Example of how to play clsp without video js
 
 -->
 
+
+
+
   <div>Url for headless player: <input id="headless_url" tyle="text"/></div>
   <div><button id="headless_play">Headless Player</button></div> 
+
+
 
 <script>
 function parseUrl(_src) {
@@ -362,6 +461,11 @@ $(function(){
 });
 
 </script>
+
+
+
+
+
 
 </script>   
   

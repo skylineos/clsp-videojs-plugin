@@ -44,7 +44,8 @@ export default class IOV {
       // to be overriden by user.
       appStart: config.appStart,
       useSSL: config.useSSL || false,
-      videoElement: config.videoElement
+      videoElement: config.videoElement,
+      videoElementParent: null
     };
 
     // handle inbound messages from MQTT, including video
@@ -72,6 +73,63 @@ export default class IOV {
     };
   }
 
+
+  new_iov(config) {
+    var self = {};
+    self.id = 'x'+uuidv4();
+    
+    self.config = {
+      // web socket address defaults to the address of the server that loaded this page.
+      wsbroker: config.address,
+      // default port number
+      wsport: config.port,
+      // default clientId
+      clientId: self.id,
+      // to be overriden by user.
+      appStart: config.appStart,
+      useSSL: config.useSSL || false,
+      videoElement: config.videoElement,
+      videoElementParent: this.config.videoElementParent   
+    };
+
+
+    // handle inbound messages from MQTT, including video
+    // and distributes them to players.
+    self.mqttTopicHandlers = new MqttTopicHandlers(self.id, self);
+    self.mqttConduitCollection = this.mqttConduitCollection;
+    self.transport = new MqttTransport(self.id, self);
+
+    this.events = {
+      connection_lost : function(responseObject) {
+        //TODO close all players and display an error message
+        console.error("MQTT connection lost");
+        console.error(responseObject);
+      },
+
+
+      // keep the same topic handler
+      on_message: self.mqttTopicHandlers.msghandler,
+
+      // generic exception handler
+      exception: function(text,e) {
+        console.error(text);
+        if (typeof e !== 'undefined') {
+          console.error(e.stack);
+        }
+      }
+    };
+
+    self.new_iov = this.new_iov;
+    self.play = this.play;
+    self.getAvailableStreams = this.getAvailableStreams;
+    self.compatibilityCheck = this.compatibilityCheck;
+      
+
+    return self;
+  }  
+
+   
+
   initialize () {
     IOV.compatibilityCheck();
 
@@ -93,6 +151,9 @@ export default class IOV {
           conduit.inboundHandler(event.data);
           break;
         case 'ready':
+          if (this.config.videoElement.parentNode !== null) { 
+              this.config.videoElementParentId = this.config.videoElement.parentNode.id;
+          }   
           conduit.onReady();
           break;
         case 'fail':

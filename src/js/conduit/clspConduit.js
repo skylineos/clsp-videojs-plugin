@@ -146,18 +146,31 @@ window.mqttConduit = function( config, onReady ){
     iframe.setAttribute('style','display:none;');
     iframe.setAttribute('id',config.clientId);
 
+
     // attach hidden iframe to player
     //document.body.appendChild(iframe);
-    if (config.videoElement.parentNode !== null) {
+    console.log("conduit created");
+    if (config.videoElementParent !== null) {
+        config.videoElementParent.appendChild(iframe);
+        console.log("config.videoElementParent.appendChild");
+
+    } else if (config.videoElement.parentNode !== null) {
         config.videoElement.parentNode.appendChild(iframe);
+        config.videoElementParent = config.videoElement.parentNode; 
+        console.log("config.videoElement.parentNode.appendChild");
+
     } else {
         var t = setInterval(function(){
             if (config.videoElement.parentNode !== null) {
+                console.log("conduit starting");
                 config.videoElement.parentNode.appendChild(iframe);
+                config.videoElementParent = config.videoElement.parentNode;
+                console.log("config.videoElementParent", config.videoElementParent);
                 clearInterval(t);
             }
         },1000);
-    }
+    } 
+    
 
     return pframe_client(iframe,config,onReady);
 }

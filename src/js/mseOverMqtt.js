@@ -2,6 +2,9 @@ import videojs from 'video.js';
 
 import utils from './utils';
 
+
+window.iov_events = {};
+
 export default function (defaults, SrcsLookupTable, onPlayerReady) {
   /**
    * A video.js plugin.
@@ -30,6 +33,19 @@ export default function (defaults, SrcsLookupTable, onPlayerReady) {
       this.error({code: 'PLAYER_ERR_NOT_COMPAT', dismiss: false});
       return;
     }
+
+    this.on('changesrc', function(evt, data) {
+      console.log('changesrc', evt, data); 
+      var velm = document.getElementById(data.eid + '_html5_api');
+
+      var event = document.createEvent('Event');
+      event.initEvent('iov-change-src', true, true);
+
+      event.detail = data;  
+      velm.dispatchEvent(new CustomEvent('iov-change-src', event));
+    });
+
+   
 
     this.on('firstplay', function (e) {
       var spinner = this.player_.loadingSpinner;
@@ -101,6 +117,7 @@ export default function (defaults, SrcsLookupTable, onPlayerReady) {
             }, 0);
           });
         }
+
 
         // start playing video
         iov_player.play(

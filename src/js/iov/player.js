@@ -3,6 +3,53 @@ import Debug from 'debug';
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:player`);
 
+window.parse_clsp_url = function(_src) {
+    if (!_src) {
+        return;
+    }
+    var parser = document.createElement('a');
+
+    var useSSL = false;
+    var default_port;
+    var kluged_src;
+
+    if (_src.substring(0,5).toLowerCase() === 'clsps') {
+        useSSL = true;
+        kluged_src = _src.replace('clsps','https');
+        default_port = 443;
+    } else {
+        // firefox/ie hack!
+        kluged_src = _src.replace('clsp','http');
+        default_port = 9001;
+    }
+
+    parser.href = kluged_src;
+    //parser.href = "http:" + parser.pathname;
+
+    var hostname = parser.hostname;
+    var port = parser.port;
+    var t = parser.pathname.split("/");
+    var streamName = t[t.length-1];
+
+    if (port.length === 0) {
+        port = default_port;
+    }
+
+
+    // @ is a special address maening the server that loaded the web page.
+    if (hostname === '@') {
+        hostname = window.location.hostname;
+    }
+
+    return { 
+        port: parseInt(port),
+        address: hostname,
+        streamName : streamName,
+        useSSL : useSSL
+    };    
+};
+
+
 /**
  * Responsible for receiving stream input and routing it to the media source
  * buffer for rendering on the video tag. There is some 'light' reworking of
@@ -14,11 +61,37 @@ const debug = Debug(`${DEBUG_PREFIX}:player`);
 export default function (iov) {
     var self = {};
 
+    self.change_event = function(evt) {
+        var url = evt.detail.url;
+        console.log("change_event", url);
 
-    self.change = function(newStream) {
+        // parse url, extract the ip of the sfs and the port as well as useSSL
+        var new_cfg = parse_clsp_url(url);
+
+        if (new_cfg.address === iov.config.wsbroker) {
+            self.change(new_cfg.streamName, null);
+        } else {
+            var next_iov;
+
+            new_cfg.videoElement = iov.config.videoElement;
+            new_cfg.appStart = function(next_iov) {
+                // conected to new mqtt
+                console.log('new_cfg.appStart');
+                self.change(new_cfg.streamName, next_iov);
+            };
+ 
+            // first create a new transport
+            next_iov = iov.new_iov(new_cfg);
+            
+        }
+    };
+
+    self.change = function(newStream, next_iov) {
         var moov = null;
         var moof = null;
            
+        console.log("change",newStream,next_iov);
+
         var on_req_resp = function (resp) {
            var new_mimeCodec = resp.mimeCodec;
            var new_guid = resp.guid; // stream guid
@@ -26,22 +99,29 @@ export default function (iov) {
            if ('MediaSource' in window && MediaSource.isTypeSupported(new_mimeCodec)) {
                var initseg_topic = iov.config.clientId + "/init-segment/" + parseInt(Math.random()*1000000);
 
-                iov.transport.subscribe(initseg_topic, function(mqtt_msg) {
+               // tranport will either be the exiting one or the new iov's tranport
+               var transport = (next_iov === null) ? iov.transport : next_iov.transport;
+
+               transport.subscribe(initseg_topic, function(mqtt_msg) {
                     var moov = mqtt_msg.payloadBytes; // store new MOOV atom.
-                    iov.transport.unsubscribe(initseg_topic);
+                    console.log("received moov for", new_guid);
+                    transport.unsubscribe(initseg_topic);
                     
-                    iov.transport.subscribe("iov/video/"+new_guid+"/live", function(moof_mqtt_msg) {
+                    transport.subscribe("iov/video/"+new_guid+"/live", function(moof_mqtt_msg) {
                         var moofBox = moof_mqtt_msg.payloadBytes;
                         self.vqueue.push( moofBox.slice(0) );
 
                         // unsubscribe to existing live
                         // 1) unsubscribe to remove avoid callback
-                        iov.transport.unsubscribe("iov/video/"+new_guid+"/live");
-                        // 2) unsubscribe to remove callback   
+                        transport.unsubscribe("iov/video/"+new_guid+"/live");
+
+                        // 2) unsubscribe to livee callback for the old stream   
                         iov.transport.unsubscribe("iov/video/"+self.guid+"/live");
+
                         // 3) resubscribe with different callback           
-                        iov.transport.subscribe("iov/video/"+new_guid+"/live", self._on_moof);
+                        transport.subscribe("iov/video/"+new_guid+"/live", self._on_moof);
             
+
                         // alter object properties to reflect new stream
                         self.guid = new_guid;
                         self.moovBox = moov;
@@ -49,13 +129,25 @@ export default function (iov) {
 
                         // remove media source buffer, reinitialize 
                         self.reinitializeMse();
+
+                        if (next_iov !== null) {
+                            if (next_iov.config.parentNodeId !== null) {
+                                var iframe_elm = document.getElementById(iov.config.clientId);
+                                var p = document.getElementById(next_iov.config.parentNodeId);
+                                if (p) {
+                                    p.removeChild(iframe_elm);
+                                }
+                            }
+                            iov = next_iov; // replace iov variable with the new one created.
+                        }
+
                     });            
                 });
 
                 var play_request_topic = "iov/video/"+new_guid+"/play";
-                iov.transport.publish(play_request_topic,{
+                transport.publish(play_request_topic,{
                     initSegmentTopic: initseg_topic,
-                    clientId: iov.config.clientId
+                    clientId: (next_iov === null) ? iov.config.clientId: next_iov.config.clientId
                 });
 
             } else {
@@ -66,7 +158,11 @@ export default function (iov) {
 
         var request = { clientId: iov.config.clientId };
         var topic = "iov/video/"+window.btoa(newStream)+"/request";
-        iov.transport.transaction(topic,on_req_resp,request);
+        if (next_iov === null) {
+            iov.transport.transaction(topic,on_req_resp,request);
+        } else {
+            next_iov.transport.transaction(topic,on_req_resp,request);
+        }
     };
     
 
@@ -110,6 +206,7 @@ export default function (iov) {
         self.seqnumProcessed = 1; // last sequence number processed
         self.source_buffer_ready = false;
         self.dropCounter = 0;
+ 
 
         // free resource
         URL.revokeObjectURL(self.mediaSource);
@@ -236,6 +333,11 @@ export default function (iov) {
                 parent.replaceChild(clone,self.video);
                 self.video = clone;
             }
+            
+            var event = document.createEvent('Event');
+            event.initEvent('iov-change-src', true, true);
+            self.video.addEventListener('iov-change-src', self.change_event, false);
+            console.log("iov-change-src on id = ",self.video.id);
 
 
             self.mediaSource.addEventListener('sourceopen' ,self._on_sourceopen);
@@ -365,6 +467,21 @@ export default function (iov) {
     };
 
     self._on_sourceended = function() {
+
+
+        if (self.sourceBuffer.buffered.length > 0 ) {
+           var start = self.sourceBuffer.buffered.start(0);
+           var end = self.sourceBuffer.buffered.end(0);
+           try {
+               // observed this fail during a memry snapshot in chrome
+               // otherwise no observed failure, so ignore exception.
+               self.sourceBuffer.remove(start, start+limit);
+           } catch(e) {
+               console.error(e);
+           }
+        }
+        
+
         //debug("sourceended");
         self.stop();
         self.source_buffer_ready = false;
