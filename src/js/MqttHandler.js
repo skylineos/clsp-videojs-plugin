@@ -92,7 +92,7 @@ export default function (SrcsLookupTable) {
                 videoElement: velm
             });
 
-            iov.initialize(this.player());
+            iov.initialize(this);
         }
 
 
