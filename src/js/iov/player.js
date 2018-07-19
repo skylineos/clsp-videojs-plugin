@@ -137,6 +137,14 @@ export default function (iov) {
                                 if (p) {
                                     p.removeChild(iframe_elm);
                                 }
+
+                                // remove code from iframe.
+                                if (typeof iframe_elm.srcdoc !== 'undefined' ) {
+                                    iframe_elm.srcdoc = "";
+                                } else {
+                                    window.srcDoc( iframe_elm, "" );
+                                }
+
                             }
                             iov = next_iov; // replace iov variable with the new one created.
                         }
@@ -441,9 +449,13 @@ export default function (iov) {
         self.sourceBuffer.addEventListener('updateend', self._on_updateend);
         self.sourceBuffer.addEventListener('update', function() {
             if ( (self.sourceBuffer.updating === false) && (self.vqueue.length > 0) ) {
-                self._appendBuffer_event(self.vqueue[0]);
-                self.sourceBuffer.appendBuffer( self.vqueue[0] );
-                self.vqueue = self.vqueue.slice(1);
+                try {
+                    self._appendBuffer_event(self.vqueue[0]);
+                    self.sourceBuffer.appendBuffer( self.vqueue[0] );
+                    self.vqueue = self.vqueue.slice(1);
+                } catch(e) {
+                    console.log("error while source buffer append", e);
+                } 
             }
         });
 

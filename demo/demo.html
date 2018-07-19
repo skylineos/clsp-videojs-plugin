@@ -338,7 +338,12 @@ $(function(){
     $(function(){
       tour.player = window.videojs('#tour-video');
       tour.player.clsp(); // start playing first stream    
-      $('#now-playing').html(tour.plist[0]);        
+      $('#now-playing').html(tour.plist[0]);      
+
+      tour.player.on("network-error", function(evt){
+          console.log("!!!!! Handled network-error", evt);
+      }); 
+  
 
       tour.timer = setInterval(function(){
         var url = tour.plist[ tour.counter % tour.plist.length ];

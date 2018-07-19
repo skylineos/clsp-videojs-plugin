@@ -130,7 +130,7 @@ export default class IOV {
 
    
 
-  initialize () {
+  initialize (MqttHandler) {
     IOV.compatibilityCheck();
 
     // route inbound data from a frame running mqtt to the appropriate player
@@ -157,7 +157,8 @@ export default class IOV {
           conduit.onReady();
           break;
         case 'fail':
-          console.error('network error', event.reason);
+          console.log('network error', event.reason);
+          MqttHandler.player().trigger("network-error", event.reason);
           break;
         default:
           console.error("No match for event = " + eventType);
