@@ -3,13 +3,14 @@ import videojs from 'video.js';
 
 import IOV from './iov/IOV';
 
-const Component = videojs.getComponent('Component');
-
 export default function (SrcsLookupTable) {
+    const Component = videojs.getComponent('Component');
+
     class MqttHandler extends Component {
 
-        constructor(source, tech, options) {
+        constructor(source, tech, options, player) {
             super(tech,options.mqtt);
+            this.playerInstance = player;
             this.tech_ = tech;
             this.source_ = source;
             this.enabled = false;
@@ -92,7 +93,7 @@ export default function (SrcsLookupTable) {
                 videoElement: velm
             });
 
-            iov.initialize();
+            iov.initialize(this.playerInstance);
         }
 
 

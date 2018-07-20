@@ -77,7 +77,7 @@ export default class IOV {
   new_iov(config) {
     var self = {};
     self.id = 'x'+uuidv4();
-    
+
     self.config = {
       // web socket address defaults to the address of the server that loaded this page.
       wsbroker: config.address,
@@ -89,7 +89,7 @@ export default class IOV {
       appStart: config.appStart,
       useSSL: config.useSSL || false,
       videoElement: config.videoElement,
-      videoElementParent: this.config.videoElementParent   
+      videoElementParent: this.config.videoElementParent
     };
 
 
@@ -123,14 +123,14 @@ export default class IOV {
     self.play = this.play;
     self.getAvailableStreams = this.getAvailableStreams;
     self.compatibilityCheck = this.compatibilityCheck;
-      
+
 
     return self;
-  }  
+  }
 
-   
 
-  initialize () {
+
+  initialize (player) {
     IOV.compatibilityCheck();
 
     // route inbound data from a frame running mqtt to the appropriate player
@@ -151,13 +151,14 @@ export default class IOV {
           conduit.inboundHandler(event.data);
           break;
         case 'ready':
-          if (this.config.videoElement.parentNode !== null) { 
+          if (this.config.videoElement.parentNode !== null) {
               this.config.videoElementParentId = this.config.videoElement.parentNode.id;
-          }   
+          }
           conduit.onReady();
           break;
         case 'fail':
-          console.error('network error', event.reason);
+          this.debug('network error', event.data.reason);
+          player.trigger("network-error", event.data.reason);
           break;
         default:
           console.error("No match for event = " + eventType);

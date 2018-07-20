@@ -49,7 +49,15 @@ function _clspRouter() {
             }
         } catch(e) {
             // we are dead!
-            MQTTClient.disconnect();
+           send({
+               event: 'fail',
+               reason: "network failure"
+            });
+            try {
+                MQTTClient.disconnect();
+            } catch(e) {
+                console.error(e);
+            }
         }
 
     }
@@ -99,9 +107,12 @@ function _clspRouter() {
      * Callback which gets called when the connection is lost
      */
     function onConnectionLost(message){
-
+        send({
+            event: 'fail',
+            reason: "connection lost error code " + parseInt(message.errorCode)
+        });
         if (Reconnect === -1) {
-           Reconnect = setInterval(() => connect(), 2000);
+            Reconnect = setInterval(() => connect(), 2000);
         }
     }
 
@@ -141,9 +152,15 @@ function _clspRouter() {
             options.useSSL = true;
         }
 
-        // console.log('MQTTClient', options);
-
-        MQTTClient.connect(options);
+        try {
+            MQTTClient.connect(options);
+        } catch(e) {
+            console.error("connect failed", e);
+            send({
+                event: 'fail',
+                reason: "connect failed"
+            });
+        }
     }
 
     connect();

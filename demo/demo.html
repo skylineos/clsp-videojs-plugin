@@ -150,7 +150,7 @@
               onPlayFailed: function(player) {
                 console.log("failed to play");
                 console.log(player);
-                 
+
 
               }
             });
@@ -203,7 +203,7 @@
                                console.log(player);
                            }
                     });
-                     
+
                 });
 
                 //window.videojs(celm).clsp();
@@ -275,8 +275,8 @@ Enter a list of clsp urls separated by newline.
 <br>
 <textarea id="tour-list" rows="10" cols="80" style="overflow: scroll;">
 clsp://172.28.12.247/testpattern
-clsp://172.28.12.247:9001/FairfaxVideo0540_1
-clsp://172.28.12.248:9001/FairfaxVideo0350_57
+clsp://172.28.12.57:9001/FairfaxVideo0520
+clsp://172.28.12.57:9001/40004
 </textarea>
 
 <h3 id="now-playing"></h3>
@@ -294,7 +294,7 @@ clsp://172.28.12.248:9001/FairfaxVideo0350_57
 
 <br>
 
-Play time per <input type="number" id="tour-switch-interval" value="30"/>
+Play time per <input type="number" id="tour-switch-interval" value="10"/>
 <button id="start-tour">Start Video Tour</button>
 
 
@@ -303,10 +303,10 @@ $(function(){
   var tour = {
     player: null,
     plist: [],
-    interval: 30,
+    interval: 10,
     counter: 0,
     timer: null
-  };  
+  };
 
   $('#start-tour').click(function(){
     tour.interval = parseInt($('#tour-switch-interval').val());
@@ -315,17 +315,17 @@ $(function(){
     var x = $('#tour-list').val().split("\n");
     for(var i = 0; i < x.length; i++) {
         if (x[i].length > 0) {
-            tour.plist.push(x[i]);  
+            tour.plist.push(x[i]);
         }
     }
-    
+
 
 
 
     if (tour.plist.length < 2) {
        alert("at least two source needed!");
        return;
-    } 
+    }
     $('#tour-first-source').attr('src',tour.plist[0]);
 
     tour.counter = 1;
@@ -334,24 +334,30 @@ $(function(){
     if (tour.timer !== null) {
       clearInterval(tour.timer);
     }
-    
+
     $(function(){
       tour.player = window.videojs('#tour-video');
-      tour.player.clsp(); // start playing first stream    
-      $('#now-playing').html(tour.plist[0]);        
+      tour.player.clsp(); // start playing first stream
+      $('#now-playing').html(tour.plist[0]);
+
+      tour.player.on("network-error", function(evt, message){
+          console.log("!!!!! Handled network-error", evt);
+          console.log(message);
+      });
+
 
       tour.timer = setInterval(function(){
         var url = tour.plist[ tour.counter % tour.plist.length ];
-        $('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');        
+        $('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
 
         tour.counter += 1;
         console.log("selected url", url, tour.plist);
-        tour.player.trigger('changesrc', {eid: 'tour-video', url:url}); 
+        tour.player.trigger('changesrc', {eid: 'tour-video', url:url});
       }, tour.interval * 1000);
 
     });
 
-  }); 
+  });
 
 });
 </script>
@@ -360,7 +366,7 @@ $(function(){
 
 <hr>
   <br>
-  <h3>Headless clsp player</h3> 
+  <h3>Headless clsp player</h3>
   <video id="headless"
     width="352"
     height="240"
@@ -381,7 +387,7 @@ Example of how to play clsp without video js
 
 
   <div>Url for headless player: <input id="headless_url" tyle="text"/></div>
-  <div><button id="headless_play">Headless Player</button></div> 
+  <div><button id="headless_play">Headless Player</button></div>
 
 
 
@@ -434,26 +440,26 @@ function parseUrl(_src) {
 
 $(function(){
     $('#headless_play').click(function(){
-////////////////////////////////////////////////  
+////////////////////////////////////////////////
 // headless play demo
-////////////////////////////////////////////////    
+////////////////////////////////////////////////
      var src = $('#headless_url').val();
      var iov_config = parseUrl(src);
 
      iov_config.videoElement = document.getElementById('headless');
      iov_config.appStart = function(iov) {
         iovPlayer = iov.player();
-        iovPlayer.play('headless', iov_config.streamName, 
+        iovPlayer.play('headless', iov_config.streamName,
            function() {
               console.log("first chunk of video received, remove poster if its playing");
            },
            function() {
               console.log("video received");
-           } 
+           }
        );
-     }; 
+     };
 
-     var IOV = videojs.getPlugin('clsp').clsp_IOV; 
+     var IOV = videojs.getPlugin('clsp').clsp_IOV;
      var iov = new IOV(iov_config);
      iov.initialize();
 /////////////////////////////////////////////////
@@ -467,8 +473,8 @@ $(function(){
 
 
 
-</script>   
-  
+</script>
+
 
 
   <template id="cell">

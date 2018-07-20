@@ -41,12 +41,12 @@ window.parse_clsp_url = function(_src) {
         hostname = window.location.hostname;
     }
 
-    return { 
+    return {
         port: parseInt(port),
         address: hostname,
         streamName : streamName,
         useSSL : useSSL
-    };    
+    };
 };
 
 
@@ -63,7 +63,6 @@ export default function (iov) {
 
     self.change_event = function(evt) {
         var url = evt.detail.url;
-        console.log("change_event", url);
 
         // parse url, extract the ip of the sfs and the port as well as useSSL
         var new_cfg = parse_clsp_url(url);
@@ -76,21 +75,18 @@ export default function (iov) {
             new_cfg.videoElement = iov.config.videoElement;
             new_cfg.appStart = function(next_iov) {
                 // conected to new mqtt
-                console.log('new_cfg.appStart');
                 self.change(new_cfg.streamName, next_iov);
             };
- 
+
             // first create a new transport
             next_iov = iov.new_iov(new_cfg);
-            
+
         }
     };
 
     self.change = function(newStream, next_iov) {
         var moov = null;
         var moof = null;
-           
-        console.log("change",newStream,next_iov);
 
         var on_req_resp = function (resp) {
            var new_mimeCodec = resp.mimeCodec;
@@ -104,9 +100,8 @@ export default function (iov) {
 
                transport.subscribe(initseg_topic, function(mqtt_msg) {
                     var moov = mqtt_msg.payloadBytes; // store new MOOV atom.
-                    console.log("received moov for", new_guid);
                     transport.unsubscribe(initseg_topic);
-                    
+
                     transport.subscribe("iov/video/"+new_guid+"/live", function(moof_mqtt_msg) {
                         var moofBox = moof_mqtt_msg.payloadBytes;
                         self.vqueue.push( moofBox.slice(0) );
@@ -115,19 +110,19 @@ export default function (iov) {
                         // 1) unsubscribe to remove avoid callback
                         transport.unsubscribe("iov/video/"+new_guid+"/live");
 
-                        // 2) unsubscribe to livee callback for the old stream   
+                        // 2) unsubscribe to livee callback for the old stream
                         iov.transport.unsubscribe("iov/video/"+self.guid+"/live");
 
-                        // 3) resubscribe with different callback           
+                        // 3) resubscribe with different callback
                         transport.subscribe("iov/video/"+new_guid+"/live", self._on_moof);
-            
+
 
                         // alter object properties to reflect new stream
                         self.guid = new_guid;
                         self.moovBox = moov;
                         self.mimeCodec = new_mimeCodec;
 
-                        // remove media source buffer, reinitialize 
+                        // remove media source buffer, reinitialize
                         self.reinitializeMse();
 
                         if (next_iov !== null) {
@@ -137,11 +132,19 @@ export default function (iov) {
                                 if (p) {
                                     p.removeChild(iframe_elm);
                                 }
+
+                                // remove code from iframe.
+                                if (typeof iframe_elm.srcdoc !== 'undefined' ) {
+                                    iframe_elm.srcdoc = "";
+                                } else {
+                                    window.srcDoc( iframe_elm, "" );
+                                }
+
                             }
                             iov = next_iov; // replace iov variable with the new one created.
                         }
 
-                    });            
+                    });
                 });
 
                 var play_request_topic = "iov/video/"+new_guid+"/play";
@@ -164,7 +167,7 @@ export default function (iov) {
             next_iov.transport.transaction(topic,on_req_resp,request);
         }
     };
-    
+
 
 
     /*
@@ -206,7 +209,7 @@ export default function (iov) {
         self.seqnumProcessed = 1; // last sequence number processed
         self.source_buffer_ready = false;
         self.dropCounter = 0;
- 
+
 
         // free resource
         URL.revokeObjectURL(self.mediaSource);
@@ -333,11 +336,11 @@ export default function (iov) {
                 parent.replaceChild(clone,self.video);
                 self.video = clone;
             }
-            
+
             var event = document.createEvent('Event');
             event.initEvent('iov-change-src', true, true);
             self.video.addEventListener('iov-change-src', self.change_event, false);
-            console.log("iov-change-src on id = ",self.video.id);
+            debug("iov-change-src on id = ", self.video.id);
 
 
             self.mediaSource.addEventListener('sourceopen' ,self._on_sourceopen);
@@ -441,9 +444,13 @@ export default function (iov) {
         self.sourceBuffer.addEventListener('updateend', self._on_updateend);
         self.sourceBuffer.addEventListener('update', function() {
             if ( (self.sourceBuffer.updating === false) && (self.vqueue.length > 0) ) {
-                self._appendBuffer_event(self.vqueue[0]);
-                self.sourceBuffer.appendBuffer( self.vqueue[0] );
-                self.vqueue = self.vqueue.slice(1);
+                try {
+                    self._appendBuffer_event(self.vqueue[0]);
+                    self.sourceBuffer.appendBuffer( self.vqueue[0] );
+                    self.vqueue = self.vqueue.slice(1);
+                } catch(e) {
+                    console.error("error while source buffer append", e);
+                }
             }
         });
 
@@ -480,7 +487,7 @@ export default function (iov) {
                console.error(e);
            }
         }
-        
+
 
         //debug("sourceended");
         self.stop();
