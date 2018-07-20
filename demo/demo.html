@@ -340,8 +340,9 @@ $(function(){
       tour.player.clsp(); // start playing first stream
       $('#now-playing').html(tour.plist[0]);
 
-      tour.player.on("network-error", function(evt){
+      tour.player.on("network-error", function(evt, message){
           console.log("!!!!! Handled network-error", evt);
+          console.log(message);
       });
 
 

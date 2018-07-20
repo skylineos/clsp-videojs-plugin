@@ -8,8 +8,9 @@ export default function (SrcsLookupTable) {
 
     class MqttHandler extends Component {
 
-        constructor(source, tech, options) {
+        constructor(source, tech, options, player) {
             super(tech,options.mqtt);
+            this.playerInstance = player;
             this.tech_ = tech;
             this.source_ = source;
             this.enabled = false;
@@ -92,14 +93,7 @@ export default function (SrcsLookupTable) {
                 videoElement: velm
             });
 
-            // @todo - we are accessing an internal property here, which is subject
-            // to change in future versions of videojs.  Is there a way for us to get
-            // the ID without using this property?  Better yet, is it possible to
-            // pass the player instance here rather than have to look it up through
-            // videojs?
-            const player = videojs.getPlayer(this.player().options_.playerId);
-
-            iov.initialize(player);
+            iov.initialize(this.playerInstance);
         }
 
 
