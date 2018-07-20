@@ -1547,11 +1547,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     var MqttHandler = function (_Component) {
         _inherits(MqttHandler, _Component);
 
-        function MqttHandler(source, tech, options) {
+        function MqttHandler(source, tech, options, player) {
             _classCallCheck(this, MqttHandler);
 
             var _this = _possibleConstructorReturn(this, (MqttHandler.__proto__ || Object.getPrototypeOf(MqttHandler)).call(this, tech, options.mqtt));
 
+            _this.playerInstance = player;
             _this.tech_ = tech;
             _this.source_ = source;
             _this.enabled = false;
@@ -1634,14 +1635,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                     videoElement: velm
                 });
 
-                // @todo - we are accessing an internal property here, which is subject
-                // to change in future versions of videojs.  Is there a way for us to get
-                // the ID without using this property?  Better yet, is it possible to
-                // pass the player instance here rather than have to look it up through
-                // videojs?
-                var player = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlayer(this.player().options_.playerId);
-
-                iov.initialize(player);
+                iov.initialize(this.playerInstance);
             }
         }]);
 
@@ -1745,8 +1739,14 @@ __webpack_require__.r(__webpack_exports__);
                 var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
                 var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options, { mqtt: { mode: mode } });
+                // @todo - we are accessing an internal property here, which is subject
+                // to change in future versions of videojs.  Is there a way for us to get
+                // the ID without using this property?  Better yet, is it possible to
+                // pass the player instance here rather than have to look it up through
+                // videojs?
+                var player = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlayer(tech.options_.playerId);
 
-                tech.mqtt = new MqttHandler(srcObj, tech, localOptions);
+                tech.mqtt = new MqttHandler(srcObj, tech, localOptions, player);
                 tech.mqtt.src(srcObj.src);
                 return tech.mqtt;
             }
