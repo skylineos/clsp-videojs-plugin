@@ -56,8 +56,8 @@ function _clspRouter() {
             try {
                 MQTTClient.disconnect();
             } catch(e) {
-                console.log(e);
-            } 
+                console.error(e);
+            }
         }
 
     }
@@ -111,7 +111,7 @@ function _clspRouter() {
             event: 'fail',
             reason: "connection lost error code " + parseInt(message.errorCode)
         });
-        if (Reconnect === -1) { 
+        if (Reconnect === -1) {
             Reconnect = setInterval(() => connect(), 2000);
         }
     }
@@ -152,11 +152,10 @@ function _clspRouter() {
             options.useSSL = true;
         }
 
-        // console.log('MQTTClient', options);
         try {
             MQTTClient.connect(options);
         } catch(e) {
-            console.log("connect failed", e);
+            console.error("connect failed", e);
             send({
                 event: 'fail',
                 reason: "connect failed"

@@ -35,24 +35,23 @@ export default function (defaults, SrcsLookupTable, onPlayerReady) {
     }
 
     this.on('changesrc', function(evt, data) {
-      console.log('changesrc', evt, data); 
       var velm = document.getElementById(data.eid + '_html5_api');
 
       var event = document.createEvent('Event');
       event.initEvent('iov-change-src', true, true);
 
-      event.detail = data;  
+      event.detail = data;
       velm.dispatchEvent(new CustomEvent('iov-change-src', event));
     });
 
-   
+
 
     this.on('firstplay', function (e) {
       var spinner = this.player_.loadingSpinner;
       var videojs_player = this.player_;
 
       //TODO: This seems to screw up the video js error function.  Is this necessary?
-      // work around bogus error code. 
+      // work around bogus error code.
       /*var old_error = Object.assign({}, videojs_player.error());
       videojs_player.error = function (evt) {
         if (typeof evt === 'undefined') {
