@@ -4,7 +4,7 @@ import uuidv4 from 'uuid/v4';
 import MqttTopicHandlers from './MqttTopicHandlers';
 import MqttConduitCollection from './MqttConduitCollection';
 import MqttTransport from './MqttTransport';
-import _player from './player';
+import IOVPlayer from './player';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 
@@ -124,11 +124,8 @@ export default class IOV {
     self.getAvailableStreams = this.getAvailableStreams;
     self.compatibilityCheck = this.compatibilityCheck;
 
-
     return self;
   }
-
-
 
   initialize (player) {
     IOV.compatibilityCheck();
@@ -167,7 +164,7 @@ export default class IOV {
   }
 
   player () {
-    return _player(this);
+    return IOVPlayer.factory(this);
   }
 
   // query remote server and get a list of all stream names

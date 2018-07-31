@@ -86,7 +86,6 @@ export default function (defaults, SrcsLookupTable, onPlayerReady) {
         // dynamically alter the control bar below the video tag.
         function setupControlBar () {
           videojs_player.controlBar.addClass('vjs-live');
-          window._ThePlayer = videojs_player;
 
           var playToggle = videojs_player.controlBar.children_[0].el_;
           playToggle.addEventListener('click', function () {

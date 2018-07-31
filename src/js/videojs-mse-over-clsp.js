@@ -41,7 +41,7 @@ function initialize () {
   videojs.mqttHandler = mqttHandler;
   videojs.mqttSourceHandler = mqttSourceHandler;
   videojs.getTech('Html5').registerSourceHandler(mqttSourceHandler('html5'), 0);
-   
+
 
   // Default options for the plugin.
   const defaults = {};
@@ -53,8 +53,8 @@ function initialize () {
 
   // Register the plugin with video.js.
   // @todo - this is a side effect of
-  clspPlugin.clsp_IOV = IOV;  
- 
+  clspPlugin.clsp_IOV = IOV;
+
   registerPlugin('clsp', clspPlugin);
 
   return clspPlugin;
