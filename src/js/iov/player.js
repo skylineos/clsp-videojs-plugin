@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import videojs from 'video.js';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:player`);
@@ -193,13 +194,13 @@ export default function (iov) {
 
 
     self._fault = function(err) {
-        _ThePlayer.errors.extend({
+        self.videoPlayer.errors.extend({
             PLAYER_ERR_IOV: {
                 headline: 'Error Playing Stream',
                 message: err
             }
         });
-        _ThePlayer.error({code: 'PLAYER_ERR_IOV'});
+        self.videoPlayer.error({code: 'PLAYER_ERR_IOV'});
         self.state = "fault";
     }
 
@@ -226,10 +227,12 @@ export default function (iov) {
 
     self.play = function(eid, streamName, onFirstChunk, onVideoRecv) {
         self.eid = eid;
+        self.id = eid.replace('_html5_api', '');
         self.streamName = streamName;
         self.onFirstChunk = onFirstChunk;
         self.video = document.getElementById( eid );
         self.onVideoRecv = onVideoRecv;
+        self.videoPlayer = videojs.getPlayer(self.id);
 
         if (typeof self.video === 'undefined') {
             self._fault("Unable to match id '"+eid+"'");
@@ -409,7 +412,7 @@ export default function (iov) {
                 self.seqnum += 1; // increment sequence number for next chunk
             } catch(e) {
                 console.error("Excetion thrown from appendBuffer", e);
-                _ThePlayer.error({code: 3});
+                self.videoPlayer.error({code: 3});
                 self.reinitializeMse();
             }
         } else {
@@ -451,7 +454,7 @@ export default function (iov) {
                     self.vqueue = self.vqueue.slice(1);
                 } catch(e) {
                     console.error("Excetion thrown from appendBuffer", e);
-                    _ThePlayer.error({code: 3});
+                    self.videoPlayer.error({code: 3});
                     self.reinitializeMse();
                 }
             }
@@ -477,22 +480,9 @@ export default function (iov) {
     };
 
     self._on_sourceended = function() {
-
-
-        if (self.sourceBuffer.buffered.length > 0 ) {
-           var start = self.sourceBuffer.buffered.start(0);
-           var end = self.sourceBuffer.buffered.end(0);
-           try {
-               // observed this fail during a memry snapshot in chrome
-               // otherwise no observed failure, so ignore exception.
-               self.sourceBuffer.remove(start, start+limit);
-           } catch(e) {
-               console.error(e);
-           }
-        }
-
-
         //debug("sourceended");
+
+        // @todo - do we need to clear the buffer manually?
         self.stop();
         self.source_buffer_ready = false;
     };
@@ -501,7 +491,6 @@ export default function (iov) {
 
         // identify what seqnum of the MOOF message has actually been processed.
         self.seqnumProcessed += 1;
-
 
         /*
         var logmsg =
@@ -513,11 +502,12 @@ export default function (iov) {
         debug(logmsg);
         */
         if (self.mediaSource.readyState === "open") {
-
             if (self.video.paused === true) {
+                console.log("video is paused!", self.videoPlayer.id());
                 try {
-                    console.log("video paused calling video.play()");
+                    console.log("video paused calling video.play()", self.videoPlayer.id());
                     var promise = self.video.play();
+                    console.log("video.play() called", self.videoPlayer.id());
                     if (typeof promise !== 'undefined') {
                         promise.then(function(_){}).catch(function(e){});
                     }
@@ -526,7 +516,6 @@ export default function (iov) {
                 }
                 //debug("setting video player from paused to play");
             }
-
 
             if (self.sourceBuffer.buffered.length > 0 ) {
                 var start = self.sourceBuffer.buffered.start(0);
@@ -539,10 +528,11 @@ export default function (iov) {
                         // otherwise no observed failure, so ignore exception.
                         self.sourceBuffer.remove(start, start+limit);
                     } catch(e) {
+                        console.log('error while removing', self.videoPlayer.id())
+                        console.error(e)
                     }
                  }
             }
-
 
             if (self.vqueue.length > 0){
                 self._appendBuffer_event(self.vqueue[0]);
@@ -556,16 +546,13 @@ export default function (iov) {
                             // in the browser where this video player lives is hidden
                             // then reselected. 'ex' is undefined the error is bug
                             // within the MSE C++ implementation in the browser.
-                            self.reinitializeMse();                            
+                            self.reinitializeMse();
                         }
                     }
                     // regardless we must proceed to the frame.
                     self.vqueue = self.vqueue.slice(1);
                 },0);
             }
-
-
-
         }
     };
 

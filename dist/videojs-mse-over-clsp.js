@@ -2441,6 +2441,9 @@ var MqttTransport = function () {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
+
 
 
 var DEBUG_PREFIX = 'skyline:clsp:iov';
@@ -2625,13 +2628,13 @@ window.parse_clsp_url = function (_src) {
     self.source_buffer_ready = false;
 
     self._fault = function (err) {
-        _ThePlayer.errors.extend({
+        self.videoPlayer.errors.extend({
             PLAYER_ERR_IOV: {
                 headline: 'Error Playing Stream',
                 message: err
             }
         });
-        _ThePlayer.error({ code: 'PLAYER_ERR_IOV' });
+        self.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
         self.state = "fault";
     };
 
@@ -2657,10 +2660,12 @@ window.parse_clsp_url = function (_src) {
 
     self.play = function (eid, streamName, onFirstChunk, onVideoRecv) {
         self.eid = eid;
+        self.id = eid.replace('_html5_api', '');
         self.streamName = streamName;
         self.onFirstChunk = onFirstChunk;
         self.video = document.getElementById(eid);
         self.onVideoRecv = onVideoRecv;
+        self.videoPlayer = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlayer(self.id);
 
         if (typeof self.video === 'undefined') {
             self._fault("Unable to match id '" + eid + "'");
@@ -2825,7 +2830,7 @@ window.parse_clsp_url = function (_src) {
                 self.seqnum += 1; // increment sequence number for next chunk
             } catch (e) {
                 console.error("Excetion thrown from appendBuffer", e);
-                _ThePlayer.error({ code: 3 });
+                self.videoPlayer.error({ code: 3 });
                 self.reinitializeMse();
             }
         } else {
@@ -2866,7 +2871,7 @@ window.parse_clsp_url = function (_src) {
                     self.vqueue = self.vqueue.slice(1);
                 } catch (e) {
                     console.error("Excetion thrown from appendBuffer", e);
-                    _ThePlayer.error({ code: 3 });
+                    self.videoPlayer.error({ code: 3 });
                     self.reinitializeMse();
                 }
             }
@@ -2892,20 +2897,9 @@ window.parse_clsp_url = function (_src) {
     };
 
     self._on_sourceended = function () {
-
-        if (self.sourceBuffer.buffered.length > 0) {
-            var start = self.sourceBuffer.buffered.start(0);
-            var end = self.sourceBuffer.buffered.end(0);
-            try {
-                // observed this fail during a memry snapshot in chrome
-                // otherwise no observed failure, so ignore exception.
-                self.sourceBuffer.remove(start, start + limit);
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
         //debug("sourceended");
+
+        // @todo - do we need to clear the buffer manually?
         self.stop();
         self.source_buffer_ready = false;
     };
@@ -2925,11 +2919,12 @@ window.parse_clsp_url = function (_src) {
         debug(logmsg);
         */
         if (self.mediaSource.readyState === "open") {
-
             if (self.video.paused === true) {
+                console.log("video is paused!", self.videoPlayer.id());
                 try {
-                    console.log("video paused calling video.play()");
+                    console.log("video paused calling video.play()", self.videoPlayer.id());
                     var promise = self.video.play();
+                    console.log("video.play() called", self.videoPlayer.id());
                     if (typeof promise !== 'undefined') {
                         promise.then(function (_) {}).catch(function (e) {});
                     }
@@ -2949,7 +2944,10 @@ window.parse_clsp_url = function (_src) {
                         // observed this fail during a memry snapshot in chrome
                         // otherwise no observed failure, so ignore exception.
                         self.sourceBuffer.remove(start, start + limit);
-                    } catch (e) {}
+                    } catch (e) {
+                        console.log('error while removing', self.videoPlayer.id());
+                        console.error(e);
+                    }
                 }
             }
 
