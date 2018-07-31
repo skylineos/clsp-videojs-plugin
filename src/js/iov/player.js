@@ -3,6 +3,7 @@ import videojs from 'video.js';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
+const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -88,7 +89,6 @@ export default class IOVPlayer {
     this.retry_count = 3;
 
     this._start_play = this._start_play.bind(this);
-    this.change_event = this.change_event.bind(this);
     this._on_sourceopen = this._on_sourceopen.bind(this);
     this._on_sourceended = this._on_sourceended.bind(this);
     this._on_moof = this._on_moof.bind(this);
@@ -103,30 +103,6 @@ export default class IOVPlayer {
     this.source_buffer_ready = false;
     this.dropCounter = 0;
   }
-
-  change_event (event) {
-    debug('change_event');
-
-    if (!event.detail || !event.detail.url) {
-      throw new Error('Unable to process change event because there is no url!');
-    }
-
-    // parse url, extract the ip of the sfs and the port as well as useSSL
-    const new_cfg = IOVPlayer.generateIOVConfigFromCLSPURL(event.detail.url);
-
-    if (new_cfg.address === this.iov.config.wsbroker) {
-      this.change(new_cfg.streamName, null);
-      return;
-    }
-
-    new_cfg.videoElement = this.iov.config.videoElement;
-    new_cfg.appStart = (iov) => {
-      // conected to new mqtt
-      this.change(new_cfg.streamName, iov);
-    };
-
-    this.iov.new_iov(new_cfg);
-  };
 
   isMimeCodecSupported (mimeCodec) {
     if (!window.MediaSource || !window.MediaSource.isTypeSupported(mimeCodec)) {
@@ -304,7 +280,7 @@ export default class IOVPlayer {
   }
 
   _appendBuffer_event (bytearray) {
-    debug('_appendBuffer_event');
+    silly('_appendBuffer_event');
 
     const self = this;
 
@@ -399,16 +375,35 @@ export default class IOVPlayer {
 
       var clone = self.video.cloneNode();
       var parent = self.video.parentNode;
+
       if (parent !== null) {
         parent.replaceChild(clone, self.video);
         self.video = clone;
       }
 
-      var event = document.createEvent('Event');
-      event.initEvent('iov-change-src', true, true);
-      self.video.addEventListener('iov-change-src', self.change_event, false);
-      debug("iov-change-src on id = ", self.video.id);
+      self.videoPlayer.on('changesrc', function (event, { eid, url }) {
+        debug(`iov-change-src on id ${self.videoPlayer.id()}`);
 
+        if (!url) {
+          throw new Error('Unable to process change event because there is no url!');
+        }
+
+        // parse url, extract the ip of the sfs and the port as well as useSSL
+        const new_cfg = IOVPlayer.generateIOVConfigFromCLSPURL(url);
+
+        if (new_cfg.address === self.iov.config.wsbroker) {
+          self.change(new_cfg.streamName, null);
+          return;
+        }
+
+        new_cfg.videoElement = self.iov.config.videoElement;
+        new_cfg.appStart = (iov) => {
+          // conected to new mqtt
+          self.change(new_cfg.streamName, iov);
+        };
+
+        self.iov.new_iov(new_cfg);
+      });
 
       self.mediaSource.addEventListener('sourceopen', self._on_sourceopen);
       self.mediaSource.addEventListener('sourceended', self._on_sourceended);
@@ -436,7 +431,7 @@ export default class IOVPlayer {
   }
 
   _on_moof (mqtt_msg) {
-    debug('_on_moof');
+    silly('_on_moof');
 
     const self = this;
 
@@ -560,7 +555,7 @@ export default class IOVPlayer {
   }
 
   _on_updateend () {
-    debug('_on_updateend');
+    silly('_on_updateend');
 
     const self = this;
 

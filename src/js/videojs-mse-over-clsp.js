@@ -5,12 +5,9 @@ import 'srcdoc-polyfill';
 import './conduit/clspConduit.generated.js';
 // import './conduit/clspConduit.generated.min.js';
 
-import {version as VERSION} from '../../package.json';
 import MqttHandler from './MqttHandler';
 import MqttSourceHandler from './MqttSourceHandler';
 import mseOverMqtt from './mseOverMqtt';
-import utils from './utils';
-import IOV from './iov/IOV';
 import '../styles/videojs-mse-over-clsp.scss';
 
 /**
@@ -28,34 +25,22 @@ import '../styles/videojs-mse-over-clsp.scss';
  *           A plain object containing options for the plugin.
  */
 const onPlayerReady = (player, options) => {
-  player.addClass('vjs-mse-over-mqtt');
+  player.addClass();
 };
 
 function initialize () {
+  // Default options for the plugin.
+  const defaults = {
+    customClass: 'vjs-mse-over-mqtt',
+  };
   const SrcsLookupTable = {};
 
   const mqttHandler = MqttHandler(SrcsLookupTable);
   const mqttSourceHandler = MqttSourceHandler(mqttHandler);
-
-  videojs.mqttSupported = true;
-  videojs.mqttHandler = mqttHandler;
-  videojs.mqttSourceHandler = mqttSourceHandler;
-  videojs.getTech('Html5').registerSourceHandler(mqttSourceHandler('html5'), 0);
-
-
-  // Default options for the plugin.
-  const defaults = {};
-
   const clspPlugin = mseOverMqtt(defaults, SrcsLookupTable, onPlayerReady);
 
-  // Cross-compatibility for Video.js 5 and 6.
-  const registerPlugin = videojs.registerPlugin || videojs.plugin;
-
-  // Register the plugin with video.js.
-  // @todo - this is a side effect of
-  clspPlugin.clsp_IOV = IOV;
-
-  registerPlugin('clsp', clspPlugin);
+  videojs.getTech('Html5').registerSourceHandler(mqttSourceHandler('html5'), 0);
+  videojs.registerPlugin(clspPlugin.pluginName, clspPlugin);
 
   return clspPlugin;
 }
@@ -63,11 +48,4 @@ function initialize () {
 // @todo - do not initialize the plugin by default, since that is a side
 // effect.  make the caller call the initialize function.  also, is it
 // possible to unregister the plugin?
-const clspPlugin = initialize();
-
-// clspPlugin.initialize = initialize;
-clspPlugin.version = VERSION;
-clspPlugin.utils = utils;
-
-export default clspPlugin;
-
+export default initialize();
