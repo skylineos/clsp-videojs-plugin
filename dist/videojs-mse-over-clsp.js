@@ -2585,7 +2585,7 @@ var IOVPlayer = function () {
   }, {
     key: 'isMimeCodecSupported',
     value: function isMimeCodecSupported(mimeCodec) {
-      if (!window.MediaSource || window.MediaSource.isTypeSupported(mimeCodec)) {
+      if (!window.MediaSource || !window.MediaSource.isTypeSupported(mimeCodec)) {
         // the browser does not support this video format
         this._fault('Unsupported mime codec: ' + mimeCodec);
 
@@ -2599,6 +2599,7 @@ var IOVPlayer = function () {
     value: function onTransportTransation(iov, response) {
       var _this2 = this;
 
+      console.log(response);
       var new_mimeCodec = response.mimeCodec;
       var new_guid = response.guid; // stream guid
 
@@ -2679,7 +2680,7 @@ var IOVPlayer = function () {
       var request = { clientId: this.iov.config.clientId };
       var topic = 'iov/video/' + window.btoa(newStream) + '/request';
 
-      if (iov === null) {
+      if (iov) {
         iov.transport.transaction(topic, function () {
           for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
             args[_key] = arguments[_key];
@@ -2877,9 +2878,6 @@ var IOVPlayer = function () {
         if (parent !== null) {
           parent.replaceChild(clone, self.video);
           self.video = clone;
-          self.video.addEventListener('pause', function () {
-            console.log('pause', self.video.paused, self.videoPlayer.id());
-          });
         }
 
         var event = document.createEvent('Event');
@@ -3045,17 +3043,14 @@ var IOVPlayer = function () {
 
       var self = this;
 
-      console.log('updateend', self.videoPlayer.id(), self.video.paused);
-
       // identify what seqnum of the MOOF message has actually been processed.
       self.seqnumProcessed += 1;
 
       if (self.video.paused === true) {
-        console.log("video is paused!", self.videoPlayer.id());
         try {
-          console.log("video paused calling video.play()", self.videoPlayer.id());
+          // console.log("video paused calling video.play()", self.videoPlayer.id());
           var promise = self.video.play();
-          console.log("video.play() called", self.videoPlayer.id());
+          // console.log("video.play() called", self.videoPlayer.id());
           if (typeof promise !== 'undefined') {
             promise.then(function (_) {}).catch(function (e) {});
           }

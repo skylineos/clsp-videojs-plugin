@@ -129,7 +129,7 @@ export default class IOVPlayer {
   };
 
   isMimeCodecSupported (mimeCodec) {
-    if (!window.MediaSource || window.MediaSource.isTypeSupported(mimeCodec)) {
+    if (!window.MediaSource || !window.MediaSource.isTypeSupported(mimeCodec)) {
       // the browser does not support this video format
       this._fault(`Unsupported mime codec: ${mimeCodec}`);
 
@@ -140,6 +140,7 @@ export default class IOVPlayer {
   }
 
   onTransportTransation (iov, response) {
+    console.log(response)
     const new_mimeCodec = response.mimeCodec;
     const new_guid = response.guid; // stream guid
 
@@ -221,7 +222,7 @@ export default class IOVPlayer {
     const request = { clientId: this.iov.config.clientId };
     const topic = `iov/video/${window.btoa(newStream)}/request`;
 
-    if (iov === null) {
+    if (iov) {
       iov.transport.transaction(topic, (...args) => this.onTransportTransation(iov, ...args), request);
       return;
     }
@@ -401,9 +402,6 @@ export default class IOVPlayer {
       if (parent !== null) {
         parent.replaceChild(clone, self.video);
         self.video = clone;
-        self.video.addEventListener('pause', () => {
-          console.log('pause', self.video.paused, self.videoPlayer.id())
-        });
       }
 
       var event = document.createEvent('Event');
@@ -566,17 +564,14 @@ export default class IOVPlayer {
 
     const self = this;
 
-    console.log('updateend', self.videoPlayer.id(), self.video.paused)
-
     // identify what seqnum of the MOOF message has actually been processed.
     self.seqnumProcessed += 1;
 
     if (self.video.paused === true) {
-      console.log("video is paused!", self.videoPlayer.id());
       try {
-        console.log("video paused calling video.play()", self.videoPlayer.id());
+        // console.log("video paused calling video.play()", self.videoPlayer.id());
         var promise = self.video.play();
-        console.log("video.play() called", self.videoPlayer.id());
+        // console.log("video.play() called", self.videoPlayer.id());
         if (typeof promise !== 'undefined') {
           promise.then(function (_) { }).catch(function (e) { });
         }
