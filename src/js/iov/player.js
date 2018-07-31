@@ -408,8 +408,9 @@ export default function (iov) {
                 self.sourceBuffer.appendBuffer( moofBox );
                 self.seqnum += 1; // increment sequence number for next chunk
             } catch(e) {
+                console.error("Excetion thrown from appendBuffer", e);
                 _ThePlayer.error({code: 3});
-                self.stop();
+                self.reinitializeMse();
             }
         } else {
             self.vqueue.push( moofBox.slice(0) );
@@ -449,7 +450,9 @@ export default function (iov) {
                     self.sourceBuffer.appendBuffer( self.vqueue[0] );
                     self.vqueue = self.vqueue.slice(1);
                 } catch(e) {
-                    console.error("error while source buffer append", e);
+                    console.error("Excetion thrown from appendBuffer", e);
+                    _ThePlayer.error({code: 3});
+                    self.reinitializeMse();
                 }
             }
         });
@@ -511,6 +514,20 @@ export default function (iov) {
         */
         if (self.mediaSource.readyState === "open") {
 
+            if (self.video.paused === true) {
+                try {
+                    console.log("video paused calling video.play()");
+                    var promise = self.video.play();
+                    if (typeof promise !== 'undefined') {
+                        promise.then(function(_){}).catch(function(e){});
+                    }
+                } catch( ex ) {
+                    console.error("Exception while trying to play:" + ex.message );
+                }
+                //debug("setting video player from paused to play");
+            }
+
+
             if (self.sourceBuffer.buffered.length > 0 ) {
                 var start = self.sourceBuffer.buffered.start(0);
                 var end = self.sourceBuffer.buffered.end(0);
@@ -522,7 +539,6 @@ export default function (iov) {
                         // otherwise no observed failure, so ignore exception.
                         self.sourceBuffer.remove(start, start+limit);
                     } catch(e) {
-                        console.error(e);
                     }
                  }
             }
@@ -540,6 +556,7 @@ export default function (iov) {
                             // in the browser where this video player lives is hidden
                             // then reselected. 'ex' is undefined the error is bug
                             // within the MSE C++ implementation in the browser.
+                            self.reinitializeMse();                            
                         }
                     }
                     // regardless we must proceed to the frame.
@@ -548,17 +565,6 @@ export default function (iov) {
             }
 
 
-            if (self.video.paused === true) {
-                try {
-                    var promise = self.video.play();
-                    if (typeof promise !== 'undefined') {
-                        promise.then(function(_){}).catch(function(e){});
-                    }
-                } catch( ex ) {
-                    console.error("Exception while trying to play:" + ex.message );
-                }
-                //debug("setting video player from paused to play");
-            }
 
         }
     };

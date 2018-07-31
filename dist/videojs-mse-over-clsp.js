@@ -1510,7 +1510,7 @@ module.exports = g;
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.8.8","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.9.0","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
 
 /***/ }),
 
@@ -2824,8 +2824,9 @@ window.parse_clsp_url = function (_src) {
                 self.sourceBuffer.appendBuffer(moofBox);
                 self.seqnum += 1; // increment sequence number for next chunk
             } catch (e) {
+                console.error("Excetion thrown from appendBuffer", e);
                 _ThePlayer.error({ code: 3 });
-                self.stop();
+                self.reinitializeMse();
             }
         } else {
             self.vqueue.push(moofBox.slice(0));
@@ -2864,7 +2865,9 @@ window.parse_clsp_url = function (_src) {
                     self.sourceBuffer.appendBuffer(self.vqueue[0]);
                     self.vqueue = self.vqueue.slice(1);
                 } catch (e) {
-                    console.error("error while source buffer append", e);
+                    console.error("Excetion thrown from appendBuffer", e);
+                    _ThePlayer.error({ code: 3 });
+                    self.reinitializeMse();
                 }
             }
         });
@@ -2923,6 +2926,19 @@ window.parse_clsp_url = function (_src) {
         */
         if (self.mediaSource.readyState === "open") {
 
+            if (self.video.paused === true) {
+                try {
+                    console.log("video paused calling video.play()");
+                    var promise = self.video.play();
+                    if (typeof promise !== 'undefined') {
+                        promise.then(function (_) {}).catch(function (e) {});
+                    }
+                } catch (ex) {
+                    console.error("Exception while trying to play:" + ex.message);
+                }
+                //debug("setting video player from paused to play");
+            }
+
             if (self.sourceBuffer.buffered.length > 0) {
                 var start = self.sourceBuffer.buffered.start(0);
                 var end = self.sourceBuffer.buffered.end(0);
@@ -2933,9 +2949,7 @@ window.parse_clsp_url = function (_src) {
                         // observed this fail during a memry snapshot in chrome
                         // otherwise no observed failure, so ignore exception.
                         self.sourceBuffer.remove(start, start + limit);
-                    } catch (e) {
-                        console.error(e);
-                    }
+                    } catch (e) {}
                 }
             }
 
@@ -2951,23 +2965,12 @@ window.parse_clsp_url = function (_src) {
                             // in the browser where this video player lives is hidden
                             // then reselected. 'ex' is undefined the error is bug
                             // within the MSE C++ implementation in the browser.
+                            self.reinitializeMse();
                         }
                     }
                     // regardless we must proceed to the frame.
                     self.vqueue = self.vqueue.slice(1);
                 }, 0);
-            }
-
-            if (self.video.paused === true) {
-                try {
-                    var promise = self.video.play();
-                    if (typeof promise !== 'undefined') {
-                        promise.then(function (_) {}).catch(function (e) {});
-                    }
-                } catch (ex) {
-                    console.error("Exception while trying to play:" + ex.message);
-                }
-                //debug("setting video player from paused to play");
             }
         }
     };
