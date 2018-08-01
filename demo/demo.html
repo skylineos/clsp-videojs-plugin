@@ -6,8 +6,8 @@
   <link href="//vjs.zencdn.net/6.7.1/video-js.css" rel="stylesheet">
   <link href="/dist/videojs-mse-over-clsp.css" rel="stylesheet">
   <script
-    src="//code.jquery.com/jquery-3.2.1.min.js"
-    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    src="//code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
     crossorigin="anonymous"
   ></script>
   <style>
@@ -27,6 +27,7 @@
           height="240"
           class="video-js vjs-default-skin"
           controls
+          muted
         >
           <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'"/>
           <source id="hls1"  src="" type="application/x-mpegURL" />
@@ -39,6 +40,7 @@
           height="240"
           class="video-js vjs-default-skin"
           controls
+          muted
         >
           <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'" />
           <source id="hls2"  src="" type="application/x-mpegURL" />
@@ -53,6 +55,7 @@
           height="240"
           class="video-js vjs-default-skin"
           controls
+          muted
         >
           <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'" />
           <source id="hls3"  src="" type="application/x-mpegURL" />
@@ -65,6 +68,7 @@
           height="240"
           class="video-js vjs-default-skin"
           controls
+          muted
         >
           <source id="src4" src="" type="video/mp4; codecs='avc1.42E01E'" />
           <source id="hls4"  src="" type="application/x-mpegURL" />
@@ -96,6 +100,7 @@
     <tr><td>CLSP URL</td><td>
       <input
         id="url4"
+        value="clsp://172.28.12.247/testpattern"
         style="width: 400px;"
       /></td></tr>
     <tr><td colspan="2"><button id="submit">Submit</button></td></tr>
@@ -259,8 +264,21 @@
     });
   </script>
 
-  <div>Url:<input id="url" value="clsp://172.28.12.247/testpattern" /></div>
-  <div>Number of videos: <input id="numvideos" value="4" type="number" /></div>
+  <div>
+    <span>Url:</span>
+    <input
+      id="url"
+      value="clsp://172.28.12.247/testpattern"
+    />
+  </div>
+  <div>
+    <span>Number of videos:</span>
+    <input
+      id="numvideos"
+      value="8"
+      type="number"
+    />
+  </div>
 
   <br />
 
@@ -284,6 +302,7 @@ clsp://172.28.12.57:9001/40004
     width="352"
     height="240"
     autoplay
+    muted
   >
   <source id="tour-first-source"
     src=""
@@ -372,6 +391,7 @@ $(function(){
     height="240"
     controls
     autoplay
+    muted
   >
 
 
@@ -486,6 +506,7 @@ $(function(){
         class="video-js vjs-default-skin"
         controls
         autoplay
+        muted
       >
         <source
           id="src-$cellId"

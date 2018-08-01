@@ -135,11 +135,7 @@ window.mqttConduit = function( config, onReady ){
 
 
     // inject code into iframe
-    if (typeof iframe.srcdoc !== 'undefined' ) {
-        iframe.srcdoc = markup;
-    } else {
-        window.srcDoc( iframe, markup );
-    }
+    iframe.srcdoc = markup;
 
     iframe.width = 0;
     iframe.height = 0;

@@ -4,7 +4,7 @@ import uuidv4 from 'uuid/v4';
 import MqttTopicHandlers from './MqttTopicHandlers';
 import MqttConduitCollection from './MqttConduitCollection';
 import MqttTransport from './MqttTransport';
-import _player from './player';
+import IOVPlayer from './player';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 
@@ -15,24 +15,30 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 
 export default class IOV {
   static compatibilityCheck () {
+    // @todo - shouldn't this be done in the utils function?
     // For the MAC
     var NoMediaSourceAlert = false;
 
     window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 
-    if (!window.MediaSource){
+    if (!window.MediaSource) {
       if (NoMediaSourceAlert === false) {
-        alert("Media Source Extensions not supported in your browser"+
-           ": Claris Live Streaming will not work!");
+        window.alert('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
       }
 
       NoMediaSourceAlert = true;
     }
   }
 
-  constructor (config) {
+  static factory (player, config) {
+    return new IOV(player, config);
+  }
+
+  constructor (player, config) {
     this.id = uuidv4();
     this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
+
+    this.playerInstance = player;
 
     this.config = {
       // web socket address defaults to the address of the server that loaded this page.
@@ -45,94 +51,53 @@ export default class IOV {
       appStart: config.appStart,
       useSSL: config.useSSL || false,
       videoElement: config.videoElement,
-      videoElementParent: null
+      videoElementParent: null,
     };
 
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
     this.mqttTopicHandlers = new MqttTopicHandlers(this.id, this);
-    this.mqttConduitCollection = new MqttConduitCollection(this.id);
+    this.mqttConduitCollection = config.mqttConduitCollection || new MqttConduitCollection(this.id);
     this.transport = new MqttTransport(this.id, this);
 
     this.events = {
-      connection_lost : function(responseObject) {
-        //TODO close all players and display an error message
-        console.error("MQTT connection lost");
+      connection_lost : function (responseObject) {
+        // @todo - close all players and display an error message
+        console.error('MQTT connection lost');
         console.error(responseObject);
       },
 
       on_message: this.mqttTopicHandlers.msghandler,
 
       // generic exception handler
-      exception: function(text,e) {
+      exception: function (text, e) {
         console.error(text);
         if (typeof e !== 'undefined') {
           console.error(e.stack);
         }
-      }
-    };
-  }
-
-
-  new_iov(config) {
-    var self = {};
-    self.id = 'x'+uuidv4();
-
-    self.config = {
-      // web socket address defaults to the address of the server that loaded this page.
-      wsbroker: config.address,
-      // default port number
-      wsport: config.port,
-      // default clientId
-      clientId: self.id,
-      // to be overriden by user.
-      appStart: config.appStart,
-      useSSL: config.useSSL || false,
-      videoElement: config.videoElement,
-      videoElementParent: this.config.videoElementParent
-    };
-
-
-    // handle inbound messages from MQTT, including video
-    // and distributes them to players.
-    self.mqttTopicHandlers = new MqttTopicHandlers(self.id, self);
-    self.mqttConduitCollection = this.mqttConduitCollection;
-    self.transport = new MqttTransport(self.id, self);
-
-    this.events = {
-      connection_lost : function(responseObject) {
-        //TODO close all players and display an error message
-        console.error("MQTT connection lost");
-        console.error(responseObject);
       },
-
-
-      // keep the same topic handler
-      on_message: self.mqttTopicHandlers.msghandler,
-
-      // generic exception handler
-      exception: function(text,e) {
-        console.error(text);
-        if (typeof e !== 'undefined') {
-          console.error(e.stack);
-        }
-      }
     };
 
-    self.new_iov = this.new_iov;
-    self.play = this.play;
-    self.getAvailableStreams = this.getAvailableStreams;
-    self.compatibilityCheck = this.compatibilityCheck;
+    this.player = IOVPlayer.factory(this, this.playerInstance);
 
-
-    return self;
+    if (config.initialize) {
+      this.initialize();
+    }
   }
 
+  clone (config) {
+    return IOV.factory(this.playerInstance, {
+      ...config,
+      mqttConduitCollection: this.mqttConduitCollection,
+      videoElementParent: this.config.videoElementParent,
+    });
+  }
 
-
-  initialize (player) {
+  initialize () {
     IOV.compatibilityCheck();
 
+    // @todo - this listener has no concept of this instance, so it should be
+    // moved elsewhere, or restructured
     // route inbound data from a frame running mqtt to the appropriate player
     window.addEventListener('message', (event) => {
       this.debug('message received', event.data)
@@ -147,27 +112,29 @@ export default class IOV {
       var eventType = event.data.event;
 
       switch (eventType) {
-        case 'data':
+        case 'data': {
           conduit.inboundHandler(event.data);
           break;
-        case 'ready':
+        }
+        case 'ready': {
           if (this.config.videoElement.parentNode !== null) {
-              this.config.videoElementParentId = this.config.videoElement.parentNode.id;
+            this.config.videoElementParentId = this.config.videoElement.parentNode.id;
           }
           conduit.onReady();
           break;
-        case 'fail':
+        }
+        case 'fail': {
           this.debug('network error', event.data.reason);
-          player.trigger("network-error", event.data.reason);
+          this.playerInstance.trigger('network-error', event.data.reason);
           break;
-        default:
-          console.error("No match for event = " + eventType);
+        }
+        default: {
+          console.error(`No match for event: ${eventType}`);
+        }
       }
     });
-  }
 
-  player () {
-    return _player(this);
+    return this;
   }
 
   // query remote server and get a list of all stream names

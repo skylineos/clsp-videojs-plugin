@@ -1510,7 +1510,7 @@ module.exports = g;
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.8.8","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.9.0","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
 
 /***/ }),
 
@@ -1527,7 +1527,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
+/* harmony import */ var _iov_player__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./iov/player */ "./src/js/iov/player.js");
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1541,110 +1541,48 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 
 
-/* harmony default export */ __webpack_exports__["default"] = (function (SrcsLookupTable) {
-    var Component = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getComponent('Component');
+var Component = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getComponent('Component');
 
-    var MqttHandler = function (_Component) {
-        _inherits(MqttHandler, _Component);
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  var MqttHandler = function (_Component) {
+    _inherits(MqttHandler, _Component);
 
-        function MqttHandler(source, tech, options, player) {
-            _classCallCheck(this, MqttHandler);
+    function MqttHandler(source, tech, options) {
+      _classCallCheck(this, MqttHandler);
 
-            var _this = _possibleConstructorReturn(this, (MqttHandler.__proto__ || Object.getPrototypeOf(MqttHandler)).call(this, tech, options.mqtt));
+      var _this = _possibleConstructorReturn(this, (MqttHandler.__proto__ || Object.getPrototypeOf(MqttHandler)).call(this, tech, options.mqtt));
 
-            _this.playerInstance = player;
-            _this.tech_ = tech;
-            _this.source_ = source;
-            _this.enabled = false;
-            _this.playing = false;
-            _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:MqttHandler');
-            return _this;
-        }
+      _this.tech_ = tech;
+      _this.source_ = source;
+      _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:MqttHandler');
+      return _this;
+    }
 
-        _createClass(MqttHandler, [{
-            key: 'src',
-            value: function src(_src) {
-                if (!_src) {
-                    return;
-                }
-                var parser = document.createElement('a');
+    /**
+     * called when player.src gets called, handle a new source
+     *
+     * @param {Object} src the source object to handle
+     */
 
-                var useSSL = false;
-                var default_port;
-                var kluged_src;
 
-                if (_src.substring(0, 5).toLowerCase() === 'clsps') {
-                    useSSL = true;
-                    kluged_src = _src.replace('clsps', 'https');
-                    default_port = 443;
-                } else {
-                    // firefox/ie hack!
-                    kluged_src = _src.replace('clsp', 'http');
-                    default_port = 9001;
-                }
+    _createClass(MqttHandler, [{
+      key: 'src',
+      value: function src(_src) {
+        var srcConfig = _iov_player__WEBPACK_IMPORTED_MODULE_2__["default"].generateIOVConfigFromCLSPURL(_src);
 
-                parser.href = kluged_src;
-                //parser.href = "http:" + parser.pathname;
-
-                var hostname = parser.hostname;
-                var port = parser.port;
-                var t = parser.pathname.split("/");
-                var streamName = t[t.length - 1];
-
-                if (port.length === 0) {
-                    port = default_port;
-                }
-
-                // @ is a special address maening the server that loaded the web page.
-                if (hostname === '@') {
-                    hostname = window.location.hostname;
-                }
-
-                this.mqtt_player = null;
-                this.port = parseInt(port);
-                this.address = hostname;
-                this.streamName = streamName;
-                this.enabled = true;
-                this.useSSL = useSSL;
-
-                SrcsLookupTable[_src] = this;
-            }
-        }, {
-            key: 'launchIovPlayer',
-            value: function launchIovPlayer(onMqttReady) {
-                var _this2 = this;
-
-                var velm = this.player().el();
-
-                var iov = new _iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"]({
-                    port: this.port,
-                    address: this.address,
-                    appStart: function appStart(iov) {
-                        // connected to MQTT procede to setting up callbacks
-                        // debug("iov.player() called")
-                        var mqtt_player = iov.player();
-                        var evt = new CustomEvent("mqttReady");
-                        _this2.player().el().dispatchEvent(evt);
-                        onMqttReady(mqtt_player);
-
-                        velm.addEventListener("mse-error-event", function (e) {
-                            mqtt_player.restart();
-                        }, false);
-                    },
-                    useSSL: this.useSSL,
-                    videoElement: velm
-                });
-
-                iov.initialize(this.playerInstance);
-            }
-        }]);
-
-        return MqttHandler;
-    }(Component);
-
-    ;
+        this.port = srcConfig.port;
+        this.address = srcConfig.address;
+        this.streamName = srcConfig.streamName;
+        this.useSSL = srcConfig.useSSL;
+      }
+    }]);
 
     return MqttHandler;
+  }(Component);
+
+  ;
+
+  return MqttHandler;
 });
 
 /***/ }),
@@ -1662,100 +1600,230 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
+/* harmony import */ var _MqttHandler__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MqttHandler */ "./src/js/MqttHandler.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
 
 
 
 
 
-/* harmony default export */ __webpack_exports__["default"] = (function (MqttHandler) {
-    var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:MqttSourceHandler');
 
-    /*
-       source handler for the source tag in html5:
-       <video><source src="..." type="..."></video>
-        mqttSourceHandler = {
-           canPlayType: function(type) {
-               // only the canned type for MediaSource entensions
-               // use media source extensions to determine if
-               // it can play it. MQTT/video
-           },
-           canHandleSource: function(source, options) {
-               // check for mqtt:// .... as a protocol
-           },
-           handleSource : function(source, tech, options) {
-           },
-           dispose: function() {
-               // destructor.
-           }
-       }
-        Html5 = videojs.getTech('Html5');
-       Html5.registerSourceHandler(mqttSourceHandler);
-     */
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:MqttSourceHandler');
+  var MqttHandler = Object(_MqttHandler__WEBPACK_IMPORTED_MODULE_2__["default"])();
 
-    var MqttSourceHandler = function MqttSourceHandler(mode) {
-        var obj = {
-            canPlayType: function canPlayType(type) {
-                var r = '';
-                if ('MediaSource' in window) {
-                    if (type === "video/mp4; codecs='avc1.42E01E'") {
-                        r = 'maybe';
-                    } else {
-                        debug("clsp type='" + type + "' rejected");
-                    }
-                }
-                return r;
-            },
-            canHandleSource: function canHandleSource(srcObj) {
-                var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  return function (mode) {
+    var obj = {
+      canHandleSource: function canHandleSource(srcObj) {
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-                /* This method is used to determin if the following html5 tag can be used
-                   as a video source:
-                    <source src="clsp://<ip addr>:<ws port>/<mqtt topic>"
-                           type="video/mp4; codecs='avc1.42E01E'" />
-                */
-                var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options);
+        if (!srcObj.src) {
+          console.error('srcObj doesn\'t contain src');
+          debug(srcObj);
+          return false;
+        }
 
-                if (!srcObj.src) {
-                    debug("srcObj doesn't contain src");
-                    debug(srcObj);
-                    return false;
-                }
+        if (!srcObj.src.startsWith('clsp')) {
+          console.error('srcObj.src is not clsp protocol');
+          return false;
+        }
 
-                if (srcObj.src.startsWith("clsp") === false) {
-                    debug("srcObj.src is not clsp protocol");
-                    return false;
-                }
+        if (!_utils__WEBPACK_IMPORTED_MODULE_3__["default"].supported()) {
+          debug('Browser not supported. Chrome 52+ is required.');
+          return false;
+        }
 
-                /// restrict to chrome version 52 or greater
-                if (_utils__WEBPACK_IMPORTED_MODULE_2__["default"].supported() === false) {
-                    debug("Browser not supported. Chrome 52+ is required.");
-                    return false;
-                }
+        return obj.canPlayType(srcObj.type);
+      },
+      handleSource: function handleSource(source, tech) {
+        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-                return obj.canPlayType(srcObj.type);
-            },
-            handleSource: function handleSource(srcObj, tech) {
-                var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+        var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options, { mqtt: { mode: mode } });
 
-                var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options, { mqtt: { mode: mode } });
-                // @todo - we are accessing an internal property here, which is subject
-                // to change in future versions of videojs.  Is there a way for us to get
-                // the ID without using this property?  Better yet, is it possible to
-                // pass the player instance here rather than have to look it up through
-                // videojs?
-                var player = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlayer(tech.options_.playerId);
+        tech.mqtt = new MqttHandler(source, tech, localOptions);
 
-                tech.mqtt = new MqttHandler(srcObj, tech, localOptions, player);
-                tech.mqtt.src(srcObj.src);
-                return tech.mqtt;
-            }
-        };
-        return obj;
+        tech.mqtt.src(source.src);
+
+        return tech.mqtt;
+      },
+      canPlayType: function canPlayType(type) {
+        if (type === "video/mp4; codecs='avc1.42E01E'") {
+          return 'maybe';
+        }
+
+        console.error('clsp type=\'' + type + '\' rejected');
+
+        return '';
+      }
     };
 
-    return MqttSourceHandler;
+    return obj;
+  };
 });
+
+/***/ }),
+
+/***/ "./src/js/MseOverMqttPlugin.js":
+/*!*************************************!*\
+  !*** ./src/js/MseOverMqttPlugin.js ***!
+  \*************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../package.json */ "./package.json");
+var _package_json__WEBPACK_IMPORTED_MODULE_1___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../package.json */ "./package.json", 1);
+/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
+/* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+
+
+
+var Plugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getPlugin('plugin');
+
+var registered = false;
+
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  var defaults = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+  var MseOverMqttPlugin = function (_Plugin) {
+    _inherits(MseOverMqttPlugin, _Plugin);
+
+    _createClass(MseOverMqttPlugin, null, [{
+      key: 'register',
+      value: function register() {
+        if (registered) {
+          throw new Error('You can only register the clsp plugin once, and it has already been registered.');
+        }
+
+        // @todo - there is likely some way for videojs to tell us that the plugin has already
+        // been registered, or perhaps videojs itself will not let you register a plugin twice
+        registered = true;
+
+        video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getTech('Html5').registerSourceHandler(Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__["default"])()('html5'), 0);
+        video_js__WEBPACK_IMPORTED_MODULE_0___default.a.registerPlugin(MseOverMqttPlugin.pluginName, MseOverMqttPlugin);
+
+        return MseOverMqttPlugin;
+      }
+    }]);
+
+    function MseOverMqttPlugin(player, options) {
+      _classCallCheck(this, MseOverMqttPlugin);
+
+      var _this = _possibleConstructorReturn(this, (MseOverMqttPlugin.__proto__ || Object.getPrototypeOf(MseOverMqttPlugin)).call(this, player, options));
+
+      options = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, options);
+
+      player.addClass('vjs-mse-over-mqtt');
+
+      if (options.customClass) {
+        player.addClass(options.customClass);
+      }
+
+      player.errors({
+        errors: {
+          PLAYER_ERR_NOT_COMPAT: {
+            headline: 'This browser is unsupported.',
+            message: 'Chrome 52+ is required.'
+          }
+        },
+        timeout: 120 * 1000
+      });
+
+      if (!_utils__WEBPACK_IMPORTED_MODULE_4__["default"].supported()) {
+        var _ret;
+
+        return _ret = player.error({
+          code: 'PLAYER_ERR_NOT_COMPAT',
+          dismiss: false
+        }), _possibleConstructorReturn(_this, _ret);
+      }
+
+      player.on('firstplay', function (e) {
+        // @todo - the use of the tech here is discouraged.  What is the "right" way to
+        // get the information from the mqttHandler?
+        // And, really, all this does is parse the clsp url - do we really need a
+        // dedicated handler for that?  Can't we parse the url ourselves?
+        var mqttHandler = player.tech(true).mqtt;
+
+        if (!mqttHandler) {
+          return console.error('src not in lookup table');
+        }
+
+        var videoElement = player.el();
+
+        var iov = _iov_IOV__WEBPACK_IMPORTED_MODULE_3__["default"].factory(player, {
+          port: mqttHandler.port,
+          address: mqttHandler.address,
+          useSSL: mqttHandler.useSSL,
+          videoElement: videoElement,
+          appStart: function appStart(iov) {
+            // connected to MQTT procede to setting up callbacks
+            // debug("iov.player() called")
+            var mqtt_player = iov.player;
+
+            if (!mqtt_player) {
+              throw new Error('mqtt_player not available!');
+            }
+
+            var videoTag = player.children()[0];
+
+            // @todo - there must be a better way to determine autoplay...
+            if (videoTag.getAttribute('autoplay') !== null) {
+              // playButton.trigger('click');
+              player.trigger('play', videoTag);
+            }
+
+            if (mqtt_player.playing) {
+              console.warn('tried to use this player more than once...');
+              return;
+            }
+
+            mqtt_player.playing = true;
+
+            // start playing video
+            mqtt_player.play(e.target.firstChild.id, mqttHandler.streamName, function () {
+              player.loadingSpinner.hide();
+            }, function () {
+              // reset the timeout monitor
+              player.trigger('timeupdate');
+            });
+
+            videoElement.addEventListener('mse-error-event', function (e) {
+              mqtt_player.restart();
+            }, false);
+          }
+        });
+
+        iov.initialize();
+      });
+      return _this;
+    }
+
+    return MseOverMqttPlugin;
+  }(Plugin);
+
+  MseOverMqttPlugin.pluginName = 'clsp';
+  MseOverMqttPlugin.VERSION = _package_json__WEBPACK_IMPORTED_MODULE_1__["version"];
+  MseOverMqttPlugin.utils = _utils__WEBPACK_IMPORTED_MODULE_4__["default"];
+
+  return MseOverMqttPlugin;
+});;
 
 /***/ }),
 
@@ -1881,11 +1949,7 @@ window.mqttConduit = function (config, onReady) {
     var markup = '<html><head>' + '<script>\n' + "var MqttIp = '" + config.wsbroker + "' ; \n" + "var MqttPort = " + config.wsport + "; \n" + "var MqttUseSSL = " + MqttUseSSL + "; \n" + "var MqttClientId = '" + config.clientId + "' ; \n" + "var Origin = '" + window.location.origin + "' ; \n" + iframe_code + '\n' + '</script>\n' + '</head><body onload="clspRouter();" onunload="onunload();"><body>' + '<div id="message"></div>' + '</body></html>';
 
     // inject code into iframe
-    if (typeof iframe.srcdoc !== 'undefined') {
-        iframe.srcdoc = markup;
-    } else {
-        window.srcDoc(iframe, markup);
-    }
+    iframe.srcdoc = markup;
 
     iframe.width = 0;
     iframe.height = 0;
@@ -1931,6 +1995,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/iov/MqttConduitCollection.js");
 /* harmony import */ var _MqttTransport__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./MqttTransport */ "./src/js/iov/MqttTransport.js");
 /* harmony import */ var _player__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./player */ "./src/js/iov/player.js");
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1954,6 +2020,7 @@ var IOV = function () {
   _createClass(IOV, null, [{
     key: 'compatibilityCheck',
     value: function compatibilityCheck() {
+      // @todo - shouldn't this be done in the utils function?
       // For the MAC
       var NoMediaSourceAlert = false;
 
@@ -1961,19 +2028,26 @@ var IOV = function () {
 
       if (!window.MediaSource) {
         if (NoMediaSourceAlert === false) {
-          alert("Media Source Extensions not supported in your browser" + ": Claris Live Streaming will not work!");
+          window.alert('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
         }
 
         NoMediaSourceAlert = true;
       }
     }
+  }, {
+    key: 'factory',
+    value: function factory(player, config) {
+      return new IOV(player, config);
+    }
   }]);
 
-  function IOV(config) {
+  function IOV(player, config) {
     _classCallCheck(this, IOV);
 
     this.id = uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
     this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':main');
+
+    this.playerInstance = player;
 
     this.config = {
       // web socket address defaults to the address of the server that loaded this page.
@@ -1992,13 +2066,13 @@ var IOV = function () {
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
     this.mqttTopicHandlers = new _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__["default"](this.id, this);
-    this.mqttConduitCollection = new _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__["default"](this.id);
+    this.mqttConduitCollection = config.mqttConduitCollection || new _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__["default"](this.id);
     this.transport = new _MqttTransport__WEBPACK_IMPORTED_MODULE_4__["default"](this.id, this);
 
     this.events = {
       connection_lost: function connection_lost(responseObject) {
-        //TODO close all players and display an error message
-        console.error("MQTT connection lost");
+        // @todo - close all players and display an error message
+        console.error('MQTT connection lost');
         console.error(responseObject);
       },
 
@@ -2012,67 +2086,31 @@ var IOV = function () {
         }
       }
     };
+
+    this.player = _player__WEBPACK_IMPORTED_MODULE_5__["default"].factory(this, this.playerInstance);
+
+    if (config.initialize) {
+      this.initialize();
+    }
   }
 
   _createClass(IOV, [{
-    key: 'new_iov',
-    value: function new_iov(config) {
-      var self = {};
-      self.id = 'x' + uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
-
-      self.config = {
-        // web socket address defaults to the address of the server that loaded this page.
-        wsbroker: config.address,
-        // default port number
-        wsport: config.port,
-        // default clientId
-        clientId: self.id,
-        // to be overriden by user.
-        appStart: config.appStart,
-        useSSL: config.useSSL || false,
-        videoElement: config.videoElement,
+    key: 'clone',
+    value: function clone(config) {
+      return IOV.factory(this.playerInstance, _extends({}, config, {
+        mqttConduitCollection: this.mqttConduitCollection,
         videoElementParent: this.config.videoElementParent
-      };
-
-      // handle inbound messages from MQTT, including video
-      // and distributes them to players.
-      self.mqttTopicHandlers = new _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__["default"](self.id, self);
-      self.mqttConduitCollection = this.mqttConduitCollection;
-      self.transport = new _MqttTransport__WEBPACK_IMPORTED_MODULE_4__["default"](self.id, self);
-
-      this.events = {
-        connection_lost: function connection_lost(responseObject) {
-          //TODO close all players and display an error message
-          console.error("MQTT connection lost");
-          console.error(responseObject);
-        },
-
-        // keep the same topic handler
-        on_message: self.mqttTopicHandlers.msghandler,
-
-        // generic exception handler
-        exception: function exception(text, e) {
-          console.error(text);
-          if (typeof e !== 'undefined') {
-            console.error(e.stack);
-          }
-        }
-      };
-
-      self.new_iov = this.new_iov;
-      self.play = this.play;
-      self.getAvailableStreams = this.getAvailableStreams;
-      self.compatibilityCheck = this.compatibilityCheck;
-
-      return self;
+      }));
     }
   }, {
     key: 'initialize',
-    value: function initialize(player) {
+    value: function initialize() {
       var _this = this;
 
       IOV.compatibilityCheck();
 
+      // @todo - this listener has no concept of this instance, so it should be
+      // moved elsewhere, or restructured
       // route inbound data from a frame running mqtt to the appropriate player
       window.addEventListener('message', function (event) {
         _this.debug('message received', event.data);
@@ -2088,27 +2126,32 @@ var IOV = function () {
 
         switch (eventType) {
           case 'data':
-            conduit.inboundHandler(event.data);
-            break;
-          case 'ready':
-            if (_this.config.videoElement.parentNode !== null) {
-              _this.config.videoElementParentId = _this.config.videoElement.parentNode.id;
+            {
+              conduit.inboundHandler(event.data);
+              break;
             }
-            conduit.onReady();
-            break;
+          case 'ready':
+            {
+              if (_this.config.videoElement.parentNode !== null) {
+                _this.config.videoElementParentId = _this.config.videoElement.parentNode.id;
+              }
+              conduit.onReady();
+              break;
+            }
           case 'fail':
-            _this.debug('network error', event.data.reason);
-            player.trigger("network-error", event.data.reason);
-            break;
+            {
+              _this.debug('network error', event.data.reason);
+              _this.playerInstance.trigger('network-error', event.data.reason);
+              break;
+            }
           default:
-            console.error("No match for event = " + eventType);
+            {
+              console.error('No match for event: ' + eventType);
+            }
         }
       });
-    }
-  }, {
-    key: 'player',
-    value: function player() {
-      return Object(_player__WEBPACK_IMPORTED_MODULE_5__["default"])(this);
+
+      return this;
     }
 
     // query remote server and get a list of all stream names
@@ -2174,7 +2217,7 @@ var MqttConduitCollection = function () {
 
       this.debug('adding from iov...', iov);
 
-      return this.set(iov.config.clientId, mqttConduit(iov.config, function () {
+      return this.set(iov.config.clientId, window.mqttConduit(iov.config, function () {
         _this.debug('onReady...', iov.config.clientId);
 
         iov.config.appStart(iov);
@@ -2297,7 +2340,7 @@ var MqttTopicHandlers = function () {
       var topic = message.destinationName;
 
       if (!this.exists(topic)) {
-        debug('No handler for ' + topic + ' - message dropped', message);
+        this.debug('No handler for ' + topic + ' - message dropped', message);
 
         return;
       }
@@ -2441,706 +2484,669 @@ var MqttTransport = function () {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+
 
 
 var DEBUG_PREFIX = 'skyline:clsp:iov';
-var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':player');
-
-window.parse_clsp_url = function (_src) {
-    if (!_src) {
-        return;
-    }
-    var parser = document.createElement('a');
-
-    var useSSL = false;
-    var default_port;
-    var kluged_src;
-
-    if (_src.substring(0, 5).toLowerCase() === 'clsps') {
-        useSSL = true;
-        kluged_src = _src.replace('clsps', 'https');
-        default_port = 443;
-    } else {
-        // firefox/ie hack!
-        kluged_src = _src.replace('clsp', 'http');
-        default_port = 9001;
-    }
-
-    parser.href = kluged_src;
-    //parser.href = "http:" + parser.pathname;
-
-    var hostname = parser.hostname;
-    var port = parser.port;
-    var t = parser.pathname.split("/");
-    var streamName = t[t.length - 1];
-
-    if (port.length === 0) {
-        port = default_port;
-    }
-
-    // @ is a special address maening the server that loaded the web page.
-    if (hostname === '@') {
-        hostname = window.location.hostname;
-    }
-
-    return {
-        port: parseInt(port),
-        address: hostname,
-        streamName: streamName,
-        useSSL: useSSL
-    };
-};
+var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':IOVPlayer');
+var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX + ':IOVPlayer');
 
 /**
  * Responsible for receiving stream input and routing it to the media source
  * buffer for rendering on the video tag. There is some 'light' reworking of
  * the binary data that is required.
  *
- * var player = iov.player();
+ * var player = IOVPlayer.factory(iov);
  * player.play( video_element_id, stream_name );
 */
-/* harmony default export */ __webpack_exports__["default"] = (function (iov) {
-    var self = {};
 
-    self.change_event = function (evt) {
-        var url = evt.detail.url;
+var IOVPlayer = function () {
+  _createClass(IOVPlayer, null, [{
+    key: 'factory',
+    value: function factory(iov) {
+      return new IOVPlayer(iov);
+    }
+  }, {
+    key: 'generateIOVConfigFromCLSPURL',
+    value: function generateIOVConfigFromCLSPURL(_src) {
+      debug('generateIOVConfigFromCLSPURL');
 
-        // parse url, extract the ip of the sfs and the port as well as useSSL
-        var new_cfg = parse_clsp_url(url);
+      if (!_src) {
+        throw new Error('No source was given to be parsed!');
+      }
 
-        if (new_cfg.address === iov.config.wsbroker) {
-            self.change(new_cfg.streamName, null);
-        } else {
-            var next_iov;
+      // We use an anchor tag here beacuse, when an href is added to
+      // an anchor dom Element, the parsing is done for you by the
+      // browser.
+      var parser = document.createElement('a');
 
-            new_cfg.videoElement = iov.config.videoElement;
-            new_cfg.appStart = function (next_iov) {
-                // conected to new mqtt
-                self.change(new_cfg.streamName, next_iov);
-            };
+      var useSSL = void 0;
+      var default_port = void 0;
 
-            // first create a new transport
-            next_iov = iov.new_iov(new_cfg);
-        }
-    };
+      // Chrome is the only browser that allows non-http protocols in
+      // the anchor tag's href, so change them all to http here so we
+      // get the benefits of the anchor tag's parsing
+      if (_src.substring(0, 5).toLowerCase() === 'clsps') {
+        useSSL = true;
+        parser.href = _src.replace('clsps', 'https');
+        default_port = 443;
+      } else if (_src.substring(0, 4).toLowerCase() === 'clsp') {
+        useSSL = false;
+        parser.href = _src.replace('clsp', 'http');
+        default_port = 9001;
+      } else {
+        throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
+      }
 
-    self.change = function (newStream, next_iov) {
-        var moov = null;
-        var moof = null;
+      var paths = parser.pathname.split('/');
+      var streamName = paths[paths.length - 1];
 
-        var on_req_resp = function on_req_resp(resp) {
-            var new_mimeCodec = resp.mimeCodec;
-            var new_guid = resp.guid; // stream guid
+      var hostname = parser.hostname;
+      var port = parser.port;
 
-            if ('MediaSource' in window && MediaSource.isTypeSupported(new_mimeCodec)) {
-                var initseg_topic = iov.config.clientId + "/init-segment/" + parseInt(Math.random() * 1000000);
+      if (port.length === 0) {
+        port = default_port;
+      }
 
-                // tranport will either be the exiting one or the new iov's tranport
-                var transport = next_iov === null ? iov.transport : next_iov.transport;
+      // @ is a special address meaning the server that loaded the web page.
+      if (hostname === '@') {
+        hostname = window.location.hostname;
+      }
 
-                transport.subscribe(initseg_topic, function (mqtt_msg) {
-                    var moov = mqtt_msg.payloadBytes; // store new MOOV atom.
-                    transport.unsubscribe(initseg_topic);
+      return {
+        port: parseInt(port),
+        address: hostname,
+        streamName: streamName,
+        useSSL: useSSL
+      };
+    }
+  }]);
 
-                    transport.subscribe("iov/video/" + new_guid + "/live", function (moof_mqtt_msg) {
-                        var moofBox = moof_mqtt_msg.payloadBytes;
-                        self.vqueue.push(moofBox.slice(0));
+  function IOVPlayer(iov) {
+    _classCallCheck(this, IOVPlayer);
 
-                        // unsubscribe to existing live
-                        // 1) unsubscribe to remove avoid callback
-                        transport.unsubscribe("iov/video/" + new_guid + "/live");
+    debug('constructor');
 
-                        // 2) unsubscribe to livee callback for the old stream
-                        iov.transport.unsubscribe("iov/video/" + self.guid + "/live");
+    this.iov = iov;
 
-                        // 3) resubscribe with different callback
-                        transport.subscribe("iov/video/" + new_guid + "/live", self._on_moof);
+    this.MAX_SEQ_PROC = 2;
 
-                        // alter object properties to reflect new stream
-                        self.guid = new_guid;
-                        self.moovBox = moov;
-                        self.mimeCodec = new_mimeCodec;
+    // Used for determining the size of the internal buffer hidden from the MSE
+    // api by recording the size and time of each chunk of video upon buffer append
+    // and recording the time when the updateend event is called.
+    this.LogSourceBuffer = false;
+    this.LogSourceBufferTopic = null;
 
-                        // remove media source buffer, reinitialize
-                        self.reinitializeMse();
+    this.resetPlayState();
 
-                        if (next_iov !== null) {
-                            if (next_iov.config.parentNodeId !== null) {
-                                var iframe_elm = document.getElementById(iov.config.clientId);
-                                var p = document.getElementById(next_iov.config.parentNodeId);
-                                if (p) {
-                                    p.removeChild(iframe_elm);
-                                }
+    this.moovBox = null;
+    this.moofBox = null;
 
-                                // remove code from iframe.
-                                if (typeof iframe_elm.srcdoc !== 'undefined') {
-                                    iframe_elm.srcdoc = "";
-                                } else {
-                                    window.srcDoc(iframe_elm, "");
-                                }
-                            }
-                            iov = next_iov; // replace iov variable with the new one created.
-                        }
-                    });
-                });
-
-                var play_request_topic = "iov/video/" + new_guid + "/play";
-                transport.publish(play_request_topic, {
-                    initSegmentTopic: initseg_topic,
-                    clientId: next_iov === null ? iov.config.clientId : next_iov.config.clientId
-                });
-            } else {
-                // the browser does not support this video format
-                self._fault("Unsupported mime codec " + self.mimeCodec);
-            }
-        };
-
-        var request = { clientId: iov.config.clientId };
-        var topic = "iov/video/" + window.btoa(newStream) + "/request";
-        if (next_iov === null) {
-            iov.transport.transaction(topic, on_req_resp, request);
-        } else {
-            next_iov.transport.transaction(topic, on_req_resp, request);
-        }
-    };
-
-    /*
-    Used for determining the size of the internal buffer hidden from the MSE
-    api by recording the size and time of each chunk of video upon buffer append
-    and recording the time when the updateend event is called.
-      */
-
-    self.LogSourceBuffer = false;
-    self.LogSourceBufferTopic = null;
-    self.state = "idle";
-    self.seqnum = 1;
-    self.seqnumProcessed = 1; // last sequence number processed
-    self.MAX_SEQ_PROC = 2;
-    self.dropCounter = 0;
-
-    self.moovBox = null;
-    self.moofBox = null;
     // -1 is forever
-    self.retry_count = 3;
-    self.source_buffer_ready = false;
+    this.retry_count = 3;
 
-    self._fault = function (err) {
-        _ThePlayer.errors.extend({
-            PLAYER_ERR_IOV: {
-                headline: 'Error Playing Stream',
-                message: err
+    this._start_play = this._start_play.bind(this);
+    this._on_sourceopen = this._on_sourceopen.bind(this);
+    this._on_sourceended = this._on_sourceended.bind(this);
+    this._on_moof = this._on_moof.bind(this);
+    this._on_updateend = this._on_updateend.bind(this);
+    this.onTransportTransaction = this.onTransportTransaction.bind(this);
+  }
+
+  _createClass(IOVPlayer, [{
+    key: 'resetPlayState',
+    value: function resetPlayState() {
+      this.state = 'idle';
+      this.seqnum = 1;
+      this.seqnumProcessed = 1; // last sequence number processed
+      this.source_buffer_ready = false;
+      this.dropCounter = 0;
+    }
+  }, {
+    key: 'isMimeCodecSupported',
+    value: function isMimeCodecSupported(mimeCodec) {
+      if (!window.MediaSource || !window.MediaSource.isTypeSupported(mimeCodec)) {
+        // the browser does not support this video format
+        this._fault('Unsupported mime codec: ' + mimeCodec);
+
+        return false;
+      }
+
+      return true;
+    }
+  }, {
+    key: 'onTransportTransaction',
+    value: function onTransportTransaction(iov, response) {
+      var _this = this;
+
+      var new_mimeCodec = response.mimeCodec;
+      var new_guid = response.guid; // stream guid
+
+      if (!this.isMimeCodecSupported(new_mimeCodec)) {
+        return;
+      }
+
+      var initSegmentTopic = this.iov.config.clientId + '/init-segment/' + parseInt(Math.random() * 1000000);
+
+      var transport = iov === null ? this.iov.transport : iov.transport;
+
+      transport.subscribe(initSegmentTopic, function (mqtt_msg) {
+        var moov = mqtt_msg.payloadBytes; // store new MOOV atom.
+
+        transport.unsubscribe(initSegmentTopic);
+
+        var oldTopic = 'iov/video/' + _this.guid + '/live';
+        var newTopic = 'iov/video/' + new_guid + '/live';
+
+        transport.subscribe(newTopic, function (moof_mqtt_msg) {
+          var moofBox = moof_mqtt_msg.payloadBytes;
+
+          _this.vqueue.push(moofBox.slice(0));
+
+          // unsubscribe to existing live
+          // 1) unsubscribe to remove avoid callback
+          transport.unsubscribe(newTopic);
+
+          // 2) unsubscribe to live callback for the old stream
+          _this.iov.transport.unsubscribe(oldTopic);
+
+          // 3) resubscribe with different callback
+          transport.subscribe(newTopic, _this._on_moof);
+
+          // alter object properties to reflect new stream
+          _this.guid = new_guid;
+          _this.moovBox = moov;
+          _this.mimeCodec = new_mimeCodec;
+
+          // remove media source buffer, reinitialize
+          _this.reinitializeMse();
+
+          if (!iov) {
+            return;
+          }
+
+          if (iov.config.parentNodeId !== null) {
+            var iframe_elm = document.getElementById(_this.iov.config.clientId);
+            var parent = document.getElementById(iov.config.parentNodeId);
+
+            if (parent) {
+              parent.removeChild(iframe_elm);
             }
+
+            // remove code from iframe.
+            iframe_elm.srcdoc = '';
+          }
+
+          // replace iov variable with the new one created.
+          _this.iov = iov;
         });
-        _ThePlayer.error({ code: 'PLAYER_ERR_IOV' });
-        self.state = "fault";
-    };
+      });
 
-    self.reinitializeMse = function () {
-        // reset counters, flags
-        self.seqnum = 1;
-        self.seqnumProcessed = 1; // last sequence number processed
-        self.source_buffer_ready = false;
-        self.dropCounter = 0;
+      var play_request_topic = 'iov/video/' + new_guid + '/play';
 
-        // free resource
-        URL.revokeObjectURL(self.mediaSource);
+      transport.publish(play_request_topic, {
+        initSegmentTopic: initSegmentTopic,
+        clientId: iov === null ? this.iov.config.clientId : iov.config.clientId
+      });
+    }
+  }, {
+    key: 'change',
+    value: function change(newStream, iov) {
+      var _this2 = this;
+
+      debug('change');
+
+      var request = { clientId: this.iov.config.clientId };
+      var topic = 'iov/video/' + window.btoa(newStream) + '/request';
+
+      if (iov) {
+        iov.transport.transaction(topic, function () {
+          for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+          }
+
+          return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
+        }, request);
+        return;
+      }
+
+      this.iov.transport.transaction(topic, function () {
+        for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+          args[_key2] = arguments[_key2];
+        }
+
+        return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
+      }, request);
+    }
+  }, {
+    key: '_fault',
+    value: function _fault(message) {
+      debug('_fault');
+
+      this.videoPlayer.errors.extend({
+        PLAYER_ERR_IOV: {
+          headline: 'Error Playing Stream',
+          message: message
+        }
+      });
+
+      this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
+      this.state = 'fault';
+    }
+  }, {
+    key: 'reinitializeMse',
+    value: function reinitializeMse() {
+      debug('reinitializeMse');
+
+      this.resetPlayState();
+
+      // free resource
+      if (this.mediaSource) {
+        URL.revokeObjectURL(this.mediaSource);
 
         // reallocate, this will call media source open which will
         // append the MOOV atom.
-        self.video.src = URL.createObjectURL(self.mediaSource);
-    };
+        this.video.src = URL.createObjectURL(this.mediaSource);
+      }
+    }
+  }, {
+    key: 'restart',
+    value: function restart() {
+      debug('restart');
 
-    self.restart = function () {
-        self.stop();
-        self.play(self.eid, self.streamName, self.onFirstChunk, self.onVideoRecv);
-    };
+      this.stop();
+      this.play(this.eid, this.streamName, this.onFirstChunk, this.onVideoRecv);
+    }
+  }, {
+    key: 'play',
+    value: function play(eid, streamName, onFirstChunk, onVideoRecv) {
+      debug('play');
 
-    self.play = function (eid, streamName, onFirstChunk, onVideoRecv) {
-        self.eid = eid;
-        self.streamName = streamName;
-        self.onFirstChunk = onFirstChunk;
-        self.video = document.getElementById(eid);
-        self.onVideoRecv = onVideoRecv;
+      this.video = document.getElementById(eid);
 
-        if (typeof self.video === 'undefined') {
-            self._fault("Unable to match id '" + eid + "'");
-            return;
-        }
-        var request = { clientId: iov.config.clientId };
-        var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
-        iov.transport.transaction(topic, self._start_play, request);
-    };
+      this.eid = eid;
+      this.id = eid.replace('_html5_api', '');
+      this.streamName = streamName;
+      this.onFirstChunk = onFirstChunk;
+      this.onVideoRecv = onVideoRecv;
+      this.videoPlayer = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlayer(this.id);
 
-    self.resume = function (onFirstChunk, onVideoRecv) {
-        self.onFirstChunk = onFirstChunk;
-        self.onVideoRecv = onVideoRecv;
+      if (typeof this.video === 'undefined') {
+        this._fault("Unable to match id '" + eid + "'");
+        return;
+      }
 
-        var request = { clientId: iov.config.clientId };
-        var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
-        iov.transport.transaction(topic, self._start_play, request);
-    };
+      var request = { clientId: this.iov.config.clientId };
+      var topic = 'iov/video/' + window.btoa(this.streamName) + '/request';
 
-    self._appendBuffer_event = function (bytearray) {
-        if (self.LogSourceBuffer === true && self.LogSourceBufferTopic !== null) {
-            //debug("recording "+parseInt(bytearray.length)+" bytes of data");
-            var mqtt_msg = new Paho.MQTT.Message(bytearray);
-            mqtt_msg.destinationName = self.LogSourceBufferTopic;
-            MQTTClient.send(mqtt_msg);
-        }
-        // increment bytecount stats
-        iov.statsMsg.byteCount += bytearray.length;
-    };
+      this.iov.transport.transaction(topic, this._start_play, request);
+    }
+  }, {
+    key: 'resume',
+    value: function resume(onFirstChunk, onVideoRecv) {
+      debug('resume');
 
-    self.stop = function () {
-        // stop streaming live video
-        if (typeof self.guid !== 'undefined') {
-            iov.transport.unsubscribe("iov/video/" + self.guid + "/live");
-        }
+      var self = this;
 
-        self.state = "idle";
+      self.onFirstChunk = onFirstChunk;
+      self.onVideoRecv = onVideoRecv;
 
-        // free resources associated with player
-        self.seqnum = 1;
-        self.moovBox = null;
-        self.moofBox = null;
+      var request = { clientId: self.iov.config.clientId };
+      var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
+      self.iov.transport.transaction(topic, self._start_play, request);
+    }
+  }, {
+    key: '_appendBuffer_event',
+    value: function _appendBuffer_event(bytearray) {
+      silly('_appendBuffer_event');
 
-        var request = { clientId: iov.config.clientId };
-        iov.transport.publish("iov/video/" + self.guid + "/stop", request);
-    };
+      var self = this;
 
-    self._start_play = function (resp) {
-        self.mimeCodec = resp.mimeCodec;
-        self.guid = resp.guid; // stream guid
+      if (self.LogSourceBuffer === true && self.LogSourceBufferTopic !== null) {
+        //debug("recording "+parseInt(bytearray.length)+" bytes of data");
+        var mqtt_msg = new Paho.MQTT.Message(bytearray);
+        mqtt_msg.destinationName = self.LogSourceBufferTopic;
+        MQTTClient.send(mqtt_msg);
+      }
+      // increment bytecount stats
+      self.iov.statsMsg.byteCount += bytearray.length;
+    }
+  }, {
+    key: 'stop',
+    value: function stop() {
+      debug('stop');
 
-        if ('MediaSource' in window && MediaSource.isTypeSupported(self.mimeCodec)) {
-            var initseg_topic = iov.config.clientId + "/init-segment/" + parseInt(Math.random() * 1000000);
+      var self = this;
 
-            self._async_play_loop(resp, initseg_topic);
-            var play_request_topic = "iov/video/" + self.guid + "/play";
-            iov.transport.publish(play_request_topic, {
-                initSegmentTopic: initseg_topic,
-                clientId: iov.config.clientId
-            });
-        } else {
-            // the browser does not support this video format
-            self._fault("Unsupported mime codec " + self.mimeCodec);
-        }
-    };
+      // stop streaming live video
+      if (typeof self.guid !== 'undefined') {
+        self.iov.transport.unsubscribe("iov/video/" + self.guid + "/live");
+      }
 
-    self._async_play_loop = function (resp, initSegmentTopic) {
-        // setup handlers for video
-        self.vqueue = []; // used if the media source buffer is busy
+      self.state = "idle";
 
-        self.state = "waiting-for-moov";
+      // free resources associated with player
+      self.seqnum = 1;
+      self.moovBox = null;
+      self.moofBox = null;
 
-        iov.transport.subscribe(initSegmentTopic, function (mqtt_msg) {
+      var request = { clientId: self.iov.config.clientId };
+      self.iov.transport.publish("iov/video/" + self.guid + "/stop", request);
+    }
+  }, {
+    key: '_start_play',
+    value: function _start_play(resp) {
+      debug('_start_play');
 
-            // capture the initial segment
-            self.moovBox = mqtt_msg.payloadBytes;
-            //debug(typeof mqtt_msg.payloadBytes);
-            //debug("received moov from server");
+      var self = this;
 
+      self.mimeCodec = resp.mimeCodec;
+      self.guid = resp.guid; // stream guid
 
-            self.state = "waiting-for-moof";
-            // unsubscribe to this group
-            iov.transport.unsubscribe(initSegmentTopic);
+      if ('MediaSource' in window && MediaSource.isTypeSupported(self.mimeCodec)) {
+        var initseg_topic = self.iov.config.clientId + "/init-segment/" + parseInt(Math.random() * 1000000);
 
-            // subscribe to the live video topic.
-            self.state = "playing";
-            iov.transport.subscribe("iov/video/" + self.guid + "/live", self._on_moof);
-            // create media source buffer and start routing video traffic.
-
-
-            self.onFirstChunk(); // first chunk of video received.
-
-            self.mediaSource = new MediaSource();
-
-            var clone = self.video.cloneNode();
-            var parent = self.video.parentNode;
-            if (parent !== null) {
-                parent.replaceChild(clone, self.video);
-                self.video = clone;
-            }
-
-            var event = document.createEvent('Event');
-            event.initEvent('iov-change-src', true, true);
-            self.video.addEventListener('iov-change-src', self.change_event, false);
-            debug("iov-change-src on id = ", self.video.id);
-
-            self.mediaSource.addEventListener('sourceopen', self._on_sourceopen);
-            self.mediaSource.addEventListener('sourceended', self._on_sourceended);
-            self.mediaSource.addEventListener('error', function (e) {
-                console.error("MSE error");
-                console.error(e);
-            });
-
-            // now assign media source extensions
-            //debug("Disregard: The play() request was interrupted ... its not an error!");
-            self.video.src = URL.createObjectURL(self.mediaSource);
-
-            // subscribe to a sync topic that will be called if the stream that is feeding
-            // the mse service dies and has to be restarted that this player should restart the stream
-            var resync_topic = "iov/video/" + self.guid + "/resync";
-            debug("Call " + resync_topic + " to resync stream");
-            iov.transport.subscribe(resync_topic, function (mqtt_msg) {
-                debug("sync received re-initialize media source buffer");
-                self.reinitializeMse();
-            });
+        self._async_play_loop(resp, initseg_topic);
+        var play_request_topic = "iov/video/" + self.guid + "/play";
+        self.iov.transport.publish(play_request_topic, {
+          initSegmentTopic: initseg_topic,
+          clientId: self.iov.config.clientId
         });
-    };
+      } else {
+        // the browser does not support this video format
+        self._fault("Unsupported mime codec " + self.mimeCodec);
+      }
+    }
+  }, {
+    key: '_async_play_loop',
+    value: function _async_play_loop(resp, initSegmentTopic) {
+      debug('_async_play_loop');
 
-    self._on_moof = function (mqtt_msg) {
+      var self = this;
 
-        if (self.source_buffer_ready == false) {
-            //debug("media source not yet open dropping frame");
+      // setup handlers for video
+      self.vqueue = []; // used if the media source buffer is busy
+
+      self.state = "waiting-for-moov";
+
+      self.iov.transport.subscribe(initSegmentTopic, function (mqtt_msg) {
+
+        // capture the initial segment
+        self.moovBox = mqtt_msg.payloadBytes;
+        //debug(typeof mqtt_msg.payloadBytes);
+        //debug("received moov from server");
+
+
+        self.state = "waiting-for-moof";
+        // unsubscribe to this group
+        self.iov.transport.unsubscribe(initSegmentTopic);
+
+        // subscribe to the live video topic.
+        self.state = "playing";
+        self.iov.transport.subscribe("iov/video/" + self.guid + "/live", self._on_moof);
+        // create media source buffer and start routing video traffic.
+
+
+        self.onFirstChunk(); // first chunk of video received.
+
+        self.mediaSource = new MediaSource();
+
+        // when videojs initializes the video element (or something like that),
+        // it creates events and listeners on that element that it uses, however
+        // these events interfere with our ability to play clsp streams.  Cloning
+        // the element like this and reinserting it is a blunt instrument to remove
+        // all of the videojs events so that we are in control of the player.
+        var clone = self.video.cloneNode();
+        var parent = self.video.parentNode;
+
+        if (parent !== null) {
+          parent.replaceChild(clone, self.video);
+          self.video = clone;
+        }
+
+        self.videoPlayer.on('changesrc', function (event, _ref) {
+          var eid = _ref.eid,
+              url = _ref.url;
+
+          debug('iov-change-src on id ' + self.videoPlayer.id());
+
+          if (!url) {
+            throw new Error('Unable to process change event because there is no url!');
+          }
+
+          // parse url, extract the ip of the sfs and the port as well as useSSL
+          var new_cfg = IOVPlayer.generateIOVConfigFromCLSPURL(url);
+
+          if (new_cfg.address === self.iov.config.wsbroker) {
+            self.change(new_cfg.streamName, null);
             return;
+          }
+
+          new_cfg.initialize = false;
+          new_cfg.videoElement = self.iov.config.videoElement;
+          new_cfg.appStart = function (iov) {
+            // conected to new mqtt
+            self.change(new_cfg.streamName, iov);
+          };
+
+          self.iov.clone(new_cfg);
+        });
+
+        self.mediaSource.addEventListener('sourceopen', self._on_sourceopen);
+        self.mediaSource.addEventListener('sourceended', self._on_sourceended);
+        self.mediaSource.addEventListener('error', function (e) {
+          console.error("MSE error");
+          console.error(e);
+        });
+
+        // now assign media source extensions
+        //debug("Disregard: The play() request was interrupted ... its not an error!");
+        self.video.src = URL.createObjectURL(self.mediaSource);
+
+        // subscribe to a sync topic that will be called if the stream that is feeding
+        // the mse service dies and has to be restarted that this player should restart the stream
+        var resync_topic = "iov/video/" + self.guid + "/resync";
+        debug("Call " + resync_topic + " to resync stream");
+        self.iov.transport.subscribe(resync_topic, function (mqtt_msg) {
+          debug("sync received re-initialize media source buffer");
+          self.reinitializeMse();
+        });
+      });
+    }
+  }, {
+    key: '_on_moof',
+    value: function _on_moof(mqtt_msg) {
+      silly('_on_moof');
+
+      var self = this;
+
+      if (self.source_buffer_ready == false) {
+        //debug("media source not yet open dropping frame");
+        return;
+      }
+
+      /**
+          Enqueues or sends to the media source buffer an MP4 moof atom. This contains a
+          chunk of video/audio tracks.
+        */
+      // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
+      // the source buffer.
+      if (self.seqnum - self.seqnumProcessed > self.MAX_SEQ_PROC) {
+        //debug("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
+        return; // DROP this frame since the borwser is falling
+      }
+
+      var moofBox = mqtt_msg.payloadBytes;
+      moofBox[20] = (self.seqnum & 0xFF000000) >> 24;
+      moofBox[21] = (self.seqnum & 0x00FF0000) >> 16;
+      moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
+      moofBox[23] = self.seqnum & 0xFF;
+
+      //debug("moof handler: data seqnum chunk ");
+      //debug(self.seqnum);
+
+      if (self.sourceBuffer.updating === false) {
+        try {
+          //debug(typeof moofBox);
+          //debug("calling append buffer");
+          self._appendBuffer_event(moofBox);
+          self.sourceBuffer.appendBuffer(moofBox);
+          self.seqnum += 1; // increment sequence number for next chunk
+        } catch (e) {
+          console.error("Excetion thrown from appendBuffer", e);
+          self.videoPlayer.error({ code: 3 });
+          self.reinitializeMse();
         }
-
-        /**
-            Enqueues or sends to the media source buffer an MP4 moof atom. This contains a
-            chunk of video/audio tracks.
-         */
-        // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
-        // the source buffer.
-        if (self.seqnum - self.seqnumProcessed > self.MAX_SEQ_PROC) {
-            //debug("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
-            return; // DROP this frame since the borwser is falling
-        }
-
-        var moofBox = mqtt_msg.payloadBytes;
-        moofBox[20] = (self.seqnum & 0xFF000000) >> 24;
-        moofBox[21] = (self.seqnum & 0x00FF0000) >> 16;
-        moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
-        moofBox[23] = self.seqnum & 0xFF;
-
-        //debug("moof handler: data seqnum chunk ");
-        //debug(self.seqnum);
-
-        if (self.sourceBuffer.updating === false) {
-            try {
-                //debug(typeof moofBox);
-                //debug("calling append buffer");
-                self._appendBuffer_event(moofBox);
-                self.sourceBuffer.appendBuffer(moofBox);
-                self.seqnum += 1; // increment sequence number for next chunk
-            } catch (e) {
-                _ThePlayer.error({ code: 3 });
-                self.stop();
-            }
-        } else {
-            self.vqueue.push(moofBox.slice(0));
-        }
-    };
+      } else {
+        self.vqueue.push(moofBox.slice(0));
+      }
+    }
 
     // found when stress testing many videos, it is possible for the
     // media source ready state not to be open even though
     // source open callback is being called.
-    self._on_sourceopen = function () {
-        if (self.mediaSource.readyState === "open") {
-            self._do_on_sourceopen();
-            return;
-        }
 
-        var t = setInterval(function () {
-            if (self.mediaSource.readyState === "open") {
-                self._do_on_sourceopen();
-                clearInterval(t);
-            }
-        }, 1000);
-    };
+  }, {
+    key: '_on_sourceopen',
+    value: function _on_sourceopen() {
+      debug('_on_sourceopen');
 
-    self._do_on_sourceopen = function () {
-        /** New media source opened. Add a buffer and append the moov MP4 video data.
-        */
+      var self = this;
 
-        // add buffer
-        self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
-        self.sourceBuffer.mode = "sequence";
-        self.sourceBuffer.addEventListener('updateend', self._on_updateend);
-        self.sourceBuffer.addEventListener('update', function () {
-            if (self.sourceBuffer.updating === false && self.vqueue.length > 0) {
-                try {
-                    self._appendBuffer_event(self.vqueue[0]);
-                    self.sourceBuffer.appendBuffer(self.vqueue[0]);
-                    self.vqueue = self.vqueue.slice(1);
-                } catch (e) {
-                    console.error("error while source buffer append", e);
-                }
-            }
-        });
-
-        self.sourceBuffer.addEventListener('updatestart', function () {
-            //debug("On update start");
-        });
-
-        self.sourceBuffer.addEventListener('error', function (e) {
-            console.error("MSE sourceBffer error");
-            console.error(e);
-        });
-
-        // send ftype+moov segments of video
-        //debug("sending moov atom ");
-
-        // we are now able to process video
-        self.source_buffer_ready = true;
-
-        self._appendBuffer_event(self.moovBox);
-        self.sourceBuffer.appendBuffer(self.moovBox);
-    };
-
-    self._on_sourceended = function () {
-
-        if (self.sourceBuffer.buffered.length > 0) {
-            var start = self.sourceBuffer.buffered.start(0);
-            var end = self.sourceBuffer.buffered.end(0);
-            try {
-                // observed this fail during a memry snapshot in chrome
-                // otherwise no observed failure, so ignore exception.
-                self.sourceBuffer.remove(start, start + limit);
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        //debug("sourceended");
-        self.stop();
-        self.source_buffer_ready = false;
-    };
-
-    self._on_updateend = function () {
-
-        // identify what seqnum of the MOOF message has actually been processed.
-        self.seqnumProcessed += 1;
-
-        /*
-        var logmsg =
-           "_on_updateend: " +
-           ((self.video.paused) ? " video is paused,": "video is playing,")   +
-           " ready state = '" + self.mediaSource.readyState + "', " +
-           " video queue size = " + parseInt(self.vqueue.length)
-        ;
-        debug(logmsg);
-        */
-        if (self.mediaSource.readyState === "open") {
-
-            if (self.sourceBuffer.buffered.length > 0) {
-                var start = self.sourceBuffer.buffered.start(0);
-                var end = self.sourceBuffer.buffered.end(0);
-                var time_buffered = end - start;
-                var limit = 15.0;
-                if (time_buffered > 30.0) {
-                    try {
-                        // observed this fail during a memry snapshot in chrome
-                        // otherwise no observed failure, so ignore exception.
-                        self.sourceBuffer.remove(start, start + limit);
-                    } catch (e) {
-                        console.error(e);
-                    }
-                }
-            }
-
-            if (self.vqueue.length > 0) {
-                self._appendBuffer_event(self.vqueue[0]);
-                setTimeout(function () {
-                    // deqeue next prepared moof atom
-                    if (self.sourceBuffer.updating === false) {
-                        try {
-                            self.sourceBuffer.appendBuffer(self.vqueue[0]);
-                        } catch (ex) {
-                            // internal error, this has been observed to happen the tab
-                            // in the browser where this video player lives is hidden
-                            // then reselected. 'ex' is undefined the error is bug
-                            // within the MSE C++ implementation in the browser.
-                        }
-                    }
-                    // regardless we must proceed to the frame.
-                    self.vqueue = self.vqueue.slice(1);
-                }, 0);
-            }
-
-            if (self.video.paused === true) {
-                try {
-                    var promise = self.video.play();
-                    if (typeof promise !== 'undefined') {
-                        promise.then(function (_) {}).catch(function (e) {});
-                    }
-                } catch (ex) {
-                    console.error("Exception while trying to play:" + ex.message);
-                }
-                //debug("setting video player from paused to play");
-            }
-        }
-    };
-
-    return self;
-});;
-
-/***/ }),
-
-/***/ "./src/js/mseOverMqtt.js":
-/*!*******************************!*\
-  !*** ./src/js/mseOverMqtt.js ***!
-  \*******************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
-
-
-
-
-window.iov_events = {};
-
-/* harmony default export */ __webpack_exports__["default"] = (function (defaults, SrcsLookupTable, onPlayerReady) {
-  /**
-   * A video.js plugin.
-   *
-   * In the plugin function, the value of `this` is a video.js `Player`
-   * instance. You cannot rely on the player being in a "ready" state here,
-   * depending on how the plugin is invoked. This may or may not be important
-   * to you; if not, remove the wait for "ready"!
-   *
-   * @function mseOverMqtt
-   * @param    {Object} [options={}]
-   *           An object of options left to the plugin author to define.
-   */
-  var mseOverMqtt = function mseOverMqtt(options) {
-    var _this = this;
-
-    this.errors({
-      errors: {
-        PLAYER_ERR_NOT_COMPAT: {
-          headline: 'This browser is unsupported.',
-          message: 'Chrome 52+ is required.'
-        }
-      },
-      timeout: 120 * 1000
-    });
-
-    if (_utils__WEBPACK_IMPORTED_MODULE_1__["default"].supported() === false) {
-      this.error({ code: 'PLAYER_ERR_NOT_COMPAT', dismiss: false });
-      return;
-    }
-
-    this.on('changesrc', function (evt, data) {
-      var velm = document.getElementById(data.eid + '_html5_api');
-
-      var event = document.createEvent('Event');
-      event.initEvent('iov-change-src', true, true);
-
-      event.detail = data;
-      velm.dispatchEvent(new CustomEvent('iov-change-src', event));
-    });
-
-    this.on('firstplay', function (e) {
-      var spinner = this.player_.loadingSpinner;
-      var videojs_player = this.player_;
-
-      //TODO: This seems to screw up the video js error function.  Is this necessary?
-      // work around bogus error code.
-      /*var old_error = Object.assign({}, videojs_player.error());
-      videojs_player.error = function (evt) {
-        if (typeof evt === 'undefined') {
-          return old_error;
-        }
-         if (evt === null) {
-          return;
-        }
-         if (evt.code !== -2) {
-          videojs_player.old_error(evt);
-        }
-      };*/
-
-      var source_tag = this.currentSource();
-      if (!(source_tag.src in SrcsLookupTable)) {
-        console.error('src not in lookup table');
+      if (self.mediaSource.readyState === "open") {
+        self._do_on_sourceopen();
         return;
       }
 
-      var h = SrcsLookupTable[source_tag.src];
-      // setup mqtt connection, callback called when connection
-      // made and a new iov_player created.
-      h.launchIovPlayer(function (iov_player) {
-        if (iov_player === null || iov_player.playing === true) {
-          return;
+      var t = setInterval(function () {
+        if (self.mediaSource.readyState === "open") {
+          self._do_on_sourceopen();
+          clearInterval(t);
+        }
+      }, 1000);
+    }
+  }, {
+    key: '_do_on_sourceopen',
+    value: function _do_on_sourceopen() {
+      debug('_do_on_sourceopen');
+
+      var self = this;
+
+      /** New media source opened. Add a buffer and append the moov MP4 video data.
+      */
+
+      // add buffer
+      self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
+      self.sourceBuffer.mode = 'sequence';
+      self.sourceBuffer.addEventListener('updateend', self._on_updateend);
+
+      self.sourceBuffer.addEventListener('error', function (e) {
+        console.error("MSE sourceBffer error");
+        console.error(e);
+      });
+
+      // we are now able to process video
+      self.source_buffer_ready = true;
+
+      self._appendBuffer_event(self.moovBox);
+      self.sourceBuffer.appendBuffer(self.moovBox);
+    }
+  }, {
+    key: '_on_sourceended',
+    value: function _on_sourceended() {
+      debug('_on_sourceended');
+
+      var self = this;
+
+      // @todo - do we need to clear the buffer manually?
+      self.stop();
+      self.source_buffer_ready = false;
+    }
+  }, {
+    key: '_on_updateend',
+    value: function _on_updateend() {
+      silly('_on_updateend');
+
+      var self = this;
+
+      // identify what seqnum of the MOOF message has actually been processed.
+      self.seqnumProcessed += 1;
+
+      if (self.video.paused === true) {
+        try {
+          // console.log("video paused calling video.play()", self.videoPlayer.id());
+          var promise = self.video.play();
+          // console.log("video.play() called", self.videoPlayer.id());
+          if (typeof promise !== 'undefined') {
+            promise.then(function (_) {}).catch(function (e) {});
+          }
+        } catch (ex) {
+          console.error("Exception while trying to play:" + ex.message);
+        }
+        //debug("setting video player from paused to play");
+      }
+
+      /*
+      var logmsg =
+          "_on_updateend: " +
+          ((self.video.paused) ? " video is paused,": "video is playing,")   +
+          " ready state = '" + self.mediaSource.readyState + "', " +
+          " video queue size = " + parseInt(self.vqueue.length)
+      ;
+      debug(logmsg);
+      */
+      if (self.mediaSource.readyState === "open") {
+        if (self.sourceBuffer.buffered.length > 0) {
+          var start = self.sourceBuffer.buffered.start(0);
+          var end = self.sourceBuffer.buffered.end(0);
+          var time_buffered = end - start;
+          var limit = 15.0;
+          if (time_buffered > 30.0) {
+            try {
+              // observed this fail during a memry snapshot in chrome
+              // otherwise no observed failure, so ignore exception.
+              self.sourceBuffer.remove(start, start + limit);
+            } catch (e) {
+              console.log('error while removing', self.videoPlayer.id());
+              console.error(e);
+            }
+          }
         }
 
-        iov_player.playing = true;
-
-        // dynamically alter the control bar below the video tag.
-        function setupControlBar() {
-          videojs_player.controlBar.addClass('vjs-live');
-          window._ThePlayer = videojs_player;
-
-          var playToggle = videojs_player.controlBar.children_[0].el_;
-          playToggle.addEventListener('click', function () {
-            // @todo - is this setTimeout necessary?
-            setTimeout(function () {
-              if (iov_player.playing === true) {
-                iov_player.stop();
-                iov_player.playing = false;
-                videojs_player.controlBar.playToggle.handlePause();
-                return;
-              }
-
-              spinner.show();
-
-              iov_player.resume(function () {
-                // @todo - is this setTimeout necessary?
-                setTimeout(function () {
-                  spinner.hide();
-                }, 0);
-              }, function () {
-                // reset the timeout monitor
-                videojs_player.trigger('timeupdate');
-              });
-
-              iov_player.playing = true;
-              videojs_player.controlBar.playToggle.handlePlay();
-            }, 0);
-          });
-        }
-
-        // start playing video
-        iov_player.play(e.target.firstChild.id, h.streamName, function () {
-          // @todo - is this setTimeout necessary?
-          // dispose of spinner after page refresh.
+        if (self.vqueue.length > 0) {
+          self._appendBuffer_event(self.vqueue[0]);
           setTimeout(function () {
-            // spinner.dispose();
-            spinner.hide();
-            // toggle play button
-            videojs_player.controlBar.playToggle.handlePlay();
-            // alter the control bar
-            setupControlBar();
+            // deqeue next prepared moof atom
+            if (self.sourceBuffer.updating === false) {
+              try {
+                self.sourceBuffer.appendBuffer(self.vqueue[0]);
+              } catch (ex) {
+                // internal error, this has been observed to happen the tab
+                // in the browser where this video player lives is hidden
+                // then reselected. 'ex' is undefined the error is bug
+                // within the MSE C++ implementation in the browser.
+                self.reinitializeMse();
+              }
+            }
+            // regardless we must proceed to the frame.
+            self.vqueue = self.vqueue.slice(1);
           }, 0);
-        }, function () {
-          // reset the timeout monitor
-          videojs_player.trigger('timeupdate');
-        });
-      });
-    });
-
-    this.ready(function () {
-      var videoTag = _this.children()[0];
-      // var playButton = this.bigPlayButton;
-
-      videoTag.addEventListener('mqttReady', function (event) {
-        if (videoTag.getAttribute('autoplay') !== null) {
-          // playButton.trigger('click');
-          _this.trigger('play', videoTag);
         }
-      });
+      }
+    }
+  }]);
 
-      onPlayerReady(_this, video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, options));
-    });
-  };
+  return IOVPlayer;
+}();
 
-  return mseOverMqtt;
-});
+/* harmony default export */ __webpack_exports__["default"] = (IOVPlayer);
+;
 
 /***/ }),
 
@@ -3185,23 +3191,14 @@ function browserIsCompatable() {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var videojs_errors__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! videojs-errors */ "./node_modules/videojs-errors/dist/videojs-errors.es.js");
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./conduit/clspConduit.generated.js */ "./src/js/conduit/clspConduit.generated.js");
-/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../package.json */ "./package.json");
-var _package_json__WEBPACK_IMPORTED_MODULE_4___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../package.json */ "./package.json", 1);
-/* harmony import */ var _MqttHandler__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./MqttHandler */ "./src/js/MqttHandler.js");
-/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
-/* harmony import */ var _mseOverMqtt__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./mseOverMqtt */ "./src/js/mseOverMqtt.js");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
-/* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_10___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_10__);
-
+/* harmony import */ var videojs_errors__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! videojs-errors */ "./node_modules/videojs-errors/dist/videojs-errors.es.js");
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./conduit/clspConduit.generated.js */ "./src/js/conduit/clspConduit.generated.js");
+/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MseOverMqttPlugin */ "./src/js/MseOverMqttPlugin.js");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__);
 
 
 
@@ -3211,65 +3208,12 @@ var _package_json__WEBPACK_IMPORTED_MODULE_4___namespace = /*#__PURE__*/__webpac
 
 
 
-
-
-
-
-
-/**
- * Function to invoke when the player is ready.
- *
- * This is a great place for your plugin to initialize itself. When this
- * function is called, the player will have its DOM and child components
- * in place.
- *
- * @function onPlayerReady
- * @param    {Player} player
- *           A Video.js player object.
- *
- * @param    {Object} [options={}]
- *           A plain object containing options for the plugin.
- */
-var onPlayerReady = function onPlayerReady(player, options) {
-  player.addClass('vjs-mse-over-mqtt');
-};
-
-function initialize() {
-  var SrcsLookupTable = {};
-
-  var mqttHandler = Object(_MqttHandler__WEBPACK_IMPORTED_MODULE_5__["default"])(SrcsLookupTable);
-  var mqttSourceHandler = Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_6__["default"])(mqttHandler);
-
-  video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mqttSupported = true;
-  video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mqttHandler = mqttHandler;
-  video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mqttSourceHandler = mqttSourceHandler;
-  video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getTech('Html5').registerSourceHandler(mqttSourceHandler('html5'), 0);
-
-  // Default options for the plugin.
-  var defaults = {};
-
-  var clspPlugin = Object(_mseOverMqtt__WEBPACK_IMPORTED_MODULE_7__["default"])(defaults, SrcsLookupTable, onPlayerReady);
-
-  // Cross-compatibility for Video.js 5 and 6.
-  var registerPlugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.registerPlugin || video_js__WEBPACK_IMPORTED_MODULE_0___default.a.plugin;
-
-  // Register the plugin with video.js.
-  // @todo - this is a side effect of
-  clspPlugin.clsp_IOV = _iov_IOV__WEBPACK_IMPORTED_MODULE_9__["default"];
-
-  registerPlugin('clsp', clspPlugin);
-
-  return clspPlugin;
-}
-
 // @todo - do not initialize the plugin by default, since that is a side
 // effect.  make the caller call the initialize function.  also, is it
 // possible to unregister the plugin?
-var clspPlugin = initialize();
+var clspPlugin = Object(_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_3__["default"])();
 
-// clspPlugin.initialize = initialize;
-clspPlugin.version = _package_json__WEBPACK_IMPORTED_MODULE_4__["version"];
-clspPlugin.utils = _utils__WEBPACK_IMPORTED_MODULE_8__["default"];
+clspPlugin.register();
 
 /* harmony default export */ __webpack_exports__["default"] = (clspPlugin);
 

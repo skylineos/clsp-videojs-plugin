@@ -14,7 +14,7 @@ export default class MqttTransport {
       byteCount: 0,
       inkbps: 0,
       host: document.location.host,
-      clientId: iov.config.clientId
+      clientId: iov.config.clientId,
     };
 
     this.clientId = iov.config.clientId;
