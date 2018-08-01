@@ -93,7 +93,7 @@ export default class IOVPlayer {
     this._on_sourceended = this._on_sourceended.bind(this);
     this._on_moof = this._on_moof.bind(this);
     this._on_updateend = this._on_updateend.bind(this);
-    this.onTransportTransation = this.onTransportTransation.bind(this);
+    this.onTransportTransaction = this.onTransportTransaction.bind(this);
   }
 
   resetPlayState () {
@@ -115,8 +115,7 @@ export default class IOVPlayer {
     return true;
   }
 
-  onTransportTransation (iov, response) {
-    console.log(response)
+  onTransportTransaction (iov, response) {
     const new_mimeCodec = response.mimeCodec;
     const new_guid = response.guid; // stream guid
 
@@ -199,11 +198,11 @@ export default class IOVPlayer {
     const topic = `iov/video/${window.btoa(newStream)}/request`;
 
     if (iov) {
-      iov.transport.transaction(topic, (...args) => this.onTransportTransation(iov, ...args), request);
+      iov.transport.transaction(topic, (...args) => this.onTransportTransaction(iov, ...args), request);
       return;
     }
 
-    this.iov.transport.transaction(topic, (...args) => this.onTransportTransation(iov, ...args), request);
+    this.iov.transport.transaction(topic, (...args) => this.onTransportTransaction(iov, ...args), request);
   }
 
   _fault (message) {
@@ -232,7 +231,6 @@ export default class IOVPlayer {
       // reallocate, this will call media source open which will
       // append the MOOV atom.
       this.video.src = URL.createObjectURL(this.mediaSource);
-      console.log(`set the source for ${this.videoPlayer.id()}, but is it playing?`)
     }
   }
 
@@ -396,13 +394,14 @@ export default class IOVPlayer {
           return;
         }
 
+        new_cfg.initialize = false;
         new_cfg.videoElement = self.iov.config.videoElement;
         new_cfg.appStart = (iov) => {
           // conected to new mqtt
           self.change(new_cfg.streamName, iov);
         };
 
-        self.iov.new_iov(new_cfg);
+        self.iov.clone(new_cfg);
       });
 
       self.mediaSource.addEventListener('sourceopen', self._on_sourceopen);
@@ -508,34 +507,13 @@ export default class IOVPlayer {
 
     // add buffer
     self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
-    self.sourceBuffer.mode = "sequence";
+    self.sourceBuffer.mode = 'sequence';
     self.sourceBuffer.addEventListener('updateend', self._on_updateend);
-    self.sourceBuffer.addEventListener('update', function () {
-      // console.log('update', self.videoPlayer.id())
-      // if ( (self.sourceBuffer.updating === false) && (self.vqueue.length > 0) ) {
-      //     try {
-      //         self._appendBuffer_event(self.vqueue[0]);
-      //         self.sourceBuffer.appendBuffer( self.vqueue[0] );
-      //         self.vqueue = self.vqueue.slice(1);
-      //     } catch(e) {
-      //         console.error("Excetion thrown from appendBuffer", e);
-      //         self.videoPlayer.error({code: 3});
-      //         self.reinitializeMse();
-      //     }
-      // }
-    });
-
-    self.sourceBuffer.addEventListener('updatestart', function () {
-      //debug("On update start");
-    });
 
     self.sourceBuffer.addEventListener('error', function (e) {
       console.error("MSE sourceBffer error");
       console.error(e);
     });
-
-    // send ftype+moov segments of video
-    //debug("sending moov atom ");
 
     // we are now able to process video
     self.source_buffer_ready = true;

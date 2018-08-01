@@ -1527,8 +1527,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
-/* harmony import */ var _iov_player__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./iov/player */ "./src/js/iov/player.js");
+/* harmony import */ var _iov_player__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./iov/player */ "./src/js/iov/player.js");
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1542,69 +1541,39 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 
 
-
 var Component = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getComponent('Component');
 
-/* harmony default export */ __webpack_exports__["default"] = (function (SrcsLookupTable) {
+/* harmony default export */ __webpack_exports__["default"] = (function () {
   var MqttHandler = function (_Component) {
     _inherits(MqttHandler, _Component);
 
-    function MqttHandler(source, tech, options, player) {
+    function MqttHandler(source, tech, options) {
       _classCallCheck(this, MqttHandler);
 
       var _this = _possibleConstructorReturn(this, (MqttHandler.__proto__ || Object.getPrototypeOf(MqttHandler)).call(this, tech, options.mqtt));
 
-      _this.playerInstance = player;
       _this.tech_ = tech;
       _this.source_ = source;
-      _this.enabled = false;
       _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:MqttHandler');
       return _this;
     }
 
+    /**
+     * called when player.src gets called, handle a new source
+     *
+     * @param {Object} src the source object to handle
+     */
+
+
     _createClass(MqttHandler, [{
       key: 'src',
       value: function src(_src) {
-        var srcConfig = _iov_player__WEBPACK_IMPORTED_MODULE_3__["default"].generateIOVConfigFromCLSPURL(_src);
+        var srcConfig = _iov_player__WEBPACK_IMPORTED_MODULE_2__["default"].generateIOVConfigFromCLSPURL(_src);
 
-        this.enabled = true;
-        this.mqtt_player = null;
         this.port = srcConfig.port;
         this.address = srcConfig.address;
         this.streamName = srcConfig.streamName;
         this.useSSL = srcConfig.useSSL;
-
-        SrcsLookupTable[_src] = this;
-      }
-    }, {
-      key: 'launchIovPlayer',
-      value: function launchIovPlayer(player, onMqttReady) {
-        var _this2 = this;
-
-        var velm = this.player().el();
-
-        var iov = new _iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"]({
-          port: this.port,
-          address: this.address,
-          appStart: function appStart(iov) {
-            // connected to MQTT procede to setting up callbacks
-            // debug("iov.player() called")
-            var mqtt_player = iov.player();
-            var evt = new window.CustomEvent("mqttReady");
-            console.log(_this2.player());
-            console.log(_this2.player);
-            _this2.player().el().dispatchEvent(evt);
-            onMqttReady(mqtt_player);
-
-            velm.addEventListener("mse-error-event", function (e) {
-              mqtt_player.restart();
-            }, false);
-          },
-          useSSL: this.useSSL,
-          videoElement: velm
-        });
-
-        iov.initialize(this.playerInstance);
       }
     }]);
 
@@ -1631,100 +1600,230 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
+/* harmony import */ var _MqttHandler__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MqttHandler */ "./src/js/MqttHandler.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
 
 
 
 
 
-/* harmony default export */ __webpack_exports__["default"] = (function (MqttHandler) {
-    var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:MqttSourceHandler');
 
-    /*
-       source handler for the source tag in html5:
-       <video><source src="..." type="..."></video>
-        mqttSourceHandler = {
-           canPlayType: function(type) {
-               // only the canned type for MediaSource entensions
-               // use media source extensions to determine if
-               // it can play it. MQTT/video
-           },
-           canHandleSource: function(source, options) {
-               // check for mqtt:// .... as a protocol
-           },
-           handleSource : function(source, tech, options) {
-           },
-           dispose: function() {
-               // destructor.
-           }
-       }
-        Html5 = videojs.getTech('Html5');
-       Html5.registerSourceHandler(mqttSourceHandler);
-     */
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:MqttSourceHandler');
+  var MqttHandler = Object(_MqttHandler__WEBPACK_IMPORTED_MODULE_2__["default"])();
 
-    var MqttSourceHandler = function MqttSourceHandler(mode) {
-        var obj = {
-            canPlayType: function canPlayType(type) {
-                var r = '';
-                if ('MediaSource' in window) {
-                    if (type === "video/mp4; codecs='avc1.42E01E'") {
-                        r = 'maybe';
-                    } else {
-                        debug("clsp type='" + type + "' rejected");
-                    }
-                }
-                return r;
-            },
-            canHandleSource: function canHandleSource(srcObj) {
-                var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  return function (mode) {
+    var obj = {
+      canHandleSource: function canHandleSource(srcObj) {
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-                /* This method is used to determin if the following html5 tag can be used
-                   as a video source:
-                    <source src="clsp://<ip addr>:<ws port>/<mqtt topic>"
-                           type="video/mp4; codecs='avc1.42E01E'" />
-                */
-                var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options);
+        if (!srcObj.src) {
+          console.error('srcObj doesn\'t contain src');
+          debug(srcObj);
+          return false;
+        }
 
-                if (!srcObj.src) {
-                    debug("srcObj doesn't contain src");
-                    debug(srcObj);
-                    return false;
-                }
+        if (!srcObj.src.startsWith('clsp')) {
+          console.error('srcObj.src is not clsp protocol');
+          return false;
+        }
 
-                if (srcObj.src.startsWith("clsp") === false) {
-                    debug("srcObj.src is not clsp protocol");
-                    return false;
-                }
+        if (!_utils__WEBPACK_IMPORTED_MODULE_3__["default"].supported()) {
+          debug('Browser not supported. Chrome 52+ is required.');
+          return false;
+        }
 
-                /// restrict to chrome version 52 or greater
-                if (_utils__WEBPACK_IMPORTED_MODULE_2__["default"].supported() === false) {
-                    debug("Browser not supported. Chrome 52+ is required.");
-                    return false;
-                }
+        return obj.canPlayType(srcObj.type);
+      },
+      handleSource: function handleSource(source, tech) {
+        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-                return obj.canPlayType(srcObj.type);
-            },
-            handleSource: function handleSource(srcObj, tech) {
-                var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+        var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options, { mqtt: { mode: mode } });
 
-                var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options, { mqtt: { mode: mode } });
-                // @todo - we are accessing an internal property here, which is subject
-                // to change in future versions of videojs.  Is there a way for us to get
-                // the ID without using this property?  Better yet, is it possible to
-                // pass the player instance here rather than have to look it up through
-                // videojs?
-                var player = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlayer(tech.options_.playerId);
+        tech.mqtt = new MqttHandler(source, tech, localOptions);
 
-                tech.mqtt = new MqttHandler(srcObj, tech, localOptions, player);
-                tech.mqtt.src(srcObj.src);
-                return tech.mqtt;
-            }
-        };
-        return obj;
+        tech.mqtt.src(source.src);
+
+        return tech.mqtt;
+      },
+      canPlayType: function canPlayType(type) {
+        if (type === "video/mp4; codecs='avc1.42E01E'") {
+          return 'maybe';
+        }
+
+        console.error('clsp type=\'' + type + '\' rejected');
+
+        return '';
+      }
     };
 
-    return MqttSourceHandler;
+    return obj;
+  };
 });
+
+/***/ }),
+
+/***/ "./src/js/MseOverMqttPlugin.js":
+/*!*************************************!*\
+  !*** ./src/js/MseOverMqttPlugin.js ***!
+  \*************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../package.json */ "./package.json");
+var _package_json__WEBPACK_IMPORTED_MODULE_1___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../package.json */ "./package.json", 1);
+/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
+/* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+
+
+
+var Plugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getPlugin('plugin');
+
+var registered = false;
+
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  var defaults = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+  var MseOverMqttPlugin = function (_Plugin) {
+    _inherits(MseOverMqttPlugin, _Plugin);
+
+    _createClass(MseOverMqttPlugin, null, [{
+      key: 'register',
+      value: function register() {
+        if (registered) {
+          throw new Error('You can only register the clsp plugin once, and it has already been registered.');
+        }
+
+        // @todo - there is likely some way for videojs to tell us that the plugin has already
+        // been registered, or perhaps videojs itself will not let you register a plugin twice
+        registered = true;
+
+        video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getTech('Html5').registerSourceHandler(Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__["default"])()('html5'), 0);
+        video_js__WEBPACK_IMPORTED_MODULE_0___default.a.registerPlugin(MseOverMqttPlugin.pluginName, MseOverMqttPlugin);
+
+        return MseOverMqttPlugin;
+      }
+    }]);
+
+    function MseOverMqttPlugin(player, options) {
+      _classCallCheck(this, MseOverMqttPlugin);
+
+      var _this = _possibleConstructorReturn(this, (MseOverMqttPlugin.__proto__ || Object.getPrototypeOf(MseOverMqttPlugin)).call(this, player, options));
+
+      options = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, options);
+
+      player.addClass('vjs-mse-over-mqtt');
+
+      if (options.customClass) {
+        player.addClass(options.customClass);
+      }
+
+      player.errors({
+        errors: {
+          PLAYER_ERR_NOT_COMPAT: {
+            headline: 'This browser is unsupported.',
+            message: 'Chrome 52+ is required.'
+          }
+        },
+        timeout: 120 * 1000
+      });
+
+      if (!_utils__WEBPACK_IMPORTED_MODULE_4__["default"].supported()) {
+        var _ret;
+
+        return _ret = player.error({
+          code: 'PLAYER_ERR_NOT_COMPAT',
+          dismiss: false
+        }), _possibleConstructorReturn(_this, _ret);
+      }
+
+      player.on('firstplay', function (e) {
+        // @todo - the use of the tech here is discouraged.  What is the "right" way to
+        // get the information from the mqttHandler?
+        // And, really, all this does is parse the clsp url - do we really need a
+        // dedicated handler for that?  Can't we parse the url ourselves?
+        var mqttHandler = player.tech(true).mqtt;
+
+        if (!mqttHandler) {
+          return console.error('src not in lookup table');
+        }
+
+        var videoElement = player.el();
+
+        var iov = _iov_IOV__WEBPACK_IMPORTED_MODULE_3__["default"].factory(player, {
+          port: mqttHandler.port,
+          address: mqttHandler.address,
+          useSSL: mqttHandler.useSSL,
+          videoElement: videoElement,
+          appStart: function appStart(iov) {
+            // connected to MQTT procede to setting up callbacks
+            // debug("iov.player() called")
+            var mqtt_player = iov.player;
+
+            if (!mqtt_player) {
+              throw new Error('mqtt_player not available!');
+            }
+
+            var videoTag = player.children()[0];
+
+            // @todo - there must be a better way to determine autoplay...
+            if (videoTag.getAttribute('autoplay') !== null) {
+              // playButton.trigger('click');
+              player.trigger('play', videoTag);
+            }
+
+            if (mqtt_player.playing) {
+              console.warn('tried to use this player more than once...');
+              return;
+            }
+
+            mqtt_player.playing = true;
+
+            // start playing video
+            mqtt_player.play(e.target.firstChild.id, mqttHandler.streamName, function () {
+              player.loadingSpinner.hide();
+            }, function () {
+              // reset the timeout monitor
+              player.trigger('timeupdate');
+            });
+
+            videoElement.addEventListener('mse-error-event', function (e) {
+              mqtt_player.restart();
+            }, false);
+          }
+        });
+
+        iov.initialize();
+      });
+      return _this;
+    }
+
+    return MseOverMqttPlugin;
+  }(Plugin);
+
+  MseOverMqttPlugin.pluginName = 'clsp';
+  MseOverMqttPlugin.VERSION = _package_json__WEBPACK_IMPORTED_MODULE_1__["version"];
+  MseOverMqttPlugin.utils = _utils__WEBPACK_IMPORTED_MODULE_4__["default"];
+
+  return MseOverMqttPlugin;
+});;
 
 /***/ }),
 
@@ -1896,6 +1995,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/iov/MqttConduitCollection.js");
 /* harmony import */ var _MqttTransport__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./MqttTransport */ "./src/js/iov/MqttTransport.js");
 /* harmony import */ var _player__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./player */ "./src/js/iov/player.js");
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1919,6 +2020,7 @@ var IOV = function () {
   _createClass(IOV, null, [{
     key: 'compatibilityCheck',
     value: function compatibilityCheck() {
+      // @todo - shouldn't this be done in the utils function?
       // For the MAC
       var NoMediaSourceAlert = false;
 
@@ -1926,19 +2028,26 @@ var IOV = function () {
 
       if (!window.MediaSource) {
         if (NoMediaSourceAlert === false) {
-          alert("Media Source Extensions not supported in your browser" + ": Claris Live Streaming will not work!");
+          window.alert('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
         }
 
         NoMediaSourceAlert = true;
       }
     }
+  }, {
+    key: 'factory',
+    value: function factory(player, config) {
+      return new IOV(player, config);
+    }
   }]);
 
-  function IOV(config) {
+  function IOV(player, config) {
     _classCallCheck(this, IOV);
 
     this.id = uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
     this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':main');
+
+    this.playerInstance = player;
 
     this.config = {
       // web socket address defaults to the address of the server that loaded this page.
@@ -1957,13 +2066,13 @@ var IOV = function () {
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
     this.mqttTopicHandlers = new _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__["default"](this.id, this);
-    this.mqttConduitCollection = new _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__["default"](this.id);
+    this.mqttConduitCollection = config.mqttConduitCollection || new _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__["default"](this.id);
     this.transport = new _MqttTransport__WEBPACK_IMPORTED_MODULE_4__["default"](this.id, this);
 
     this.events = {
       connection_lost: function connection_lost(responseObject) {
-        //TODO close all players and display an error message
-        console.error("MQTT connection lost");
+        // @todo - close all players and display an error message
+        console.error('MQTT connection lost');
         console.error(responseObject);
       },
 
@@ -1977,67 +2086,31 @@ var IOV = function () {
         }
       }
     };
+
+    this.player = _player__WEBPACK_IMPORTED_MODULE_5__["default"].factory(this, this.playerInstance);
+
+    if (config.initialize) {
+      this.initialize();
+    }
   }
 
   _createClass(IOV, [{
-    key: 'new_iov',
-    value: function new_iov(config) {
-      var self = {};
-      self.id = 'x' + uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
-
-      self.config = {
-        // web socket address defaults to the address of the server that loaded this page.
-        wsbroker: config.address,
-        // default port number
-        wsport: config.port,
-        // default clientId
-        clientId: self.id,
-        // to be overriden by user.
-        appStart: config.appStart,
-        useSSL: config.useSSL || false,
-        videoElement: config.videoElement,
+    key: 'clone',
+    value: function clone(config) {
+      return IOV.factory(this.playerInstance, _extends({}, config, {
+        mqttConduitCollection: this.mqttConduitCollection,
         videoElementParent: this.config.videoElementParent
-      };
-
-      // handle inbound messages from MQTT, including video
-      // and distributes them to players.
-      self.mqttTopicHandlers = new _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__["default"](self.id, self);
-      self.mqttConduitCollection = this.mqttConduitCollection;
-      self.transport = new _MqttTransport__WEBPACK_IMPORTED_MODULE_4__["default"](self.id, self);
-
-      this.events = {
-        connection_lost: function connection_lost(responseObject) {
-          //TODO close all players and display an error message
-          console.error("MQTT connection lost");
-          console.error(responseObject);
-        },
-
-        // keep the same topic handler
-        on_message: self.mqttTopicHandlers.msghandler,
-
-        // generic exception handler
-        exception: function exception(text, e) {
-          console.error(text);
-          if (typeof e !== 'undefined') {
-            console.error(e.stack);
-          }
-        }
-      };
-
-      self.new_iov = this.new_iov;
-      self.play = this.play;
-      self.getAvailableStreams = this.getAvailableStreams;
-      self.compatibilityCheck = this.compatibilityCheck;
-
-      return self;
+      }));
     }
   }, {
     key: 'initialize',
-    value: function initialize(player) {
+    value: function initialize() {
       var _this = this;
 
       IOV.compatibilityCheck();
 
+      // @todo - this listener has no concept of this instance, so it should be
+      // moved elsewhere, or restructured
       // route inbound data from a frame running mqtt to the appropriate player
       window.addEventListener('message', function (event) {
         _this.debug('message received', event.data);
@@ -2053,27 +2126,32 @@ var IOV = function () {
 
         switch (eventType) {
           case 'data':
-            conduit.inboundHandler(event.data);
-            break;
-          case 'ready':
-            if (_this.config.videoElement.parentNode !== null) {
-              _this.config.videoElementParentId = _this.config.videoElement.parentNode.id;
+            {
+              conduit.inboundHandler(event.data);
+              break;
             }
-            conduit.onReady();
-            break;
+          case 'ready':
+            {
+              if (_this.config.videoElement.parentNode !== null) {
+                _this.config.videoElementParentId = _this.config.videoElement.parentNode.id;
+              }
+              conduit.onReady();
+              break;
+            }
           case 'fail':
-            _this.debug('network error', event.data.reason);
-            player.trigger("network-error", event.data.reason);
-            break;
+            {
+              _this.debug('network error', event.data.reason);
+              _this.playerInstance.trigger('network-error', event.data.reason);
+              break;
+            }
           default:
-            console.error("No match for event = " + eventType);
+            {
+              console.error('No match for event: ' + eventType);
+            }
         }
       });
-    }
-  }, {
-    key: 'player',
-    value: function player() {
-      return _player__WEBPACK_IMPORTED_MODULE_5__["default"].factory(this);
+
+      return this;
     }
 
     // query remote server and get a list of all stream names
@@ -2139,7 +2217,7 @@ var MqttConduitCollection = function () {
 
       this.debug('adding from iov...', iov);
 
-      return this.set(iov.config.clientId, mqttConduit(iov.config, function () {
+      return this.set(iov.config.clientId, window.mqttConduit(iov.config, function () {
         _this.debug('onReady...', iov.config.clientId);
 
         iov.config.appStart(iov);
@@ -2262,7 +2340,7 @@ var MqttTopicHandlers = function () {
       var topic = message.destinationName;
 
       if (!this.exists(topic)) {
-        debug('No handler for ' + topic + ' - message dropped', message);
+        this.debug('No handler for ' + topic + ' - message dropped', message);
 
         return;
       }
@@ -2512,7 +2590,7 @@ var IOVPlayer = function () {
     this._on_sourceended = this._on_sourceended.bind(this);
     this._on_moof = this._on_moof.bind(this);
     this._on_updateend = this._on_updateend.bind(this);
-    this.onTransportTransation = this.onTransportTransation.bind(this);
+    this.onTransportTransaction = this.onTransportTransaction.bind(this);
   }
 
   _createClass(IOVPlayer, [{
@@ -2537,11 +2615,10 @@ var IOVPlayer = function () {
       return true;
     }
   }, {
-    key: 'onTransportTransation',
-    value: function onTransportTransation(iov, response) {
+    key: 'onTransportTransaction',
+    value: function onTransportTransaction(iov, response) {
       var _this = this;
 
-      console.log(response);
       var new_mimeCodec = response.mimeCodec;
       var new_guid = response.guid; // stream guid
 
@@ -2628,7 +2705,7 @@ var IOVPlayer = function () {
             args[_key] = arguments[_key];
           }
 
-          return _this2.onTransportTransation.apply(_this2, [iov].concat(args));
+          return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
         }, request);
         return;
       }
@@ -2638,7 +2715,7 @@ var IOVPlayer = function () {
           args[_key2] = arguments[_key2];
         }
 
-        return _this2.onTransportTransation.apply(_this2, [iov].concat(args));
+        return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
       }, request);
     }
   }, {
@@ -2670,7 +2747,6 @@ var IOVPlayer = function () {
         // reallocate, this will call media source open which will
         // append the MOOV atom.
         this.video.src = URL.createObjectURL(this.mediaSource);
-        console.log('set the source for ' + this.videoPlayer.id() + ', but is it playing?');
       }
     }
   }, {
@@ -2841,13 +2917,14 @@ var IOVPlayer = function () {
             return;
           }
 
+          new_cfg.initialize = false;
           new_cfg.videoElement = self.iov.config.videoElement;
           new_cfg.appStart = function (iov) {
             // conected to new mqtt
             self.change(new_cfg.streamName, iov);
           };
 
-          self.iov.new_iov(new_cfg);
+          self.iov.clone(new_cfg);
         });
 
         self.mediaSource.addEventListener('sourceopen', self._on_sourceopen);
@@ -2955,34 +3032,13 @@ var IOVPlayer = function () {
 
       // add buffer
       self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
-      self.sourceBuffer.mode = "sequence";
+      self.sourceBuffer.mode = 'sequence';
       self.sourceBuffer.addEventListener('updateend', self._on_updateend);
-      self.sourceBuffer.addEventListener('update', function () {
-        // console.log('update', self.videoPlayer.id())
-        // if ( (self.sourceBuffer.updating === false) && (self.vqueue.length > 0) ) {
-        //     try {
-        //         self._appendBuffer_event(self.vqueue[0]);
-        //         self.sourceBuffer.appendBuffer( self.vqueue[0] );
-        //         self.vqueue = self.vqueue.slice(1);
-        //     } catch(e) {
-        //         console.error("Excetion thrown from appendBuffer", e);
-        //         self.videoPlayer.error({code: 3});
-        //         self.reinitializeMse();
-        //     }
-        // }
-      });
-
-      self.sourceBuffer.addEventListener('updatestart', function () {
-        //debug("On update start");
-      });
 
       self.sourceBuffer.addEventListener('error', function (e) {
         console.error("MSE sourceBffer error");
         console.error(e);
       });
-
-      // send ftype+moov segments of video
-      //debug("sending moov atom ");
 
       // we are now able to process video
       self.source_buffer_ready = true;
@@ -3083,124 +3139,6 @@ var IOVPlayer = function () {
 
 /***/ }),
 
-/***/ "./src/js/mseOverMqtt.js":
-/*!*******************************!*\
-  !*** ./src/js/mseOverMqtt.js ***!
-  \*******************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../package.json */ "./package.json");
-var _package_json__WEBPACK_IMPORTED_MODULE_1___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../package.json */ "./package.json", 1);
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
-
-
-
-
-var Plugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getPlugin('plugin');
-
-/* harmony default export */ __webpack_exports__["default"] = (function (defaults, SrcsLookupTable) {
-  var MseOverMqttPlugin = function (_Plugin) {
-    _inherits(MseOverMqttPlugin, _Plugin);
-
-    function MseOverMqttPlugin(player, options) {
-      _classCallCheck(this, MseOverMqttPlugin);
-
-      var _this = _possibleConstructorReturn(this, (MseOverMqttPlugin.__proto__ || Object.getPrototypeOf(MseOverMqttPlugin)).call(this, player, options));
-
-      options = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, options);
-
-      if (options.customClass) {
-        player.addClass(options.customClass);
-      }
-
-      player.errors({
-        errors: {
-          PLAYER_ERR_NOT_COMPAT: {
-            headline: 'This browser is unsupported.',
-            message: 'Chrome 52+ is required.'
-          }
-        },
-        timeout: 120 * 1000
-      });
-
-      if (!_utils__WEBPACK_IMPORTED_MODULE_2__["default"].supported()) {
-        var _ret;
-
-        return _ret = player.error({
-          code: 'PLAYER_ERR_NOT_COMPAT',
-          dismiss: false
-        }), _possibleConstructorReturn(_this, _ret);
-      }
-
-      player.on('firstplay', function (e) {
-        var mqttHandler = SrcsLookupTable[this.currentSource().src];
-
-        if (!mqttHandler) {
-          return console.error('src not in lookup table');
-        }
-
-        // setup mqtt connection, callback called when connection
-        // made and a new iov_player created.
-        mqttHandler.launchIovPlayer(player, function (iov_player) {
-          if (!iov_player) {
-            throw new Error('iov_player not available!');
-          }
-
-          if (iov_player.playing) {
-            console.warn('tried to use this player more than once...');
-            return;
-          }
-
-          iov_player.playing = true;
-
-          // start playing video
-          iov_player.play(e.target.firstChild.id, mqttHandler.streamName, function () {
-            player.loadingSpinner.hide();
-          }, function () {
-            // reset the timeout monitor
-            player.trigger('timeupdate');
-          });
-        });
-      });
-
-      player.ready(function () {
-        var videoTag = player.children()[0];
-        // var playButton = this.bigPlayButton;
-
-        videoTag.addEventListener('mqttReady', function (event) {
-          if (videoTag.getAttribute('autoplay') !== null) {
-            // playButton.trigger('click');
-            player.trigger('play', videoTag);
-          }
-        });
-      });
-      return _this;
-    }
-
-    return MseOverMqttPlugin;
-  }(Plugin);
-
-  MseOverMqttPlugin.pluginName = 'clsp';
-  MseOverMqttPlugin.VERSION = _package_json__WEBPACK_IMPORTED_MODULE_1__["version"];
-  MseOverMqttPlugin.utils = _utils__WEBPACK_IMPORTED_MODULE_2__["default"];
-
-  return MseOverMqttPlugin;
-});;
-
-/***/ }),
-
 /***/ "./src/js/utils.js":
 /*!*************************!*\
   !*** ./src/js/utils.js ***!
@@ -3242,19 +3180,14 @@ function browserIsCompatable() {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var videojs_errors__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! videojs-errors */ "./node_modules/videojs-errors/dist/videojs-errors.es.js");
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./conduit/clspConduit.generated.js */ "./src/js/conduit/clspConduit.generated.js");
-/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _MqttHandler__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./MqttHandler */ "./src/js/MqttHandler.js");
-/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
-/* harmony import */ var _mseOverMqtt__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./mseOverMqtt */ "./src/js/mseOverMqtt.js");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_7__);
-
+/* harmony import */ var videojs_errors__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! videojs-errors */ "./node_modules/videojs-errors/dist/videojs-errors.es.js");
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./conduit/clspConduit.generated.js */ "./src/js/conduit/clspConduit.generated.js");
+/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MseOverMqttPlugin */ "./src/js/MseOverMqttPlugin.js");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__);
 
 
 
@@ -3264,47 +3197,14 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
-
-/**
- * Function to invoke when the player is ready.
- *
- * This is a great place for your plugin to initialize itself. When this
- * function is called, the player will have its DOM and child components
- * in place.
- *
- * @function onPlayerReady
- * @param    {Player} player
- *           A Video.js player object.
- *
- * @param    {Object} [options={}]
- *           A plain object containing options for the plugin.
- */
-var onPlayerReady = function onPlayerReady(player, options) {
-  player.addClass();
-};
-
-function initialize() {
-  // Default options for the plugin.
-  var defaults = {
-    customClass: 'vjs-mse-over-mqtt'
-  };
-  var SrcsLookupTable = {};
-
-  var mqttHandler = Object(_MqttHandler__WEBPACK_IMPORTED_MODULE_4__["default"])(SrcsLookupTable);
-  var mqttSourceHandler = Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_5__["default"])(mqttHandler);
-  var clspPlugin = Object(_mseOverMqtt__WEBPACK_IMPORTED_MODULE_6__["default"])(defaults, SrcsLookupTable, onPlayerReady);
-
-  video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getTech('Html5').registerSourceHandler(mqttSourceHandler('html5'), 0);
-  video_js__WEBPACK_IMPORTED_MODULE_0___default.a.registerPlugin(clspPlugin.pluginName, clspPlugin);
-
-  return clspPlugin;
-}
-
 // @todo - do not initialize the plugin by default, since that is a side
 // effect.  make the caller call the initialize function.  also, is it
 // possible to unregister the plugin?
-/* harmony default export */ __webpack_exports__["default"] = (initialize());
+var clspPlugin = Object(_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_3__["default"])();
+
+clspPlugin.register();
+
+/* harmony default export */ __webpack_exports__["default"] = (clspPlugin);
 
 /***/ }),
 

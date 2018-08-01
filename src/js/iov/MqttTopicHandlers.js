@@ -53,14 +53,15 @@ export default class MqttTopicHandlers {
     var topic = message.destinationName;
 
     if (!this.exists(topic)) {
-      debug(`No handler for ${topic} - message dropped`, message);
+      this.debug(`No handler for ${topic} - message dropped`, message);
 
       return;
     }
 
     try {
       this.get(topic)(message);
-    } catch (e) {
+    }
+    catch (e) {
       this.iov.events.exception(`${topic} handler exception`, e);
     }
   }

@@ -23,7 +23,7 @@ export default class MqttConduitCollection {
   addFromIov (transport, iov) {
     this.debug('adding from iov...', iov);
 
-    return this.set(iov.config.clientId, mqttConduit(iov.config, () => {
+    return this.set(iov.config.clientId, window.mqttConduit(iov.config, () => {
       this.debug('onReady...', iov.config.clientId);
 
       iov.config.appStart(iov);
