@@ -54,6 +54,13 @@ export default function (defaults = {}) {
         });
       }
 
+      player.currentTime = function () {
+        // Needed to make videojs-errors think that the video is progressing
+        // If we do not do this, videojs-errors will give us a timeout error
+        // filthy hack - two objects will never be equal to one another
+        return {};
+      };
+
       player.on('firstplay', function (e) {
         // @todo - the use of the tech here is discouraged.  What is the "right" way to
         // get the information from the mqttHandler?
@@ -104,7 +111,7 @@ export default function (defaults = {}) {
                 player.loadingSpinner.hide();
               },
               function () {
-                // reset the timeout monitor
+                // reset the timeout monitor from videojs-errors
                 player.trigger('timeupdate');
               }
             );

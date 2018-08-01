@@ -295,6 +295,9 @@ export default class IOVPlayer {
       mqtt_msg.destinationName = self.LogSourceBufferTopic;
       MQTTClient.send(mqtt_msg);
     }
+
+    self.onVideoRecv();
+
     // increment bytecount stats
     self.iov.statsMsg.byteCount += bytearray.length;
   }
