@@ -212,7 +212,8 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
-* expose utils
+* create dispose methods for all classes
+* make iov initialize execute once, and by default
 * create demo for failover
 * add lint precommit
 * minify css

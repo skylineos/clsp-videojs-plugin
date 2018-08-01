@@ -2521,11 +2521,17 @@ var IOVPlayer = function () {
         throw new Error('No source was given to be parsed!');
       }
 
+      // We use an anchor tag here beacuse, when an href is added to
+      // an anchor dom Element, the parsing is done for you by the
+      // browser.
       var parser = document.createElement('a');
 
       var useSSL = void 0;
       var default_port = void 0;
 
+      // Chrome is the only browser that allows non-http protocols in
+      // the anchor tag's href, so change them all to http here so we
+      // get the benefits of the anchor tag's parsing
       if (_src.substring(0, 5).toLowerCase() === 'clsps') {
         useSSL = true;
         parser.href = _src.replace('clsps', 'https');
@@ -2891,6 +2897,11 @@ var IOVPlayer = function () {
 
         self.mediaSource = new MediaSource();
 
+        // when videojs initializes the video element (or something like that),
+        // it creates events and listeners on that element that it uses, however
+        // these events interfere with our ability to play clsp streams.  Cloning
+        // the element like this and reinserting it is a blunt instrument to remove
+        // all of the videojs events so that we are in control of the player.
         var clone = self.video.cloneNode();
         var parent = self.video.parentNode;
 
