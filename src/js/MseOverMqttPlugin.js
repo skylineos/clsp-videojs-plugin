@@ -103,20 +103,24 @@ export default function (defaults = {}) {
 
             mqtt_player.playing = true;
 
-            // start playing video
-            mqtt_player.play(
-              e.target.firstChild.id,
-              mqttHandler.streamName,
-              function () {
-                player.loadingSpinner.hide();
-              },
-              function () {
-                // reset the timeout monitor from videojs-errors
-                player.trigger('timeupdate');
-              }
-            );
+            mqtt_player.on('firstChunk', () => {
+              player.loadingSpinner.hide();
+            });
 
-            videoElement.addEventListener('mse-error-event', function (e) {
+            mqtt_player.on('videoReceived', () => {
+              // reset the timeout monitor from videojs-errors
+              player.trigger('timeupdate');
+            });
+
+            mqtt_player.on('videoInfoReceived', () => {
+              // reset the timeout monitor from videojs-errors
+              player.trigger('timeupdate');
+            });
+
+            // start playing video
+            mqtt_player.play(e.target.firstChild.id, mqttHandler.streamName);
+
+            videoElement.addEventListener('mse-error-event', (e) => {
               mqtt_player.restart();
             }, false);
           },
