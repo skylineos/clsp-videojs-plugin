@@ -14,9 +14,10 @@ var iframe_code = "__IFRAME_CODE__";
 
 
 
-function pframe_client(iframe, config, onReady) {
+function pframe_client(iframe, iov, config, onReady) {
     var self = {
-        dispatch: {}
+        dispatch: {},
+        iov,
     };
 
 
@@ -105,14 +106,8 @@ function pframe_client(iframe, config, onReady) {
 }
 
 
-window.mqttConduit = function( config, onReady ){
-    /*
-        config = {
-            ip: ... mqtt ip address
-            port: websocket port
-        }
-      }
-    */
+window.mqttConduit = function( iov, onReady ){
+    var config = iov.config;
     var client = {};
     var iframe = document.createElement('iframe');
     var MqttUseSSL = (config.useSSL || false) ? "true": "false";
@@ -161,5 +156,5 @@ window.mqttConduit = function( config, onReady ){
     }
 
 
-    return pframe_client(iframe,config,onReady);
+    return pframe_client(iframe, iov, config, onReady);
 }

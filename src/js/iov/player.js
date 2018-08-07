@@ -81,17 +81,24 @@ export default class IOVPlayer {
   constructor (iov) {
     debug('constructor');
 
+    this.state = 'initializing';
+
     this.MAX_SEQ_PROC = 2;
     this.BUFFER_LIMIT = 15;
+    this.EVENT_NAMES = [
+      'firstChunk',
+      'videoReceived',
+      'videoInfoReceived',
+    ];
 
     this.iov = iov;
+    this.events = {};
+    this.vqueue = []; // used if the media source buffer is busy
 
     // @todo - there must be a more proper way to do this...
-    this.events = {
-      firstChunk: [],
-      videoReceived: [],
-      videoInfoReceived: [],
-    };
+    for (let i = 0; i < this.EVENT_NAMES.length; i++) {
+      this.events[this.EVENT_NAMES[i]] = [];
+    }
 
     // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
@@ -100,65 +107,28 @@ export default class IOVPlayer {
     this.LogSourceBufferTopic = null;
 
     this.resetPlayState();
-
-    this.moovBox = null;
-
-    // -1 is forever
-    this.retry_count = 3;
-
-    this.on('firstChunk', () => {
-
-    });
-
-    this._on_updateend = this._on_updateend.bind(this);
   }
 
   on (name, action) {
     debug(`Registering Listener for ${name} event...`);
 
-    switch (name) {
-      case 'firstChunk':
-      case 'videoReceived':
-      case 'videoInfoReceived': {
-        this.events[name].push(action);
-        break;
-      }
-      default: {
-        throw new Error(`"${name}" is not a valid event."`);
-      }
+    if (!this.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
     }
+
+    this.events[name].push(action);
   }
 
   trigger (name) {
     debug(`Triggering ${name} event...`);
 
-    switch (name) {
-      case 'firstChunk':
-      case 'videoReceived':
-      case 'videoInfoReceived': {
-        for (let i = 0; i < this.events[name].length; i++) {
-          this.events[name][i](this);
-        }
-        break;
-      }
-      default: {
-        throw new Error(`"${name}" is not a valid event."`);
-      }
+    if (!this.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
     }
-  }
 
-  _fault (message) {
-    debug('_fault');
-
-    this.videoPlayer.errors.extend({
-      PLAYER_ERR_IOV: {
-        headline: 'Error Playing Stream',
-        message,
-      },
-    });
-
-    this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
-    this.state = 'fault';
+    for (let i = 0; i < this.events[name].length; i++) {
+      this.events[name][i](this);
+    }
   }
 
   resetPlayState () {
@@ -166,105 +136,137 @@ export default class IOVPlayer {
 
     this.state = 'idle';
     this.numFramesReceived = 1;
-    this.numFramesProcessed = 1; // last sequence number processed
+    this.numFramesProcessed = 1;
+    this.moovBox = null;
     this.source_buffer_ready = false;
   }
 
-  isMimeCodecSupported (mimeCodec) {
+  assertMimeCodecSupported (mimeCodec) {
     if (!window.MediaSource || !window.MediaSource.isTypeSupported(mimeCodec)) {
+      this.state = 'unsupported-mime-codec';
+
+      const message = `Unsupported mime codec: ${mimeCodec}`;
+
       // the browser does not support this video format
-      this._fault(`Unsupported mime codec: ${mimeCodec}`);
+      // @todo - the IOV player should have no knowledge of the videojs player
+      this.videoPlayer.errors.extend({
+        PLAYER_ERR_IOV: {
+          headline: 'Error Playing Stream',
+          message,
+        },
+      });
 
-      return false;
+      this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
+
+      throw new Error(message);
     }
-
-    return true;
   }
 
-  // @todo - review
-  onTransportTransaction (current_iov, { mimeCodec, guid }) {
-    debug('onTransportTransaction');
-
-    if (!this.isMimeCodecSupported(mimeCodec)) {
+  updateIOV (iov) {
+    if (this.iov === iov) {
       return;
     }
 
+    // @todo - why is this needed?
+    if (iov.config.parentNodeId !== null) {
+      var iframe_elm = document.getElementById(this.iov.config.clientId);
+      var parent = document.getElementById(iov.config.parentNodeId);
+
+      if (parent) {
+        parent.removeChild(iframe_elm);
+      }
+
+      // remove code from iframe.
+      iframe_elm.srcdoc = '';
+    }
+
+    // We are about to update the IOV, so unregister the listener
+    this.iov.conduit.unsubscribe(`iov/video/${this.guid}/live`);
+
+    this.iov = iov;
+  }
+
+  onChangeSourceTransaction (iov, { mimeCodec, guid }) {
+    debug('onChangeSourceTransaction');
+
+    this.assertMimeCodecSupported(mimeCodec);
+
     const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
 
-    current_iov.transport.subscribe(initSegmentTopic, ({ payloadBytes }) => {
+    this.state = 'changing';
+
+    iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
+      debug(`onChangeSourceTransaction ${initSegmentTopic} listener fired`);
+      debug(`received moov of type "${typeof payloadBytes}" from server`);
+
       const moov = payloadBytes;
 
-      current_iov.transport.unsubscribe(initSegmentTopic);
+      this.state = 'waiting-for-moof';
 
-      const oldTopic = `iov/video/${this.guid}/live`;
+      iov.conduit.unsubscribe(initSegmentTopic);
+
       const newTopic = `iov/video/${guid}/live`;
 
-      current_iov.transport.subscribe(newTopic, ({ payloadBytes }) => {
-        const moofBox = payloadBytes;
+      // When we receive the first moof, we need to unregister the old listeners, get the player
+      // ready, ensure all subsequent moofs are handled appropriately, and update the iov.
+      iov.conduit.subscribe(newTopic, ({ payloadBytes }) => {
+        // Unregister the old stuff, and unregister this listener to ensure that it
+        // does not get used again, since it is only meant to be executed on the first moof
+        iov.conduit.unsubscribe(newTopic);
 
-        // @todo - why are we adding this to the queue here? we have an "onMoof" method - can we use it?
-        // If we need this to display the first frame, can we just "drop"
-        // this first frame to simplify the logic?
-        // this.vqueue.push(moofBox.slice(0));
+        this.reinitializeMse();
+        this.updateIOV(iov);
 
-        // unsubscribe to existing live
-        // 1) unsubscribe to remove avoid callback
-        current_iov.transport.unsubscribe(newTopic);
-
-        // 2) unsubscribe to live callback for the old stream
-        this.iov.transport.unsubscribe(oldTopic);
-
-        // 3) resubscribe with different callback
-        current_iov.transport.subscribe(newTopic, (...args) => this.onMoof(...args));
-
-        // alter object properties to reflect new stream
         this.guid = guid;
         this.moovBox = moov;
         this.mimeCodec = mimeCodec;
 
-        // remove media source buffer, reinitialize
-        this.reinitializeMse();
-
-        // Was the IOV updated?
-        if (this.iov === current_iov) {
-          return;
-        }
-
-        if (current_iov.config.parentNodeId !== null) {
-          var iframe_elm = document.getElementById(this.iov.config.clientId);
-          var parent = document.getElementById(current_iov.config.parentNodeId);
-
-          if (parent) {
-            parent.removeChild(iframe_elm);
-          }
-
-          // remove code from iframe.
-          iframe_elm.srcdoc = '';
-        }
-
-        this.iov = current_iov;
+        // Handle this moof by calling our listener manually
+        this.onMoof({ payloadBytes });
+        // Handle subsequent moofs by registering our listener
+        iov.conduit.subscribe(newTopic, (...args) => this.onMoof(...args));
       });
     });
 
-    current_iov.transport.publish(`iov/video/${guid}/play`, {
+    iov.conduit.publish(`iov/video/${guid}/play`, {
       initSegmentTopic,
-      clientId: current_iov.config.clientId,
+      clientId: iov.config.clientId,
     });
   }
 
-  change (newStream, iov) {
-    // @todo - is there a way to set up the changeSrc logic to never need
-    // to pass its own iov?
-    debug('change');
+  changeSource (url) {
+    debug(`changeSource on player "${this.id}""`);
 
-    const next_iov = iov || null;
-    const current_iov = iov || this.iov;
+    if (!url) {
+      throw new Error('Unable to change source because there is no url!');
+    }
 
-    current_iov.transport.transaction(
-      `iov/video/${window.btoa(newStream)}/request`,
-      (...args) => this.onTransportTransaction(next_iov, ...args),
-      { clientId: this.iov.config.clientId }
-    );
+    // parse url, extract the ip of the sfs and the port as well as useSSL
+    const new_cfg = IOVPlayer.generateIOVConfigFromCLSPURL(url);
+
+    const topic = `iov/video/${window.btoa(new_cfg.streamName)}/request`;
+    const request = { clientId: this.iov.config.clientId };
+
+    if (new_cfg.address === this.iov.config.wsbroker) {
+      this.iov.conduit.transaction(
+        topic,
+        (...args) => this.onChangeSourceTransaction(this.iov, ...args),
+        request
+      );
+      return;
+    }
+
+    new_cfg.initialize = false;
+    new_cfg.videoElement = this.iov.config.videoElement;
+    new_cfg.appStart = (iov) => {
+      iov.conduit.transaction(
+        topic,
+        (...args) => this.onChangeSourceTransaction(iov, ...args),
+        request
+      );
+    };
+
+    this.iov.clone(new_cfg);
   }
 
   reinitializeMse () {
@@ -272,8 +274,9 @@ export default class IOVPlayer {
 
     this.resetPlayState();
 
-    // free resource
+    // @todo - can we do this in resetPlayState?
     if (this.mediaSource) {
+      // free resource
       URL.revokeObjectURL(this.mediaSource);
 
       // reallocate, this will call media source open which will
@@ -296,17 +299,19 @@ export default class IOVPlayer {
 
     if (eid) {
       this.video = document.getElementById(eid);
+      // @todo - pass the ID rather than determining it like this.  The
+      // IOV player should not be aware of the videojs player
       this.id = eid.replace('_html5_api', '');
       this.videoPlayer = videojs.getPlayer(this.id);
     }
 
     if (!this.video) {
-      return this._fault(`Unable to find an element in the DOM with id "${eid}".`);
+      throw new Error(`Unable to find an element in the DOM with id "${eid}".`);
     }
 
-    this.iov.transport.transaction(
+    this.iov.conduit.transaction(
       `iov/video/${window.btoa(streamName)}/request`,
-      (...args) => this.onIovPlay(...args),
+      (...args) => this.onIovPlayTransaction(...args),
       { clientId: this.iov.config.clientId }
     );
   }
@@ -403,7 +408,6 @@ export default class IOVPlayer {
       // within the MSE C++ implementation in the browser.
 
       console.error('Excetion thrown from appendBuffer', e);
-      this.videoPlayer.error({ code: 3 });
       this.reinitializeMse();
     }
   }
@@ -431,7 +435,8 @@ export default class IOVPlayer {
       this.sourceBuffer.remove(start, start + this.BUFFER_LIMIT);
     }
     catch (e) {
-      console.error('error while removing', this.videoPlayer.id(), e);
+      console.error(`error while removing from source buffer for player "${this.id}"`);
+      console.error(e);
     }
   }
 
@@ -439,16 +444,13 @@ export default class IOVPlayer {
     debug('stop');
 
     // @todo - should this happen in resetPlayState?
-    this.moovBox = null;
-
-    // @todo - should this happen in resetPlayState?
     if (this.guid !== undefined) {
-      this.iov.transport.unsubscribe(`iov/video/${this.guid}/live`);
+      this.iov.conduit.unsubscribe(`iov/video/${this.guid}/live`);
     }
 
     this.resetPlayState();
 
-    this.iov.transport.publish(
+    this.iov.conduit.publish(
       `iov/video/${this.guid}/stop`,
       { clientId: this.iov.config.clientId }
     );
@@ -459,7 +461,7 @@ export default class IOVPlayer {
     // the mse service dies and has to be restarted that this player should restart the stream
     debug('Trying to resync stream...');
 
-    this.iov.transport.subscribe(`iov/video/${this.guid}/resync`, () => {
+    this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, () => {
       debug('sync received re-initialize media source buffer');
       this.reinitializeMse();
     });
@@ -502,40 +504,37 @@ export default class IOVPlayer {
     });
   }
 
-  onIovPlay ({ mimeCodec, guid }) {
-    debug('onIovPlay');
+  // @todo - there is much shared between this and onChangeSourceTransaction
+  onIovPlayTransaction ({ mimeCodec, guid }) {
+    debug('onIovPlayTransaction');
 
-    if (!this.isMimeCodecSupported(mimeCodec)) {
-      return;
-    }
-
-    this.mimeCodec = mimeCodec;
-    this.guid = guid;
+    this.assertMimeCodecSupported(mimeCodec);
 
     const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
 
-    this.vqueue = []; // used if the media source buffer is busy
+    this.state = 'waiting-for-first-moov';
 
-    this.state = 'waiting-for-moov';
-
-    // @todo - this is at least paritally duplicated in onTransportTransaction
-    this.iov.transport.subscribe(initSegmentTopic, ({ payloadBytes }) => {
-      debug(`this.iov.transport.subscribe ${initSegmentTopic} listener fired`);
+    this.iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
+      debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
       debug(`received moov of type "${typeof payloadBytes}" from server`);
 
-      // capture the initial segment
-      this.moovBox = payloadBytes;
-      this.state = 'waiting-for-moof';
+      const moov = payloadBytes;
 
-      // unsubscribe to this group
-      this.iov.transport.unsubscribe(initSegmentTopic);
+      this.state = 'waiting-for-first-moof';
+
+      this.iov.conduit.unsubscribe(initSegmentTopic);
+
+      const newTopic = `iov/video/${guid}/live`;
 
       // subscribe to the live video topic.
-      this.state = 'playing';
-      this.iov.transport.subscribe(
-        `iov/video/${this.guid}/live`,
+      this.iov.conduit.subscribe(
+        newTopic,
         (...args) => this.onMoof(...args)
       );
+
+      this.guid = guid;
+      this.moovBox = moov;
+      this.mimeCodec = mimeCodec;
 
       this.trigger('firstChunk');
 
@@ -552,36 +551,12 @@ export default class IOVPlayer {
         this.video = clone;
       }
 
-      this.videoPlayer.on('changesrc', (event, { url }) => {
-        debug(`iov-change-src on id ${this.videoPlayer.id()}`);
+      // @todo - how can we make the changesrc stuff work without "knowing about"
+      // the videojs player?
+      this.videoPlayer.on('changesrc', (event, { url }) => this.changeSource(url));
 
-        if (!url) {
-          throw new Error('Unable to process change event because there is no url!');
-        }
-
-        // parse url, extract the ip of the sfs and the port as well as useSSL
-        const new_cfg = IOVPlayer.generateIOVConfigFromCLSPURL(url);
-
-        if (new_cfg.address === this.iov.config.wsbroker) {
-          this.change(new_cfg.streamName);
-          return;
-        }
-
-        new_cfg.initialize = false;
-        new_cfg.videoElement = this.iov.config.videoElement;
-        new_cfg.appStart = (iov) => {
-          // conected to new mqtt
-          this.change(new_cfg.streamName, iov);
-        };
-
-        // @todo - so here, we clone the iov instance - is it possible to handle
-        // the "clean up" of the old iov instance here, so that in all subsequent
-        // logic we can use ONLY the new iov instance?  That would eliminate some
-        // conditions based on the iov instance in other places.
-        this.iov.clone(new_cfg);
-      });
-
-      // @todo - need to revisit the logic below...
+      // @todo - need to revisit the logic below... how does this stuff relate to
+      // reinitializeMse?
 
       this.initializeMediaSource();
 
@@ -592,7 +567,7 @@ export default class IOVPlayer {
       this.resyncStream();
     });
 
-    this.iov.transport.publish(`iov/video/${this.guid}/play`, {
+    this.iov.conduit.publish(`iov/video/${guid}/play`, {
       initSegmentTopic,
       clientId: this.iov.config.clientId,
     });
@@ -600,6 +575,8 @@ export default class IOVPlayer {
 
   onMoof ({ payloadBytes }) {
     silly('onMoof');
+
+    this.state = 'playing';
 
     if (this.source_buffer_ready === false) {
       debug('media source not yet open - dropping frame');
@@ -634,12 +611,10 @@ export default class IOVPlayer {
     debug('initializeSourceBuffer');
 
     // New media source opened. Add a buffer and append the moov MP4 video data.
-
-    // add buffer
     this.sourceBuffer = this.mediaSource.addSourceBuffer(this.mimeCodec);
     this.sourceBuffer.mode = 'sequence';
 
-    this.sourceBuffer.addEventListener('updateend', this._on_updateend);
+    this.sourceBuffer.addEventListener('updateend', (...args) => this.onUpdateEnd(...args));
 
     this.sourceBuffer.addEventListener('error', function (e) {
       console.error('MSE sourceBffer error');
@@ -652,9 +627,9 @@ export default class IOVPlayer {
     this.appendInfo();
   }
 
-  _on_updateend (...args) {
+  onUpdateEnd (...args) {
     console.log(args)
-    silly('_on_updateend');
+    silly('onUpdateEnd');
 
     if (this.video.paused === true) {
       debug('Video is paused!');

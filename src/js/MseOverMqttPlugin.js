@@ -2,6 +2,7 @@ import videojs from 'video.js';
 
 import { version as VERSION } from '../../package.json';
 import MqttSourceHandler from './MqttSourceHandler';
+import MqttConduitCollection from './MqttConduitCollection';
 import IOV from './iov/IOV';
 import utils from './utils';
 
@@ -74,7 +75,8 @@ export default function (defaults = {}) {
 
         var videoElement = player.el();
 
-        var iov = IOV.factory(player, {
+        player.tech(true).mqtt.iov = IOV.factory(MseOverMqttPlugin.mqttConduitCollection, player, {
+          initialize: true,
           port: mqttHandler.port,
           address: mqttHandler.address,
           useSSL: mqttHandler.useSSL,
@@ -125,13 +127,12 @@ export default function (defaults = {}) {
             }, false);
           },
         });
-
-        iov.initialize();
       });
     }
   }
 
   MseOverMqttPlugin.pluginName = 'clsp';
+  MseOverMqttPlugin.mqttConduitCollection = MqttConduitCollection.factory();
   MseOverMqttPlugin.VERSION = VERSION;
   MseOverMqttPlugin.utils = utils;
 

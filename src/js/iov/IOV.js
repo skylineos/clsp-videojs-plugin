@@ -2,8 +2,6 @@ import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 
 import MqttTopicHandlers from './MqttTopicHandlers';
-import MqttConduitCollection from './MqttConduitCollection';
-import MqttTransport from './MqttTransport';
 import IOVPlayer from './player';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
@@ -16,6 +14,7 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 export default class IOV {
   static compatibilityCheck () {
     // @todo - shouldn't this be done in the utils function?
+    // @todo - does this need to throw an error?
     // For the MAC
     var NoMediaSourceAlert = false;
 
@@ -30,11 +29,13 @@ export default class IOV {
     }
   }
 
-  static factory (player, config) {
-    return new IOV(player, config);
+  static factory (mqttConduitCollection, player, config) {
+    return new IOV(mqttConduitCollection, player, config);
   }
 
-  constructor (player, config) {
+  constructor (mqttConduitCollection, player, config) {
+    IOV.compatibilityCheck();
+
     this.id = uuidv4();
     this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
 
@@ -54,11 +55,18 @@ export default class IOV {
       videoElementParent: null,
     };
 
+    this.statsMsg = {
+      byteCount: 0,
+      inkbps: 0,
+      host: document.location.host,
+      clientId: this.config.clientId,
+    };
+
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
     this.mqttTopicHandlers = new MqttTopicHandlers(this.id, this);
-    this.mqttConduitCollection = config.mqttConduitCollection || new MqttConduitCollection(this.id);
-    this.transport = new MqttTransport(this.id, this);
+    this.mqttConduitCollection = mqttConduitCollection;
+    this.conduit = mqttConduitCollection.addFromIov(this);
 
     this.events = {
       connection_lost : function (responseObject) {
@@ -79,66 +87,23 @@ export default class IOV {
     };
 
     this.player = IOVPlayer.factory(this, this.playerInstance);
-
-    if (config.initialize) {
-      this.initialize();
-    }
   }
 
   clone (config) {
-    return IOV.factory(this.playerInstance, {
+    const cloneConfig = {
       ...config,
-      mqttConduitCollection: this.mqttConduitCollection,
       videoElementParent: this.config.videoElementParent,
-    });
-  }
+    };
 
-  initialize () {
-    IOV.compatibilityCheck();
-
-    // @todo - this listener has no concept of this instance, so it should be
-    // moved elsewhere, or restructured
-    // route inbound data from a frame running mqtt to the appropriate player
-    window.addEventListener('message', (event) => {
-      this.debug('message received', event.data)
-
-      var clientId = event.data.clientId;
-
-      if (!this.mqttConduitCollection.exists(clientId)) {
-        return;
-      }
-
-      var conduit = this.mqttConduitCollection.getById(clientId);
-      var eventType = event.data.event;
-
-      switch (eventType) {
-        case 'data': {
-          conduit.inboundHandler(event.data);
-          break;
-        }
-        case 'ready': {
-          if (this.config.videoElement.parentNode !== null) {
-            this.config.videoElementParentId = this.config.videoElement.parentNode.id;
-          }
-          conduit.onReady();
-          break;
-        }
-        case 'fail': {
-          this.debug('network error', event.data.reason);
-          this.playerInstance.trigger('network-error', event.data.reason);
-          break;
-        }
-        default: {
-          console.error(`No match for event: ${eventType}`);
-        }
-      }
-    });
-
-    return this;
+    return IOV.factory(
+      this.mqttConduitCollection,
+      this.playerInstance,
+      cloneConfig
+    );
   }
 
   // query remote server and get a list of all stream names
   getAvailableStreams (callback) {
-    this.transport.transaction('iov/video/list', callback, {});
+    this.conduit.transaction('iov/video/list', callback, {});
   }
-}
+};
