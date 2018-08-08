@@ -2116,7 +2116,7 @@ module.exports = g;
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.10.1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.11.0","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
 
 /***/ }),
 
@@ -3209,8 +3209,16 @@ var IOVPlayer = function () {
     this.moofBox = null;
 
     this.lastAppendAttemptTime = null;
-    this.debounceInterval = null;
+    this.appendInterval = null;
     this.moofSplits = [];
+
+    // We determined that these debounce settings are "good enough"
+    // for the append interval debounce.
+    this.appendIntervalTolerance = 0.5;
+    this.appendIntervalSettings = {
+      leading: true,
+      trailing: false
+    };
 
     this.appendBuffer = function (moofBox) {
       return _this._appendBuffer(moofBox);
@@ -3642,7 +3650,7 @@ var IOVPlayer = function () {
       moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
       moofBox[23] = self.seqnum & 0xFF;
 
-      if (!this.debounceInterval && this.moofSplits.length < DEBOUNCE_INTERVAL_SAMPLE_SIZE) {
+      if (!this.appendInterval && this.moofSplits.length < DEBOUNCE_INTERVAL_SAMPLE_SIZE) {
         var currentAppendTime = Date.now();
         var moofSplit = this.lastAppendAttemptTime ? currentAppendTime - this.lastAppendAttemptTime : 0;
 
@@ -3661,14 +3669,14 @@ var IOVPlayer = function () {
 
           var moofSplitAverage = moofSplitSum / DEBOUNCE_INTERVAL_SAMPLE_SIZE;
 
-          this.debounceInterval = Math.round(moofSplitAverage * 0.8);
+          this.appendInterval = Math.round(moofSplitAverage * this.appendIntervalTolerance);
           this.moofSplits = null;
 
-          console.log('set debounce interval', this.debounceInterval);
+          debug('set append debounce interval', this.appendInterval);
 
           this.appendBuffer = lodash_debounce__WEBPACK_IMPORTED_MODULE_2___default()(function (moofBox) {
             _this4._appendBuffer(moofBox);
-          }, this.debounceInterval);
+          }, this.appendInterval, this.appendIntervalSettings);
         }
       }
 
