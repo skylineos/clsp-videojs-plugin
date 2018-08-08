@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import videojs from 'video.js';
+import debounce from 'lodash/debounce';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
@@ -29,7 +29,7 @@ export default class IOVPlayer {
     this.state = 'initializing';
 
     this.MAX_SEQ_PROC = 2;
-    this.BUFFER_LIMIT = 15;
+    this.BUFFER_LIMIT = 6;
     this.EVENT_NAMES = [
       'firstChunk',
       'videoReceived',
@@ -81,9 +81,20 @@ export default class IOVPlayer {
     this.sourceBufferEventListeners = {
       updateend: (...args) => this.onUpdateEnd(...args),
       error: (e) => {
-        console.error('MSE sourceBffer error');
+        console.error('MSE sourceBuffer error');
         console.error(e);
       },
+    };
+
+    this.documentEventListeners = {
+      visibilitychange: debounce(
+        () => this.reinitializeMse(),
+        2000,
+        {
+          leading: true,
+          trailing: false,
+        }
+      ),
     };
 
     this.events = {};
@@ -99,6 +110,10 @@ export default class IOVPlayer {
     // and recording the time when the updateend event is called.
     this.LogSourceBuffer = false;
     this.LogSourceBufferTopic = null;
+
+    this.moovBox = null;
+    this.guid = null;
+    this.mimeCodec = null;
 
     this.resetPlayState();
   }
@@ -129,11 +144,6 @@ export default class IOVPlayer {
     debug('resetPlayState');
 
     this.state = 'idle';
-    this.numFramesReceived = 1;
-    this.numFramesProcessed = 1;
-    this.guid = null;
-    this.moovBox = null;
-    this.mimeCodec = null;
     this.source_buffer_ready = false;
   }
 
@@ -163,7 +173,6 @@ export default class IOVPlayer {
 
     this.resetPlayState();
 
-    // @todo - can we do this in resetPlayState?
     if (this.mediaSource) {
       // free resource
       URL.revokeObjectURL(this.mediaSource);
@@ -191,17 +200,6 @@ export default class IOVPlayer {
     );
   }
 
-  formatMoof (payloadBytes) {
-    var moofBox = payloadBytes;
-
-    moofBox[20] = (this.numFramesReceived & 0xFF000000) >> 24;
-    moofBox[21] = (this.numFramesReceived & 0x00FF0000) >> 16;
-    moofBox[22] = (this.numFramesReceived & 0x0000FF00) >> 8;
-    moofBox[23] = this.numFramesReceived & 0xFF;
-
-    return moofBox;
-  }
-
   // @todo - it seems like a lot of the logic here is relative to something
   // inside of the IOV class - does the IOV instance mutate some of our properties?
   // Should this logic be moved to the IOV class?
@@ -220,31 +218,24 @@ export default class IOVPlayer {
     this.iov.statsMsg.byteCount += bytearray.length;
   }
 
-  /**
-   *
-   * @param {Object} moofBox
-   *   A "moofBox" object - @see this.formatMoof
-   */
   appendVideo (moofBox) {
-    debug('Appending moof data...');
+    silly('Appending moof data...');
 
     if (!moofBox) {
       console.warn('Cannot use empty moof...');
       return;
     }
 
-    // Add the moof to the queue if we're in the middle of an update
+    // If the buffer is busy, we'll try on the next call, and drop the frame
     if (this.sourceBuffer.updating === true) {
-      silly('queueing moof...');
-      // this.vqueue.push(moofBox.slice(0));
+      debug('Dropping frame because the buffer is busy...');
       return;
     }
 
     try {
-      silly('appending moof to sourceBuffer...');
+      debug('appending moof to sourceBuffer...');
       this.onBeforeAppendBuffer(moofBox);
       this.sourceBuffer.appendBuffer(moofBox);
-      this.numFramesProcessed++;
     }
     catch (e) {
       // internal error, this has been observed to happen the tab
@@ -260,7 +251,8 @@ export default class IOVPlayer {
   stop () {
     debug('stop');
 
-    // @todo - should this happen in resetPlayState?
+    this.moovBox = null;
+
     if (this.guid !== undefined) {
       this.iov.conduit.unsubscribe(`iov/video/${this.guid}/live`);
     }
@@ -316,6 +308,8 @@ export default class IOVPlayer {
       this.moovBox = moov;
       this.mimeCodec = mimeCodec;
 
+      document.addEventListener('visibilitychange', this.documentEventListeners.visibilitychange);
+
       this.trigger('firstChunk');
 
       // when videojs initializes the video element (or something like that),
@@ -359,27 +353,9 @@ export default class IOVPlayer {
       return;
     }
 
-    if (this.numFramesReceived !== this.numFramesProcessed) {
-      debug(`The frame count is falling behind: processed ${this.numFramesProcessed} out of ${this.numFramesReceived} received.`);
-    }
-
-    this.numFramesReceived++;
-    silly(this.numFramesReceived);
-
     this.trigger('videoReceived');
 
-    // Enqueues or sends to the media source buffer an MP4 moof atom. This contains a
-    // chunk of video/audio tracks.
-
-    // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
-    // the source buffer.  In other words, drop frames when we aren't processing
-    // the video fast enough.
-    if ((this.numFramesReceived - this.numFramesProcessed) > this.MAX_SEQ_PROC) {
-      debug('Dropping frame...');
-      return;
-    }
-
-    this.appendVideo(this.formatMoof(payloadBytes));
+    this.appendVideo(payloadBytes);
   }
 
   // @todo - need a method to properly destroy source buffer
@@ -425,9 +401,12 @@ export default class IOVPlayer {
       return;
     }
 
+    this.sourceBuffer.abort();
+
     // this.sourceBuffer.removeEventListener('updateend', this.sourceBufferEventListeners.updateend);
     this.sourceBuffer.removeEventListener('error', this.sourceBufferEventListeners.error);
 
+    this.sourceBuffer = null;
     this.source_buffer_ready = false;
   }
 
@@ -457,6 +436,8 @@ export default class IOVPlayer {
   destroy () {
     this.stop();
 
+    document.removeEventListener('visibilitychange', this.documentEventListeners.visibilitychange);
+
     this.iov = null;
     this.playerInstance = null;
     this.videoElement = null;
@@ -473,126 +454,6 @@ export default class IOVPlayer {
 
     this.sourceBufferEventListeners = null;
     this.mediaSourceEventListeners = null;
+    this.documentEventListeners = null;
   }
-
-  // onChangeSourceTransaction(iov, { mimeCodec, guid }) {
-  //   debug('onChangeSourceTransaction');
-
-  //   this.assertMimeCodecSupported(mimeCodec);
-
-  //   const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
-
-  //   this.state = 'changing';
-
-  //   iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
-  //     debug(`onChangeSourceTransaction ${initSegmentTopic} listener fired`);
-  //     debug(`received moov of type "${typeof payloadBytes}" from server`);
-
-  //     const moov = payloadBytes;
-
-  //     this.state = 'waiting-for-moof';
-
-  //     iov.conduit.unsubscribe(initSegmentTopic);
-
-  //     const newTopic = `iov/video/${guid}/live`;
-
-  //     // When we receive the first moof, we need to unregister the old listeners, get the player
-  //     // ready, ensure all subsequent moofs are handled appropriately, and update the iov.
-  //     iov.conduit.subscribe(newTopic, ({ payloadBytes }) => {
-  //       // Unregister the old stuff, and unregister this listener to ensure that it
-  //       // does not get used again, since it is only meant to be executed on the first moof
-  //       iov.conduit.unsubscribe(newTopic);
-
-  //       this.reinitializeMse();
-
-  //       this.guid = guid;
-  //       this.moovBox = moov;
-  //       this.mimeCodec = mimeCodec;
-
-  //       // Handle this moof by calling our listener manually
-  //       this.onMoof({ payloadBytes });
-  //       // Handle subsequent moofs by registering our listener
-  //       iov.conduit.subscribe(newTopic, (...args) => this.onMoof(...args));
-  //     });
-  //   });
-
-  //   iov.conduit.publish(`iov/video/${guid}/play`, {
-  //     initSegmentTopic,
-  //     clientId: iov.config.clientId,
-  //   });
-  // }
-
-  // appendNextInQueue() {
-  //   debug('Appending next moof in queue...');
-
-  //   if (this.vqueue.length < 1) {
-  //     // console.warn('There is no moof in the queue!');
-  //     return;
-  //   }
-
-  //   if (this.sourceBuffer.updating === true) {
-  //     debug('SourceBuffer is updating, cannot append next moof, dropping it...');
-  //     this.vqueue = this.vqueue.slice(1);
-  //     return;
-  //   }
-
-  //   this.appendVideo(this.vqueue[0]);
-  // }
-
-  // truncateBuffer() {
-  //   silly('truncateBuffer');
-
-  //   if (this.sourceBuffer.buffered.length <= 0) {
-  //     return;
-  //   }
-
-  //   const start = this.sourceBuffer.buffered.start(0);
-  //   const end = this.sourceBuffer.buffered.end(0);
-  //   const time_buffered = end - start;
-
-  //   if (time_buffered <= 30) {
-  //     return;
-  //   }
-
-  //   debug('About to truncate the buffer...');
-
-  //   try {
-  //     // observed this fail during a memry snapshot in chrome
-  //     // otherwise no observed failure, so ignore exception.
-  //     this.sourceBuffer.remove(start, start + this.BUFFER_LIMIT);
-  //   }
-  //   catch (e) {
-  //     console.error(`error while removing from source buffer for player "${this.id}"`);
-  //     console.error(e);
-  //   }
-  // }
-
-  // onUpdateEnd (...args) {
-  //   silly('onUpdateEnd');
-
-  //   if (this.videoElement.paused === true) {
-  //     debug('Video is paused!');
-
-  //     try {
-  //       const promise = this.videoElement.play();
-
-  //       if (promise) {
-  //         // Handle promise errors
-  //         promise.catch((error) => {
-  //           console.error('Couldn\'t play the paused stream...', error);
-  //         });
-  //       }
-  //     }
-  //     catch (error) {
-  //       console.error('Couldn\'t play the paused stream...', error);
-  //     }
-
-  //     return;
-  //   }
-
-  //   if (this.mediaSource.readyState === 'open') {
-  //     // this.appendNextInQueue();
-  //     // this.truncateBuffer();
-  //   }
-  // }
 };
