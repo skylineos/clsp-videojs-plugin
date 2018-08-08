@@ -95,8 +95,16 @@ export default class IOVPlayer {
     this.moofBox = null;
 
     this.lastAppendAttemptTime = null;
-    this.debounceInterval = null;
+    this.appendInterval = null;
     this.moofSplits = [];
+
+    // We determined that these debounce settings are "good enough"
+    // for the append interval debounce.
+    this.appendIntervalTolerance = 0.5;
+    this.appendIntervalSettings = {
+      leading: true,
+      trailing: false,
+    };
 
     this.appendBuffer = (moofBox) => this._appendBuffer(moofBox);
 
@@ -499,7 +507,7 @@ export default class IOVPlayer {
     moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
     moofBox[23] = self.seqnum & 0xFF;
 
-    if (!this.debounceInterval && this.moofSplits.length < DEBOUNCE_INTERVAL_SAMPLE_SIZE) {
+    if (!this.appendInterval && this.moofSplits.length < DEBOUNCE_INTERVAL_SAMPLE_SIZE) {
       const currentAppendTime = Date.now();
       const moofSplit = this.lastAppendAttemptTime
         ? currentAppendTime - this.lastAppendAttemptTime
@@ -520,14 +528,14 @@ export default class IOVPlayer {
 
         const moofSplitAverage = moofSplitSum / DEBOUNCE_INTERVAL_SAMPLE_SIZE;
 
-        this.debounceInterval = Math.round(moofSplitAverage * 0.8);
+        this.appendInterval = Math.round(moofSplitAverage * this.appendIntervalTolerance);
         this.moofSplits = null;
 
-        console.log('set debounce interval', this.debounceInterval)
+        debug('set append debounce interval', this.appendInterval)
 
         this.appendBuffer = debounce((moofBox) => {
           this._appendBuffer(moofBox);
-        }, this.debounceInterval);
+        }, this.appendInterval, this.appendIntervalSettings);
       }
     }
 
