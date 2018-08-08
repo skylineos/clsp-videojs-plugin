@@ -4,6 +4,7 @@ A videojs plugin that adds support for video served over the `clsp` protocol.
 Currently, this protocol is available only via Skyline SFS solutions.
 
 Note - this plugin currently only works in Chrome.
+Note - this highest keyframe/iframe segment frequency this plugin currently supports is 2 per second.
 
 The new network protocol is handled by specifying the following URI format:
 
