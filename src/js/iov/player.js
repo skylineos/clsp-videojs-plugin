@@ -1,9 +1,12 @@
 import Debug from 'debug';
 import videojs from 'video.js';
+import debounce from 'lodash/debounce';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
 const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
+
+const DEBOUNCE_INTERVAL_SAMPLE_SIZE = 10;
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -91,6 +94,12 @@ export default class IOVPlayer {
     this.moovBox = null;
     this.moofBox = null;
 
+    this.lastAppendAttemptTime = null;
+    this.debounceInterval = null;
+    this.moofSplits = [];
+
+    this.appendBuffer = (moofBox) => this._appendBuffer(moofBox);
+
     // -1 is forever
     this.retry_count = 3;
 
@@ -146,7 +155,7 @@ export default class IOVPlayer {
       transport.subscribe(newTopic, (moof_mqtt_msg) => {
         const moofBox = moof_mqtt_msg.payloadBytes;
 
-        this.vqueue.push(moofBox.slice(0));
+        // this.vqueue.push(moofBox.slice(0));
 
         // unsubscribe to existing live
         // 1) unsubscribe to remove avoid callback
@@ -353,7 +362,7 @@ export default class IOVPlayer {
     const self = this;
 
     // setup handlers for video
-    self.vqueue = []; // used if the media source buffer is busy
+    // self.vqueue = []; // used if the media source buffer is busy
 
     self.state = "waiting-for-moov";
 
@@ -442,6 +451,27 @@ export default class IOVPlayer {
     });
   }
 
+  _appendBuffer (moofBox) {
+    if (this.sourceBuffer.updating !== false || document.visibilityState === 'hidden') {
+      debug('Dropping frame...');
+      return;
+    }
+
+    try {
+      // debug(typeof moofBox);
+      // debug("calling append buffer");
+      this._appendBuffer_event(moofBox);
+      this.sourceBuffer.appendBuffer(moofBox);
+      // console.log('Actually appended moof at ' + Date.now())
+      this.seqnum += 1; // increment sequence number for next chunk
+    }
+    catch (e) {
+      console.error("Excetion thrown from appendBuffer", e);
+      this.videoPlayer.error({ code: 3 });
+      this.reinitializeMse();
+    }
+  }
+
   _on_moof (mqtt_msg) {
     silly('_on_moof');
 
@@ -469,24 +499,41 @@ export default class IOVPlayer {
     moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
     moofBox[23] = self.seqnum & 0xFF;
 
-    //debug("moof handler: data seqnum chunk ");
-    //debug(self.seqnum);
+    if (!this.debounceInterval && this.moofSplits.length < DEBOUNCE_INTERVAL_SAMPLE_SIZE) {
+      const currentAppendTime = Date.now();
+      const moofSplit = this.lastAppendAttemptTime
+        ? currentAppendTime - this.lastAppendAttemptTime
+        : 0;
 
-    if (self.sourceBuffer.updating === false) {
-      try {
-        //debug(typeof moofBox);
-        //debug("calling append buffer");
-        self._appendBuffer_event(moofBox);
-        self.sourceBuffer.appendBuffer(moofBox);
-        self.seqnum += 1; // increment sequence number for next chunk
-      } catch (e) {
-        console.error("Excetion thrown from appendBuffer", e);
-        self.videoPlayer.error({ code: 3 });
-        self.reinitializeMse();
+      this.lastAppendAttemptTime = currentAppendTime;
+
+      if (moofSplit) {
+        this.moofSplits.push(moofSplit);
       }
-    } else {
-      self.vqueue.push(moofBox.slice(0));
+
+      if (this.moofSplits.length === DEBOUNCE_INTERVAL_SAMPLE_SIZE) {
+        let moofSplitSum = 0;
+
+        for (let i = 0; i < this.moofSplits.length; i++) {
+          moofSplitSum += this.moofSplits[i];
+        }
+
+        const moofSplitAverage = moofSplitSum / DEBOUNCE_INTERVAL_SAMPLE_SIZE;
+
+        this.debounceInterval = Math.round(moofSplitAverage * 0.8);
+        this.moofSplits = null;
+
+        console.log('set debounce interval', this.debounceInterval)
+
+        this.appendBuffer = debounce((moofBox) => {
+          this._appendBuffer(moofBox);
+        }, this.debounceInterval);
+      }
     }
+
+    // console.log('tried to append at ' + this.lastAppendAttemptTime, );
+
+    this.appendBuffer(moofBox);
   }
 
   // found when stress testing many videos, it is possible for the
@@ -594,25 +641,25 @@ export default class IOVPlayer {
         }
       }
 
-      if (self.vqueue.length > 0) {
-        self._appendBuffer_event(self.vqueue[0]);
-        setTimeout(function () {
-          // deqeue next prepared moof atom
-          if (self.sourceBuffer.updating === false) {
-            try {
-              self.sourceBuffer.appendBuffer(self.vqueue[0]);
-            } catch (ex) {
-              // internal error, this has been observed to happen the tab
-              // in the browser where this video player lives is hidden
-              // then reselected. 'ex' is undefined the error is bug
-              // within the MSE C++ implementation in the browser.
-              self.reinitializeMse();
-            }
-          }
-          // regardless we must proceed to the frame.
-          self.vqueue = self.vqueue.slice(1);
-        }, 0);
-      }
+      // if (self.vqueue.length > 0) {
+      //   self._appendBuffer_event(self.vqueue[0]);
+      //   setTimeout(function () {
+      //     // deqeue next prepared moof atom
+      //     if (self.sourceBuffer.updating === false) {
+      //       try {
+      //         self.sourceBuffer.appendBuffer(self.vqueue[0]);
+      //       } catch (ex) {
+      //         // internal error, this has been observed to happen the tab
+      //         // in the browser where this video player lives is hidden
+      //         // then reselected. 'ex' is undefined the error is bug
+      //         // within the MSE C++ implementation in the browser.
+      //         self.reinitializeMse();
+      //       }
+      //     }
+      //     // regardless we must proceed to the frame.
+      //     self.vqueue = self.vqueue.slice(1);
+      //   }, 0);
+      // }
     }
   }
 };

@@ -21,6 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "debug": "^3.1.0",
+    "lodash": "^4.17.10",
     "node-sass": "^4.9.1",
     "paho-mqtt": "^1.0.4",
     "videojs-errors": "^4.1.1"
