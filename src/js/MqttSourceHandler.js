@@ -1,16 +1,19 @@
 import Debug from 'debug';
 import videojs from 'video.js';
 
-import _MqttHandler from './MqttHandler';
+import MqttHandler from './MqttHandler';
 import utils from './utils';
 
-export default function () {
-  const debug = Debug('skyline:clsp:MqttSourceHandler');
-  const MqttHandler = _MqttHandler();
+const DEBUG_PREFIX = 'skyline:clsp';
 
-  return function (mode) {
+export default function () {
+  const debug = Debug(`${DEBUG_PREFIX}:MqttSourceHandler`);
+
+  return function (mode, mqttConduitCollection) {
     var obj = {
       canHandleSource: function (srcObj, options = {}) {
+        debug('canHandleSource');
+
         if (!srcObj.src) {
           console.error('srcObj doesn\'t contain src');
           debug(srcObj);
@@ -30,15 +33,17 @@ export default function () {
         return obj.canPlayType(srcObj.type);
       },
       handleSource: function (source, tech, options = {}) {
+        debug('handleSource');
+
         const localOptions = videojs.mergeOptions(videojs.options, options, { mqtt: { mode } });
 
-        tech.mqtt = new MqttHandler(source, tech, localOptions);
-
-        tech.mqtt.src(source.src);
+        tech.mqtt = new MqttHandler(source, tech, mqttConduitCollection, localOptions);
 
         return tech.mqtt;
       },
       canPlayType: function (type) {
+        debug('canPlayType');
+
         if (type === "video/mp4; codecs='avc1.42E01E'") {
           return 'maybe';
         }

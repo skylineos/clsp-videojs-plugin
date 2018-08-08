@@ -16,11 +16,6 @@ function browserIsCompatable () {
   }
 }
 
-
-
-
-
-
 export default {
   supported: browserIsCompatable,
 };

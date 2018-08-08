@@ -14,7 +14,7 @@ var iframe_code = "__IFRAME_CODE__";
 
 
 
-function pframe_client(iframe, iov, config, onReady) {
+function pframe_client(iframe, iov) {
     var self = {
         dispatch: {},
         iov,
@@ -36,10 +36,6 @@ function pframe_client(iframe, iov, config, onReady) {
             }
         },1000);
     }
-
-
-    // called when mqtt has connected
-    self.onReady = onReady;
 
     /* message from mqttRouter routeInbound go handler which associates this
        client with the clientId. It then calls self.inboundHandler handler to
@@ -86,7 +82,7 @@ function pframe_client(iframe, iov, config, onReady) {
 
 
     self.transaction = function( topic, callback, obj ) {
-        obj.resp_topic = config.clientId + "/response/"+parseInt(Math.random()*1000000);
+        obj.resp_topic = iov.config.clientId + "/response/"+parseInt(Math.random()*1000000);
         self.subscribe(obj.resp_topic,function(mqtt_resp){
             //call user specified callback to handle response from remote process
             var resp = JSON.parse(mqtt_resp.payloadString);
@@ -106,7 +102,7 @@ function pframe_client(iframe, iov, config, onReady) {
 }
 
 
-window.mqttConduit = function( iov, onReady ){
+window.mqttConduit = function(iov){
     var config = iov.config;
     var client = {};
     var iframe = document.createElement('iframe');
@@ -142,19 +138,19 @@ window.mqttConduit = function( iov, onReady ){
     //document.body.appendChild(iframe);
     if (config.videoElementParent !== null) {
         config.videoElementParent.appendChild(iframe);
-    } else if (config.videoElement.parentNode !== null) {
-        config.videoElement.parentNode.appendChild(iframe);
-        config.videoElementParent = config.videoElement.parentNode;
+    } else if (iov.videoElement.parentNode !== null) {
+        iov.videoElement.parentNode.appendChild(iframe);
+        config.videoElementParent = iov.videoElement.parentNode;
     } else {
         var t = setInterval(function(){
-            if (config.videoElement.parentNode !== null) {
-                config.videoElement.parentNode.appendChild(iframe);
-                config.videoElementParent = config.videoElement.parentNode;
+            if (iov.videoElement.parentNode !== null) {
+                iov.videoElement.parentNode.appendChild(iframe);
+                config.videoElementParent = iov.videoElement.parentNode;
                 clearInterval(t);
             }
         },1000);
     }
 
 
-    return pframe_client(iframe, iov, config, onReady);
+    return pframe_client(iframe, iov);
 }

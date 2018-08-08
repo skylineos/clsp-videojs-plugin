@@ -19,66 +19,11 @@ const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
  * player.play( video_element_id, stream_name );
 */
 export default class IOVPlayer {
-  static factory (iov) {
-    return new IOVPlayer(iov);
+  static factory (iov, playerInstance) {
+    return new IOVPlayer(iov, playerInstance);
   }
 
-  static generateIOVConfigFromCLSPURL (clspUrl) {
-    debug('generateIOVConfigFromCLSPURL');
-
-    if (!clspUrl) {
-      throw new Error('No source was given to be parsed!');
-    }
-
-    // We use an anchor tag here beacuse, when an href is added to
-    // an anchor dom Element, the parsing is done for you by the
-    // browser.
-    const parser = document.createElement('a');
-
-    let useSSL;
-    let default_port;
-
-    // Chrome is the only browser that allows non-http protocols in
-    // the anchor tag's href, so change them all to http here so we
-    // get the benefits of the anchor tag's parsing
-    if (clspUrl.substring(0, 5).toLowerCase() === 'clsps') {
-      useSSL = true;
-      parser.href = clspUrl.replace('clsps', 'https');
-      default_port = 443;
-    }
-    else if (clspUrl.substring(0, 4).toLowerCase() === 'clsp') {
-      useSSL = false;
-      parser.href = clspUrl.replace('clsp', 'http');
-      default_port = 9001;
-    }
-    else {
-      throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
-    }
-
-    const paths = parser.pathname.split('/');
-    const streamName = paths[paths.length - 1];
-
-    let hostname = parser.hostname;
-    let port = parser.port;
-
-    if (port.length === 0) {
-      port = default_port;
-    }
-
-    // @ is a special address meaning the server that loaded the web page.
-    if (hostname === '@') {
-      hostname = window.location.hostname;
-    }
-
-    return {
-      port: parseInt(port),
-      address: hostname,
-      streamName,
-      useSSL,
-    };
-  };
-
-  constructor (iov) {
+  constructor (iov, playerInstance) {
     debug('constructor');
 
     this.state = 'initializing';
@@ -92,6 +37,55 @@ export default class IOVPlayer {
     ];
 
     this.iov = iov;
+    this.playerInstance = playerInstance;
+    this.eid = this.playerInstance.el().firstChild.id;
+    this.id = this.eid.replace('_html5_api', '');
+    this.videoElement = document.getElementById(this.eid);
+
+    if (!this.videoElement) {
+      throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
+    }
+
+    this.mediaSourceEventListeners = {
+      sourceopen: (...args) => {
+        debug('onSourceOpen');
+
+        if (this.mediaSource.readyState === 'open') {
+          this.initializeSourceBuffer();
+          return;
+        }
+
+        // found when stress testing many videos, it is possible for the
+        // media source ready state not to be open even though
+        // source open callback is being called.
+        const intervalToRetry = setInterval(() => {
+          if (this.mediaSource.readyState === 'open') {
+            this.initializeSourceBuffer();
+            clearInterval(intervalToRetry);
+          }
+        }, 1000);
+      },
+      sourceended: (...args) => {
+        debug('onSourceEnded');
+
+        // @todo - do we need to clear the buffer manually?
+        this.stop();
+        this.source_buffer_ready = false;
+      },
+      error: (e) => {
+        console.error('MSE error');
+        console.error(e);
+      },
+    };
+
+    this.sourceBufferEventListeners = {
+      updateend: (...args) => this.onUpdateEnd(...args),
+      error: (e) => {
+        console.error('MSE sourceBffer error');
+        console.error(e);
+      },
+    };
+
     this.events = {};
     this.vqueue = []; // used if the media source buffer is busy
 
@@ -137,7 +131,9 @@ export default class IOVPlayer {
     this.state = 'idle';
     this.numFramesReceived = 1;
     this.numFramesProcessed = 1;
+    this.guid = null;
     this.moovBox = null;
+    this.mimeCodec = null;
     this.source_buffer_ready = false;
   }
 
@@ -149,124 +145,17 @@ export default class IOVPlayer {
 
       // the browser does not support this video format
       // @todo - the IOV player should have no knowledge of the videojs player
-      this.videoPlayer.errors.extend({
+      this.playerInstance.errors.extend({
         PLAYER_ERR_IOV: {
           headline: 'Error Playing Stream',
           message,
         },
       });
 
-      this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
+      this.playerInstance.error({ code: 'PLAYER_ERR_IOV' });
 
       throw new Error(message);
     }
-  }
-
-  updateIOV (iov) {
-    if (this.iov === iov) {
-      return;
-    }
-
-    // @todo - why is this needed?
-    if (iov.config.parentNodeId !== null) {
-      var iframe_elm = document.getElementById(this.iov.config.clientId);
-      var parent = document.getElementById(iov.config.parentNodeId);
-
-      if (parent) {
-        parent.removeChild(iframe_elm);
-      }
-
-      // remove code from iframe.
-      iframe_elm.srcdoc = '';
-    }
-
-    // We are about to update the IOV, so unregister the listener
-    this.iov.conduit.unsubscribe(`iov/video/${this.guid}/live`);
-
-    this.iov = iov;
-  }
-
-  onChangeSourceTransaction (iov, { mimeCodec, guid }) {
-    debug('onChangeSourceTransaction');
-
-    this.assertMimeCodecSupported(mimeCodec);
-
-    const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
-
-    this.state = 'changing';
-
-    iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
-      debug(`onChangeSourceTransaction ${initSegmentTopic} listener fired`);
-      debug(`received moov of type "${typeof payloadBytes}" from server`);
-
-      const moov = payloadBytes;
-
-      this.state = 'waiting-for-moof';
-
-      iov.conduit.unsubscribe(initSegmentTopic);
-
-      const newTopic = `iov/video/${guid}/live`;
-
-      // When we receive the first moof, we need to unregister the old listeners, get the player
-      // ready, ensure all subsequent moofs are handled appropriately, and update the iov.
-      iov.conduit.subscribe(newTopic, ({ payloadBytes }) => {
-        // Unregister the old stuff, and unregister this listener to ensure that it
-        // does not get used again, since it is only meant to be executed on the first moof
-        iov.conduit.unsubscribe(newTopic);
-
-        this.reinitializeMse();
-        this.updateIOV(iov);
-
-        this.guid = guid;
-        this.moovBox = moov;
-        this.mimeCodec = mimeCodec;
-
-        // Handle this moof by calling our listener manually
-        this.onMoof({ payloadBytes });
-        // Handle subsequent moofs by registering our listener
-        iov.conduit.subscribe(newTopic, (...args) => this.onMoof(...args));
-      });
-    });
-
-    iov.conduit.publish(`iov/video/${guid}/play`, {
-      initSegmentTopic,
-      clientId: iov.config.clientId,
-    });
-  }
-
-  changeSource (url) {
-    debug(`changeSource on player "${this.id}""`);
-
-    if (!url) {
-      throw new Error('Unable to change source because there is no url!');
-    }
-
-    // parse url, extract the ip of the sfs and the port as well as useSSL
-    const new_cfg = IOVPlayer.generateIOVConfigFromCLSPURL(url);
-
-    const topic = `iov/video/${window.btoa(new_cfg.streamName)}/request`;
-    const request = { clientId: this.iov.config.clientId };
-
-    if (new_cfg.address === this.iov.config.wsbroker) {
-      this.iov.conduit.transaction(
-        topic,
-        (...args) => this.onChangeSourceTransaction(this.iov, ...args),
-        request
-      );
-      return;
-    }
-
-    new_cfg.initialize = false;
-    new_cfg.videoElement = this.iov.config.videoElement;
-    new_cfg.appStart = (iov) => {
-      iov.conduit.transaction(
-        topic,
-        (...args) => this.onChangeSourceTransaction(iov, ...args),
-        request
-      );
-    };
-
-    this.iov.clone(new_cfg);
   }
 
   reinitializeMse () {
@@ -281,7 +170,7 @@ export default class IOVPlayer {
 
       // reallocate, this will call media source open which will
       // append the MOOV atom.
-      this.video.src = URL.createObjectURL(this.mediaSource);
+      this.videoElement.src = URL.createObjectURL(this.mediaSource);
     }
   }
 
@@ -292,25 +181,11 @@ export default class IOVPlayer {
     this.play();
   }
 
-  // @todo - we should be able to make the eid and streamName passed
-  // at time of instantiation rather than at time of play
-  play (eid, streamName) {
+  play (streamName) {
     debug('play');
 
-    if (eid) {
-      this.video = document.getElementById(eid);
-      // @todo - pass the ID rather than determining it like this.  The
-      // IOV player should not be aware of the videojs player
-      this.id = eid.replace('_html5_api', '');
-      this.videoPlayer = videojs.getPlayer(this.id);
-    }
-
-    if (!this.video) {
-      throw new Error(`Unable to find an element in the DOM with id "${eid}".`);
-    }
-
     this.iov.conduit.transaction(
-      `iov/video/${window.btoa(streamName)}/request`,
+      `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
       (...args) => this.onIovPlayTransaction(...args),
       { clientId: this.iov.config.clientId }
     );
@@ -329,6 +204,7 @@ export default class IOVPlayer {
 
   // @todo - it seems like a lot of the logic here is relative to something
   // inside of the IOV class - does the IOV instance mutate some of our properties?
+  // Should this logic be moved to the IOV class?
   onBeforeAppendBuffer (bytearray) {
     silly('onBeforeAppendBuffer');
 
@@ -342,37 +218,6 @@ export default class IOVPlayer {
 
     // increment bytecount stats
     this.iov.statsMsg.byteCount += bytearray.length;
-  }
-
-  appendInfo () {
-    debug('Appending moov info...');
-
-    if (!this.moovBox) {
-      console.warn('Cannot use empty moov...');
-      return;
-    }
-
-    this.onBeforeAppendBuffer(this.moovBox);
-    this.sourceBuffer.appendBuffer(this.moovBox);
-
-    this.trigger('videoInfoReceived');
-  }
-
-  appendNextInQueue () {
-    debug('Appending next moof in queue...');
-
-    if (this.vqueue.length < 1) {
-      console.warn('There is no moof in the queue!');
-      return;
-    }
-
-    if (this.sourceBuffer.updating === true) {
-      debug('SourceBuffer is updating, cannot append next moof, dropping it...');
-      this.vqueue = this.vqueue.slice(1);
-      return;
-    }
-
-    this.appendVideo(this.vqueue[0]);
   }
 
   /**
@@ -391,7 +236,7 @@ export default class IOVPlayer {
     // Add the moof to the queue if we're in the middle of an update
     if (this.sourceBuffer.updating === true) {
       silly('queueing moof...');
-      this.vqueue.push(moofBox.slice(0));
+      // this.vqueue.push(moofBox.slice(0));
       return;
     }
 
@@ -409,34 +254,6 @@ export default class IOVPlayer {
 
       console.error('Excetion thrown from appendBuffer', e);
       this.reinitializeMse();
-    }
-  }
-
-  truncateBuffer () {
-    silly('truncateBuffer');
-
-    if (this.sourceBuffer.buffered.length <= 0) {
-      return;
-    }
-
-    const start = this.sourceBuffer.buffered.start(0);
-    const end = this.sourceBuffer.buffered.end(0);
-    const time_buffered = end - start;
-
-    if (time_buffered <= 30) {
-      return;
-    }
-
-    debug('About to truncate the buffer...');
-
-    try {
-      // observed this fail during a memry snapshot in chrome
-      // otherwise no observed failure, so ignore exception.
-      this.sourceBuffer.remove(start, start + this.BUFFER_LIMIT);
-    }
-    catch (e) {
-      console.error(`error while removing from source buffer for player "${this.id}"`);
-      console.error(e);
     }
   }
 
@@ -464,43 +281,6 @@ export default class IOVPlayer {
     this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, () => {
       debug('sync received re-initialize media source buffer');
       this.reinitializeMse();
-    });
-  }
-
-  initializeMediaSource () {
-    // create media source buffer and start routing video traffic.
-    this.mediaSource = new window.MediaSource();
-
-    this.mediaSource.addEventListener('sourceopen', (...args) => {
-      debug('onSourceOpen');
-
-      if (this.mediaSource.readyState === 'open') {
-        this.initializeSourceBuffer();
-        return;
-      }
-
-      // found when stress testing many videos, it is possible for the
-      // media source ready state not to be open even though
-      // source open callback is being called.
-      const intervalToRetry = setInterval(() => {
-        if (this.mediaSource.readyState === 'open') {
-          this.initializeSourceBuffer();
-          clearInterval(intervalToRetry);
-        }
-      }, 1000);
-    });
-
-    this.mediaSource.addEventListener('sourceended', (...args) => {
-      debug('onSourceEnded');
-
-      // @todo - do we need to clear the buffer manually?
-      this.stop();
-      this.source_buffer_ready = false;
-    });
-
-    this.mediaSource.addEventListener('error', (e) => {
-      console.error('MSE error');
-      console.error(e);
     });
   }
 
@@ -543,17 +323,13 @@ export default class IOVPlayer {
       // these events interfere with our ability to play clsp streams.  Cloning
       // the element like this and reinserting it is a blunt instrument to remove
       // all of the videojs events so that we are in control of the player.
-      var clone = this.video.cloneNode();
-      var parent = this.video.parentNode;
+      var clone = this.videoElement.cloneNode();
+      var parent = this.videoElement.parentNode;
 
       if (parent !== null) {
-        parent.replaceChild(clone, this.video);
-        this.video = clone;
+        parent.replaceChild(clone, this.videoElement);
+        this.videoElement = clone;
       }
-
-      // @todo - how can we make the changesrc stuff work without "knowing about"
-      // the videojs player?
-      this.videoPlayer.on('changesrc', (event, { url }) => this.changeSource(url));
 
       // @todo - need to revisit the logic below... how does this stuff relate to
       // reinitializeMse?
@@ -562,7 +338,7 @@ export default class IOVPlayer {
 
       // now assign media source extensions
       // debug("Disregard: The play() request was interrupted ... its not an error!");
-      this.video.src = URL.createObjectURL(this.mediaSource);
+      this.videoElement.src = URL.createObjectURL(this.mediaSource);
 
       this.resyncStream();
     });
@@ -614,46 +390,209 @@ export default class IOVPlayer {
     this.sourceBuffer = this.mediaSource.addSourceBuffer(this.mimeCodec);
     this.sourceBuffer.mode = 'sequence';
 
-    this.sourceBuffer.addEventListener('updateend', (...args) => this.onUpdateEnd(...args));
-
-    this.sourceBuffer.addEventListener('error', function (e) {
-      console.error('MSE sourceBffer error');
-      console.error(e);
-    });
+    // this.sourceBuffer.addEventListener('updateend', this.sourceBufferEventListeners.updateend);
+    this.sourceBuffer.addEventListener('error', this.sourceBufferEventListeners.error);
 
     // we are now able to process video
     this.source_buffer_ready = true;
 
-    this.appendInfo();
-  }
-
-  onUpdateEnd (...args) {
-    console.log(args)
-    silly('onUpdateEnd');
-
-    if (this.video.paused === true) {
-      debug('Video is paused!');
-
-      try {
-        const promise = this.video.play();
-
-        if (promise) {
-          // Handle promise errors
-          promise.catch((error) => {
-            console.error('Couldn\'t play the paused stream...', error);
-          });
-        }
-      }
-      catch (error) {
-        console.error('Couldn\'t play the paused stream...', error);
-      }
-
+    if (!this.moovBox) {
+      // @todo - should this throw?
       return;
     }
 
-    if (this.mediaSource.readyState === 'open') {
-      this.appendNextInQueue();
-      this.truncateBuffer();
-    }
+    this.onBeforeAppendBuffer(this.moovBox);
+    this.sourceBuffer.appendBuffer(this.moovBox);
+
+    this.trigger('videoInfoReceived');
   }
+
+  initializeMediaSource () {
+    if (this.mediaSource) {
+      this.destroyMediaSource();
+    }
+
+    // create media source buffer and start routing video traffic.
+    this.mediaSource = new window.MediaSource();
+
+    this.mediaSource.addEventListener('sourceopen', this.mediaSourceEventListeners.sourceopen);
+    this.mediaSource.addEventListener('sourceended', this.mediaSourceEventListeners.sourceended);
+    this.mediaSource.addEventListener('error', this.mediaSourceEventListeners.error);
+  }
+
+  destroySourceBuffer () {
+    if (!this.sourceBuffer) {
+      return;
+    }
+
+    // this.sourceBuffer.removeEventListener('updateend', this.sourceBufferEventListeners.updateend);
+    this.sourceBuffer.removeEventListener('error', this.sourceBufferEventListeners.error);
+
+    this.source_buffer_ready = false;
+  }
+
+  destroyMediaSource () {
+    if (!this.mediaSource) {
+      return;
+    }
+
+    this.mediaSource.removeEventListener('sourceopen', this.mediaSourceEventListeners.sourceopen);
+    this.mediaSource.removeEventListener('sourceended', this.mediaSourceEventListeners.sourceended);
+    this.mediaSource.removeEventListener('error', this.mediaSourceEventListeners.error);
+
+    let sourceBuffers = this.mediaSource.sourceBuffers;
+
+    if (sourceBuffers.SourceBuffers) {
+      // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
+      sourceBuffers = sourceBuffers.SourceBuffers();
+    }
+
+    for (let i = 0; i < sourceBuffers.length; i++) {
+      this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
+    }
+
+    this.mediaSource = null;
+  }
+
+  destroy () {
+    this.stop();
+
+    this.iov = null;
+    this.playerInstance = null;
+    this.videoElement = null;
+    this.events = null;
+    this.vqueue = null;
+    this.LogSourceBuffer = null;
+    this.LogSourceBufferTopic = null;
+    this.guid = null;
+    this.moovBox = null;
+    this.mimeCodec = null;
+
+    this.destroySourceBuffer();
+    this.destroyMediaSource();
+
+    this.sourceBufferEventListeners = null;
+    this.mediaSourceEventListeners = null;
+  }
+
+  // onChangeSourceTransaction(iov, { mimeCodec, guid }) {
+  //   debug('onChangeSourceTransaction');
+
+  //   this.assertMimeCodecSupported(mimeCodec);
+
+  //   const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
+
+  //   this.state = 'changing';
+
+  //   iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
+  //     debug(`onChangeSourceTransaction ${initSegmentTopic} listener fired`);
+  //     debug(`received moov of type "${typeof payloadBytes}" from server`);
+
+  //     const moov = payloadBytes;
+
+  //     this.state = 'waiting-for-moof';
+
+  //     iov.conduit.unsubscribe(initSegmentTopic);
+
+  //     const newTopic = `iov/video/${guid}/live`;
+
+  //     // When we receive the first moof, we need to unregister the old listeners, get the player
+  //     // ready, ensure all subsequent moofs are handled appropriately, and update the iov.
+  //     iov.conduit.subscribe(newTopic, ({ payloadBytes }) => {
+  //       // Unregister the old stuff, and unregister this listener to ensure that it
+  //       // does not get used again, since it is only meant to be executed on the first moof
+  //       iov.conduit.unsubscribe(newTopic);
+
+  //       this.reinitializeMse();
+
+  //       this.guid = guid;
+  //       this.moovBox = moov;
+  //       this.mimeCodec = mimeCodec;
+
+  //       // Handle this moof by calling our listener manually
+  //       this.onMoof({ payloadBytes });
+  //       // Handle subsequent moofs by registering our listener
+  //       iov.conduit.subscribe(newTopic, (...args) => this.onMoof(...args));
+  //     });
+  //   });
+
+  //   iov.conduit.publish(`iov/video/${guid}/play`, {
+  //     initSegmentTopic,
+  //     clientId: iov.config.clientId,
+  //   });
+  // }
+
+  // appendNextInQueue() {
+  //   debug('Appending next moof in queue...');
+
+  //   if (this.vqueue.length < 1) {
+  //     // console.warn('There is no moof in the queue!');
+  //     return;
+  //   }
+
+  //   if (this.sourceBuffer.updating === true) {
+  //     debug('SourceBuffer is updating, cannot append next moof, dropping it...');
+  //     this.vqueue = this.vqueue.slice(1);
+  //     return;
+  //   }
+
+  //   this.appendVideo(this.vqueue[0]);
+  // }
+
+  // truncateBuffer() {
+  //   silly('truncateBuffer');
+
+  //   if (this.sourceBuffer.buffered.length <= 0) {
+  //     return;
+  //   }
+
+  //   const start = this.sourceBuffer.buffered.start(0);
+  //   const end = this.sourceBuffer.buffered.end(0);
+  //   const time_buffered = end - start;
+
+  //   if (time_buffered <= 30) {
+  //     return;
+  //   }
+
+  //   debug('About to truncate the buffer...');
+
+  //   try {
+  //     // observed this fail during a memry snapshot in chrome
+  //     // otherwise no observed failure, so ignore exception.
+  //     this.sourceBuffer.remove(start, start + this.BUFFER_LIMIT);
+  //   }
+  //   catch (e) {
+  //     console.error(`error while removing from source buffer for player "${this.id}"`);
+  //     console.error(e);
+  //   }
+  // }
+
+  // onUpdateEnd (...args) {
+  //   silly('onUpdateEnd');
+
+  //   if (this.videoElement.paused === true) {
+  //     debug('Video is paused!');
+
+  //     try {
+  //       const promise = this.videoElement.play();
+
+  //       if (promise) {
+  //         // Handle promise errors
+  //         promise.catch((error) => {
+  //           console.error('Couldn\'t play the paused stream...', error);
+  //         });
+  //       }
+  //     }
+  //     catch (error) {
+  //       console.error('Couldn\'t play the paused stream...', error);
+  //     }
+
+  //     return;
+  //   }
+
+  //   if (this.mediaSource.readyState === 'open') {
+  //     // this.appendNextInQueue();
+  //     // this.truncateBuffer();
+  //   }
+  // }
 };
