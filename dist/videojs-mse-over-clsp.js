@@ -507,6 +507,612 @@ function coerce(val) {
 
 /***/ }),
 
+/***/ "./node_modules/lodash/_Symbol.js":
+/*!****************************************!*\
+  !*** ./node_modules/lodash/_Symbol.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js");
+
+/** Built-in value references. */
+var _Symbol = root.Symbol;
+
+module.exports = _Symbol;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_baseGetTag.js":
+/*!********************************************!*\
+  !*** ./node_modules/lodash/_baseGetTag.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _Symbol = __webpack_require__(/*! ./_Symbol */ "./node_modules/lodash/_Symbol.js"),
+    getRawTag = __webpack_require__(/*! ./_getRawTag */ "./node_modules/lodash/_getRawTag.js"),
+    objectToString = __webpack_require__(/*! ./_objectToString */ "./node_modules/lodash/_objectToString.js");
+
+/** `Object#toString` result references. */
+var nullTag = '[object Null]',
+    undefinedTag = '[object Undefined]';
+
+/** Built-in value references. */
+var symToStringTag = _Symbol ? _Symbol.toStringTag : undefined;
+
+/**
+ * The base implementation of `getTag` without fallbacks for buggy environments.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+function baseGetTag(value) {
+    if (value == null) {
+        return value === undefined ? undefinedTag : nullTag;
+    }
+    return symToStringTag && symToStringTag in Object(value) ? getRawTag(value) : objectToString(value);
+}
+
+module.exports = baseGetTag;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_freeGlobal.js":
+/*!********************************************!*\
+  !*** ./node_modules/lodash/_freeGlobal.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = (typeof global === 'undefined' ? 'undefined' : _typeof(global)) == 'object' && global && global.Object === Object && global;
+
+module.exports = freeGlobal;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_getRawTag.js":
+/*!*******************************************!*\
+  !*** ./node_modules/lodash/_getRawTag.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _Symbol = __webpack_require__(/*! ./_Symbol */ "./node_modules/lodash/_Symbol.js");
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString = objectProto.toString;
+
+/** Built-in value references. */
+var symToStringTag = _Symbol ? _Symbol.toStringTag : undefined;
+
+/**
+ * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the raw `toStringTag`.
+ */
+function getRawTag(value) {
+  var isOwn = hasOwnProperty.call(value, symToStringTag),
+      tag = value[symToStringTag];
+
+  try {
+    value[symToStringTag] = undefined;
+    var unmasked = true;
+  } catch (e) {}
+
+  var result = nativeObjectToString.call(value);
+  if (unmasked) {
+    if (isOwn) {
+      value[symToStringTag] = tag;
+    } else {
+      delete value[symToStringTag];
+    }
+  }
+  return result;
+}
+
+module.exports = getRawTag;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_objectToString.js":
+/*!************************************************!*\
+  !*** ./node_modules/lodash/_objectToString.js ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString = objectProto.toString;
+
+/**
+ * Converts `value` to a string using `Object.prototype.toString`.
+ *
+ * @private
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the converted string.
+ */
+function objectToString(value) {
+  return nativeObjectToString.call(value);
+}
+
+module.exports = objectToString;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_root.js":
+/*!**************************************!*\
+  !*** ./node_modules/lodash/_root.js ***!
+  \**************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var freeGlobal = __webpack_require__(/*! ./_freeGlobal */ "./node_modules/lodash/_freeGlobal.js");
+
+/** Detect free variable `self`. */
+var freeSelf = (typeof self === 'undefined' ? 'undefined' : _typeof(self)) == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+module.exports = root;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/debounce.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/debounce.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js"),
+    now = __webpack_require__(/*! ./now */ "./node_modules/lodash/now.js"),
+    toNumber = __webpack_require__(/*! ./toNumber */ "./node_modules/lodash/toNumber.js");
+
+/** Error message constants. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max,
+    nativeMin = Math.min;
+
+/**
+ * Creates a debounced function that delays invoking `func` until after `wait`
+ * milliseconds have elapsed since the last time the debounced function was
+ * invoked. The debounced function comes with a `cancel` method to cancel
+ * delayed `func` invocations and a `flush` method to immediately invoke them.
+ * Provide `options` to indicate whether `func` should be invoked on the
+ * leading and/or trailing edge of the `wait` timeout. The `func` is invoked
+ * with the last arguments provided to the debounced function. Subsequent
+ * calls to the debounced function return the result of the last `func`
+ * invocation.
+ *
+ * **Note:** If `leading` and `trailing` options are `true`, `func` is
+ * invoked on the trailing edge of the timeout only if the debounced function
+ * is invoked more than once during the `wait` timeout.
+ *
+ * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
+ * until to the next tick, similar to `setTimeout` with a timeout of `0`.
+ *
+ * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
+ * for details over the differences between `_.debounce` and `_.throttle`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to debounce.
+ * @param {number} [wait=0] The number of milliseconds to delay.
+ * @param {Object} [options={}] The options object.
+ * @param {boolean} [options.leading=false]
+ *  Specify invoking on the leading edge of the timeout.
+ * @param {number} [options.maxWait]
+ *  The maximum time `func` is allowed to be delayed before it's invoked.
+ * @param {boolean} [options.trailing=true]
+ *  Specify invoking on the trailing edge of the timeout.
+ * @returns {Function} Returns the new debounced function.
+ * @example
+ *
+ * // Avoid costly calculations while the window size is in flux.
+ * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
+ *
+ * // Invoke `sendMail` when clicked, debouncing subsequent calls.
+ * jQuery(element).on('click', _.debounce(sendMail, 300, {
+ *   'leading': true,
+ *   'trailing': false
+ * }));
+ *
+ * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
+ * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
+ * var source = new EventSource('/stream');
+ * jQuery(source).on('message', debounced);
+ *
+ * // Cancel the trailing debounced invocation.
+ * jQuery(window).on('popstate', debounced.cancel);
+ */
+function debounce(func, wait, options) {
+  var lastArgs,
+      lastThis,
+      maxWait,
+      result,
+      timerId,
+      lastCallTime,
+      lastInvokeTime = 0,
+      leading = false,
+      maxing = false,
+      trailing = true;
+
+  if (typeof func != 'function') {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  wait = toNumber(wait) || 0;
+  if (isObject(options)) {
+    leading = !!options.leading;
+    maxing = 'maxWait' in options;
+    maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
+    trailing = 'trailing' in options ? !!options.trailing : trailing;
+  }
+
+  function invokeFunc(time) {
+    var args = lastArgs,
+        thisArg = lastThis;
+
+    lastArgs = lastThis = undefined;
+    lastInvokeTime = time;
+    result = func.apply(thisArg, args);
+    return result;
+  }
+
+  function leadingEdge(time) {
+    // Reset any `maxWait` timer.
+    lastInvokeTime = time;
+    // Start the timer for the trailing edge.
+    timerId = setTimeout(timerExpired, wait);
+    // Invoke the leading edge.
+    return leading ? invokeFunc(time) : result;
+  }
+
+  function remainingWait(time) {
+    var timeSinceLastCall = time - lastCallTime,
+        timeSinceLastInvoke = time - lastInvokeTime,
+        timeWaiting = wait - timeSinceLastCall;
+
+    return maxing ? nativeMin(timeWaiting, maxWait - timeSinceLastInvoke) : timeWaiting;
+  }
+
+  function shouldInvoke(time) {
+    var timeSinceLastCall = time - lastCallTime,
+        timeSinceLastInvoke = time - lastInvokeTime;
+
+    // Either this is the first call, activity has stopped and we're at the
+    // trailing edge, the system time has gone backwards and we're treating
+    // it as the trailing edge, or we've hit the `maxWait` limit.
+    return lastCallTime === undefined || timeSinceLastCall >= wait || timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= maxWait;
+  }
+
+  function timerExpired() {
+    var time = now();
+    if (shouldInvoke(time)) {
+      return trailingEdge(time);
+    }
+    // Restart the timer.
+    timerId = setTimeout(timerExpired, remainingWait(time));
+  }
+
+  function trailingEdge(time) {
+    timerId = undefined;
+
+    // Only invoke if we have `lastArgs` which means `func` has been
+    // debounced at least once.
+    if (trailing && lastArgs) {
+      return invokeFunc(time);
+    }
+    lastArgs = lastThis = undefined;
+    return result;
+  }
+
+  function cancel() {
+    if (timerId !== undefined) {
+      clearTimeout(timerId);
+    }
+    lastInvokeTime = 0;
+    lastArgs = lastCallTime = lastThis = timerId = undefined;
+  }
+
+  function flush() {
+    return timerId === undefined ? result : trailingEdge(now());
+  }
+
+  function debounced() {
+    var time = now(),
+        isInvoking = shouldInvoke(time);
+
+    lastArgs = arguments;
+    lastThis = this;
+    lastCallTime = time;
+
+    if (isInvoking) {
+      if (timerId === undefined) {
+        return leadingEdge(lastCallTime);
+      }
+      if (maxing) {
+        // Handle invocations in a tight loop.
+        timerId = setTimeout(timerExpired, wait);
+        return invokeFunc(lastCallTime);
+      }
+    }
+    if (timerId === undefined) {
+      timerId = setTimeout(timerExpired, wait);
+    }
+    return result;
+  }
+  debounced.cancel = cancel;
+  debounced.flush = flush;
+  return debounced;
+}
+
+module.exports = debounce;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/isObject.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/isObject.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value === 'undefined' ? 'undefined' : _typeof(value);
+  return value != null && (type == 'object' || type == 'function');
+}
+
+module.exports = isObject;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/isObjectLike.js":
+/*!*********************************************!*\
+  !*** ./node_modules/lodash/isObjectLike.js ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return value != null && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) == 'object';
+}
+
+module.exports = isObjectLike;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/isSymbol.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/isSymbol.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var baseGetTag = __webpack_require__(/*! ./_baseGetTag */ "./node_modules/lodash/_baseGetTag.js"),
+    isObjectLike = __webpack_require__(/*! ./isObjectLike */ "./node_modules/lodash/isObjectLike.js");
+
+/** `Object#toString` result references. */
+var symbolTag = '[object Symbol]';
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+    return (typeof value === 'undefined' ? 'undefined' : _typeof(value)) == 'symbol' || isObjectLike(value) && baseGetTag(value) == symbolTag;
+}
+
+module.exports = isSymbol;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/now.js":
+/*!************************************!*\
+  !*** ./node_modules/lodash/now.js ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js");
+
+/**
+ * Gets the timestamp of the number of milliseconds that have elapsed since
+ * the Unix epoch (1 January 1970 00:00:00 UTC).
+ *
+ * @static
+ * @memberOf _
+ * @since 2.4.0
+ * @category Date
+ * @returns {number} Returns the timestamp.
+ * @example
+ *
+ * _.defer(function(stamp) {
+ *   console.log(_.now() - stamp);
+ * }, _.now());
+ * // => Logs the number of milliseconds it took for the deferred invocation.
+ */
+var now = function now() {
+  return root.Date.now();
+};
+
+module.exports = now;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/toNumber.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/toNumber.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js"),
+    isSymbol = __webpack_require__(/*! ./isSymbol */ "./node_modules/lodash/isSymbol.js");
+
+/** Used as references for various `Number` constants. */
+var NAN = 0 / 0;
+
+/** Used to match leading and trailing whitespace. */
+var reTrim = /^\s+|\s+$/g;
+
+/** Used to detect bad signed hexadecimal string values. */
+var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+
+/** Used to detect binary string values. */
+var reIsBinary = /^0b[01]+$/i;
+
+/** Used to detect octal string values. */
+var reIsOctal = /^0o[0-7]+$/i;
+
+/** Built-in method references without a dependency on `root`. */
+var freeParseInt = parseInt;
+
+/**
+ * Converts `value` to a number.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {number} Returns the number.
+ * @example
+ *
+ * _.toNumber(3.2);
+ * // => 3.2
+ *
+ * _.toNumber(Number.MIN_VALUE);
+ * // => 5e-324
+ *
+ * _.toNumber(Infinity);
+ * // => Infinity
+ *
+ * _.toNumber('3.2');
+ * // => 3.2
+ */
+function toNumber(value) {
+  if (typeof value == 'number') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return NAN;
+  }
+  if (isObject(value)) {
+    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+    value = isObject(other) ? other + '' : other;
+  }
+  if (typeof value != 'string') {
+    return value === 0 ? value : +value;
+  }
+  value = value.replace(reTrim, '');
+  var isBinary = reIsBinary.test(value);
+  return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
+}
+
+module.exports = toNumber;
+
+/***/ }),
+
 /***/ "./node_modules/ms/index.js":
 /*!**********************************!*\
   !*** ./node_modules/ms/index.js ***!
@@ -1510,7 +2116,109 @@ module.exports = g;
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.10.1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.10.1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
+
+/***/ }),
+
+/***/ "./src/js/MqttConduitCollection.js":
+/*!*****************************************!*\
+  !*** ./src/js/MqttConduitCollection.js ***!
+  \*****************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
+/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+
+
+var DEBUG_PREFIX = 'skyline:clsp';
+
+var singleton = void 0;
+
+var MqttConduitCollection = function () {
+  _createClass(MqttConduitCollection, null, [{
+    key: 'factory',
+    value: function factory() {
+      if (!singleton) {
+        singleton = new MqttConduitCollection();
+      }
+
+      return singleton;
+    }
+  }]);
+
+  function MqttConduitCollection() {
+    var _this = this;
+
+    _classCallCheck(this, MqttConduitCollection);
+
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MqttConduitCollection');
+
+    this.debug('constructing...');
+
+    this._conduits = {};
+
+    window.addEventListener('message', function (event) {
+      _this.debug('window on message');
+
+      var clientId = event.data.clientId;
+
+      if (!_this.exists(clientId)) {
+        console.error('No conduit with id "' + clientId + '" exists!');
+        return;
+      }
+
+      var conduit = _this.getById(clientId);
+      var iov = conduit.iov;
+
+      iov.onMessage(event);
+    });
+  }
+
+  _createClass(MqttConduitCollection, [{
+    key: 'set',
+    value: function set(id, conduit) {
+      this.debug('setting...', id, conduit);
+
+      this._conduits[id] = conduit;
+
+      return conduit;
+    }
+  }, {
+    key: 'addFromIov',
+    value: function addFromIov(iov) {
+      this.debug('adding from iov...', iov);
+
+      var conduit = this.exists(iov.config.clientId) ? this.getById(iov.config.clientId) : window.mqttConduit(iov);
+
+      return this.set(iov.config.clientId, conduit);
+    }
+  }, {
+    key: 'getById',
+    value: function getById(id) {
+      this.debug('getting...', id);
+
+      return this._conduits[id];
+    }
+  }, {
+    key: 'exists',
+    value: function exists(id) {
+      this.debug('exists?', id);
+
+      return this._conduits.hasOwnProperty(id);
+    }
+  }]);
+
+  return MqttConduitCollection;
+}();
+
+/* harmony default export */ __webpack_exports__["default"] = (MqttConduitCollection);
 
 /***/ }),
 
@@ -1527,7 +2235,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _iov_player__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./iov/player */ "./src/js/iov/player.js");
+/* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1543,47 +2251,54 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var Component = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getComponent('Component');
 
-/* harmony default export */ __webpack_exports__["default"] = (function () {
-  var MqttHandler = function (_Component) {
-    _inherits(MqttHandler, _Component);
+var DEBUG_PREFIX = 'skyline:clsp';
 
-    function MqttHandler(source, tech, options) {
-      _classCallCheck(this, MqttHandler);
+var MqttHandler = function (_Component) {
+  _inherits(MqttHandler, _Component);
 
-      var _this = _possibleConstructorReturn(this, (MqttHandler.__proto__ || Object.getPrototypeOf(MqttHandler)).call(this, tech, options.mqtt));
+  function MqttHandler(source, tech, mqttConduitCollection, options) {
+    _classCallCheck(this, MqttHandler);
 
-      _this.tech_ = tech;
-      _this.source_ = source;
-      _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:MqttHandler');
-      return _this;
+    var _this = _possibleConstructorReturn(this, (MqttHandler.__proto__ || Object.getPrototypeOf(MqttHandler)).call(this, tech, options.mqtt));
+
+    _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MqttHandler');
+    _this.debug('constructor');
+
+    _this.tech_ = tech;
+    _this.source_ = source;
+
+    // @todo - is there a better way to do this where we don't pollute the
+    // top level namespace?
+    _this.iov = null;
+    _this.mqttConduitCollection = mqttConduitCollection;
+    return _this;
+  }
+
+  _createClass(MqttHandler, [{
+    key: 'createIOV',
+    value: function createIOV(player) {
+      this.debug('createIOV');
+
+      this.updateIOV(_iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(this.source_.src, this.mqttConduitCollection, player));
     }
+  }, {
+    key: 'updateIOV',
+    value: function updateIOV(iov) {
+      this.debug('updateIOV');
 
-    /**
-     * called when player.src gets called, handle a new source
-     *
-     * @param {Object} src the source object to handle
-     */
-
-
-    _createClass(MqttHandler, [{
-      key: 'src',
-      value: function src(_src) {
-        var srcConfig = _iov_player__WEBPACK_IMPORTED_MODULE_2__["default"].generateIOVConfigFromCLSPURL(_src);
-
-        this.port = srcConfig.port;
-        this.address = srcConfig.address;
-        this.streamName = srcConfig.streamName;
-        this.useSSL = srcConfig.useSSL;
+      if (this.iov) {
+        this.iov.destroy();
       }
-    }]);
 
-    return MqttHandler;
-  }(Component);
-
-  ;
+      this.iov = iov;
+    }
+  }]);
 
   return MqttHandler;
-});
+}(Component);
+
+/* harmony default export */ __webpack_exports__["default"] = (MqttHandler);
+;
 
 /***/ }),
 
@@ -1608,14 +2323,17 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-/* harmony default export */ __webpack_exports__["default"] = (function () {
-  var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:MqttSourceHandler');
-  var MqttHandler = Object(_MqttHandler__WEBPACK_IMPORTED_MODULE_2__["default"])();
+var DEBUG_PREFIX = 'skyline:clsp';
 
-  return function (mode) {
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MqttSourceHandler');
+
+  return function (mode, mqttConduitCollection) {
     var obj = {
       canHandleSource: function canHandleSource(srcObj) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        debug('canHandleSource');
 
         if (!srcObj.src) {
           console.error('srcObj doesn\'t contain src');
@@ -1638,15 +2356,17 @@ __webpack_require__.r(__webpack_exports__);
       handleSource: function handleSource(source, tech) {
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
+        debug('handleSource');
+
         var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options, { mqtt: { mode: mode } });
 
-        tech.mqtt = new MqttHandler(source, tech, localOptions);
-
-        tech.mqtt.src(source.src);
+        tech.mqtt = new _MqttHandler__WEBPACK_IMPORTED_MODULE_2__["default"](source, tech, mqttConduitCollection, localOptions);
 
         return tech.mqtt;
       },
       canPlayType: function canPlayType(type) {
+        debug('canPlayType');
+
         if (type === "video/mp4; codecs='avc1.42E01E'") {
           return 'maybe';
         }
@@ -1672,13 +2392,15 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../package.json */ "./package.json");
-var _package_json__WEBPACK_IMPORTED_MODULE_1___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../package.json */ "./package.json", 1);
-/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
-/* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
+/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
+/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../package.json */ "./package.json");
+var _package_json__WEBPACK_IMPORTED_MODULE_2___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../package.json */ "./package.json", 1);
+/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
+/* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/MqttConduitCollection.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1694,7 +2416,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 
 
-var Plugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getPlugin('plugin');
+
+var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin');
+
+var DEBUG_PREFIX = 'skyline:clsp';
 
 var registered = false;
 
@@ -1715,8 +2440,8 @@ var registered = false;
         // been registered, or perhaps videojs itself will not let you register a plugin twice
         registered = true;
 
-        video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getTech('Html5').registerSourceHandler(Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__["default"])()('html5'), 0);
-        video_js__WEBPACK_IMPORTED_MODULE_0___default.a.registerPlugin(MseOverMqttPlugin.pluginName, MseOverMqttPlugin);
+        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getTech('Html5').registerSourceHandler(Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_3__["default"])()('html5', _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_4__["default"].factory()), 0);
+        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.registerPlugin(MseOverMqttPlugin.pluginName, MseOverMqttPlugin);
 
         return MseOverMqttPlugin;
       }
@@ -1727,7 +2452,10 @@ var registered = false;
 
       var _this = _possibleConstructorReturn(this, (MseOverMqttPlugin.__proto__ || Object.getPrototypeOf(MseOverMqttPlugin)).call(this, player, options));
 
-      options = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, options);
+      _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MseOverMqttPlugin');
+      _this.debug('constructor');
+
+      options = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(defaults, options);
 
       player.addClass('vjs-mse-over-mqtt');
 
@@ -1745,7 +2473,7 @@ var registered = false;
         timeout: 120 * 1000
       });
 
-      if (!_utils__WEBPACK_IMPORTED_MODULE_4__["default"].supported()) {
+      if (!_utils__WEBPACK_IMPORTED_MODULE_5__["default"].supported()) {
         var _ret;
 
         return _ret = player.error({
@@ -1754,79 +2482,25 @@ var registered = false;
         }), _possibleConstructorReturn(_this, _ret);
       }
 
+      // Needed to make videojs-errors think that the video is progressing
+      // If we do not do this, videojs-errors will give us a timeout error
+      player._currentTime = 0;
       player.currentTime = function () {
-        // Needed to make videojs-errors think that the video is progressing
-        // If we do not do this, videojs-errors will give us a timeout error
-        // filthy hack - two objects will never be equal to one another
-        return {};
+        return player._currentTime++;
       };
 
-      player.on('firstplay', function (e) {
+      player.on('firstplay', function (event) {
+        _this.debug('on firstplay');
+
         // @todo - the use of the tech here is discouraged.  What is the "right" way to
         // get the information from the mqttHandler?
-        // And, really, all this does is parse the clsp url - do we really need a
-        // dedicated handler for that?  Can't we parse the url ourselves?
         var mqttHandler = player.tech(true).mqtt;
 
         if (!mqttHandler) {
           return console.error('src not in lookup table');
         }
 
-        var videoElement = player.el();
-
-        var iov = _iov_IOV__WEBPACK_IMPORTED_MODULE_3__["default"].factory(player, {
-          port: mqttHandler.port,
-          address: mqttHandler.address,
-          useSSL: mqttHandler.useSSL,
-          videoElement: videoElement,
-          appStart: function appStart(iov) {
-            // connected to MQTT procede to setting up callbacks
-            // debug("iov.player() called")
-            var mqtt_player = iov.player;
-
-            if (!mqtt_player) {
-              throw new Error('mqtt_player not available!');
-            }
-
-            var videoTag = player.children()[0];
-
-            // @todo - there must be a better way to determine autoplay...
-            if (videoTag.getAttribute('autoplay') !== null) {
-              // playButton.trigger('click');
-              player.trigger('play', videoTag);
-            }
-
-            if (mqtt_player.playing) {
-              console.warn('tried to use this player more than once...');
-              return;
-            }
-
-            mqtt_player.playing = true;
-
-            mqtt_player.on('firstChunk', function () {
-              player.loadingSpinner.hide();
-            });
-
-            mqtt_player.on('videoReceived', function () {
-              // reset the timeout monitor from videojs-errors
-              player.trigger('timeupdate');
-            });
-
-            mqtt_player.on('videoInfoReceived', function () {
-              // reset the timeout monitor from videojs-errors
-              player.trigger('timeupdate');
-            });
-
-            // start playing video
-            mqtt_player.play(e.target.firstChild.id, mqttHandler.streamName);
-
-            videoElement.addEventListener('mse-error-event', function (e) {
-              mqtt_player.restart();
-            }, false);
-          }
-        });
-
-        iov.initialize();
+        mqttHandler.createIOV(player);
       });
       return _this;
     }
@@ -1835,8 +2509,8 @@ var registered = false;
   }(Plugin);
 
   MseOverMqttPlugin.pluginName = 'clsp';
-  MseOverMqttPlugin.VERSION = _package_json__WEBPACK_IMPORTED_MODULE_1__["version"];
-  MseOverMqttPlugin.utils = _utils__WEBPACK_IMPORTED_MODULE_4__["default"];
+  MseOverMqttPlugin.VERSION = _package_json__WEBPACK_IMPORTED_MODULE_2__["version"];
+  MseOverMqttPlugin.utils = _utils__WEBPACK_IMPORTED_MODULE_5__["default"];
 
   return MseOverMqttPlugin;
 });;
@@ -1863,9 +2537,10 @@ uses cross document communication to route data to and from the iframe.
 // this code is filled in by the gulpfile.js
 var iframe_code = "/*******************************************************************************\n * Copyright (c) 2013, 2016 IBM Corp.\n *\n * All rights reserved. This program and the accompanying materials\n * are made available under the terms of the Eclipse Public License v1.0\n * and Eclipse Distribution License v1.0 which accompany this distribution.\n *\n * The Eclipse Public License is available at\n *    http://www.eclipse.org/legal/epl-v10.html\n * and the Eclipse Distribution License is available at\n *   http://www.eclipse.org/org/documents/edl-v10.php.\n *\n *******************************************************************************/\n(function(p,s){\"object\"===typeof exports&&\"object\"===typeof module?module.exports=s():\"function\"===typeof define&&define.amd?define(s):\"object\"===typeof exports?exports=s():(\"undefined\"===typeof p.Paho&&(p.Paho={}),p.Paho.MQTT=s())})(this,function(){return function(p){function s(a,b,c){b[c++]=a>>8;b[c++]=a%256;return c}function u(a,b,c,k){k=s(b,c,k);D(a,c,k);return k+b}function n(a){for(var b=0,c=0;c<a.length;c++){var k=a.charCodeAt(c);2047<k?(55296<=k&&56319>=k&&(c++,b++),b+=3):127<k?b+=2:b++}return b}\nfunction D(a,b,c){for(var k=0;k<a.length;k++){var e=a.charCodeAt(k);if(55296<=e&&56319>=e){var g=a.charCodeAt(++k);if(isNaN(g))throw Error(f(h.MALFORMED_UNICODE,[e,g]));e=(e-55296<<10)+(g-56320)+65536}127>=e?b[c++]=e:(2047>=e?b[c++]=e>>6&31|192:(65535>=e?b[c++]=e>>12&15|224:(b[c++]=e>>18&7|240,b[c++]=e>>12&63|128),b[c++]=e>>6&63|128),b[c++]=e&63|128)}return b}function E(a,b,c){for(var k=\"\",e,g=b;g<b+c;){e=a[g++];if(!(128>e)){var m=a[g++]-128;if(0>m)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),\n\"\"]));if(224>e)e=64*(e-192)+m;else{var d=a[g++]-128;if(0>d)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16)]));if(240>e)e=4096*(e-224)+64*m+d;else{var l=a[g++]-128;if(0>l)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16),l.toString(16)]));if(248>e)e=262144*(e-240)+4096*m+64*d+l;else throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16),l.toString(16)]));}}}65535<e&&(e-=65536,k+=String.fromCharCode(55296+(e>>10)),e=56320+(e&\n1023));k+=String.fromCharCode(e)}return k}var z=function(a,b){for(var c in a)if(a.hasOwnProperty(c))if(b.hasOwnProperty(c)){if(typeof a[c]!==b[c])throw Error(f(h.INVALID_TYPE,[typeof a[c],c]));}else{c=\"Unknown property, \"+c+\". Valid properties are:\";for(var k in b)b.hasOwnProperty(k)&&(c=c+\" \"+k);throw Error(c);}},v=function(a,b){return function(){return a.apply(b,arguments)}},h={OK:{code:0,text:\"AMQJSC0000I OK.\"},CONNECT_TIMEOUT:{code:1,text:\"AMQJSC0001E Connect timed out.\"},SUBSCRIBE_TIMEOUT:{code:2,\ntext:\"AMQJS0002E Subscribe timed out.\"},UNSUBSCRIBE_TIMEOUT:{code:3,text:\"AMQJS0003E Unsubscribe timed out.\"},PING_TIMEOUT:{code:4,text:\"AMQJS0004E Ping timed out.\"},INTERNAL_ERROR:{code:5,text:\"AMQJS0005E Internal error. Error Message: {0}, Stack trace: {1}\"},CONNACK_RETURNCODE:{code:6,text:\"AMQJS0006E Bad Connack return code:{0} {1}.\"},SOCKET_ERROR:{code:7,text:\"AMQJS0007E Socket error:{0}.\"},SOCKET_CLOSE:{code:8,text:\"AMQJS0008I Socket closed.\"},MALFORMED_UTF:{code:9,text:\"AMQJS0009E Malformed UTF data:{0} {1} {2}.\"},\nUNSUPPORTED:{code:10,text:\"AMQJS0010E {0} is not supported by this browser.\"},INVALID_STATE:{code:11,text:\"AMQJS0011E Invalid state {0}.\"},INVALID_TYPE:{code:12,text:\"AMQJS0012E Invalid type {0} for {1}.\"},INVALID_ARGUMENT:{code:13,text:\"AMQJS0013E Invalid argument {0} for {1}.\"},UNSUPPORTED_OPERATION:{code:14,text:\"AMQJS0014E Unsupported operation.\"},INVALID_STORED_DATA:{code:15,text:\"AMQJS0015E Invalid data in local storage key\\x3d{0} value\\x3d{1}.\"},INVALID_MQTT_MESSAGE_TYPE:{code:16,text:\"AMQJS0016E Invalid MQTT message type {0}.\"},\nMALFORMED_UNICODE:{code:17,text:\"AMQJS0017E Malformed Unicode string:{0} {1}.\"},BUFFER_FULL:{code:18,text:\"AMQJS0018E Message buffer is full, maximum buffer size: {0}.\"}},H={0:\"Connection Accepted\",1:\"Connection Refused: unacceptable protocol version\",2:\"Connection Refused: identifier rejected\",3:\"Connection Refused: server unavailable\",4:\"Connection Refused: bad user name or password\",5:\"Connection Refused: not authorized\"},f=function(a,b){var c=a.text;if(b)for(var k,e,g=0;g<b.length;g++)if(k=\"{\"+\ng+\"}\",e=c.indexOf(k),0<e)var h=c.substring(0,e),c=c.substring(e+k.length),c=h+b[g]+c;return c},A=[0,6,77,81,73,115,100,112,3],B=[0,4,77,81,84,84,4],q=function(a,b){this.type=a;for(var c in b)b.hasOwnProperty(c)&&(this[c]=b[c])};q.prototype.encode=function(){var a=(this.type&15)<<4,b=0,c=[],k=0,e;void 0!==this.messageIdentifier&&(b+=2);switch(this.type){case 1:switch(this.mqttVersion){case 3:b+=A.length+3;break;case 4:b+=B.length+3}b+=n(this.clientId)+2;void 0!==this.willMessage&&(b+=n(this.willMessage.destinationName)+\n2,e=this.willMessage.payloadBytes,e instanceof Uint8Array||(e=new Uint8Array(h)),b+=e.byteLength+2);void 0!==this.userName&&(b+=n(this.userName)+2);void 0!==this.password&&(b+=n(this.password)+2);break;case 8:for(var a=a|2,g=0;g<this.topics.length;g++)c[g]=n(this.topics[g]),b+=c[g]+2;b+=this.requestedQos.length;break;case 10:a|=2;for(g=0;g<this.topics.length;g++)c[g]=n(this.topics[g]),b+=c[g]+2;break;case 6:a|=2;break;case 3:this.payloadMessage.duplicate&&(a|=8);a=a|=this.payloadMessage.qos<<1;this.payloadMessage.retained&&\n(a|=1);var k=n(this.payloadMessage.destinationName),h=this.payloadMessage.payloadBytes,b=b+(k+2)+h.byteLength;h instanceof ArrayBuffer?h=new Uint8Array(h):h instanceof Uint8Array||(h=new Uint8Array(h.buffer))}var f=b,g=Array(1),d=0;do{var t=f%128,f=f>>7;0<f&&(t|=128);g[d++]=t}while(0<f&&4>d);f=g.length+1;b=new ArrayBuffer(b+f);d=new Uint8Array(b);d[0]=a;d.set(g,1);if(3==this.type)f=u(this.payloadMessage.destinationName,k,d,f);else if(1==this.type){switch(this.mqttVersion){case 3:d.set(A,f);f+=A.length;\nbreak;case 4:d.set(B,f),f+=B.length}a=0;this.cleanSession&&(a=2);void 0!==this.willMessage&&(a=a|4|this.willMessage.qos<<3,this.willMessage.retained&&(a|=32));void 0!==this.userName&&(a|=128);void 0!==this.password&&(a|=64);d[f++]=a;f=s(this.keepAliveInterval,d,f)}void 0!==this.messageIdentifier&&(f=s(this.messageIdentifier,d,f));switch(this.type){case 1:f=u(this.clientId,n(this.clientId),d,f);void 0!==this.willMessage&&(f=u(this.willMessage.destinationName,n(this.willMessage.destinationName),d,f),\nf=s(e.byteLength,d,f),d.set(e,f),f+=e.byteLength);void 0!==this.userName&&(f=u(this.userName,n(this.userName),d,f));void 0!==this.password&&u(this.password,n(this.password),d,f);break;case 3:d.set(h,f);break;case 8:for(g=0;g<this.topics.length;g++)f=u(this.topics[g],c[g],d,f),d[f++]=this.requestedQos[g];break;case 10:for(g=0;g<this.topics.length;g++)f=u(this.topics[g],c[g],d,f)}return b};var F=function(a,b,c){this._client=a;this._window=b;this._keepAliveInterval=1E3*c;this.isReset=!1;var k=(new q(12)).encode(),\ne=function(a){return function(){return g.apply(a)}},g=function(){this.isReset?(this.isReset=!1,this._client._trace(\"Pinger.doPing\",\"send PINGREQ\"),this._client.socket.send(k),this.timeout=this._window.setTimeout(e(this),this._keepAliveInterval)):(this._client._trace(\"Pinger.doPing\",\"Timed out\"),this._client._disconnected(h.PING_TIMEOUT.code,f(h.PING_TIMEOUT)))};this.reset=function(){this.isReset=!0;this._window.clearTimeout(this.timeout);0<this._keepAliveInterval&&(this.timeout=setTimeout(e(this),\nthis._keepAliveInterval))};this.cancel=function(){this._window.clearTimeout(this.timeout)}},w=function(a,b,c,f,e){this._window=b;c||(c=30);this.timeout=setTimeout(function(a,b,c){return function(){return a.apply(b,c)}}(f,a,e),1E3*c);this.cancel=function(){this._window.clearTimeout(this.timeout)}},d=function(a,b,c,d,e){if(!(\"WebSocket\"in p&&null!==p.WebSocket))throw Error(f(h.UNSUPPORTED,[\"WebSocket\"]));if(!(\"localStorage\"in p&&null!==p.localStorage))throw Error(f(h.UNSUPPORTED,[\"localStorage\"]));\nif(!(\"ArrayBuffer\"in p&&null!==p.ArrayBuffer))throw Error(f(h.UNSUPPORTED,[\"ArrayBuffer\"]));this._trace(\"Paho.MQTT.Client\",a,b,c,d,e);this.host=b;this.port=c;this.path=d;this.uri=a;this.clientId=e;this._wsuri=null;this._localKey=b+\":\"+c+(\"/mqtt\"!=d?\":\"+d:\"\")+\":\"+e+\":\";this._msg_queue=[];this._buffered_msg_queue=[];this._sentMessages={};this._receivedMessages={};this._notify_msg_sent={};this._message_identifier=1;this._sequence=0;for(var g in localStorage)0!==g.indexOf(\"Sent:\"+this._localKey)&&0!==\ng.indexOf(\"Received:\"+this._localKey)||this.restore(g)};d.prototype.host=null;d.prototype.port=null;d.prototype.path=null;d.prototype.uri=null;d.prototype.clientId=null;d.prototype.socket=null;d.prototype.connected=!1;d.prototype.maxMessageIdentifier=65536;d.prototype.connectOptions=null;d.prototype.hostIndex=null;d.prototype.onConnected=null;d.prototype.onConnectionLost=null;d.prototype.onMessageDelivered=null;d.prototype.onMessageArrived=null;d.prototype.traceFunction=null;d.prototype._msg_queue=\nnull;d.prototype._buffered_msg_queue=null;d.prototype._connectTimeout=null;d.prototype.sendPinger=null;d.prototype.receivePinger=null;d.prototype._reconnectInterval=1;d.prototype._reconnecting=!1;d.prototype._reconnectTimeout=null;d.prototype.disconnectedPublishing=!1;d.prototype.disconnectedBufferSize=5E3;d.prototype.receiveBuffer=null;d.prototype._traceBuffer=null;d.prototype._MAX_TRACE_ENTRIES=100;d.prototype.connect=function(a){var b=this._traceMask(a,\"password\");this._trace(\"Client.connect\",\nb,this.socket,this.connected);if(this.connected)throw Error(f(h.INVALID_STATE,[\"already connected\"]));if(this.socket)throw Error(f(h.INVALID_STATE,[\"already connected\"]));this._reconnecting&&(this._reconnectTimeout.cancel(),this._reconnectTimeout=null,this._reconnecting=!1);this.connectOptions=a;this._reconnectInterval=1;this._reconnecting=!1;a.uris?(this.hostIndex=0,this._doConnect(a.uris[0])):this._doConnect(this.uri)};d.prototype.subscribe=function(a,b){this._trace(\"Client.subscribe\",a,b);if(!this.connected)throw Error(f(h.INVALID_STATE,\n[\"not connected\"]));var c=new q(8);c.topics=[a];c.requestedQos=void 0!==b.qos?[b.qos]:[0];b.onSuccess&&(c.onSuccess=function(a){b.onSuccess({invocationContext:b.invocationContext,grantedQos:a})});b.onFailure&&(c.onFailure=function(a){b.onFailure({invocationContext:b.invocationContext,errorCode:a,errorMessage:f(a)})});b.timeout&&(c.timeOut=new w(this,window,b.timeout,b.onFailure,[{invocationContext:b.invocationContext,errorCode:h.SUBSCRIBE_TIMEOUT.code,errorMessage:f(h.SUBSCRIBE_TIMEOUT)}]));this._requires_ack(c);\nthis._schedule_message(c)};d.prototype.unsubscribe=function(a,b){this._trace(\"Client.unsubscribe\",a,b);if(!this.connected)throw Error(f(h.INVALID_STATE,[\"not connected\"]));var c=new q(10);c.topics=[a];b.onSuccess&&(c.callback=function(){b.onSuccess({invocationContext:b.invocationContext})});b.timeout&&(c.timeOut=new w(this,window,b.timeout,b.onFailure,[{invocationContext:b.invocationContext,errorCode:h.UNSUBSCRIBE_TIMEOUT.code,errorMessage:f(h.UNSUBSCRIBE_TIMEOUT)}]));this._requires_ack(c);this._schedule_message(c)};\nd.prototype.send=function(a){this._trace(\"Client.send\",a);wireMessage=new q(3);wireMessage.payloadMessage=a;if(this.connected)0<a.qos?this._requires_ack(wireMessage):this.onMessageDelivered&&(this._notify_msg_sent[wireMessage]=this.onMessageDelivered(wireMessage.payloadMessage)),this._schedule_message(wireMessage);else if(this._reconnecting&&this.disconnectedPublishing){if(Object.keys(this._sentMessages).length+this._buffered_msg_queue.length>this.disconnectedBufferSize)throw Error(f(h.BUFFER_FULL,\n[this.disconnectedBufferSize]));0<a.qos?this._requires_ack(wireMessage):(wireMessage.sequence=++this._sequence,this._buffered_msg_queue.push(wireMessage))}else throw Error(f(h.INVALID_STATE,[\"not connected\"]));};d.prototype.disconnect=function(){this._trace(\"Client.disconnect\");this._reconnecting&&(this._reconnectTimeout.cancel(),this._reconnectTimeout=null,this._reconnecting=!1);if(!this.socket)throw Error(f(h.INVALID_STATE,[\"not connecting or connected\"]));wireMessage=new q(14);this._notify_msg_sent[wireMessage]=\nv(this._disconnected,this);this._schedule_message(wireMessage)};d.prototype.getTraceLog=function(){if(null!==this._traceBuffer){this._trace(\"Client.getTraceLog\",new Date);this._trace(\"Client.getTraceLog in flight messages\",this._sentMessages.length);for(var a in this._sentMessages)this._trace(\"_sentMessages \",a,this._sentMessages[a]);for(a in this._receivedMessages)this._trace(\"_receivedMessages \",a,this._receivedMessages[a]);return this._traceBuffer}};d.prototype.startTrace=function(){null===this._traceBuffer&&\n(this._traceBuffer=[]);this._trace(\"Client.startTrace\",new Date,\"1.0.3\")};d.prototype.stopTrace=function(){delete this._traceBuffer};d.prototype._doConnect=function(a){this.connectOptions.useSSL&&(a=a.split(\":\"),a[0]=\"wss\",a=a.join(\":\"));this._wsuri=a;this.connected=!1;this.socket=4>this.connectOptions.mqttVersion?new WebSocket(a,[\"mqttv3.1\"]):new WebSocket(a,[\"mqtt\"]);this.socket.binaryType=\"arraybuffer\";this.socket.onopen=v(this._on_socket_open,this);this.socket.onmessage=v(this._on_socket_message,\nthis);this.socket.onerror=v(this._on_socket_error,this);this.socket.onclose=v(this._on_socket_close,this);this.sendPinger=new F(this,window,this.connectOptions.keepAliveInterval);this.receivePinger=new F(this,window,this.connectOptions.keepAliveInterval);this._connectTimeout&&(this._connectTimeout.cancel(),this._connectTimeout=null);this._connectTimeout=new w(this,window,this.connectOptions.timeout,this._disconnected,[h.CONNECT_TIMEOUT.code,f(h.CONNECT_TIMEOUT)])};d.prototype._schedule_message=function(a){this._msg_queue.push(a);\nthis.connected&&this._process_queue()};d.prototype.store=function(a,b){var c={type:b.type,messageIdentifier:b.messageIdentifier,version:1};switch(b.type){case 3:b.pubRecReceived&&(c.pubRecReceived=!0);c.payloadMessage={};for(var d=\"\",e=b.payloadMessage.payloadBytes,g=0;g<e.length;g++)d=15>=e[g]?d+\"0\"+e[g].toString(16):d+e[g].toString(16);c.payloadMessage.payloadHex=d;c.payloadMessage.qos=b.payloadMessage.qos;c.payloadMessage.destinationName=b.payloadMessage.destinationName;b.payloadMessage.duplicate&&\n(c.payloadMessage.duplicate=!0);b.payloadMessage.retained&&(c.payloadMessage.retained=!0);0===a.indexOf(\"Sent:\")&&(void 0===b.sequence&&(b.sequence=++this._sequence),c.sequence=b.sequence);break;default:throw Error(f(h.INVALID_STORED_DATA,[key,c]));}localStorage.setItem(a+this._localKey+b.messageIdentifier,JSON.stringify(c))};d.prototype.restore=function(a){var b=localStorage.getItem(a),c=JSON.parse(b),d=new q(c.type,c);switch(c.type){case 3:for(var b=c.payloadMessage.payloadHex,e=new ArrayBuffer(b.length/\n2),e=new Uint8Array(e),g=0;2<=b.length;){var m=parseInt(b.substring(0,2),16),b=b.substring(2,b.length);e[g++]=m}b=new Paho.MQTT.Message(e);b.qos=c.payloadMessage.qos;b.destinationName=c.payloadMessage.destinationName;c.payloadMessage.duplicate&&(b.duplicate=!0);c.payloadMessage.retained&&(b.retained=!0);d.payloadMessage=b;break;default:throw Error(f(h.INVALID_STORED_DATA,[a,b]));}0===a.indexOf(\"Sent:\"+this._localKey)?(d.payloadMessage.duplicate=!0,this._sentMessages[d.messageIdentifier]=d):0===a.indexOf(\"Received:\"+\nthis._localKey)&&(this._receivedMessages[d.messageIdentifier]=d)};d.prototype._process_queue=function(){for(var a=null,b=this._msg_queue.reverse();a=b.pop();)this._socket_send(a),this._notify_msg_sent[a]&&(this._notify_msg_sent[a](),delete this._notify_msg_sent[a])};d.prototype._requires_ack=function(a){var b=Object.keys(this._sentMessages).length;if(b>this.maxMessageIdentifier)throw Error(\"Too many messages:\"+b);for(;void 0!==this._sentMessages[this._message_identifier];)this._message_identifier++;\na.messageIdentifier=this._message_identifier;this._sentMessages[a.messageIdentifier]=a;3===a.type&&this.store(\"Sent:\",a);this._message_identifier===this.maxMessageIdentifier&&(this._message_identifier=1)};d.prototype._on_socket_open=function(){var a=new q(1,this.connectOptions);a.clientId=this.clientId;this._socket_send(a)};d.prototype._on_socket_message=function(a){this._trace(\"Client._on_socket_message\",a.data);a=this._deframeMessages(a.data);for(var b=0;b<a.length;b+=1)this._handleMessage(a[b])};\nd.prototype._deframeMessages=function(a){a=new Uint8Array(a);var b=[];if(this.receiveBuffer){var c=new Uint8Array(this.receiveBuffer.length+a.length);c.set(this.receiveBuffer);c.set(a,this.receiveBuffer.length);a=c;delete this.receiveBuffer}try{for(c=0;c<a.length;){var d;a:{var e=a,g=c,m=g,n=e[g],l=n>>4,t=n&15,g=g+1,x=void 0,C=0,p=1;do{if(g==e.length){d=[null,m];break a}x=e[g++];C+=(x&127)*p;p*=128}while(0!==(x&128));x=g+C;if(x>e.length)d=[null,m];else{var y=new q(l);switch(l){case 2:e[g++]&1&&(y.sessionPresent=\n!0);y.returnCode=e[g++];break;case 3:var m=t>>1&3,s=256*e[g]+e[g+1],g=g+2,u=E(e,g,s),g=g+s;0<m&&(y.messageIdentifier=256*e[g]+e[g+1],g+=2);var r=new Paho.MQTT.Message(e.subarray(g,x));1==(t&1)&&(r.retained=!0);8==(t&8)&&(r.duplicate=!0);r.qos=m;r.destinationName=u;y.payloadMessage=r;break;case 4:case 5:case 6:case 7:case 11:y.messageIdentifier=256*e[g]+e[g+1];break;case 9:y.messageIdentifier=256*e[g]+e[g+1],g+=2,y.returnCode=e.subarray(g,x)}d=[y,x]}}var v=d[0],c=d[1];if(null!==v)b.push(v);else break}c<\na.length&&(this.receiveBuffer=a.subarray(c))}catch(w){d=\"undefined\"==w.hasOwnProperty(\"stack\")?w.stack.toString():\"No Error Stack Available\";this._disconnected(h.INTERNAL_ERROR.code,f(h.INTERNAL_ERROR,[w.message,d]));return}return b};d.prototype._handleMessage=function(a){this._trace(\"Client._handleMessage\",a);try{switch(a.type){case 2:this._connectTimeout.cancel();this._reconnectTimeout&&this._reconnectTimeout.cancel();if(this.connectOptions.cleanSession){for(var b in this._sentMessages){var c=this._sentMessages[b];\nlocalStorage.removeItem(\"Sent:\"+this._localKey+c.messageIdentifier)}this._sentMessages={};for(b in this._receivedMessages){var d=this._receivedMessages[b];localStorage.removeItem(\"Received:\"+this._localKey+d.messageIdentifier)}this._receivedMessages={}}if(0===a.returnCode)this.connected=!0,this.connectOptions.uris&&(this.hostIndex=this.connectOptions.uris.length);else{this._disconnected(h.CONNACK_RETURNCODE.code,f(h.CONNACK_RETURNCODE,[a.returnCode,H[a.returnCode]]));break}a=[];for(var e in this._sentMessages)this._sentMessages.hasOwnProperty(e)&&\na.push(this._sentMessages[e]);if(0<this._buffered_msg_queue.length){e=null;for(var g=this._buffered_msg_queue.reverse();e=g.pop();)a.push(e),this.onMessageDelivered&&(this._notify_msg_sent[e]=this.onMessageDelivered(e.payloadMessage))}a=a.sort(function(a,b){return a.sequence-b.sequence});for(var g=0,m=a.length;g<m;g++)if(c=a[g],3==c.type&&c.pubRecReceived){var n=new q(6,{messageIdentifier:c.messageIdentifier});this._schedule_message(n)}else this._schedule_message(c);if(this.connectOptions.onSuccess)this.connectOptions.onSuccess({invocationContext:this.connectOptions.invocationContext});\nc=!1;this._reconnecting&&(c=!0,this._reconnectInterval=1,this._reconnecting=!1);this._connected(c,this._wsuri);this._process_queue();break;case 3:this._receivePublish(a);break;case 4:if(c=this._sentMessages[a.messageIdentifier])if(delete this._sentMessages[a.messageIdentifier],localStorage.removeItem(\"Sent:\"+this._localKey+a.messageIdentifier),this.onMessageDelivered)this.onMessageDelivered(c.payloadMessage);break;case 5:if(c=this._sentMessages[a.messageIdentifier])c.pubRecReceived=!0,n=new q(6,{messageIdentifier:a.messageIdentifier}),\nthis.store(\"Sent:\",c),this._schedule_message(n);break;case 6:d=this._receivedMessages[a.messageIdentifier];localStorage.removeItem(\"Received:\"+this._localKey+a.messageIdentifier);d&&(this._receiveMessage(d),delete this._receivedMessages[a.messageIdentifier]);var l=new q(7,{messageIdentifier:a.messageIdentifier});this._schedule_message(l);break;case 7:c=this._sentMessages[a.messageIdentifier];delete this._sentMessages[a.messageIdentifier];localStorage.removeItem(\"Sent:\"+this._localKey+a.messageIdentifier);\nif(this.onMessageDelivered)this.onMessageDelivered(c.payloadMessage);break;case 9:if(c=this._sentMessages[a.messageIdentifier]){c.timeOut&&c.timeOut.cancel();if(128===a.returnCode[0]){if(c.onFailure)c.onFailure(a.returnCode)}else if(c.onSuccess)c.onSuccess(a.returnCode);delete this._sentMessages[a.messageIdentifier]}break;case 11:if(c=this._sentMessages[a.messageIdentifier])c.timeOut&&c.timeOut.cancel(),c.callback&&c.callback(),delete this._sentMessages[a.messageIdentifier];break;case 13:this.sendPinger.reset();\nbreak;case 14:this._disconnected(h.INVALID_MQTT_MESSAGE_TYPE.code,f(h.INVALID_MQTT_MESSAGE_TYPE,[a.type]));break;default:this._disconnected(h.INVALID_MQTT_MESSAGE_TYPE.code,f(h.INVALID_MQTT_MESSAGE_TYPE,[a.type]))}}catch(t){c=\"undefined\"==t.hasOwnProperty(\"stack\")?t.stack.toString():\"No Error Stack Available\",this._disconnected(h.INTERNAL_ERROR.code,f(h.INTERNAL_ERROR,[t.message,c]))}};d.prototype._on_socket_error=function(a){this._reconnecting||this._disconnected(h.SOCKET_ERROR.code,f(h.SOCKET_ERROR,\n[a.data]))};d.prototype._on_socket_close=function(){this._reconnecting||this._disconnected(h.SOCKET_CLOSE.code,f(h.SOCKET_CLOSE))};d.prototype._socket_send=function(a){if(1==a.type){var b=this._traceMask(a,\"password\");this._trace(\"Client._socket_send\",b)}else this._trace(\"Client._socket_send\",a);this.socket.send(a.encode());this.sendPinger.reset()};d.prototype._receivePublish=function(a){switch(a.payloadMessage.qos){case \"undefined\":case 0:this._receiveMessage(a);break;case 1:var b=new q(4,{messageIdentifier:a.messageIdentifier});\nthis._schedule_message(b);this._receiveMessage(a);break;case 2:this._receivedMessages[a.messageIdentifier]=a;this.store(\"Received:\",a);a=new q(5,{messageIdentifier:a.messageIdentifier});this._schedule_message(a);break;default:throw Error(\"Invaild qos\\x3d\"+wireMmessage.payloadMessage.qos);}};d.prototype._receiveMessage=function(a){if(this.onMessageArrived)this.onMessageArrived(a.payloadMessage)};d.prototype._connected=function(a,b){if(this.onConnected)this.onConnected(a,b)};d.prototype._reconnect=\nfunction(){this._trace(\"Client._reconnect\");this.connected||(this._reconnecting=!0,this.sendPinger.cancel(),this.receivePinger.cancel(),128>this._reconnectInterval&&(this._reconnectInterval*=2),this.connectOptions.uris?(this.hostIndex=0,this._doConnect(this.connectOptions.uris[0])):this._doConnect(this.uri))};d.prototype._disconnected=function(a,b){this._trace(\"Client._disconnected\",a,b);if(void 0!==a&&this._reconnecting)this._reconnectTimeout=new w(this,window,this._reconnectInterval,this._reconnect);\nelse if(this.sendPinger.cancel(),this.receivePinger.cancel(),this._connectTimeout&&(this._connectTimeout.cancel(),this._connectTimeout=null),this._msg_queue=[],this._buffered_msg_queue=[],this._notify_msg_sent={},this.socket&&(this.socket.onopen=null,this.socket.onmessage=null,this.socket.onerror=null,this.socket.onclose=null,1===this.socket.readyState&&this.socket.close(),delete this.socket),this.connectOptions.uris&&this.hostIndex<this.connectOptions.uris.length-1)this.hostIndex++,this._doConnect(this.connectOptions.uris[this.hostIndex]);\nelse if(void 0===a&&(a=h.OK.code,b=f(h.OK)),this.connected){this.connected=!1;if(this.onConnectionLost)this.onConnectionLost({errorCode:a,errorMessage:b,reconnect:this.connectOptions.reconnect,uri:this._wsuri});a!==h.OK.code&&this.connectOptions.reconnect&&(this._reconnectInterval=1,this._reconnect())}else if(4===this.connectOptions.mqttVersion&&!1===this.connectOptions.mqttVersionExplicit)this._trace(\"Failed to connect V4, dropping back to V3\"),this.connectOptions.mqttVersion=3,this.connectOptions.uris?\n(this.hostIndex=0,this._doConnect(this.connectOptions.uris[0])):this._doConnect(this.uri);else if(this.connectOptions.onFailure)this.connectOptions.onFailure({invocationContext:this.connectOptions.invocationContext,errorCode:a,errorMessage:b})};d.prototype._trace=function(){if(this.traceFunction){for(var a in arguments)\"undefined\"!==typeof arguments[a]&&arguments.splice(a,1,JSON.stringify(arguments[a]));a=Array.prototype.slice.call(arguments).join(\"\");this.traceFunction({severity:\"Debug\",message:a})}if(null!==\nthis._traceBuffer){a=0;for(var b=arguments.length;a<b;a++)this._traceBuffer.length==this._MAX_TRACE_ENTRIES&&this._traceBuffer.shift(),0===a?this._traceBuffer.push(arguments[a]):\"undefined\"===typeof arguments[a]?this._traceBuffer.push(arguments[a]):this._traceBuffer.push(\"  \"+JSON.stringify(arguments[a]))}};d.prototype._traceMask=function(a,b){var c={},d;for(d in a)a.hasOwnProperty(d)&&(c[d]=d==b?\"******\":a[d]);return c};var G=function(a,b,c,k){var e;if(\"string\"!==typeof a)throw Error(f(h.INVALID_TYPE,\n[typeof a,\"host\"]));if(2==arguments.length){k=b;e=a;var g=e.match(/^(wss?):\\/\\/((\\[(.+)\\])|([^\\/]+?))(:(\\d+))?(\\/.*)$/);if(g)a=g[4]||g[2],b=parseInt(g[7]),c=g[8];else throw Error(f(h.INVALID_ARGUMENT,[a,\"host\"]));}else{3==arguments.length&&(k=c,c=\"/mqtt\");if(\"number\"!==typeof b||0>b)throw Error(f(h.INVALID_TYPE,[typeof b,\"port\"]));if(\"string\"!==typeof c)throw Error(f(h.INVALID_TYPE,[typeof c,\"path\"]));e=\"ws://\"+(-1!==a.indexOf(\":\")&&\"[\"!==a.slice(0,1)&&\"]\"!==a.slice(-1)?\"[\"+a+\"]\":a)+\":\"+b+c}for(var m=\ng=0;m<k.length;m++){var n=k.charCodeAt(m);55296<=n&&56319>=n&&m++;g++}if(\"string\"!==typeof k||65535<g)throw Error(f(h.INVALID_ARGUMENT,[k,\"clientId\"]));var l=new d(e,a,b,c,k);this._getHost=function(){return a};this._setHost=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getPort=function(){return b};this._setPort=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getPath=function(){return c};this._setPath=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getURI=function(){return e};\nthis._setURI=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getClientId=function(){return l.clientId};this._setClientId=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getOnConnected=function(){return l.onConnected};this._setOnConnected=function(a){if(\"function\"===typeof a)l.onConnected=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onConnected\"]));};this._getDisconnectedPublishing=function(){return l.disconnectedPublishing};this._setDisconnectedPublishing=function(a){l.disconnectedPublishing=\na};this._getDisconnectedBufferSize=function(){return l.disconnectedBufferSize};this._setDisconnectedBufferSize=function(a){l.disconnectedBufferSize=a};this._getOnConnectionLost=function(){return l.onConnectionLost};this._setOnConnectionLost=function(a){if(\"function\"===typeof a)l.onConnectionLost=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onConnectionLost\"]));};this._getOnMessageDelivered=function(){return l.onMessageDelivered};this._setOnMessageDelivered=function(a){if(\"function\"===typeof a)l.onMessageDelivered=\na;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onMessageDelivered\"]));};this._getOnMessageArrived=function(){return l.onMessageArrived};this._setOnMessageArrived=function(a){if(\"function\"===typeof a)l.onMessageArrived=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onMessageArrived\"]));};this._getTrace=function(){return l.traceFunction};this._setTrace=function(a){if(\"function\"===typeof a)l.traceFunction=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onTrace\"]));};this.connect=function(a){a=a||{};z(a,\n{timeout:\"number\",userName:\"string\",password:\"string\",willMessage:\"object\",keepAliveInterval:\"number\",cleanSession:\"boolean\",useSSL:\"boolean\",invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",hosts:\"object\",ports:\"object\",reconnect:\"boolean\",mqttVersion:\"number\",mqttVersionExplicit:\"boolean\",uris:\"object\"});void 0===a.keepAliveInterval&&(a.keepAliveInterval=60);if(4<a.mqttVersion||3>a.mqttVersion)throw Error(f(h.INVALID_ARGUMENT,[a.mqttVersion,\"connectOptions.mqttVersion\"]));void 0===\na.mqttVersion?(a.mqttVersionExplicit=!1,a.mqttVersion=4):a.mqttVersionExplicit=!0;if(void 0!==a.password&&void 0===a.userName)throw Error(f(h.INVALID_ARGUMENT,[a.password,\"connectOptions.password\"]));if(a.willMessage){if(!(a.willMessage instanceof r))throw Error(f(h.INVALID_TYPE,[a.willMessage,\"connectOptions.willMessage\"]));a.willMessage.stringPayload=null;if(\"undefined\"===typeof a.willMessage.destinationName)throw Error(f(h.INVALID_TYPE,[typeof a.willMessage.destinationName,\"connectOptions.willMessage.destinationName\"]));\n}\"undefined\"===typeof a.cleanSession&&(a.cleanSession=!0);if(a.hosts){if(!(a.hosts instanceof Array))throw Error(f(h.INVALID_ARGUMENT,[a.hosts,\"connectOptions.hosts\"]));if(1>a.hosts.length)throw Error(f(h.INVALID_ARGUMENT,[a.hosts,\"connectOptions.hosts\"]));for(var b=!1,d=0;d<a.hosts.length;d++){if(\"string\"!==typeof a.hosts[d])throw Error(f(h.INVALID_TYPE,[typeof a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));if(/^(wss?):\\/\\/((\\[(.+)\\])|([^\\/]+?))(:(\\d+))?(\\/.*)$/.test(a.hosts[d]))if(0===d)b=!0;else{if(!b)throw Error(f(h.INVALID_ARGUMENT,\n[a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));}else if(b)throw Error(f(h.INVALID_ARGUMENT,[a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));}if(b)a.uris=a.hosts;else{if(!a.ports)throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));if(!(a.ports instanceof Array))throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));if(a.hosts.length!==a.ports.length)throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));a.uris=[];for(d=0;d<a.hosts.length;d++){if(\"number\"!==typeof a.ports[d]||\n0>a.ports[d])throw Error(f(h.INVALID_TYPE,[typeof a.ports[d],\"connectOptions.ports[\"+d+\"]\"]));var b=a.hosts[d],g=a.ports[d];e=\"ws://\"+(-1!==b.indexOf(\":\")?\"[\"+b+\"]\":b)+\":\"+g+c;a.uris.push(e)}}}l.connect(a)};this.subscribe=function(a,b){if(\"string\"!==typeof a)throw Error(\"Invalid argument:\"+a);b=b||{};z(b,{qos:\"number\",invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",timeout:\"number\"});if(b.timeout&&!b.onFailure)throw Error(\"subscribeOptions.timeout specified with no onFailure callback.\");\nif(\"undefined\"!==typeof b.qos&&0!==b.qos&&1!==b.qos&&2!==b.qos)throw Error(f(h.INVALID_ARGUMENT,[b.qos,\"subscribeOptions.qos\"]));l.subscribe(a,b)};this.unsubscribe=function(a,b){if(\"string\"!==typeof a)throw Error(\"Invalid argument:\"+a);b=b||{};z(b,{invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",timeout:\"number\"});if(b.timeout&&!b.onFailure)throw Error(\"unsubscribeOptions.timeout specified with no onFailure callback.\");l.unsubscribe(a,b)};this.send=function(a,b,c,d){var e;if(0===\narguments.length)throw Error(\"Invalid argument.length\");if(1==arguments.length){if(!(a instanceof r)&&\"string\"!==typeof a)throw Error(\"Invalid argument:\"+typeof a);e=a;if(\"undefined\"===typeof e.destinationName)throw Error(f(h.INVALID_ARGUMENT,[e.destinationName,\"Message.destinationName\"]));}else e=new r(b),e.destinationName=a,3<=arguments.length&&(e.qos=c),4<=arguments.length&&(e.retained=d);l.send(e)};this.publish=function(a,b,c,d){console.log(\"Publising message to: \",a);var e;if(0===arguments.length)throw Error(\"Invalid argument.length\");\nif(1==arguments.length){if(!(a instanceof r)&&\"string\"!==typeof a)throw Error(\"Invalid argument:\"+typeof a);e=a;if(\"undefined\"===typeof e.destinationName)throw Error(f(h.INVALID_ARGUMENT,[e.destinationName,\"Message.destinationName\"]));}else e=new r(b),e.destinationName=a,3<=arguments.length&&(e.qos=c),4<=arguments.length&&(e.retained=d);l.send(e)};this.disconnect=function(){l.disconnect()};this.getTraceLog=function(){return l.getTraceLog()};this.startTrace=function(){l.startTrace()};this.stopTrace=\nfunction(){l.stopTrace()};this.isConnected=function(){return l.connected}};G.prototype={get host(){return this._getHost()},set host(a){this._setHost(a)},get port(){return this._getPort()},set port(a){this._setPort(a)},get path(){return this._getPath()},set path(a){this._setPath(a)},get clientId(){return this._getClientId()},set clientId(a){this._setClientId(a)},get onConnected(){return this._getOnConnected()},set onConnected(a){this._setOnConnected(a)},get disconnectedPublishing(){return this._getDisconnectedPublishing()},\nset disconnectedPublishing(a){this._setDisconnectedPublishing(a)},get disconnectedBufferSize(){return this._getDisconnectedBufferSize()},set disconnectedBufferSize(a){this._setDisconnectedBufferSize(a)},get onConnectionLost(){return this._getOnConnectionLost()},set onConnectionLost(a){this._setOnConnectionLost(a)},get onMessageDelivered(){return this._getOnMessageDelivered()},set onMessageDelivered(a){this._setOnMessageDelivered(a)},get onMessageArrived(){return this._getOnMessageArrived()},set onMessageArrived(a){this._setOnMessageArrived(a)},\nget trace(){return this._getTrace()},set trace(a){this._setTrace(a)}};var r=function(a){var b;if(\"string\"===typeof a||a instanceof ArrayBuffer||a instanceof Int8Array||a instanceof Uint8Array||a instanceof Int16Array||a instanceof Uint16Array||a instanceof Int32Array||a instanceof Uint32Array||a instanceof Float32Array||a instanceof Float64Array)b=a;else throw f(h.INVALID_ARGUMENT,[a,\"newPayload\"]);this._getPayloadString=function(){return\"string\"===typeof b?b:E(b,0,b.length)};this._getPayloadBytes=\nfunction(){if(\"string\"===typeof b){var a=new ArrayBuffer(n(b)),a=new Uint8Array(a);D(b,a,0);return a}return b};var c;this._getDestinationName=function(){return c};this._setDestinationName=function(a){if(\"string\"===typeof a)c=a;else throw Error(f(h.INVALID_ARGUMENT,[a,\"newDestinationName\"]));};var d=0;this._getQos=function(){return d};this._setQos=function(a){if(0===a||1===a||2===a)d=a;else throw Error(\"Invalid argument:\"+a);};var e=!1;this._getRetained=function(){return e};this._setRetained=function(a){if(\"boolean\"===\ntypeof a)e=a;else throw Error(f(h.INVALID_ARGUMENT,[a,\"newRetained\"]));};var g=!1;this._getDuplicate=function(){return g};this._setDuplicate=function(a){g=a}};r.prototype={get payloadString(){return this._getPayloadString()},get payloadBytes(){return this._getPayloadBytes()},get destinationName(){return this._getDestinationName()},set destinationName(a){this._setDestinationName(a)},get topic(){return this._getDestinationName()},set topic(a){this._setDestinationName(a)},get qos(){return this._getQos()},\nset qos(a){this._setQos(a)},get retained(){return this._getRetained()},set retained(a){this._setRetained(a)},get duplicate(){return this._getDuplicate()},set duplicate(a){this._setDuplicate(a)}};return{Client:G,Message:r}}(window)});\nfunction _clspRouter() {\n    function send(m){\n        // route message to parent which will in turn route to the correct\n        // player based on clientId.\n        m.clientId = MqttClientId;\n        // console.log(m);\n        window.parent.postMessage(m,\"*\");\n    }// end send\n\n\n    function routeInbound(message){\n        var pstring = \"\";\n\n        try {\n            pstring = message.payloadString;\n        } catch(e) {\n            //bogus excepton?\n        }\n\n        send({\n          event: \'data\',\n          destinationName: message.destinationName,\n          payloadString: pstring,\n          payloadBytes: message.payloadBytes || null\n        });\n    }// end route inbound\n\n\n    function eventHandler(evt){\n        var m = evt.data;\n\n        try {\n            if (m.method === \'subscribe\') {\n                MQTTClient.subscribe(m.topic);\n            } else if (m.method === \'unsubscribe\') {\n                MQTTClient.unsubscribe(m.topic);\n            } else if (m.method === \'publish\') {\n                var mqtt_payload = null;\n                try {\n                    mqtt_payload = JSON.stringify(m.data);\n                } catch( json_error ) {\n                    console.error(\"json stringify error: \" + m.data);\n                    return;\n                }\n\n                var mqtt_msg = new Paho.MQTT.Message(mqtt_payload);\n                mqtt_msg.destinationName = m.topic;\n                MQTTClient.send(mqtt_msg);\n            }\n        } catch(e) {\n            // we are dead!\n           send({\n               event: \'fail\',\n               reason: \"network failure\"\n            });\n            try {\n                MQTTClient.disconnect();\n            } catch(e) {\n                console.error(e);\n            }\n        }\n\n    }\n\n    function AppReady() {\n\n        if (window.addEventListener) {\n            window.addEventListener(\"message\", eventHandler, false);\n        } else if (window.attachEvent) {\n            window.attachEvent(\'onmessage\', eventHandler);\n        }\n\n        send({\n          event: \'ready\'\n        });\n\n        if (Reconnect !== -1)\n        {\n            clearInterval(Reconnect);\n            Reconnect = -1;\n        }\n\n    }// application ready\n\n\n    function AppFail(message) {\n      var e = \"Error code \" +\n          parseInt(message.errorCode) + \": \" + message.errorMessage;\n      send({\n        event: \'fail\',\n        reason: e\n      });\n    }\n\n    MQTTClient = new Paho.MQTT.Client(\n        MqttIp,\n        MqttPort,\n        MqttClientId\n    );\n\n    /*\n     * Hold the id of the reconnect interval task\n     */\n    var Reconnect = -1;\n\n    /*\n     * Callback which gets called when the connection is lost\n     */\n    function onConnectionLost(message){\n        send({\n            event: \'fail\',\n            reason: \"connection lost error code \" + parseInt(message.errorCode)\n        });\n        if (Reconnect === -1) {\n            Reconnect = setInterval(() => connect(), 2000);\n        }\n    }\n\n    MQTTClient.onConnectionLost = onConnectionLost;\n\n    // perhaps the busiest function in this module ;)\n    MQTTClient.onMessageArrived = function(message) {\n        // console.log(message);\n        try {\n             routeInbound(message);\n        }catch(e) {\n            if (e) {\n                console.error(e);\n            }\n        }\n    };\n\n    /**\n     * Connect to MQTT...\n     */\n    function connect()\n    {\n        // setup connection options\n        var options = {\n            timeout: 120,\n            onSuccess:  AppReady,\n            onFailure: AppFail\n        };\n        // last will message sent on disconnect\n        var willmsg = new Paho.MQTT.Message(JSON.stringify({\n            clientId: MqttClientId\n        }));\n        willmsg.destinationName = \"iov/clientDisconnect\";\n        options.willMessage = willmsg;\n\n        if (MqttUseSSL === true) {\n            options.useSSL = true;\n        }\n\n        try {\n            MQTTClient.connect(options);\n        } catch(e) {\n            console.error(\"connect failed\", e);\n            send({\n                event: \'fail\',\n                reason: \"connect failed\"\n            });\n        }\n    }\n\n    connect();\n}\n\nfunction clspRouter() {\n    try {\n        _clspRouter();\n    } catch(e) {\n        console.error(\"IFRAME error\");\n        console.error(e);\n    }\n}\n\nfunction onunload()\n{\n    if (typeof MQTTClient !== \'undefined\') {\n        MQTTClient.disconnect();\n    }\n}\n";
 
-function pframe_client(iframe, config, onReady) {
+function pframe_client(iframe, iov) {
     var self = {
-        dispatch: {}
+        dispatch: {},
+        iov: iov
     };
 
     // primitive function that routes message to iframe
@@ -1883,9 +2558,6 @@ function pframe_client(iframe, config, onReady) {
             }
         }, 1000);
     }
-
-    // called when mqtt has connected
-    self.onReady = onReady;
 
     /* message from mqttRouter routeInbound go handler which associates this
        client with the clientId. It then calls self.inboundHandler handler to
@@ -1931,7 +2603,7 @@ function pframe_client(iframe, config, onReady) {
     };
 
     self.transaction = function (topic, callback, obj) {
-        obj.resp_topic = config.clientId + "/response/" + parseInt(Math.random() * 1000000);
+        obj.resp_topic = iov.config.clientId + "/response/" + parseInt(Math.random() * 1000000);
         self.subscribe(obj.resp_topic, function (mqtt_resp) {
             //call user specified callback to handle response from remote process
             var resp = JSON.parse(mqtt_resp.payloadString);
@@ -1950,14 +2622,8 @@ function pframe_client(iframe, config, onReady) {
     return self;
 }
 
-window.mqttConduit = function (config, onReady) {
-    /*
-        config = {
-            ip: ... mqtt ip address
-            port: websocket port
-        }
-      }
-    */
+window.mqttConduit = function (iov) {
+    var config = iov.config;
     var client = {};
     var iframe = document.createElement('iframe');
     var MqttUseSSL = config.useSSL || false ? "true" : "false";
@@ -1976,20 +2642,20 @@ window.mqttConduit = function (config, onReady) {
     //document.body.appendChild(iframe);
     if (config.videoElementParent !== null) {
         config.videoElementParent.appendChild(iframe);
-    } else if (config.videoElement.parentNode !== null) {
-        config.videoElement.parentNode.appendChild(iframe);
-        config.videoElementParent = config.videoElement.parentNode;
+    } else if (iov.videoElement.parentNode !== null) {
+        iov.videoElement.parentNode.appendChild(iframe);
+        config.videoElementParent = iov.videoElement.parentNode;
     } else {
         var t = setInterval(function () {
-            if (config.videoElement.parentNode !== null) {
-                config.videoElement.parentNode.appendChild(iframe);
-                config.videoElementParent = config.videoElement.parentNode;
+            if (iov.videoElement.parentNode !== null) {
+                iov.videoElement.parentNode.appendChild(iframe);
+                config.videoElementParent = iov.videoElement.parentNode;
                 clearInterval(t);
             }
         }, 1000);
     }
 
-    return pframe_client(iframe, config, onReady);
+    return pframe_client(iframe, iov);
 };
 
 /***/ }),
@@ -2008,16 +2674,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
 /* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MqttTopicHandlers */ "./src/js/iov/MqttTopicHandlers.js");
-/* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/iov/MqttConduitCollection.js");
-/* harmony import */ var _MqttTransport__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./MqttTransport */ "./src/js/iov/MqttTransport.js");
-/* harmony import */ var _player__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./player */ "./src/js/iov/player.js");
+/* harmony import */ var _player__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./player */ "./src/js/iov/player.js");
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-
 
 
 
@@ -2032,11 +2694,15 @@ var DEBUG_PREFIX = 'skyline:clsp:iov';
  * deliver video content streamed through MQTT from distributed sources.
  */
 
+//  @todo - should this be the videojs component?  it seems like the
+// mqttHandler does nothing, and that this could replace it
+
 var IOV = function () {
   _createClass(IOV, null, [{
     key: 'compatibilityCheck',
     value: function compatibilityCheck() {
       // @todo - shouldn't this be done in the utils function?
+      // @todo - does this need to throw an error?
       // For the MAC
       var NoMediaSourceAlert = false;
 
@@ -2051,39 +2717,113 @@ var IOV = function () {
       }
     }
   }, {
+    key: 'generateConfigFromUrl',
+    value: function generateConfigFromUrl(url) {
+      if (!url) {
+        throw new Error('No source was given to be parsed!');
+      }
+
+      // We use an anchor tag here beacuse, when an href is added to
+      // an anchor dom Element, the parsing is done for you by the
+      // browser.
+      var parser = document.createElement('a');
+
+      var useSSL = void 0;
+      var default_port = void 0;
+
+      // Chrome is the only browser that allows non-http protocols in
+      // the anchor tag's href, so change them all to http here so we
+      // get the benefits of the anchor tag's parsing
+      if (url.substring(0, 5).toLowerCase() === 'clsps') {
+        useSSL = true;
+        parser.href = url.replace('clsps', 'https');
+        default_port = 443;
+      } else if (url.substring(0, 4).toLowerCase() === 'clsp') {
+        useSSL = false;
+        parser.href = url.replace('clsp', 'http');
+        default_port = 9001;
+      } else {
+        throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
+      }
+
+      var paths = parser.pathname.split('/');
+      var streamName = paths[paths.length - 1];
+
+      var hostname = parser.hostname;
+      var port = parser.port;
+
+      if (port.length === 0) {
+        port = default_port;
+      }
+
+      // @ is a special address meaning the server that loaded the web page.
+      if (hostname === '@') {
+        hostname = window.location.hostname;
+      }
+
+      return {
+        // url,
+        wsbroker: hostname,
+        wsport: parseInt(port),
+        streamName: streamName,
+        useSSL: useSSL
+      };
+    }
+  }, {
     key: 'factory',
-    value: function factory(player, config) {
-      return new IOV(player, config);
+    value: function factory(mqttConduitCollection, player) {
+      var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+      return new IOV(mqttConduitCollection, player, config);
+    }
+  }, {
+    key: 'fromUrl',
+    value: function fromUrl(url, mqttConduitCollection, player) {
+      var config = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+      return IOV.factory(mqttConduitCollection, player, _extends({}, config, IOV.generateConfigFromUrl(url)));
     }
   }]);
 
-  function IOV(player, config) {
+  function IOV(mqttConduitCollection, player, config) {
     _classCallCheck(this, IOV);
 
-    this.id = uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':main');
+    IOV.compatibilityCheck();
 
+    this.id = uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
+
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':main');
+    this.debug('constructor');
+
+    this.destroyed = false;
+    this.onReadyAlreadyCalled = false;
     this.playerInstance = player;
+    this.videoElement = this.playerInstance.el();
 
     this.config = {
-      // web socket address defaults to the address of the server that loaded this page.
-      wsbroker: config.address,
-      // default port number
-      wsport: config.port,
-      // default clientId
       clientId: this.id,
-      // to be overriden by user.
+      wsbroker: config.wsbroker,
+      wsport: config.wsport,
+      useSSL: config.useSSL,
+      streamName: config.streamName,
       appStart: config.appStart,
-      useSSL: config.useSSL || false,
-      videoElement: config.videoElement,
-      videoElementParent: null
+      videoElementParent: config.videoElementParent || null
     };
+
+    this.statsMsg = {
+      byteCount: 0,
+      inkbps: 0,
+      host: document.location.host,
+      clientId: this.config.clientId
+    };
+
+    // @todo - this needs to be a global service or something
+    this.mqttConduitCollection = mqttConduitCollection;
 
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
     this.mqttTopicHandlers = new _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__["default"](this.id, this);
-    this.mqttConduitCollection = config.mqttConduitCollection || new _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__["default"](this.id);
-    this.transport = new _MqttTransport__WEBPACK_IMPORTED_MODULE_4__["default"](this.id, this);
+    this.conduit = this.mqttConduitCollection.addFromIov(this);
 
     this.events = {
       connection_lost: function connection_lost(responseObject) {
@@ -2092,6 +2832,7 @@ var IOV = function () {
         console.error(responseObject);
       },
 
+      // @todo - does this ever get fired?
       on_message: this.mqttTopicHandlers.msghandler,
 
       // generic exception handler
@@ -2103,71 +2844,29 @@ var IOV = function () {
       }
     };
 
-    this.player = _player__WEBPACK_IMPORTED_MODULE_5__["default"].factory(this, this.playerInstance);
-
-    if (config.initialize) {
-      this.initialize();
-    }
+    this.player = _player__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this, this.playerInstance);
   }
 
   _createClass(IOV, [{
     key: 'clone',
     value: function clone(config) {
-      return IOV.factory(this.playerInstance, _extends({}, config, {
-        mqttConduitCollection: this.mqttConduitCollection,
+      this.debug('clone');
+
+      var cloneConfig = _extends({}, config, {
         videoElementParent: this.config.videoElementParent
-      }));
-    }
-  }, {
-    key: 'initialize',
-    value: function initialize() {
-      var _this = this;
-
-      IOV.compatibilityCheck();
-
-      // @todo - this listener has no concept of this instance, so it should be
-      // moved elsewhere, or restructured
-      // route inbound data from a frame running mqtt to the appropriate player
-      window.addEventListener('message', function (event) {
-        _this.debug('message received', event.data);
-
-        var clientId = event.data.clientId;
-
-        if (!_this.mqttConduitCollection.exists(clientId)) {
-          return;
-        }
-
-        var conduit = _this.mqttConduitCollection.getById(clientId);
-        var eventType = event.data.event;
-
-        switch (eventType) {
-          case 'data':
-            {
-              conduit.inboundHandler(event.data);
-              break;
-            }
-          case 'ready':
-            {
-              if (_this.config.videoElement.parentNode !== null) {
-                _this.config.videoElementParentId = _this.config.videoElement.parentNode.id;
-              }
-              conduit.onReady();
-              break;
-            }
-          case 'fail':
-            {
-              _this.debug('network error', event.data.reason);
-              _this.playerInstance.trigger('network-error', event.data.reason);
-              break;
-            }
-          default:
-            {
-              console.error('No match for event: ' + eventType);
-            }
-        }
       });
 
-      return this;
+      // @todo - is it possible to reuse the iov player?
+      return IOV.factory(this.mqttConduitCollection, this.playerInstance, cloneConfig);
+    }
+  }, {
+    key: 'cloneFromUrl',
+    value: function cloneFromUrl(url) {
+      var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+      this.debug('cloneFromUrl');
+
+      return this.clone(_extends({}, IOV.generateConfigFromUrl(url), config));
     }
 
     // query remote server and get a list of all stream names
@@ -2175,7 +2874,191 @@ var IOV = function () {
   }, {
     key: 'getAvailableStreams',
     value: function getAvailableStreams(callback) {
-      this.transport.transaction('iov/video/list', callback, {});
+      this.debug('getAvailableStreams');
+
+      this.conduit.transaction('iov/video/list', callback, {});
+    }
+  }, {
+    key: 'onChangeSource',
+    value: function onChangeSource(url) {
+      var _this = this;
+
+      this.debug('changeSource on player "' + this.id + '""');
+
+      if (!url) {
+        throw new Error('Unable to change source because there is no url!');
+      }
+
+      // // @todo - it is possible to keep an IOV instance if the host for the
+      // // stream is the same.
+      // if (iovConfig.hostname === this.iov.config.wsbroker) {
+      //   this.iov.conduit.transaction(
+      //     topic,
+      //     (...args) => this.onChangeSourceTransaction(this.iov, ...args),
+      //     request
+      //   );
+      //   return;
+      // }
+
+      var clone = this.cloneFromUrl(url);
+
+      // @todo - why is this needed?
+      if (this.config.parentNodeId !== null) {
+        var iframe_elm = document.getElementById(this.config.clientId);
+        var parent = document.getElementById(clone.config.parentNodeId);
+
+        if (parent) {
+          parent.removeChild(iframe_elm);
+        }
+
+        // remove code from iframe.
+        iframe_elm.srcdoc = '';
+      }
+
+      clone.player.on('firstChunk', function () {
+        _this.updateIOV(clone);
+        _this.destroy();
+      });
+    }
+  }, {
+    key: 'onReady',
+    value: function onReady(event) {
+      var _this2 = this;
+
+      this.debug('onReady');
+
+      // @todo - why is this necessary?
+      if (this.videoElement.parentNode !== null) {
+        this.config.videoElementParentId = this.videoElement.parentNode.id;
+      }
+
+      var videoTag = this.playerInstance.children()[0];
+
+      // @todo - there must be a better way to determine autoplay...
+      if (videoTag.getAttribute('autoplay') !== null) {
+        // playButton.trigger('click');
+        this.playerInstance.trigger('play', videoTag);
+      }
+
+      if (this.onReadyAlreadyCalled) {
+        console.warn('tried to use this player more than once...');
+        return;
+      }
+
+      this.onReadyAlreadyCalled = true;
+
+      this.player.on('firstChunk', function () {
+        _this2.playerInstance.loadingSpinner.hide();
+      });
+
+      this.player.on('videoReceived', function () {
+        // reset the timeout monitor from videojs-errors
+        _this2.playerInstance.trigger('timeupdate');
+      });
+
+      this.player.on('videoInfoReceived', function () {
+        // reset the timeout monitor from videojs-errors
+        _this2.playerInstance.trigger('timeupdate');
+      });
+
+      this.playerInstanceEventListeners = {
+        changesrc: function changesrc(event, _ref) {
+          var url = _ref.url;
+          return _this2.onChangeSource(url);
+        }
+      };
+
+      this.playerInstance.on('changesrc', this.playerInstanceEventListeners.changesrc);
+
+      this.player.play(this.videoElement.firstChild.id, this.config.streamName);
+
+      this.videoElement.addEventListener('mse-error-event', function (e) {
+        _this2.player.restart();
+      }, false);
+
+      // the mse service will stop streaming to us if we don't send
+      // a message to iov/stats within 1 minute.
+      this._statsTimer = setInterval(function () {
+        _this2.statsMsg.inkbps = _this2.statsMsg.byteCount * 8 / 30000.0;
+        _this2.statsMsg.byteCount = 0;
+
+        _this2.conduit.publish('iov/stats', _this2.statsMsg);
+
+        _this2.debug('iov status', _this2.statsMsg);
+      }, 5000);
+    }
+  }, {
+    key: 'onFail',
+    value: function onFail(event) {
+      this.debug('onFail');
+
+      this.debug('network error', event.data.reason);
+      this.playerInstance.trigger('network-error', event.data.reason);
+    }
+  }, {
+    key: 'onData',
+    value: function onData(event) {
+      this.debug('onData');
+
+      this.conduit.inboundHandler(event.data);
+    }
+  }, {
+    key: 'onMessage',
+    value: function onMessage(event) {
+      var eventType = event.data.event;
+
+      this.debug('onMessage', eventType);
+
+      switch (eventType) {
+        case 'ready':
+          {
+            this.onReady(event);
+            break;
+          }
+        case 'fail':
+          {
+            this.onFail(event);
+            break;
+          }
+        case 'data':
+          {
+            this.onData(event);
+            break;
+          }
+        default:
+          {
+            console.error('No match for event: ' + eventType);
+          }
+      }
+    }
+  }, {
+    key: 'updateIOV',
+    value: function updateIOV(iov) {
+      this.playerInstance.tech(true).mqtt.updateIOV(iov);
+    }
+  }, {
+    key: 'destroy',
+    value: function destroy() {
+      this.debug('destroy');
+
+      if (this.destroyed) {
+        return;
+      }
+
+      this.destroyed = true;
+
+      clearInterval(this._statsTimer);
+
+      this.conduit.unsubscribe('iov/video/' + this.player.guid + '/live');
+
+      this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
+
+      this.player.destroy();
+
+      this.playerInstance = null;
+      this.player = null;
+
+      // @todo
     }
   }]);
 
@@ -2183,93 +3066,7 @@ var IOV = function () {
 }();
 
 /* harmony default export */ __webpack_exports__["default"] = (IOV);
-
-/***/ }),
-
-/***/ "./src/js/iov/MqttConduitCollection.js":
-/*!*********************************************!*\
-  !*** ./src/js/iov/MqttConduitCollection.js ***!
-  \*********************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
-/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-
-
-var DEBUG_PREFIX = 'skyline:clsp:iov';
-
-var MqttConduitCollection = function () {
-  function MqttConduitCollection(id) {
-    _classCallCheck(this, MqttConduitCollection);
-
-    this.id = id;
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':MqttConduitCollection');
-
-    this.debug('constructing...');
-
-    this._conduits = {};
-  }
-
-  _createClass(MqttConduitCollection, [{
-    key: 'set',
-    value: function set(id, conduit) {
-      this.debug('setting...', id, conduit);
-
-      this._conduits[id] = conduit;
-
-      return conduit;
-    }
-  }, {
-    key: 'addFromIov',
-    value: function addFromIov(transport, iov) {
-      var _this = this;
-
-      this.debug('adding from iov...', iov);
-
-      return this.set(iov.config.clientId, window.mqttConduit(iov.config, function () {
-        _this.debug('onReady...', iov.config.clientId);
-
-        iov.config.appStart(iov);
-
-        // the mse service will stop streaming to us if we don't send
-        // a message to iov/stats within 1 minute.
-        iov._statsTimer = setInterval(function () {
-          iov.statsMsg.inkbps = iov.statsMsg.byteCount * 8 / 30000.0;
-          iov.statsMsg.byteCount = 0;
-
-          transport.publish('iov/stats', iov.statsMsg);
-
-          _this.debug('iov status', iov.statsMsg);
-        }, 5000);
-      }));
-    }
-  }, {
-    key: 'getById',
-    value: function getById(id) {
-      this.debug('getting...', id);
-
-      return this._conduits[id];
-    }
-  }, {
-    key: 'exists',
-    value: function exists(id) {
-      this.debug('exists?', id);
-
-      return this._conduits.hasOwnProperty(id);
-    }
-  }]);
-
-  return MqttConduitCollection;
-}();
-
-/* harmony default export */ __webpack_exports__["default"] = (MqttConduitCollection);
+;
 
 /***/ }),
 
@@ -2376,119 +3173,6 @@ var MqttTopicHandlers = function () {
 
 /***/ }),
 
-/***/ "./src/js/iov/MqttTransport.js":
-/*!*************************************!*\
-  !*** ./src/js/iov/MqttTransport.js ***!
-  \*************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
-/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-
-
-var DEBUG_PREFIX = 'skyline:clsp:iov';
-
-var MqttTransport = function () {
-  function MqttTransport(id, iov) {
-    _classCallCheck(this, MqttTransport);
-
-    this.id = id;
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':MqttConduitCollection');
-
-    this.debug('constructing...');
-
-    // setup stats
-    iov.statsMsg = {
-      byteCount: 0,
-      inkbps: 0,
-      host: document.location.host,
-      clientId: iov.config.clientId
-    };
-
-    this.clientId = iov.config.clientId;
-    this.iov = iov;
-
-    this.debug('looking for useSSL', iov);
-    this.conduit = iov.mqttConduitCollection.addFromIov(this, iov);
-  }
-
-  // create a temporary resp_topic to receive a query response
-  // upon response remove the temporary topic. Assume both request
-  // and response are json formateed text.
-
-
-  _createClass(MqttTransport, [{
-    key: 'transaction',
-    value: function transaction(topic, callback, data) {
-      var _this = this;
-
-      this.debug('transaction...');
-
-      this.conduit.transaction(topic, function (event) {
-        _this.debug('transaction callback...', event);
-        if (callback) {
-          callback(event);
-        }
-      }, data);
-    }
-  }, {
-    key: 'subscribe',
-    value: function subscribe(topic, callback) {
-      var _this2 = this;
-
-      this.debug('subscribe...');
-
-      this.conduit.subscribe(topic, function (event) {
-        _this2.debug('subscribe callback...', event);
-        if (callback) {
-          callback(event);
-        }
-      });
-    }
-  }, {
-    key: 'unsubscribe',
-    value: function unsubscribe(topic, callback) {
-      var _this3 = this;
-
-      this.debug('unsubscribe...');
-
-      this.conduit.unsubscribe(topic, function (event) {
-        _this3.debug('unsubscribe callback...', event);
-        if (callback) {
-          callback(event);
-        }
-      });
-    }
-  }, {
-    key: 'publish',
-    value: function publish(topic, data, callback) {
-      var _this4 = this;
-
-      this.debug('publish...');
-
-      this.conduit.publish(topic, data, function (event) {
-        _this4.debug('publish callback...', event);
-        if (callback) {
-          callback(event);
-        }
-      });
-    }
-  }]);
-
-  return MqttTransport;
-}();
-
-/* harmony default export */ __webpack_exports__["default"] = (MqttTransport);
-
-/***/ }),
-
 /***/ "./src/js/iov/player.js":
 /*!******************************!*\
   !*** ./src/js/iov/player.js ***!
@@ -2500,8 +3184,8 @@ var MqttTransport = function () {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/debounce */ "./node_modules/lodash/debounce.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_1__);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2532,81 +3216,92 @@ var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX
 var IOVPlayer = function () {
   _createClass(IOVPlayer, null, [{
     key: 'factory',
-    value: function factory(iov) {
-      return new IOVPlayer(iov);
-    }
-  }, {
-    key: 'generateIOVConfigFromCLSPURL',
-    value: function generateIOVConfigFromCLSPURL(clspUrl) {
-      debug('generateIOVConfigFromCLSPURL');
-
-      if (!clspUrl) {
-        throw new Error('No source was given to be parsed!');
-      }
-
-      // We use an anchor tag here beacuse, when an href is added to
-      // an anchor dom Element, the parsing is done for you by the
-      // browser.
-      var parser = document.createElement('a');
-
-      var useSSL = void 0;
-      var default_port = void 0;
-
-      // Chrome is the only browser that allows non-http protocols in
-      // the anchor tag's href, so change them all to http here so we
-      // get the benefits of the anchor tag's parsing
-      if (clspUrl.substring(0, 5).toLowerCase() === 'clsps') {
-        useSSL = true;
-        parser.href = clspUrl.replace('clsps', 'https');
-        default_port = 443;
-      } else if (clspUrl.substring(0, 4).toLowerCase() === 'clsp') {
-        useSSL = false;
-        parser.href = clspUrl.replace('clsp', 'http');
-        default_port = 9001;
-      } else {
-        throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
-      }
-
-      var paths = parser.pathname.split('/');
-      var streamName = paths[paths.length - 1];
-
-      var hostname = parser.hostname;
-      var port = parser.port;
-
-      if (port.length === 0) {
-        port = default_port;
-      }
-
-      // @ is a special address meaning the server that loaded the web page.
-      if (hostname === '@') {
-        hostname = window.location.hostname;
-      }
-
-      return {
-        port: parseInt(port),
-        address: hostname,
-        streamName: streamName,
-        useSSL: useSSL
-      };
+    value: function factory(iov, playerInstance) {
+      return new IOVPlayer(iov, playerInstance);
     }
   }]);
 
-  function IOVPlayer(iov) {
+  function IOVPlayer(iov, playerInstance) {
+    var _this = this;
+
     _classCallCheck(this, IOVPlayer);
 
     debug('constructor');
 
+    this.state = 'initializing';
+
     this.MAX_SEQ_PROC = 2;
-    this.BUFFER_LIMIT = 15;
+    this.BUFFER_LIMIT = 6;
+    this.EVENT_NAMES = ['firstChunk', 'videoReceived', 'videoInfoReceived'];
 
     this.iov = iov;
+    this.playerInstance = playerInstance;
+    this.eid = this.playerInstance.el().firstChild.id;
+    this.id = this.eid.replace('_html5_api', '');
+    this.videoElement = document.getElementById(this.eid);
+
+    if (!this.videoElement) {
+      throw new Error('Unable to find an element in the DOM with id "' + this.eid + '".');
+    }
+
+    this.mediaSourceEventListeners = {
+      sourceopen: function sourceopen() {
+        debug('onSourceOpen');
+
+        if (_this.mediaSource.readyState === 'open') {
+          _this.initializeSourceBuffer();
+          return;
+        }
+
+        // found when stress testing many videos, it is possible for the
+        // media source ready state not to be open even though
+        // source open callback is being called.
+        var intervalToRetry = setInterval(function () {
+          if (_this.mediaSource.readyState === 'open') {
+            _this.initializeSourceBuffer();
+            clearInterval(intervalToRetry);
+          }
+        }, 1000);
+      },
+      sourceended: function sourceended() {
+        debug('onSourceEnded');
+
+        // @todo - do we need to clear the buffer manually?
+        _this.stop();
+        _this.source_buffer_ready = false;
+      },
+      error: function error(e) {
+        console.error('MSE error');
+        console.error(e);
+      }
+    };
+
+    this.sourceBufferEventListeners = {
+      updateend: function updateend() {
+        return _this.onUpdateEnd.apply(_this, arguments);
+      },
+      error: function error(e) {
+        console.error('MSE sourceBuffer error');
+        console.error(e);
+      }
+    };
+
+    this.documentEventListeners = {
+      visibilitychange: lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(function () {
+        return _this.reinitializeMse();
+      }, 2000, {
+        leading: true,
+        trailing: false
+      })
+    };
+
+    this.events = {};
+    this.vqueue = []; // used if the media source buffer is busy
 
     // @todo - there must be a more proper way to do this...
-    this.events = {
-      firstChunk: [],
-      videoReceived: [],
-      videoInfoReceived: []
-    };
+    for (var i = 0; i < this.EVENT_NAMES.length; i++) {
+      this.events[this.EVENT_NAMES[i]] = [];
+    }
 
     // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
@@ -2614,16 +3309,11 @@ var IOVPlayer = function () {
     this.LogSourceBuffer = false;
     this.LogSourceBufferTopic = null;
 
-    this.resetPlayState();
-
     this.moovBox = null;
+    this.guid = null;
+    this.mimeCodec = null;
 
-    // -1 is forever
-    this.retry_count = 3;
-
-    this.on('firstChunk', function () {});
-
-    this._on_updateend = this._on_updateend.bind(this);
+    this.resetPlayState();
   }
 
   _createClass(IOVPlayer, [{
@@ -2631,55 +3321,24 @@ var IOVPlayer = function () {
     value: function on(name, action) {
       debug('Registering Listener for ' + name + ' event...');
 
-      switch (name) {
-        case 'firstChunk':
-        case 'videoReceived':
-        case 'videoInfoReceived':
-          {
-            this.events[name].push(action);
-            break;
-          }
-        default:
-          {
-            throw new Error('"' + name + '" is not a valid event."');
-          }
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
       }
+
+      this.events[name].push(action);
     }
   }, {
     key: 'trigger',
     value: function trigger(name) {
       debug('Triggering ' + name + ' event...');
 
-      switch (name) {
-        case 'firstChunk':
-        case 'videoReceived':
-        case 'videoInfoReceived':
-          {
-            for (var i = 0; i < this.events[name].length; i++) {
-              this.events[name][i](this);
-            }
-            break;
-          }
-        default:
-          {
-            throw new Error('"' + name + '" is not a valid event."');
-          }
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
       }
-    }
-  }, {
-    key: '_fault',
-    value: function _fault(message) {
-      debug('_fault');
 
-      this.videoPlayer.errors.extend({
-        PLAYER_ERR_IOV: {
-          headline: 'Error Playing Stream',
-          message: message
-        }
-      });
-
-      this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
-      this.state = 'fault';
+      for (var i = 0; i < this.events[name].length; i++) {
+        this.events[name][i](this);
+      }
     }
   }, {
     key: 'resetPlayState',
@@ -2687,126 +3346,29 @@ var IOVPlayer = function () {
       debug('resetPlayState');
 
       this.state = 'idle';
-      this.numFramesReceived = 1;
-      this.numFramesProcessed = 1; // last sequence number processed
       this.source_buffer_ready = false;
     }
   }, {
-    key: 'isMimeCodecSupported',
-    value: function isMimeCodecSupported(mimeCodec) {
+    key: 'assertMimeCodecSupported',
+    value: function assertMimeCodecSupported(mimeCodec) {
       if (!window.MediaSource || !window.MediaSource.isTypeSupported(mimeCodec)) {
+        this.state = 'unsupported-mime-codec';
+
+        var message = 'Unsupported mime codec: ' + mimeCodec;
+
         // the browser does not support this video format
-        this._fault('Unsupported mime codec: ' + mimeCodec);
-
-        return false;
-      }
-
-      return true;
-    }
-
-    // @todo - review
-
-  }, {
-    key: 'onTransportTransaction',
-    value: function onTransportTransaction(current_iov, _ref) {
-      var _this = this;
-
-      var mimeCodec = _ref.mimeCodec,
-          guid = _ref.guid;
-
-      debug('onTransportTransaction');
-
-      if (!this.isMimeCodecSupported(mimeCodec)) {
-        return;
-      }
-
-      var initSegmentTopic = this.iov.config.clientId + '/init-segment/' + parseInt(Math.random() * 1000000);
-
-      current_iov.transport.subscribe(initSegmentTopic, function (_ref2) {
-        var payloadBytes = _ref2.payloadBytes;
-
-        var moov = payloadBytes;
-
-        current_iov.transport.unsubscribe(initSegmentTopic);
-
-        var oldTopic = 'iov/video/' + _this.guid + '/live';
-        var newTopic = 'iov/video/' + guid + '/live';
-
-        current_iov.transport.subscribe(newTopic, function (_ref3) {
-          var payloadBytes = _ref3.payloadBytes;
-
-          var moofBox = payloadBytes;
-
-          // @todo - why are we adding this to the queue here? we have an "onMoof" method - can we use it?
-          // If we need this to display the first frame, can we just "drop"
-          // this first frame to simplify the logic?
-          // this.vqueue.push(moofBox.slice(0));
-
-          // unsubscribe to existing live
-          // 1) unsubscribe to remove avoid callback
-          current_iov.transport.unsubscribe(newTopic);
-
-          // 2) unsubscribe to live callback for the old stream
-          _this.iov.transport.unsubscribe(oldTopic);
-
-          // 3) resubscribe with different callback
-          current_iov.transport.subscribe(newTopic, function () {
-            return _this.onMoof.apply(_this, arguments);
-          });
-
-          // alter object properties to reflect new stream
-          _this.guid = guid;
-          _this.moovBox = moov;
-          _this.mimeCodec = mimeCodec;
-
-          // remove media source buffer, reinitialize
-          _this.reinitializeMse();
-
-          // Was the IOV updated?
-          if (_this.iov === current_iov) {
-            return;
+        // @todo - the IOV player should have no knowledge of the videojs player
+        this.playerInstance.errors.extend({
+          PLAYER_ERR_IOV: {
+            headline: 'Error Playing Stream',
+            message: message
           }
-
-          if (current_iov.config.parentNodeId !== null) {
-            var iframe_elm = document.getElementById(_this.iov.config.clientId);
-            var parent = document.getElementById(current_iov.config.parentNodeId);
-
-            if (parent) {
-              parent.removeChild(iframe_elm);
-            }
-
-            // remove code from iframe.
-            iframe_elm.srcdoc = '';
-          }
-
-          _this.iov = current_iov;
         });
-      });
 
-      current_iov.transport.publish('iov/video/' + guid + '/play', {
-        initSegmentTopic: initSegmentTopic,
-        clientId: current_iov.config.clientId
-      });
-    }
-  }, {
-    key: 'change',
-    value: function change(newStream, iov) {
-      var _this2 = this;
+        this.playerInstance.error({ code: 'PLAYER_ERR_IOV' });
 
-      // @todo - is there a way to set up the changeSrc logic to never need
-      // to pass its own iov?
-      debug('change');
-
-      var next_iov = iov || null;
-      var current_iov = iov || this.iov;
-
-      current_iov.transport.transaction('iov/video/' + window.btoa(newStream) + '/request', function () {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-          args[_key] = arguments[_key];
-        }
-
-        return _this2.onTransportTransaction.apply(_this2, [next_iov].concat(args));
-      }, { clientId: this.iov.config.clientId });
+        throw new Error(message);
+      }
     }
   }, {
     key: 'reinitializeMse',
@@ -2815,13 +3377,13 @@ var IOVPlayer = function () {
 
       this.resetPlayState();
 
-      // free resource
       if (this.mediaSource) {
+        // free resource
         URL.revokeObjectURL(this.mediaSource);
 
         // reallocate, this will call media source open which will
         // append the MOOV atom.
-        this.video.src = URL.createObjectURL(this.mediaSource);
+        this.videoElement.src = URL.createObjectURL(this.mediaSource);
       }
     }
   }, {
@@ -2832,46 +3394,21 @@ var IOVPlayer = function () {
       this.stop();
       this.play();
     }
-
-    // @todo - we should be able to make the eid and streamName passed
-    // at time of instantiation rather than at time of play
-
   }, {
     key: 'play',
-    value: function play(eid, streamName) {
-      var _this3 = this;
+    value: function play(streamName) {
+      var _this2 = this;
 
       debug('play');
 
-      if (eid) {
-        this.video = document.getElementById(eid);
-        this.id = eid.replace('_html5_api', '');
-        this.videoPlayer = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlayer(this.id);
-      }
-
-      if (!this.video) {
-        return this._fault('Unable to find an element in the DOM with id "' + eid + '".');
-      }
-
-      this.iov.transport.transaction('iov/video/' + window.btoa(streamName) + '/request', function () {
-        return _this3.onIovPlay.apply(_this3, arguments);
+      this.iov.conduit.transaction('iov/video/' + window.btoa(this.iov.config.streamName) + '/request', function () {
+        return _this2.onIovPlayTransaction.apply(_this2, arguments);
       }, { clientId: this.iov.config.clientId });
-    }
-  }, {
-    key: 'formatMoof',
-    value: function formatMoof(payloadBytes) {
-      var moofBox = payloadBytes;
-
-      moofBox[20] = (this.numFramesReceived & 0xFF000000) >> 24;
-      moofBox[21] = (this.numFramesReceived & 0x00FF0000) >> 16;
-      moofBox[22] = (this.numFramesReceived & 0x0000FF00) >> 8;
-      moofBox[23] = this.numFramesReceived & 0xFF;
-
-      return moofBox;
     }
 
     // @todo - it seems like a lot of the logic here is relative to something
     // inside of the IOV class - does the IOV instance mutate some of our properties?
+    // Should this logic be moved to the IOV class?
 
   }, {
     key: 'onBeforeAppendBuffer',
@@ -2890,67 +3427,52 @@ var IOVPlayer = function () {
       this.iov.statsMsg.byteCount += bytearray.length;
     }
   }, {
-    key: 'appendInfo',
-    value: function appendInfo() {
-      debug('Appending moov info...');
+    key: 'flushBuffer',
+    value: function flushBuffer() {
+      console.log('Flushing Buffer...');
+      debug('Flushing Buffer...');
 
-      if (!this.moovBox) {
-        console.warn('Cannot use empty moov...');
+      if (this.sourceBuffer.buffered.length <= 0) {
         return;
       }
 
-      this.onBeforeAppendBuffer(this.moovBox);
-      this.sourceBuffer.appendBuffer(this.moovBox);
+      var start = parseInt(this.sourceBuffer.buffered.start(0));
+      var end = parseInt(this.sourceBuffer.buffered.end(0));
+      var timeBuffered = end - start;
 
-      this.trigger('videoInfoReceived');
+      console.log(start, end, timeBuffered);
+      if (timeBuffered <= 3) {
+        return;
+      }
+
+      if (this.sourceBuffer.updating !== false) {
+        this.sourceBuffer.abort();
+      }
+
+      console.log('Flushing...');
+      this.sourceBuffer.remove(start, end - 2);
     }
-  }, {
-    key: 'appendNextInQueue',
-    value: function appendNextInQueue() {
-      debug('Appending next moof in queue...');
-
-      if (this.vqueue.length < 1) {
-        console.warn('There is no moof in the queue!');
-        return;
-      }
-
-      if (this.sourceBuffer.updating === true) {
-        debug('SourceBuffer is updating, cannot append next moof, dropping it...');
-        this.vqueue = this.vqueue.slice(1);
-        return;
-      }
-
-      this.appendVideo(this.vqueue[0]);
-    }
-
-    /**
-     *
-     * @param {Object} moofBox
-     *   A "moofBox" object - @see this.formatMoof
-     */
-
   }, {
     key: 'appendVideo',
     value: function appendVideo(moofBox) {
-      debug('Appending moof data...');
+      console.log('tryna');
+      silly('Appending moof data...');
 
       if (!moofBox) {
         console.warn('Cannot use empty moof...');
         return;
       }
 
-      // Add the moof to the queue if we're in the middle of an update
+      // If the buffer is busy, we'll try on the next call, and drop the frame
       if (this.sourceBuffer.updating === true) {
-        silly('queueing moof...');
-        this.vqueue.push(moofBox.slice(0));
+        debug('Dropping frame because the buffer is busy...');
         return;
       }
 
       try {
-        silly('appending moof to sourceBuffer...');
+        debug('appending moof to sourceBuffer...');
         this.onBeforeAppendBuffer(moofBox);
         this.sourceBuffer.appendBuffer(moofBox);
-        this.numFramesProcessed++;
       } catch (e) {
         // internal error, this has been observed to happen the tab
         // in the browser where this video player lives is hidden
@@ -2958,35 +3480,7 @@ var IOVPlayer = function () {
         // within the MSE C++ implementation in the browser.
 
         console.error('Excetion thrown from appendBuffer', e);
-        this.videoPlayer.error({ code: 3 });
         this.reinitializeMse();
-      }
-    }
-  }, {
-    key: 'truncateBuffer',
-    value: function truncateBuffer() {
-      silly('truncateBuffer');
-
-      if (this.sourceBuffer.buffered.length <= 0) {
-        return;
-      }
-
-      var start = this.sourceBuffer.buffered.start(0);
-      var end = this.sourceBuffer.buffered.end(0);
-      var time_buffered = end - start;
-
-      if (time_buffered <= 30) {
-        return;
-      }
-
-      debug('About to truncate the buffer...');
-
-      try {
-        // observed this fail during a memry snapshot in chrome
-        // otherwise no observed failure, so ignore exception.
-        this.sourceBuffer.remove(start, start + this.BUFFER_LIMIT);
-      } catch (e) {
-        console.error('error while removing', this.videoPlayer.id(), e);
       }
     }
   }, {
@@ -2994,210 +3488,123 @@ var IOVPlayer = function () {
     value: function stop() {
       debug('stop');
 
-      // @todo - should this happen in resetPlayState?
       this.moovBox = null;
 
-      // @todo - should this happen in resetPlayState?
       if (this.guid !== undefined) {
-        this.iov.transport.unsubscribe('iov/video/' + this.guid + '/live');
+        this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/live');
       }
 
       this.resetPlayState();
 
-      this.iov.transport.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
+      this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
     }
   }, {
     key: 'resyncStream',
     value: function resyncStream() {
-      var _this4 = this;
+      var _this3 = this;
 
       // subscribe to a sync topic that will be called if the stream that is feeding
       // the mse service dies and has to be restarted that this player should restart the stream
       debug('Trying to resync stream...');
 
-      this.iov.transport.subscribe('iov/video/' + this.guid + '/resync', function () {
+      this.iov.conduit.subscribe('iov/video/' + this.guid + '/resync', function () {
         debug('sync received re-initialize media source buffer');
-        _this4.reinitializeMse();
+        _this3.reinitializeMse();
       });
     }
+
+    // @todo - there is much shared between this and onChangeSourceTransaction
+
   }, {
-    key: 'initializeMediaSource',
-    value: function initializeMediaSource() {
-      var _this5 = this;
+    key: 'onIovPlayTransaction',
+    value: function onIovPlayTransaction(_ref) {
+      var _this4 = this;
 
-      // create media source buffer and start routing video traffic.
-      this.mediaSource = new window.MediaSource();
+      var mimeCodec = _ref.mimeCodec,
+          guid = _ref.guid;
 
-      this.mediaSource.addEventListener('sourceopen', function () {
-        debug('onSourceOpen');
+      debug('onIovPlayTransaction');
 
-        if (_this5.mediaSource.readyState === 'open') {
-          _this5.initializeSourceBuffer();
-          return;
-        }
-
-        // found when stress testing many videos, it is possible for the
-        // media source ready state not to be open even though
-        // source open callback is being called.
-        var intervalToRetry = setInterval(function () {
-          if (_this5.mediaSource.readyState === 'open') {
-            _this5.initializeSourceBuffer();
-            clearInterval(intervalToRetry);
-          }
-        }, 1000);
-      });
-
-      this.mediaSource.addEventListener('sourceended', function () {
-        debug('onSourceEnded');
-
-        // @todo - do we need to clear the buffer manually?
-        _this5.stop();
-        _this5.source_buffer_ready = false;
-      });
-
-      this.mediaSource.addEventListener('error', function (e) {
-        console.error('MSE error');
-        console.error(e);
-      });
-    }
-  }, {
-    key: 'onIovPlay',
-    value: function onIovPlay(_ref4) {
-      var _this6 = this;
-
-      var mimeCodec = _ref4.mimeCodec,
-          guid = _ref4.guid;
-
-      debug('onIovPlay');
-
-      if (!this.isMimeCodecSupported(mimeCodec)) {
-        return;
-      }
-
-      this.mimeCodec = mimeCodec;
-      this.guid = guid;
+      this.assertMimeCodecSupported(mimeCodec);
 
       var initSegmentTopic = this.iov.config.clientId + '/init-segment/' + parseInt(Math.random() * 1000000);
 
-      this.vqueue = []; // used if the media source buffer is busy
+      this.state = 'waiting-for-first-moov';
 
-      this.state = 'waiting-for-moov';
+      this.iov.conduit.subscribe(initSegmentTopic, function (_ref2) {
+        var payloadBytes = _ref2.payloadBytes;
 
-      // @todo - this is at least paritally duplicated in onTransportTransaction
-      this.iov.transport.subscribe(initSegmentTopic, function (_ref5) {
-        var payloadBytes = _ref5.payloadBytes;
-
-        debug('this.iov.transport.subscribe ' + initSegmentTopic + ' listener fired');
+        debug('onIovPlayTransaction ' + initSegmentTopic + ' listener fired');
         debug('received moov of type "' + (typeof payloadBytes === 'undefined' ? 'undefined' : _typeof(payloadBytes)) + '" from server');
 
-        // capture the initial segment
-        _this6.moovBox = payloadBytes;
-        _this6.state = 'waiting-for-moof';
+        var moov = payloadBytes;
 
-        // unsubscribe to this group
-        _this6.iov.transport.unsubscribe(initSegmentTopic);
+        _this4.state = 'waiting-for-first-moof';
+
+        _this4.iov.conduit.unsubscribe(initSegmentTopic);
+
+        var newTopic = 'iov/video/' + guid + '/live';
 
         // subscribe to the live video topic.
-        _this6.state = 'playing';
-        _this6.iov.transport.subscribe('iov/video/' + _this6.guid + '/live', function () {
-          return _this6.onMoof.apply(_this6, arguments);
+        _this4.iov.conduit.subscribe(newTopic, function () {
+          return _this4.onMoof.apply(_this4, arguments);
         });
 
-        _this6.trigger('firstChunk');
+        _this4.guid = guid;
+        _this4.moovBox = moov;
+        _this4.mimeCodec = mimeCodec;
+
+        document.addEventListener('visibilitychange', _this4.documentEventListeners.visibilitychange);
+
+        _this4.trigger('firstChunk');
 
         // when videojs initializes the video element (or something like that),
         // it creates events and listeners on that element that it uses, however
         // these events interfere with our ability to play clsp streams.  Cloning
         // the element like this and reinserting it is a blunt instrument to remove
         // all of the videojs events so that we are in control of the player.
-        var clone = _this6.video.cloneNode();
-        var parent = _this6.video.parentNode;
+        var clone = _this4.videoElement.cloneNode();
+        var parent = _this4.videoElement.parentNode;
 
         if (parent !== null) {
-          parent.replaceChild(clone, _this6.video);
-          _this6.video = clone;
+          parent.replaceChild(clone, _this4.videoElement);
+          _this4.videoElement = clone;
         }
 
-        _this6.videoPlayer.on('changesrc', function (event, _ref6) {
-          var url = _ref6.url;
+        // @todo - need to revisit the logic below... how does this stuff relate to
+        // reinitializeMse?
 
-          debug('iov-change-src on id ' + _this6.videoPlayer.id());
-
-          if (!url) {
-            throw new Error('Unable to process change event because there is no url!');
-          }
-
-          // parse url, extract the ip of the sfs and the port as well as useSSL
-          var new_cfg = IOVPlayer.generateIOVConfigFromCLSPURL(url);
-
-          if (new_cfg.address === _this6.iov.config.wsbroker) {
-            _this6.change(new_cfg.streamName);
-            return;
-          }
-
-          new_cfg.initialize = false;
-          new_cfg.videoElement = _this6.iov.config.videoElement;
-          new_cfg.appStart = function (iov) {
-            // conected to new mqtt
-            _this6.change(new_cfg.streamName, iov);
-          };
-
-          // @todo - so here, we clone the iov instance - is it possible to handle
-          // the "clean up" of the old iov instance here, so that in all subsequent
-          // logic we can use ONLY the new iov instance?  That would eliminate some
-          // conditions based on the iov instance in other places.
-          _this6.iov.clone(new_cfg);
-        });
-
-        // @todo - need to revisit the logic below...
-
-        _this6.initializeMediaSource();
+        _this4.initializeMediaSource();
 
         // now assign media source extensions
         // debug("Disregard: The play() request was interrupted ... its not an error!");
-        _this6.video.src = URL.createObjectURL(_this6.mediaSource);
+        _this4.videoElement.src = URL.createObjectURL(_this4.mediaSource);
 
-        _this6.resyncStream();
+        _this4.resyncStream();
       });
 
-      this.iov.transport.publish('iov/video/' + this.guid + '/play', {
+      this.iov.conduit.publish('iov/video/' + guid + '/play', {
         initSegmentTopic: initSegmentTopic,
         clientId: this.iov.config.clientId
       });
     }
   }, {
     key: 'onMoof',
-    value: function onMoof(_ref7) {
-      var payloadBytes = _ref7.payloadBytes;
+    value: function onMoof(_ref3) {
+      var payloadBytes = _ref3.payloadBytes;
 
       silly('onMoof');
+
+      this.state = 'playing';
 
       if (this.source_buffer_ready === false) {
         debug('media source not yet open - dropping frame');
         return;
       }
 
-      if (this.numFramesReceived !== this.numFramesProcessed) {
-        debug('The frame count is falling behind: processed ' + this.numFramesProcessed + ' out of ' + this.numFramesReceived + ' received.');
-      }
-
-      this.numFramesReceived++;
-      silly(this.numFramesReceived);
-
       this.trigger('videoReceived');
 
-      // Enqueues or sends to the media source buffer an MP4 moof atom. This contains a
-      // chunk of video/audio tracks.
-
-      // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
-      // the source buffer.  In other words, drop frames when we aren't processing
-      // the video fast enough.
-      if (this.numFramesReceived - this.numFramesProcessed > this.MAX_SEQ_PROC) {
-        debug('Dropping frame...');
-        return;
-      }
-
-      this.appendVideo(this.formatMoof(payloadBytes));
+      this.appendVideo(payloadBytes);
     }
 
     // @todo - need a method to properly destroy source buffer
@@ -3208,57 +3615,236 @@ var IOVPlayer = function () {
       debug('initializeSourceBuffer');
 
       // New media source opened. Add a buffer and append the moov MP4 video data.
-
-      // add buffer
       this.sourceBuffer = this.mediaSource.addSourceBuffer(this.mimeCodec);
       this.sourceBuffer.mode = 'sequence';
 
-      this.sourceBuffer.addEventListener('updateend', this._on_updateend);
-
-      this.sourceBuffer.addEventListener('error', function (e) {
-        console.error('MSE sourceBffer error');
-        console.error(e);
-      });
+      // this.sourceBuffer.addEventListener('updateend', this.sourceBufferEventListeners.updateend);
+      this.sourceBuffer.addEventListener('error', this.sourceBufferEventListeners.error);
 
       // we are now able to process video
       this.source_buffer_ready = true;
 
-      this.appendInfo();
-    }
-  }, {
-    key: '_on_updateend',
-    value: function _on_updateend() {
-      for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        args[_key2] = arguments[_key2];
-      }
-
-      console.log(args);
-      silly('_on_updateend');
-
-      if (this.video.paused === true) {
-        debug('Video is paused!');
-
-        try {
-          var promise = this.video.play();
-
-          if (promise) {
-            // Handle promise errors
-            promise.catch(function (error) {
-              console.error('Couldn\'t play the paused stream...', error);
-            });
-          }
-        } catch (error) {
-          console.error('Couldn\'t play the paused stream...', error);
-        }
-
+      if (!this.moovBox) {
+        // @todo - should this throw?
         return;
       }
 
-      if (this.mediaSource.readyState === 'open') {
-        this.appendNextInQueue();
-        this.truncateBuffer();
-      }
+      this.onBeforeAppendBuffer(this.moovBox);
+      this.sourceBuffer.appendBuffer(this.moovBox);
+
+      this.trigger('videoInfoReceived');
     }
+  }, {
+    key: 'initializeMediaSource',
+    value: function initializeMediaSource() {
+      if (this.mediaSource) {
+        this.destroyMediaSource();
+      }
+
+      // create media source buffer and start routing video traffic.
+      this.mediaSource = new window.MediaSource();
+
+      this.mediaSource.addEventListener('sourceopen', this.mediaSourceEventListeners.sourceopen);
+      this.mediaSource.addEventListener('sourceended', this.mediaSourceEventListeners.sourceended);
+      this.mediaSource.addEventListener('error', this.mediaSourceEventListeners.error);
+    }
+  }, {
+    key: 'destroySourceBuffer',
+    value: function destroySourceBuffer() {
+      if (!this.sourceBuffer) {
+        return;
+      }
+
+      this.sourceBuffer.abort();
+
+      // this.sourceBuffer.removeEventListener('updateend', this.sourceBufferEventListeners.updateend);
+      this.sourceBuffer.removeEventListener('error', this.sourceBufferEventListeners.error);
+
+      this.sourceBuffer = null;
+      this.source_buffer_ready = false;
+    }
+  }, {
+    key: 'destroyMediaSource',
+    value: function destroyMediaSource() {
+      if (!this.mediaSource) {
+        return;
+      }
+
+      this.mediaSource.removeEventListener('sourceopen', this.mediaSourceEventListeners.sourceopen);
+      this.mediaSource.removeEventListener('sourceended', this.mediaSourceEventListeners.sourceended);
+      this.mediaSource.removeEventListener('error', this.mediaSourceEventListeners.error);
+
+      var sourceBuffers = this.mediaSource.sourceBuffers;
+
+      if (sourceBuffers.SourceBuffers) {
+        // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
+        sourceBuffers = sourceBuffers.SourceBuffers();
+      }
+
+      for (var i = 0; i < sourceBuffers.length; i++) {
+        this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
+      }
+
+      this.mediaSource = null;
+    }
+  }, {
+    key: 'destroy',
+    value: function destroy() {
+      this.stop();
+
+      document.removeEventListener('visibilitychange', this.documentEventListeners.visibilitychange);
+
+      this.iov = null;
+      this.playerInstance = null;
+      this.videoElement = null;
+      this.events = null;
+      this.vqueue = null;
+      this.LogSourceBuffer = null;
+      this.LogSourceBufferTopic = null;
+      this.guid = null;
+      this.moovBox = null;
+      this.mimeCodec = null;
+
+      this.destroySourceBuffer();
+      this.destroyMediaSource();
+
+      this.sourceBufferEventListeners = null;
+      this.mediaSourceEventListeners = null;
+      this.documentEventListeners = null;
+    }
+
+    // formatMoof(payloadBytes) {
+    //   var moofBox = payloadBytes;
+
+    //   moofBox[20] = (this.numFramesReceived & 0xFF000000) >> 24;
+    //   moofBox[21] = (this.numFramesReceived & 0x00FF0000) >> 16;
+    //   moofBox[22] = (this.numFramesReceived & 0x0000FF00) >> 8;
+    //   moofBox[23] = this.numFramesReceived & 0xFF;
+
+    //   return moofBox;
+    // }
+
+    // onChangeSourceTransaction(iov, { mimeCodec, guid }) {
+    //   debug('onChangeSourceTransaction');
+
+    //   this.assertMimeCodecSupported(mimeCodec);
+
+    //   const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
+
+    //   this.state = 'changing';
+
+    //   iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
+    //     debug(`onChangeSourceTransaction ${initSegmentTopic} listener fired`);
+    //     debug(`received moov of type "${typeof payloadBytes}" from server`);
+
+    //     const moov = payloadBytes;
+
+    //     this.state = 'waiting-for-moof';
+
+    //     iov.conduit.unsubscribe(initSegmentTopic);
+
+    //     const newTopic = `iov/video/${guid}/live`;
+
+    //     // When we receive the first moof, we need to unregister the old listeners, get the player
+    //     // ready, ensure all subsequent moofs are handled appropriately, and update the iov.
+    //     iov.conduit.subscribe(newTopic, ({ payloadBytes }) => {
+    //       // Unregister the old stuff, and unregister this listener to ensure that it
+    //       // does not get used again, since it is only meant to be executed on the first moof
+    //       iov.conduit.unsubscribe(newTopic);
+
+    //       this.reinitializeMse();
+
+    //       this.guid = guid;
+    //       this.moovBox = moov;
+    //       this.mimeCodec = mimeCodec;
+
+    //       // Handle this moof by calling our listener manually
+    //       this.onMoof({ payloadBytes });
+    //       // Handle subsequent moofs by registering our listener
+    //       iov.conduit.subscribe(newTopic, (...args) => this.onMoof(...args));
+    //     });
+    //   });
+
+    //   iov.conduit.publish(`iov/video/${guid}/play`, {
+    //     initSegmentTopic,
+    //     clientId: iov.config.clientId,
+    //   });
+    // }
+
+    // appendNextInQueue() {
+    //   debug('Appending next moof in queue...');
+
+    //   if (this.vqueue.length < 1) {
+    //     // console.warn('There is no moof in the queue!');
+    //     return;
+    //   }
+
+    //   if (this.sourceBuffer.updating === true) {
+    //     debug('SourceBuffer is updating, cannot append next moof, dropping it...');
+    //     this.vqueue = this.vqueue.slice(1);
+    //     return;
+    //   }
+
+    //   this.appendVideo(this.vqueue[0]);
+    // }
+
+    // truncateBuffer() {
+    //   silly('truncateBuffer');
+
+    //   if (this.sourceBuffer.buffered.length <= 0) {
+    //     return;
+    //   }
+
+    //   const start = this.sourceBuffer.buffered.start(0);
+    //   const end = this.sourceBuffer.buffered.end(0);
+    //   const time_buffered = end - start;
+
+    //   if (time_buffered <= 30) {
+    //     return;
+    //   }
+
+    //   debug('About to truncate the buffer...');
+
+    //   try {
+    //     // observed this fail during a memry snapshot in chrome
+    //     // otherwise no observed failure, so ignore exception.
+    //     this.sourceBuffer.remove(start, start + this.BUFFER_LIMIT);
+    //   }
+    //   catch (e) {
+    //     console.error(`error while removing from source buffer for player "${this.id}"`);
+    //     console.error(e);
+    //   }
+    // }
+
+    // onUpdateEnd (...args) {
+    //   silly('onUpdateEnd');
+
+    //   if (this.videoElement.paused === true) {
+    //     debug('Video is paused!');
+
+    //     try {
+    //       const promise = this.videoElement.play();
+
+    //       if (promise) {
+    //         // Handle promise errors
+    //         promise.catch((error) => {
+    //           console.error('Couldn\'t play the paused stream...', error);
+    //         });
+    //       }
+    //     }
+    //     catch (error) {
+    //       console.error('Couldn\'t play the paused stream...', error);
+    //     }
+
+    //     return;
+    //   }
+
+    //   if (this.mediaSource.readyState === 'open') {
+    //     // this.appendNextInQueue();
+    //     // this.truncateBuffer();
+    //   }
+    // }
+
   }]);
 
   return IOVPlayer;
