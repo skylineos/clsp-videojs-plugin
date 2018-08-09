@@ -4158,55 +4158,68 @@ var MSEWrapper = function () {
       this._append(byteArray);
     }
   }, {
+    key: 'getBufferTimes',
+    value: function getBufferTimes() {
+      var previousBufferSize = this.timeBuffered;
+      var bufferTimeStart = this.sourceBuffer.buffered.start(0);
+      var bufferTimeEnd = this.sourceBuffer.buffered.end(0);
+      this.timeBuffered = bufferTimeEnd - bufferTimeStart;
+
+      var info = {
+        previousBufferSize: previousBufferSize,
+        currentBufferSize: this.timeBuffered,
+        bufferTimeStart: bufferTimeStart,
+        bufferTimeEnd: bufferTimeEnd
+      };
+
+      return info;
+    }
+  }, {
+    key: 'trimBuffer',
+    value: function trimBuffer() {
+      var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
+
+      // over 30 seconds of video, so chop off 15
+      if (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
+        debug('Removing old stuff from sourceBuffer...');
+
+        try {
+          this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
+        } catch (error) {
+          this.options.onRemoveError(error);
+        }
+      }
+    }
+  }, {
     key: 'onSourceBufferUpdateEnd',
     value: function onSourceBufferUpdateEnd() {
       silly('onUpdateEnd');
 
       if (this.sourceBuffer.buffered.length <= 0) {
         debug('After updating, the sourceBuffer has no length!');
-      } else {
-        var previousBufferSize = this.timeBuffered;
-        var bufferTimeStart = this.sourceBuffer.buffered.start(0);
-        var bufferTimeEnd = this.sourceBuffer.buffered.end(0);
-        this.timeBuffered = bufferTimeEnd - bufferTimeStart;
-
-        var info = {
-          previousBufferSize: previousBufferSize,
-          currentBufferSize: this.timeBuffered,
-          bufferTimeStart: bufferTimeStart,
-          bufferTimeEnd: bufferTimeEnd
-        };
-
-        if (previousBufferSize !== null && previousBufferSize > this.timeBuffered) {
-          debug('On remove finish...');
-          this.options.onRemoveFinish(info);
-          return;
-        }
-
-        this.options.onAppendFinish(info);
-
-        // over 30 seconds of video, so chop off 15
-        if (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
-          try {
-            debug('Removing old stuff from sourceBuffer...');
-            this.sourceBuffer.remove(bufferTimeStart, bufferTimeStart + this.options.bufferTruncateValue);
-          } catch (error) {
-            this.options.onRemoveError(error);
-          }
-
-          return;
-        }
-
-        // @todo - should we attempt to
-        if (this.segmentQueue.length === 0) {
-          debug('Nothing on the queue to process...');
-          return;
-        }
-
-        debug('Segment Queue Length: ' + this.segmentQueue.length);
-
-        this.append(this.segmentQueue.shift());
+        return;
       }
+
+      var info = this.getBufferTimes();
+
+      if (info.previousBufferSize !== null && info.previousBufferSize > this.timeBuffered) {
+        debug('On remove finish...');
+        this.options.onRemoveFinish(info);
+      } else {
+        debug('On append finish...');
+        this.options.onAppendFinish(info);
+        this.trimBuffer(info);
+      }
+
+      // @todo - should we attempt to
+      if (this.segmentQueue.length === 0) {
+        debug('Nothing on the queue to process...');
+        return;
+      }
+
+      debug('Segment Queue Length: ' + this.segmentQueue.length);
+
+      this.append(this.segmentQueue.shift());
     }
   }]);
 
