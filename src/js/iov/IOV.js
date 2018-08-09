@@ -36,7 +36,7 @@ export default class IOV {
 
   constructor (player, config) {
     this.id = uuidv4();
-    this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
+    this.debug = Debug(`${DEBUG_PREFIX}:main:${this.id}`);
 
     this.playerInstance = player;
 
