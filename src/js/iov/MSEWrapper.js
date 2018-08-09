@@ -111,11 +111,11 @@ export default class MSEWrapper {
   }
 
   reinitializeVideoElementSrc () {
-    this.mseWrapper.destroyVideoElementSrc();
+    this.destroyVideoElementSrc();
 
     // reallocate, this will call media source open which will
     // append the MOOV atom.
-    return this.mseWrapper.getVideoElementSrc();
+    return this.getVideoElementSrc();
   }
 
   isMediaSourceReady () {
