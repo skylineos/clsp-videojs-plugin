@@ -3945,9 +3945,15 @@ var MSEWrapper = function () {
     debug('Constructing...');
 
     this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
-      bufferSizeLimit: 30,
-      bufferTruncateFactor: 2
+      // These default buffer value provide the best results in my testing.
+      // It keeps the memory usage as low as is practical, and rarely causes
+      // the video to stutter
+      bufferSizeLimit: 90 + Math.floor(Math.random() * 200),
+      bufferTruncateFactor: 2,
+      bufferTruncateValue: null
     });
+
+    console.log(this.options.bufferSizeLimit);
 
     this.segmentQueue = [];
 
@@ -3956,7 +3962,9 @@ var MSEWrapper = function () {
     this.objectURL = null;
     this.timeBuffered = null;
 
-    this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
+    if (!this.options.bufferTruncateValue) {
+      this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
+    }
   }
 
   _createClass(MSEWrapper, [{
@@ -4030,6 +4038,15 @@ var MSEWrapper = function () {
       }
 
       return window.URL.revokeObjectURL(this.mediaSource);
+    }
+  }, {
+    key: 'reinitializeVideoElementSrc',
+    value: function reinitializeVideoElementSrc() {
+      this.mseWrapper.destroyVideoElementSrc();
+
+      // reallocate, this will call media source open which will
+      // append the MOOV atom.
+      return this.mseWrapper.getVideoElementSrc();
     }
   }, {
     key: 'isMediaSourceReady',
@@ -4179,11 +4196,13 @@ var MSEWrapper = function () {
     value: function trimBuffer() {
       var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
 
-      // over 30 seconds of video, so chop off 15
       if (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
         debug('Removing old stuff from sourceBuffer...');
 
         try {
+          // @todo - this is the biggest performance problem we have with this player.
+          // Can you figure out how to manage the memory usage without causing the streams
+          // to stutter?
           this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
         } catch (error) {
           this.options.onRemoveError(error);
@@ -4195,8 +4214,17 @@ var MSEWrapper = function () {
     value: function onSourceBufferUpdateEnd() {
       silly('onUpdateEnd');
 
-      if (this.sourceBuffer.buffered.length <= 0) {
-        debug('After updating, the sourceBuffer has no length!');
+      try {
+        // Sometimes the mediaSource is removed while an update is being
+        // processed, resulting in an error when trying to read the
+        // "buffered" property.
+        if (this.sourceBuffer.buffered.length <= 0) {
+          debug('After updating, the sourceBuffer has no length!');
+          return;
+        }
+      } catch (error) {
+        // @todo - do we need to handle this?
+        debug('The mediaSource was removed while an update operation was occurring.');
         return;
       }
 
@@ -4638,8 +4666,6 @@ var IOVPlayer = function () {
 
     this.iov = iov;
 
-    this.MAX_SEQ_PROC = 2;
-
     // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
     // and recording the time when the updateend event is called.
@@ -4650,9 +4676,7 @@ var IOVPlayer = function () {
 
     this.moovBox = null;
 
-    this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory({
-      bufferSizeLimit: 10 + Math.floor(Math.random() * 11)
-    });
+    this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory();
 
     this.accumulatedErrors = {};
   }
@@ -4665,7 +4689,7 @@ var IOVPlayer = function () {
       }
 
       // the browser does not support this video format
-      this._fault('Unsupported mime codec: ' + mimeCodec);
+      this.displayVideoJsError('Unsupported mime codec: ' + mimeCodec);
 
       return false;
     }
@@ -4786,9 +4810,9 @@ var IOVPlayer = function () {
       console.error(error);
     }
   }, {
-    key: '_fault',
-    value: function _fault(message) {
-      debug('_fault');
+    key: 'displayVideoJsError',
+    value: function displayVideoJsError(message) {
+      debug('displayVideoJsError');
 
       this.videoPlayer.errors.extend({
         PLAYER_ERR_IOV: {
@@ -4809,11 +4833,7 @@ var IOVPlayer = function () {
 
       // free resource
       if (this.mseWrapper.mediaSource) {
-        this.mseWrapper.destroyVideoElementSrc();
-
-        // reallocate, this will call media source open which will
-        // append the MOOV atom.
-        this.video.src = this.mseWrapper.getVideoElementSrc();
+        this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
       }
     }
   }, {
@@ -4841,8 +4861,7 @@ var IOVPlayer = function () {
       this.videoPlayer = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlayer(this.id);
 
       if (typeof this.video === 'undefined') {
-        this._fault("Unable to match id '" + eid + "'");
-        return;
+        throw new Error("Unable to match id '" + eid + "'");
       }
 
       var request = { clientId: this.iov.config.clientId };

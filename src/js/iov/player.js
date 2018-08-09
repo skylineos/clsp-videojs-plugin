@@ -81,8 +81,6 @@ export default class IOVPlayer {
 
     this.iov = iov;
 
-    this.MAX_SEQ_PROC = 2;
-
     // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
     // and recording the time when the updateend event is called.
@@ -93,9 +91,7 @@ export default class IOVPlayer {
 
     this.moovBox = null;
 
-    this.mseWrapper = MSEWrapper.factory({
-      bufferSizeLimit: 10 + Math.floor(Math.random() * (11)),
-    });
+    this.mseWrapper = MSEWrapper.factory();
 
     this.accumulatedErrors = {};
   }
@@ -106,7 +102,7 @@ export default class IOVPlayer {
     }
 
     // the browser does not support this video format
-    this._fault(`Unsupported mime codec: ${mimeCodec}`);
+    this.displayVideoJsError(`Unsupported mime codec: ${mimeCodec}`);
 
     return false;
   }
@@ -212,8 +208,8 @@ export default class IOVPlayer {
     console.error(error);
   }
 
-  _fault (message) {
-    debug('_fault');
+  displayVideoJsError (message) {
+    debug('displayVideoJsError');
 
     this.videoPlayer.errors.extend({
       PLAYER_ERR_IOV: {
@@ -233,11 +229,7 @@ export default class IOVPlayer {
 
     // free resource
     if (this.mseWrapper.mediaSource) {
-      this.mseWrapper.destroyVideoElementSrc();
-
-      // reallocate, this will call media source open which will
-      // append the MOOV atom.
-      this.video.src = this.mseWrapper.getVideoElementSrc();
+      this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
     }
   }
 
@@ -261,8 +253,7 @@ export default class IOVPlayer {
     this.videoPlayer = videojs.getPlayer(this.id);
 
     if (typeof this.video === 'undefined') {
-      this._fault("Unable to match id '" + eid + "'");
-      return;
+      throw new Error("Unable to match id '" + eid + "'");
     }
 
     const request = { clientId: this.iov.config.clientId };

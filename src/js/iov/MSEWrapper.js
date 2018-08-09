@@ -22,9 +22,15 @@ export default class MSEWrapper {
     debug('Constructing...');
 
     this.options = defaults({}, options, {
-      bufferSizeLimit: 30,
+      // These default buffer value provide the best results in my testing.
+      // It keeps the memory usage as low as is practical, and rarely causes
+      // the video to stutter
+      bufferSizeLimit: 90 + Math.floor(Math.random() * (200)),
       bufferTruncateFactor: 2,
+      bufferTruncateValue: null,
     });
+
+    console.log(this.options.bufferSizeLimit);
 
     this.segmentQueue = [];
 
@@ -33,7 +39,9 @@ export default class MSEWrapper {
     this.objectURL = null;
     this.timeBuffered = null;
 
-    this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
+    if (!this.options.bufferTruncateValue) {
+      this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
+    }
   }
 
   initializeMediaSource (options = {}) {
@@ -100,6 +108,14 @@ export default class MSEWrapper {
     }
 
     return window.URL.revokeObjectURL(this.mediaSource);
+  }
+
+  reinitializeVideoElementSrc () {
+    this.mseWrapper.destroyVideoElementSrc();
+
+    // reallocate, this will call media source open which will
+    // append the MOOV atom.
+    return this.mseWrapper.getVideoElementSrc();
   }
 
   isMediaSourceReady () {
@@ -233,11 +249,13 @@ export default class MSEWrapper {
   }
 
   trimBuffer (info = this.getBufferTimes()) {
-    // over 30 seconds of video, so chop off 15
     if (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
       debug('Removing old stuff from sourceBuffer...');
 
       try {
+        // @todo - this is the biggest performance problem we have with this player.
+        // Can you figure out how to manage the memory usage without causing the streams
+        // to stutter?
         this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
       }
       catch (error) {
@@ -249,8 +267,18 @@ export default class MSEWrapper {
   onSourceBufferUpdateEnd () {
     silly('onUpdateEnd');
 
-    if (this.sourceBuffer.buffered.length <= 0) {
-      debug('After updating, the sourceBuffer has no length!');
+    try {
+      // Sometimes the mediaSource is removed while an update is being
+      // processed, resulting in an error when trying to read the
+      // "buffered" property.
+      if (this.sourceBuffer.buffered.length <= 0) {
+        debug('After updating, the sourceBuffer has no length!');
+        return;
+      }
+    }
+    catch (error) {
+      // @todo - do we need to handle this?
+      debug('The mediaSource was removed while an update operation was occurring.');
       return;
     }
 
