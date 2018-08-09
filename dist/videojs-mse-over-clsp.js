@@ -3950,7 +3950,8 @@ var MSEWrapper = function () {
       // the video to stutter
       bufferSizeLimit: 90 + Math.floor(Math.random() * 200),
       bufferTruncateFactor: 2,
-      bufferTruncateValue: null
+      bufferTruncateValue: null,
+      driftThreshold: 2000
     });
 
     console.log(this.options.bufferSizeLimit);
@@ -4117,14 +4118,33 @@ var MSEWrapper = function () {
     value: function queueSegment(segment) {
       debug('Queueing segment.  The queue now has ' + this.segmentQueue.length + ' segments.');
 
-      // this.segmentQueue.push(segment);
+      this.segmentQueue.push({
+        timestamp: Date.now(),
+        byteArray: segment
+      });
     }
   }, {
     key: '_append',
-    value: function _append(byteArray) {
+    value: function _append(_ref) {
+      var timestamp = _ref.timestamp,
+          byteArray = _ref.byteArray;
+
       silly('Appending to the sourceBuffer...');
 
       try {
+        var estimatedDrift = Date.now() - timestamp;
+
+        if (estimatedDrift > this.options.driftThreshold) {
+          debug('Estimated drift of ' + estimatedDrift + ' is above the ' + this.options.driftThreshold + ' threshold.  Flushing queue...');
+          // @todo - perhaps we should re-add the last segment to the queue with a fresh
+          // timestamp?  I think one cause of stream freezing is the sourceBuffer getting
+          // starved, but I don't know if that's correct
+          this.segmentQueue = [];
+          return;
+        }
+
+        debug('Appending to the buffer with an estimated drift of ' + estimatedDrift);
+
         this.sourceBuffer.appendBuffer(byteArray);
       } catch (error) {
         this.options.onAppendError(error, byteArray);
@@ -4160,19 +4180,11 @@ var MSEWrapper = function () {
         return;
       }
 
-      // if (this.segmentQueue.length > 0) {
-      //   debug('The queue is not empty.  Adding the current byteArray to the queue, then processing the first segment in the queue.');
+      if (this.segmentQueue.length !== 0) {
+        this._append(this.segmentQueue.shift());
+      }
 
-      //   this._append(this.segmentQueue.shift());
-
-      //   this.segmentQueue = [];
-
-      //   this.queueSegment(byteArray);
-
-      //   return;
-      // }
-
-      this._append(byteArray);
+      this.queueSegment(byteArray);
     }
   }, {
     key: 'getBufferTimes',
@@ -4238,16 +4250,6 @@ var MSEWrapper = function () {
         this.options.onAppendFinish(info);
         this.trimBuffer(info);
       }
-
-      // @todo - should we attempt to
-      if (this.segmentQueue.length === 0) {
-        debug('Nothing on the queue to process...');
-        return;
-      }
-
-      debug('Segment Queue Length: ' + this.segmentQueue.length);
-
-      this.append(this.segmentQueue.shift());
     }
   }]);
 

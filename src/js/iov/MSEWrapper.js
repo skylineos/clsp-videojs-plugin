@@ -28,6 +28,7 @@ export default class MSEWrapper {
       bufferSizeLimit: 90 + Math.floor(Math.random() * (200)),
       bufferTruncateFactor: 2,
       bufferTruncateValue: null,
+      driftThreshold: 2000,
     });
 
     console.log(this.options.bufferSizeLimit);
@@ -175,13 +176,29 @@ export default class MSEWrapper {
   queueSegment (segment) {
     debug(`Queueing segment.  The queue now has ${this.segmentQueue.length} segments.`);
 
-    // this.segmentQueue.push(segment);
+    this.segmentQueue.push({
+      timestamp: Date.now(),
+      byteArray: segment,
+    });
   }
 
-  _append (byteArray) {
+  _append ({ timestamp, byteArray }) {
     silly('Appending to the sourceBuffer...');
 
     try {
+      const estimatedDrift = Date.now() - timestamp;
+
+      if (estimatedDrift > this.options.driftThreshold) {
+        debug(`Estimated drift of ${estimatedDrift} is above the ${this.options.driftThreshold} threshold.  Flushing queue...`);
+        // @todo - perhaps we should re-add the last segment to the queue with a fresh
+        // timestamp?  I think one cause of stream freezing is the sourceBuffer getting
+        // starved, but I don't know if that's correct
+        this.segmentQueue = [];
+        return;
+      }
+
+      debug(`Appending to the buffer with an estimated drift of ${estimatedDrift}`);
+
       this.sourceBuffer.appendBuffer(byteArray);
     }
     catch (error) {
@@ -217,19 +234,11 @@ export default class MSEWrapper {
       return;
     }
 
-    // if (this.segmentQueue.length > 0) {
-    //   debug('The queue is not empty.  Adding the current byteArray to the queue, then processing the first segment in the queue.');
+    if (this.segmentQueue.length !== 0) {
+      this._append(this.segmentQueue.shift());
+    }
 
-    //   this._append(this.segmentQueue.shift());
-
-    //   this.segmentQueue = [];
-
-    //   this.queueSegment(byteArray);
-
-    //   return;
-    // }
-
-    this._append(byteArray);
+    this.queueSegment(byteArray);
   }
 
   getBufferTimes () {
@@ -293,15 +302,5 @@ export default class MSEWrapper {
       this.options.onAppendFinish(info);
       this.trimBuffer(info);
     }
-
-    // @todo - should we attempt to
-    if (this.segmentQueue.length === 0) {
-      debug('Nothing on the queue to process...');
-      return;
-    }
-
-    debug(`Segment Queue Length: ${this.segmentQueue.length}`);
-
-    this.append(this.segmentQueue.shift());
   }
 }
