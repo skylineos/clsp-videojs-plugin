@@ -98,6 +98,8 @@ export default class IOVPlayer {
     this.appendInterval = null;
     this.moofSplits = [];
 
+    this.timeBuffered = 0;
+
     // We determined that these debounce settings are "good enough"
     // for the append interval debounce.
     this.appendIntervalTolerance = 0.5;
@@ -107,6 +109,7 @@ export default class IOVPlayer {
     };
 
     this.appendBuffer = (moofBox) => this._appendBuffer(moofBox);
+    this.vqueue = []; // used if the media source buffer is busy
 
     // -1 is forever
     this.retry_count = 3;
@@ -370,7 +373,6 @@ export default class IOVPlayer {
     const self = this;
 
     // setup handlers for video
-    // self.vqueue = []; // used if the media source buffer is busy
 
     self.state = "waiting-for-moov";
 
@@ -460,18 +462,43 @@ export default class IOVPlayer {
   }
 
   _appendBuffer (moofBox) {
-    if (this.sourceBuffer.updating !== false || document.visibilityState === 'hidden') {
-      debug('Dropping frame...');
+    if (self.source_buffer_ready == false) {
+      debug("media source not yet open dropping frame");
+      //this.vqueue.push(moofBox);
+      return;
+    }
+    if (this.sourceBuffer.updating !== false) {
+      if (document.visibilityState !== 'hidden')
+      {
+         debug("Pushing fragment onto the vqueue because source buffer was busy");
+         this.vqueue.push(moofBox);
+         debug("Vqueue has " + this.vqueue.length + " elements");
+      }
       return;
     }
 
     try {
       // debug(typeof moofBox);
       // debug("calling append buffer");
-      this._appendBuffer_event(moofBox);
-      this.sourceBuffer.appendBuffer(moofBox);
+      if (this.vqueue.length == 0)
+      {
+         //debug("appending directly to the source buffer");
+         this._appendBuffer_event(moofBox);
+         this.sourceBuffer.appendBuffer(moofBox);
+         this.seqnum += 1; // increment sequence number for next chunk
+      }
+      else
+      {
+         debug("appending queue contents to the source buffer");
+         this._appendBuffer_event(this.vqueue[0]);
+         this.sourceBuffer.appendBuffer(this.vqueue[0]);
+         this.seqnum += 1; // increment sequence number for next chunk
+         this.vqueue.shift();
+         //drop the current moof.  Vqueue size indicates we fell behind.  Fogetaboutit!
+         debug("dropped current moof box.  Choppy video or drift, you decide.");
+         //this.vqueue.push(moofBox);
+      }
       // console.log('Actually appended moof at ' + Date.now())
-      this.seqnum += 1; // increment sequence number for next chunk
     }
     catch (e) {
       console.error("Excetion thrown from appendBuffer", e);
@@ -485,10 +512,6 @@ export default class IOVPlayer {
 
     const self = this;
 
-    if (self.source_buffer_ready == false) {
-      //debug("media source not yet open dropping frame");
-      return;
-    }
 
     /**
         Enqueues or sends to the media source buffer an MP4 moof atom. This contains a
@@ -497,7 +520,7 @@ export default class IOVPlayer {
     // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
     // the source buffer.
     if ((self.seqnum - self.seqnumProcessed) > self.MAX_SEQ_PROC) {
-      //debug("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
+      debug("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
       return; // DROP this frame since the borwser is falling
     }
 
@@ -507,6 +530,7 @@ export default class IOVPlayer {
     moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
     moofBox[23] = self.seqnum & 0xFF;
 
+    /*
     if (!this.appendInterval && this.moofSplits.length < DEBOUNCE_INTERVAL_SAMPLE_SIZE) {
       const currentAppendTime = Date.now();
       const moofSplit = this.lastAppendAttemptTime
@@ -537,10 +561,9 @@ export default class IOVPlayer {
           this._appendBuffer(moofBox);
         }, this.appendInterval, this.appendIntervalSettings);
       }
-    }
+    }*/
 
     // console.log('tried to append at ' + this.lastAppendAttemptTime, );
-
     this.appendBuffer(moofBox);
   }
 
@@ -636,7 +659,59 @@ export default class IOVPlayer {
         var start = self.sourceBuffer.buffered.start(0);
         var end = self.sourceBuffer.buffered.end(0);
         var time_buffered = end - start;
-        var limit = 15.0;
+        var limit = 15;
+
+        //callback reached as the result of remove
+        if (this.timeBuffered > time_buffered)
+        {
+          debug("Remove event. Buffer size: " + time_buffered);
+          this.timeBuffered = time_buffered;
+          //wait around for 3 seconds to simulate unpredictable browser interruptions.
+          var now = new Date().getTime();
+          for (var i = 0; i < 1e7; i++)
+          {
+            var diff = new Date().getTime() - now;
+            if (diff > 1000)
+            {
+              debug("breaking out of 1 second sleep");
+              break;
+            }
+          }
+          return;
+        }
+        //callbackreached as the result of an add
+        else
+        {
+          //data exists on the queue because it couldn't be added directly.  process now.. maybe drop some
+          //in order to catch up
+          //debug("Add event. Buffer size: " + time_buffered);
+          if (this.vqueue.length > 0)
+            debug("vqueue length: " + self.vqueue.length);
+          if (self.vqueue.length > 0) {
+
+            setTimeout(function () {
+            // deqeue next prepared moof atom
+            if (self.sourceBuffer.updating === false) {
+              try {
+                self._appendBuffer_event(self.vqueue[0]);
+                self.sourceBuffer.appendBuffer(self.vqueue[0]);
+                self.seqnum++;
+              } catch (ex) {
+                // internal error, this has been observed to happen the tab
+                // in the browser where this video player lives is hidden
+                // then reselected. 'ex' is undefined the error is bug
+                // within the MSE C++ implementation in the browser.
+                self.reinitializeMse();
+              }
+            }
+            // regardless we must proceed to the frame.
+            self.vqueue = self.vqueue.slice(1);
+           }, 0);
+         }
+        }
+        this.timeBuffered = time_buffered;
+
+        //over 30 seconds of video, so chop off 15
         if (time_buffered > 30.0) {
           try {
             // observed this fail during a memry snapshot in chrome
@@ -648,26 +723,10 @@ export default class IOVPlayer {
           }
         }
       }
-
-      // if (self.vqueue.length > 0) {
-      //   self._appendBuffer_event(self.vqueue[0]);
-      //   setTimeout(function () {
-      //     // deqeue next prepared moof atom
-      //     if (self.sourceBuffer.updating === false) {
-      //       try {
-      //         self.sourceBuffer.appendBuffer(self.vqueue[0]);
-      //       } catch (ex) {
-      //         // internal error, this has been observed to happen the tab
-      //         // in the browser where this video player lives is hidden
-      //         // then reselected. 'ex' is undefined the error is bug
-      //         // within the MSE C++ implementation in the browser.
-      //         self.reinitializeMse();
-      //       }
-      //     }
-      //     // regardless we must proceed to the frame.
-      //     self.vqueue = self.vqueue.slice(1);
-      //   }, 0);
-      // }
+    }
+    else
+    {
+      debug("buffer wasn't in ready state on end");
     }
   }
 };
