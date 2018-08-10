@@ -117,7 +117,6 @@ export default class MSEWrapper {
       return;
     }
 
-    console.log(type, value)
     switch (type) {
       case 'sourceBuffer.lastKnownBufferSize': {
         this.metrics[type] = value;
@@ -205,7 +204,6 @@ export default class MSEWrapper {
 
   destroyVideoElementSrc () {
     debug('destroyVideoElementSrc...');
-    console.log('destroygin...');
 
     if (!this.mediaSource) {
       // @todo - should this throw?
@@ -334,38 +332,46 @@ export default class MSEWrapper {
     }
   }
 
-  append (byteArray) {
-    silly('Append');
-
-    this.options.onAppendStart(byteArray);
+  processNextInQueue () {
+    silly('processNextInQueue');
 
     if (document.visibilityState === 'hidden') {
       debug('Tab not in focus - dropping frame...');
       this.metric('frameDrop.hiddenTab', 1);
+      this.metric('queue.cannotProcessNext', 1);
       return;
     }
 
     if (!this.isMediaSourceReady()) {
       debug('The mediaSource is not ready');
       this.metric('queue.mediaSourceNotReady', 1);
-      this.queueSegment(byteArray);
+      this.metric('queue.cannotProcessNext', 1);
       return;
     }
 
     if (!this.isSourceBufferReady()) {
       debug('The sourceBuffer is busy');
       this.metric('queue.sourceBufferNotReady', 1);
-      this.queueSegment(byteArray);
+      this.metric('queue.cannotProcessNext', 1);
       return;
     }
 
     if (this.segmentQueue.length > 0) {
       this.metric('queue.shift', 1);
+      this.metric('queue.canProcessNext', 1);
       this._append(this.segmentQueue.shift());
     }
+  }
+
+  append (byteArray) {
+    silly('Append');
+
+    this.options.onAppendStart(byteArray);
 
     this.metric('queue.append', 1);
     this.queueSegment(byteArray);
+
+    this.processNextInQueue();
   }
 
   getBufferTimes () {
@@ -439,5 +445,7 @@ export default class MSEWrapper {
       this.options.onAppendFinish(info);
       this.trimBuffer(info);
     }
+
+    this.processNextInQueue();
   }
 }

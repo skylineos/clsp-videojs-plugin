@@ -16,7 +16,11 @@ $icon-font-path: '~videojs-font/fonts';
     display: flex;
 
     &:nth-of-type(2n) {
-      background: lightslategrey;
+      background: lightgrey;
+    }
+
+    .value {
+      max-width: 1rem;
     }
 
     .type {
