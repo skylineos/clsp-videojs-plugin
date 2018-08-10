@@ -110,6 +110,7 @@ export default class IOVPlayer {
       'sourceBuffer.bufferTimeEnd',
       'video.currentTime',
       'video.drift',
+      'video.driftCorrection',
     ];
 
     this.metrics = {};
@@ -153,6 +154,13 @@ export default class IOVPlayer {
     }
 
     switch (type) {
+      case 'video.driftCorrection': {
+        if (!this.metrics[type]) {
+          this.metrics[type] = 0;
+        }
+
+        this.metrics[type] += value;
+      }
       default: {
         this.metrics[type] = value;
       }
@@ -423,8 +431,9 @@ export default class IOVPlayer {
               this.metric('video.currentTime', this.video.currentTime);
               this.metric('video.drift', this.drift);
 
-              if (this.drift > 5) {
-                this.video.currentTime = info.bufferTimeEnd - 2;
+              if (this.drift > 3) {
+                this.metric('video.driftCorrection', 1);
+                this.video.currentTime = info.bufferTimeEnd;
                 // return this.reinitializeMse();
               }
 

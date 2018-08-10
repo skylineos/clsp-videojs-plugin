@@ -219,18 +219,20 @@ export default class MSEWrapper {
 
     this.objectURL = null;
 
+    this.sourceBuffer.abort();
+
     // free the resource
     return window.URL.revokeObjectURL(this.mediaSource);
   }
 
   reinitializeVideoElementSrc () {
-    // this.metric('mediaSource.reinitialized', 1);
+    this.metric('mediaSource.reinitialized', 1);
 
-    // this.destroyVideoElementSrc();
+    this.destroyVideoElementSrc();
 
-    // // reallocate, this will call media source open which will
-    // // append the MOOV atom.
-    // return this.getVideoElementSrc();
+    // reallocate, this will call media source open which will
+    // append the MOOV atom.
+    return this.getVideoElementSrc();
   }
 
   isMediaSourceReady () {

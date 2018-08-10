@@ -4137,19 +4137,21 @@ var MSEWrapper = function () {
 
       this.objectURL = null;
 
+      this.sourceBuffer.abort();
+
       // free the resource
       return window.URL.revokeObjectURL(this.mediaSource);
     }
   }, {
     key: 'reinitializeVideoElementSrc',
     value: function reinitializeVideoElementSrc() {
-      // this.metric('mediaSource.reinitialized', 1);
+      this.metric('mediaSource.reinitialized', 1);
 
-      // this.destroyVideoElementSrc();
+      this.destroyVideoElementSrc();
 
-      // // reallocate, this will call media source open which will
-      // // append the MOOV atom.
-      // return this.getVideoElementSrc();
+      // reallocate, this will call media source open which will
+      // append the MOOV atom.
+      return this.getVideoElementSrc();
     }
   }, {
     key: 'isMediaSourceReady',
@@ -4827,7 +4829,7 @@ var IOVPlayer = function () {
       this.events[this.EVENT_NAMES[i]] = [];
     }
 
-    this.METRIC_TYPES = ['sourceBuffer.bufferTimeEnd', 'video.currentTime', 'video.drift'];
+    this.METRIC_TYPES = ['sourceBuffer.bufferTimeEnd', 'video.currentTime', 'video.drift', 'video.driftCorrection'];
 
     this.metrics = {};
 
@@ -4877,6 +4879,14 @@ var IOVPlayer = function () {
       }
 
       switch (type) {
+        case 'video.driftCorrection':
+          {
+            if (!this.metrics[type]) {
+              this.metrics[type] = 0;
+            }
+
+            this.metrics[type] += value;
+          }
         default:
           {
             this.metrics[type] = value;
@@ -5184,8 +5194,9 @@ var IOVPlayer = function () {
                 _this6.metric('video.currentTime', _this6.video.currentTime);
                 _this6.metric('video.drift', _this6.drift);
 
-                if (_this6.drift > 5) {
-                  _this6.video.currentTime = info.bufferTimeEnd - 2;
+                if (_this6.drift > 3) {
+                  _this6.metric('video.driftCorrection', 1);
+                  _this6.video.currentTime = info.bufferTimeEnd;
                   // return this.reinitializeMse();
                 }
 
