@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/js/videojs-mse-over-clsp.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -3225,7 +3225,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.11.2","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.11.2","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","jquery":"^3.3.1","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2"}};
 
 /***/ }),
 
@@ -3477,6 +3477,8 @@ var registered = false;
       };
 
       player.on('firstplay', function (e) {
+        var _this2 = this;
+
         // @todo - the use of the tech here is discouraged.  What is the "right" way to
         // get the information from the mqttHandler?
         // And, really, all this does is parse the clsp url - do we really need a
@@ -3489,7 +3491,9 @@ var registered = false;
 
         var videoElement = player.el();
 
-        var iov = _iov_IOV__WEBPACK_IMPORTED_MODULE_3__["default"].factory(player, {
+        console.log(videoElement);
+
+        this.iov = _iov_IOV__WEBPACK_IMPORTED_MODULE_3__["default"].factory(player, {
           port: mqttHandler.port,
           address: mqttHandler.address,
           useSSL: mqttHandler.useSSL,
@@ -3532,7 +3536,15 @@ var registered = false;
           }
         });
 
-        iov.initialize();
+        this.iov.initialize();
+
+        this.iov.player.on('metric', function (_ref) {
+          var type = _ref.type,
+              value = _ref.value;
+
+          // @see - https://docs.videojs.com/tutorial-plugins.html#events
+          _this2.trigger('metric', { type: type, value: value });
+        });
       });
       return _this;
     }
@@ -3951,10 +3963,10 @@ var MSEWrapper = function () {
       bufferSizeLimit: 90 + Math.floor(Math.random() * 200),
       bufferTruncateFactor: 2,
       bufferTruncateValue: null,
-      driftThreshold: 2000
+      driftThreshold: 2000,
+      duration: 10,
+      enableMetrics: true
     });
-
-    console.log(this.options.bufferSizeLimit);
 
     this.segmentQueue = [];
 
@@ -3966,11 +3978,76 @@ var MSEWrapper = function () {
     if (!this.options.bufferTruncateValue) {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
     }
+
+    this.metrics = {};
+
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
+
+    this.EVENT_NAMES = ['metric'];
+
+    for (var i = 0; i < this.EVENT_NAMES.length; i++) {
+      this.events[this.EVENT_NAMES[i]] = [];
+    }
   }
 
   _createClass(MSEWrapper, [{
+    key: 'on',
+    value: function on(name, action) {
+      debug('Registering Listener for ' + name + ' event...');
+
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
+      }
+
+      this.events[name].push(action);
+    }
+  }, {
+    key: 'trigger',
+    value: function trigger(name, value) {
+      debug('Triggering ' + name + ' event...');
+
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
+      }
+
+      for (var i = 0; i < this.events[name].length; i++) {
+        this.events[name][i](value, this);
+      }
+    }
+  }, {
+    key: 'metric',
+    value: function metric(type, value) {
+      if (!this.options.enableMetrics) {
+        return;
+      }
+
+      switch (type) {
+        case 'sourceBuffer.lastKnownBufferSize':
+          {
+            this.metrics[type] = value;
+            break;
+          }
+        default:
+          {
+            if (!this.metrics.hasOwnProperty(type)) {
+              this.metrics[type] = 0;
+            }
+
+            this.metrics[type] += value;
+          }
+      }
+
+      this.trigger('metric', {
+        type: type,
+        value: this.metrics[type]
+      });
+    }
+  }, {
     key: 'initializeMediaSource',
     value: function initializeMediaSource() {
+      var _this = this;
+
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
       debug('Initializing mediaSource...');
@@ -3981,12 +4058,23 @@ var MSEWrapper = function () {
         onError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a
       });
 
+      this.metric('mediaSource.created', 1);
+
       // Kill the existing media source
       this.destroyMediaSource();
 
       this.mediaSource = new window.MediaSource();
 
-      this.mediaSource.addEventListener('sourceopen', options.onSourceOpen);
+      this.mediaSource.addEventListener('sourceopen', function () {
+        // This can only be set when the media source is open.
+        // @todo - does this do memory management for us so we don't have
+        // to call remove on the buffer, which is expensive?  It seems
+        // like it...
+        _this.mediaSource.duration = _this.options.duration;
+
+        options.onSourceOpen();
+      });
+
       this.mediaSource.addEventListener('sourceended', options.onSourceEnded);
       this.mediaSource.addEventListener('error', options.onError);
     }
@@ -3998,6 +4086,8 @@ var MSEWrapper = function () {
       if (!this.mediaSource) {
         return;
       }
+
+      this.metric('mediaSource.destroyed', 1);
     }
   }, {
     key: 'getVideoElementSrc',
@@ -4018,6 +4108,8 @@ var MSEWrapper = function () {
 
       // Ensure only a single objectURL exists at one time
       if (!this.objectURL) {
+        this.metric('objectURL.created', 1);
+
         this.objectURL = window.URL.createObjectURL(this.mediaSource);
       }
 
@@ -4038,11 +4130,16 @@ var MSEWrapper = function () {
         return;
       }
 
+      this.metric('objectURL.revoked', 1);
+
+      // free the resource
       return window.URL.revokeObjectURL(this.mediaSource);
     }
   }, {
     key: 'reinitializeVideoElementSrc',
     value: function reinitializeVideoElementSrc() {
+      this.metric('mediaSource.reinitialized', 1);
+
       this.destroyVideoElementSrc();
 
       // reallocate, this will call media source open which will
@@ -4065,7 +4162,7 @@ var MSEWrapper = function () {
   }, {
     key: 'initializeSourceBuffer',
     value: function initializeSourceBuffer(mimeCodec) {
-      var _this = this;
+      var _this2 = this;
 
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -4088,12 +4185,14 @@ var MSEWrapper = function () {
       // Kill the existing source buffer
       this.destroySourceBuffer();
 
+      this.metric('sourceBuffer.created', 1);
+
       this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
       this.sourceBuffer.mode = 'sequence';
 
       // Supported Events
       this.sourceBuffer.addEventListener('updateend', function () {
-        return _this.onSourceBufferUpdateEnd();
+        return _this2.onSourceBufferUpdateEnd();
       });
       this.sourceBuffer.addEventListener('error', options.onError);
 
@@ -4112,11 +4211,15 @@ var MSEWrapper = function () {
       if (!this.sourceBuffer) {
         return;
       }
+
+      this.metric('sourceBuffer.destroyed', 1);
     }
   }, {
     key: 'queueSegment',
     value: function queueSegment(segment) {
       debug('Queueing segment.  The queue now has ' + this.segmentQueue.length + ' segments.');
+
+      this.metric('queue.added', 1);
 
       this.segmentQueue.push({
         timestamp: Date.now(),
@@ -4139,6 +4242,7 @@ var MSEWrapper = function () {
           // @todo - perhaps we should re-add the last segment to the queue with a fresh
           // timestamp?  I think one cause of stream freezing is the sourceBuffer getting
           // starved, but I don't know if that's correct
+          this.metric('queue.removed', this.segmentQueue.length + 1);
           this.segmentQueue = [];
           this.sourceBuffer.abort();
           return;
@@ -4146,8 +4250,12 @@ var MSEWrapper = function () {
 
         debug('Appending to the buffer with an estimated drift of ' + estimatedDrift);
 
+        this.metric('sourceBuffer.append', 1);
+
         this.sourceBuffer.appendBuffer(byteArray);
       } catch (error) {
+        this.metric('error.sourceBuffer.append', 1);
+
         this.options.onAppendError(error, byteArray);
       }
     }
@@ -4160,31 +4268,30 @@ var MSEWrapper = function () {
 
       if (document.visibilityState === 'hidden') {
         debug('Tab not in focus - dropping frame...');
+        this.metric('frameDrop.hiddenTab', 1);
         return;
       }
 
       if (!this.isMediaSourceReady()) {
         debug('The mediaSource is not ready');
-        this.queueSegment(byteArray);
-        return;
-      }
-
-      if (!this.sourceBuffer) {
-        debug('The sourceBuffer has not been initialized');
+        this.metric('queue.mediaSourceNotReady', 1);
         this.queueSegment(byteArray);
         return;
       }
 
       if (!this.isSourceBufferReady()) {
         debug('The sourceBuffer is busy');
+        this.metric('queue.sourceBufferNotReady', 1);
         this.queueSegment(byteArray);
         return;
       }
 
-      if (this.segmentQueue.length !== 0) {
+      if (this.segmentQueue.length > 0) {
+        this.metric('queue.shift', 1);
         this._append(this.segmentQueue.shift());
       }
 
+      this.metric('queue.append', 1);
       this.queueSegment(byteArray);
     }
   }, {
@@ -4209,6 +4316,8 @@ var MSEWrapper = function () {
     value: function trimBuffer() {
       var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
 
+      this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
+
       if (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
         debug('Removing old stuff from sourceBuffer...');
 
@@ -4216,8 +4325,10 @@ var MSEWrapper = function () {
           // @todo - this is the biggest performance problem we have with this player.
           // Can you figure out how to manage the memory usage without causing the streams
           // to stutter?
+          this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
           this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
         } catch (error) {
+          this.metric('sourceBuffer.trim.error', 1);
           this.options.onRemoveError(error);
         }
       }
@@ -4227,16 +4338,20 @@ var MSEWrapper = function () {
     value: function onSourceBufferUpdateEnd() {
       silly('onUpdateEnd');
 
+      this.metric('sourceBuffer.updateEnd', 1);
+
       try {
         // Sometimes the mediaSource is removed while an update is being
         // processed, resulting in an error when trying to read the
         // "buffered" property.
         if (this.sourceBuffer.buffered.length <= 0) {
+          this.metric('sourceBuffer.updateEnd.bufferLength.empty', 1);
           debug('After updating, the sourceBuffer has no length!');
           return;
         }
       } catch (error) {
         // @todo - do we need to handle this?
+        this.metric('sourceBuffer.updateEnd.bufferLength.error', 1);
         debug('The mediaSource was removed while an update operation was occurring.');
         return;
       }
@@ -4245,9 +4360,11 @@ var MSEWrapper = function () {
 
       if (info.previousBufferSize !== null && info.previousBufferSize > this.timeBuffered) {
         debug('On remove finish...');
+        this.metric('sourceBuffer.updateEnd.removeEvent', 1);
         this.options.onRemoveFinish(info);
       } else {
         debug('On append finish...');
+        this.metric('sourceBuffer.updateEnd.appendEvent', 1);
         this.options.onAppendFinish(info);
         this.trimBuffer(info);
       }
@@ -4663,6 +4780,8 @@ var IOVPlayer = function () {
   }]);
 
   function IOVPlayer(iov) {
+    var _this = this;
+
     _classCallCheck(this, IOVPlayer);
 
     debug('constructor');
@@ -4679,12 +4798,51 @@ var IOVPlayer = function () {
 
     this.moovBox = null;
 
-    this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory();
-
     this.accumulatedErrors = {};
+
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
+
+    this.EVENT_NAMES = ['metric'];
+
+    for (var i = 0; i < this.EVENT_NAMES.length; i++) {
+      this.events[this.EVENT_NAMES[i]] = [];
+    }
+
+    this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory();
+    this.mseWrapper.on('metric', function (_ref) {
+      var type = _ref.type,
+          value = _ref.value;
+
+      _this.trigger('metric', { type: type, value: value });
+    });
   }
 
   _createClass(IOVPlayer, [{
+    key: 'on',
+    value: function on(name, action) {
+      debug('Registering Listener for ' + name + ' event...');
+
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
+      }
+
+      this.events[name].push(action);
+    }
+  }, {
+    key: 'trigger',
+    value: function trigger(name, value) {
+      debug('Triggering ' + name + ' event...');
+
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
+      }
+
+      for (var i = 0; i < this.events[name].length; i++) {
+        this.events[name][i](value, this);
+      }
+    }
+  }, {
     key: 'isMimeCodecSupported',
     value: function isMimeCodecSupported(mimeCodec) {
       if (_MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].isMimeCodecSupported(mimeCodec)) {
@@ -4699,7 +4857,7 @@ var IOVPlayer = function () {
   }, {
     key: 'onTransportTransaction',
     value: function onTransportTransaction(iov, response) {
-      var _this = this;
+      var _this2 = this;
 
       var new_mimeCodec = response.mimeCodec;
       var new_guid = response.guid; // stream guid
@@ -4717,7 +4875,7 @@ var IOVPlayer = function () {
 
         transport.unsubscribe(initSegmentTopic);
 
-        var oldTopic = 'iov/video/' + _this.guid + '/live';
+        var oldTopic = 'iov/video/' + _this2.guid + '/live';
         var newTopic = 'iov/video/' + new_guid + '/live';
 
         transport.subscribe(newTopic, function (moof_mqtt_msg) {
@@ -4728,27 +4886,27 @@ var IOVPlayer = function () {
           transport.unsubscribe(newTopic);
 
           // 2) unsubscribe to live callback for the old stream
-          _this.iov.transport.unsubscribe(oldTopic);
+          _this2.iov.transport.unsubscribe(oldTopic);
 
           // 3) resubscribe with different callback
           transport.subscribe(newTopic, function (mqtt_msg) {
-            _this.mseWrapper.append(mqtt_msg.payloadBytes);
+            _this2.mseWrapper.append(mqtt_msg.payloadBytes);
           });
 
           // alter object properties to reflect new stream
-          _this.guid = new_guid;
-          _this.moovBox = moov;
-          _this.mimeCodec = new_mimeCodec;
+          _this2.guid = new_guid;
+          _this2.moovBox = moov;
+          _this2.mimeCodec = new_mimeCodec;
 
           // remove media source buffer, reinitialize
-          _this.reinitializeMse();
+          _this2.reinitializeMse();
 
           if (!iov) {
             return;
           }
 
           if (iov.config.parentNodeId !== null) {
-            var iframe_elm = document.getElementById(_this.iov.config.clientId);
+            var iframe_elm = document.getElementById(_this2.iov.config.clientId);
             var parent = document.getElementById(iov.config.parentNodeId);
 
             if (parent) {
@@ -4760,7 +4918,7 @@ var IOVPlayer = function () {
           }
 
           // replace iov variable with the new one created.
-          _this.iov = iov;
+          _this2.iov = iov;
         });
       });
 
@@ -4774,7 +4932,7 @@ var IOVPlayer = function () {
   }, {
     key: 'change',
     value: function change(newStream, iov) {
-      var _this2 = this;
+      var _this3 = this;
 
       debug('change');
 
@@ -4787,7 +4945,7 @@ var IOVPlayer = function () {
             args[_key] = arguments[_key];
           }
 
-          return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
+          return _this3.onTransportTransaction.apply(_this3, [iov].concat(args));
         }, request);
         return;
       }
@@ -4797,7 +4955,7 @@ var IOVPlayer = function () {
           args[_key2] = arguments[_key2];
         }
 
-        return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
+        return _this3.onTransportTransaction.apply(_this3, [iov].concat(args));
       }, request);
     }
   }, {
@@ -4834,7 +4992,6 @@ var IOVPlayer = function () {
 
       this.state = 'idle';
 
-      // free resource
       if (this.mseWrapper.mediaSource) {
         this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
       }
@@ -4850,7 +5007,7 @@ var IOVPlayer = function () {
   }, {
     key: 'play',
     value: function play(eid, streamName, onFirstChunk, onVideoRecv) {
-      var _this3 = this;
+      var _this4 = this;
 
       debug('play');
 
@@ -4871,13 +5028,13 @@ var IOVPlayer = function () {
       var topic = 'iov/video/' + window.btoa(this.streamName) + '/request';
 
       this.iov.transport.transaction(topic, function () {
-        return _this3._start_play.apply(_this3, arguments);
+        return _this4._start_play.apply(_this4, arguments);
       }, request);
     }
   }, {
     key: 'resume',
     value: function resume(onFirstChunk, onVideoRecv) {
-      var _this4 = this;
+      var _this5 = this;
 
       debug('resume');
 
@@ -4887,7 +5044,7 @@ var IOVPlayer = function () {
       var request = { clientId: this.iov.config.clientId };
       var topic = "iov/video/" + window.btoa(this.streamName) + "/request";
       this.iov.transport.transaction(topic, function () {
-        return _this4._start_play.apply(_this4, arguments);
+        return _this5._start_play.apply(_this5, arguments);
       }, request);
     }
   }, {
@@ -4912,11 +5069,11 @@ var IOVPlayer = function () {
     }
   }, {
     key: '_start_play',
-    value: function _start_play(_ref) {
-      var _this5 = this;
+    value: function _start_play(_ref2) {
+      var _this6 = this;
 
-      var mimeCodec = _ref.mimeCodec,
-          guid = _ref.guid;
+      var mimeCodec = _ref2.mimeCodec,
+          guid = _ref2.guid;
 
       debug('_start_play');
 
@@ -4946,31 +5103,31 @@ var IOVPlayer = function () {
         // subscribe to the live video topic.
         self.state = "playing";
         self.iov.transport.subscribe("iov/video/" + self.guid + "/live", function (mqtt_msg) {
-          _this5.mseWrapper.append(mqtt_msg.payloadBytes);
+          _this6.mseWrapper.append(mqtt_msg.payloadBytes);
         });
         // create media source buffer and start routing video traffic.
 
         self.onFirstChunk(); // first chunk of video received.
 
-        _this5.mseWrapper.initializeMediaSource({
+        _this6.mseWrapper.initializeMediaSource({
           onSourceOpen: function onSourceOpen() {
             debug('on mediaSource sourceopen');
 
-            _this5.mseWrapper.initializeSourceBuffer(mimeCodec, {
+            _this6.mseWrapper.initializeSourceBuffer(mimeCodec, {
               onAppendStart: function onAppendStart(byteArray) {
                 silly('On Append Start...');
 
-                if (_this5.LogSourceBuffer === true && _this5.LogSourceBufferTopic !== null) {
+                if (_this6.LogSourceBuffer === true && _this6.LogSourceBufferTopic !== null) {
                   debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
 
                   var _mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-                  _mqtt_msg.destinationName = _this5.LogSourceBufferTopic;
+                  _mqtt_msg.destinationName = _this6.LogSourceBufferTopic;
                   window.MQTTClient.send(_mqtt_msg);
                 }
 
-                _this5.onVideoRecv();
+                _this6.onVideoRecv();
 
-                _this5.iov.statsMsg.byteCount += byteArray.length;
+                _this6.iov.statsMsg.byteCount += byteArray.length;
               },
               onAppendFinish: function onAppendFinish(info) {
                 silly('On Append Finish...');
@@ -4983,11 +5140,11 @@ var IOVPlayer = function () {
 
                     if (typeof promise !== 'undefined') {
                       promise.catch(function (error) {
-                        _this5._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                        _this6._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
                       });
                     }
                   } catch (error) {
-                    _this5._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+                    _this6._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
                   }
                 }
               },
@@ -5009,30 +5166,30 @@ var IOVPlayer = function () {
                 // in the browser where this video player lives is hidden
                 // then reselected. 'ex' is undefined the error is bug
                 // within the MSE C++ implementation in the browser.
-                _this5._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
-                _this5.videoPlayer.error({ code: 3 });
-                _this5.reinitializeMse();
+                _this6._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
+                _this6.videoPlayer.error({ code: 3 });
+                _this6.reinitializeMse();
               },
               onRemoveError: function onRemoveError(error) {
                 // observed this fail during a memry snapshot in chrome
                 // otherwise no observed failure, so ignore exception.
-                _this5._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
+                _this6._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
               },
               onError: function onError(error) {
-                _this5._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+                _this6._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
               }
             });
 
-            _this5.mseWrapper.append(_this5.moovBox);
+            _this6.mseWrapper.append(_this6.moovBox);
           },
           onSourceEnded: function onSourceEnded() {
             debug('on mediaSource sourceended');
 
             // @todo - do we need to clear the buffer manually?
-            _this5.stop();
+            _this6.stop();
           },
           onError: function onError(error) {
-            _this5._onError('mediaSource.generic', 'mediaSource error', error);
+            _this6._onError('mediaSource.generic', 'mediaSource error', error);
           }
         });
 
@@ -5049,9 +5206,9 @@ var IOVPlayer = function () {
           self.video = clone;
         }
 
-        self.videoPlayer.on('changesrc', function (event, _ref2) {
-          var eid = _ref2.eid,
-              url = _ref2.url;
+        self.videoPlayer.on('changesrc', function (event, _ref3) {
+          var eid = _ref3.eid,
+              url = _ref3.url;
 
           debug('iov-change-src on id ' + self.videoPlayer.id());
 
@@ -5078,7 +5235,7 @@ var IOVPlayer = function () {
         });
 
         // debug("Disregard: The play() request was interrupted ... its not an error!");
-        self.video.src = _this5.mseWrapper.getVideoElementSrc();
+        self.video.src = _this6.mseWrapper.getVideoElementSrc();
 
         // subscribe to a sync topic that will be called if the stream that is feeding
         // the mse service dies and has to be restarted that this player should restart the stream
@@ -5184,6 +5341,18 @@ clspPlugin.register();
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+
+/***/ 0:
+/*!***********************************************!*\
+  !*** multi ./src/js/videojs-mse-over-clsp.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(/*! ./src/js/videojs-mse-over-clsp.js */"./src/js/videojs-mse-over-clsp.js");
+
 
 /***/ }),
 

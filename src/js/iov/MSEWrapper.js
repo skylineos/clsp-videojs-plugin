@@ -29,9 +29,9 @@ export default class MSEWrapper {
       bufferTruncateFactor: 2,
       bufferTruncateValue: null,
       driftThreshold: 2000,
+      duration: 10,
+      enableMetrics: true,
     });
-
-    console.log(this.options.bufferSizeLimit);
 
     this.segmentQueue = [];
 
@@ -43,6 +43,66 @@ export default class MSEWrapper {
     if (!this.options.bufferTruncateValue) {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
     }
+
+    this.metrics = {};
+
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
+
+    this.EVENT_NAMES = [
+      'metric',
+    ];
+
+    for (let i = 0; i < this.EVENT_NAMES.length; i++) {
+      this.events[this.EVENT_NAMES[i]] = [];
+    }
+  }
+
+  on (name, action) {
+    debug(`Registering Listener for ${name} event...`);
+
+    if (!this.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
+    }
+
+    this.events[name].push(action);
+  }
+
+  trigger (name, value) {
+    debug(`Triggering ${name} event...`);
+
+    if (!this.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
+    }
+
+    for (let i = 0; i < this.events[name].length; i++) {
+      this.events[name][i](value, this);
+    }
+  }
+
+  metric (type, value) {
+    if (!this.options.enableMetrics) {
+      return;
+    }
+
+    switch (type) {
+      case 'sourceBuffer.lastKnownBufferSize': {
+        this.metrics[type] = value;
+        break;
+      }
+      default: {
+        if (!this.metrics.hasOwnProperty(type)) {
+          this.metrics[type] = 0;
+        }
+
+        this.metrics[type] += value;
+      }
+    }
+
+    this.trigger('metric', {
+      type,
+      value: this.metrics[type],
+    });
   }
 
   initializeMediaSource (options = {}) {
@@ -54,12 +114,23 @@ export default class MSEWrapper {
       onError: noop,
     });
 
+    this.metric('mediaSource.created', 1);
+
     // Kill the existing media source
     this.destroyMediaSource();
 
     this.mediaSource = new window.MediaSource();
 
-    this.mediaSource.addEventListener('sourceopen', options.onSourceOpen);
+    this.mediaSource.addEventListener('sourceopen', () => {
+      // This can only be set when the media source is open.
+      // @todo - does this do memory management for us so we don't have
+      // to call remove on the buffer, which is expensive?  It seems
+      // like it...
+      this.mediaSource.duration = this.options.duration;
+
+      options.onSourceOpen();
+    });
+
     this.mediaSource.addEventListener('sourceended', options.onSourceEnded);
     this.mediaSource.addEventListener('error', options.onError);
   }
@@ -70,6 +141,8 @@ export default class MSEWrapper {
     if (!this.mediaSource) {
       return;
     }
+
+    this.metric('mediaSource.destroyed', 1);
   }
 
   getVideoElementSrc () {
@@ -89,6 +162,8 @@ export default class MSEWrapper {
 
     // Ensure only a single objectURL exists at one time
     if (!this.objectURL) {
+      this.metric('objectURL.created', 1);
+
       this.objectURL = window.URL.createObjectURL(this.mediaSource);
     }
 
@@ -108,10 +183,15 @@ export default class MSEWrapper {
       return;
     }
 
+    this.metric('objectURL.revoked', 1);
+
+    // free the resource
     return window.URL.revokeObjectURL(this.mediaSource);
   }
 
   reinitializeVideoElementSrc () {
+    this.metric('mediaSource.reinitialized', 1);
+
     this.destroyVideoElementSrc();
 
     // reallocate, this will call media source open which will
@@ -150,6 +230,8 @@ export default class MSEWrapper {
     // Kill the existing source buffer
     this.destroySourceBuffer();
 
+    this.metric('sourceBuffer.created', 1);
+
     this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
     this.sourceBuffer.mode = 'sequence';
 
@@ -171,10 +253,14 @@ export default class MSEWrapper {
     if (!this.sourceBuffer) {
       return;
     }
+
+    this.metric('sourceBuffer.destroyed', 1);
   }
 
   queueSegment (segment) {
     debug(`Queueing segment.  The queue now has ${this.segmentQueue.length} segments.`);
+
+    this.metric('queue.added', 1);
 
     this.segmentQueue.push({
       timestamp: Date.now(),
@@ -193,6 +279,7 @@ export default class MSEWrapper {
         // @todo - perhaps we should re-add the last segment to the queue with a fresh
         // timestamp?  I think one cause of stream freezing is the sourceBuffer getting
         // starved, but I don't know if that's correct
+        this.metric('queue.removed', this.segmentQueue.length + 1);
         this.segmentQueue = [];
         this.sourceBuffer.abort();
         return;
@@ -200,9 +287,13 @@ export default class MSEWrapper {
 
       debug(`Appending to the buffer with an estimated drift of ${estimatedDrift}`);
 
+      this.metric('sourceBuffer.append', 1);
+
       this.sourceBuffer.appendBuffer(byteArray);
     }
     catch (error) {
+      this.metric('error.sourceBuffer.append', 1);
+
       this.options.onAppendError(error, byteArray);
     }
   }
@@ -214,31 +305,30 @@ export default class MSEWrapper {
 
     if (document.visibilityState === 'hidden') {
       debug('Tab not in focus - dropping frame...');
+      this.metric('frameDrop.hiddenTab', 1);
       return;
     }
 
     if (!this.isMediaSourceReady()) {
       debug('The mediaSource is not ready');
-      this.queueSegment(byteArray);
-      return;
-    }
-
-    if (!this.sourceBuffer) {
-      debug('The sourceBuffer has not been initialized');
+      this.metric('queue.mediaSourceNotReady', 1);
       this.queueSegment(byteArray);
       return;
     }
 
     if (!this.isSourceBufferReady()) {
       debug('The sourceBuffer is busy');
+      this.metric('queue.sourceBufferNotReady', 1);
       this.queueSegment(byteArray);
       return;
     }
 
-    if (this.segmentQueue.length !== 0) {
+    if (this.segmentQueue.length > 0) {
+      this.metric('queue.shift', 1);
       this._append(this.segmentQueue.shift());
     }
 
+    this.metric('queue.append', 1);
     this.queueSegment(byteArray);
   }
 
@@ -259,6 +349,8 @@ export default class MSEWrapper {
   }
 
   trimBuffer (info = this.getBufferTimes()) {
+    this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
+
     if (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
       debug('Removing old stuff from sourceBuffer...');
 
@@ -266,9 +358,11 @@ export default class MSEWrapper {
         // @todo - this is the biggest performance problem we have with this player.
         // Can you figure out how to manage the memory usage without causing the streams
         // to stutter?
+        this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
         this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
       }
       catch (error) {
+        this.metric('sourceBuffer.trim.error', 1);
         this.options.onRemoveError(error);
       }
     }
@@ -277,17 +371,21 @@ export default class MSEWrapper {
   onSourceBufferUpdateEnd () {
     silly('onUpdateEnd');
 
+    this.metric('sourceBuffer.updateEnd', 1);
+
     try {
       // Sometimes the mediaSource is removed while an update is being
       // processed, resulting in an error when trying to read the
       // "buffered" property.
       if (this.sourceBuffer.buffered.length <= 0) {
+        this.metric('sourceBuffer.updateEnd.bufferLength.empty', 1);
         debug('After updating, the sourceBuffer has no length!');
         return;
       }
     }
     catch (error) {
       // @todo - do we need to handle this?
+      this.metric('sourceBuffer.updateEnd.bufferLength.error', 1);
       debug('The mediaSource was removed while an update operation was occurring.');
       return;
     }
@@ -296,10 +394,12 @@ export default class MSEWrapper {
 
     if (info.previousBufferSize !== null && info.previousBufferSize > this.timeBuffered) {
       debug('On remove finish...');
+      this.metric('sourceBuffer.updateEnd.removeEvent', 1);
       this.options.onRemoveFinish(info);
     }
     else {
       debug('On append finish...');
+      this.metric('sourceBuffer.updateEnd.appendEvent', 1);
       this.options.onAppendFinish(info);
       this.trimBuffer(info);
     }

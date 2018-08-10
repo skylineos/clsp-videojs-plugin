@@ -91,9 +91,45 @@ export default class IOVPlayer {
 
     this.moovBox = null;
 
-    this.mseWrapper = MSEWrapper.factory();
-
     this.accumulatedErrors = {};
+
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
+
+    this.EVENT_NAMES = [
+      'metric',
+    ];
+
+    for (let i = 0; i < this.EVENT_NAMES.length; i++) {
+      this.events[this.EVENT_NAMES[i]] = [];
+    }
+
+    this.mseWrapper = MSEWrapper.factory();
+    this.mseWrapper.on('metric', ({ type, value }) => {
+      this.trigger('metric', { type, value });
+    });
+  }
+
+  on (name, action) {
+    debug(`Registering Listener for ${name} event...`);
+
+    if (!this.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
+    }
+
+    this.events[name].push(action);
+  }
+
+  trigger (name, value) {
+    debug(`Triggering ${name} event...`);
+
+    if (!this.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
+    }
+
+    for (let i = 0; i < this.events[name].length; i++) {
+      this.events[name][i](value, this);
+    }
   }
 
   isMimeCodecSupported (mimeCodec) {
@@ -227,7 +263,6 @@ export default class IOVPlayer {
 
     this.state = 'idle';
 
-    // free resource
     if (this.mseWrapper.mediaSource) {
       this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
     }

@@ -1,0 +1,9 @@
+$icon-font-path: '~videojs-font/fonts';
+@import 'node_modules/video.js/src/css/video-js.scss';
+
+@import '~/dist/videojs-mse-over-clsp.css';
+
+.video-js {
+  width: 356px;
+  height: 244px;
+}

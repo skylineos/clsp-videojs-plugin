@@ -3,41 +3,39 @@
 <head>
   <meta charset="utf-8">
   <title>videojs-mse-over-clsp Demo</title>
-  <link href="//vjs.zencdn.net/6.7.1/video-js.css" rel="stylesheet">
-  <link href="/dist/videojs-mse-over-clsp.css" rel="stylesheet">
-  <script
-    src="//code.jquery.com/jquery-3.3.1.min.js"
-    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-    crossorigin="anonymous"
-  ></script>
-  <style>
-    video-container {
-      width: 356,
-      height: 244
-    }
-  </style>
+  <link href="/dist/demo.css" rel="stylesheet">
+  <script src="/dist/demo.js"></script>
 </head>
 <body>
   <table>
     <tr>
       <td class="video-container">
         <video
-          id="vw1"
-          width="352"
-          height="240"
+          id="vw0"
           class="video-js vjs-default-skin"
           controls
           muted
         >
-          <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'"/>
-          <source id="hls1"  src="" type="application/x-mpegURL" />
+          <source id="src0" src="" type="video/mp4; codecs='avc1.42E01E'"/>
+          <source id="hls0"  src="" type="application/x-mpegURL" />
         </video>
       </td>
       <td  class="video-container">
         <video
+          id="vw1"
+          class="video-js vjs-default-skin"
+          controls
+          muted
+        >
+          <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'" />
+          <source id="hls1"  src="" type="application/x-mpegURL" />
+        </video>
+      </td>
+    </tr>
+    <tr>
+     <td class="video-container">
+        <video
           id="vw2"
-          width="352"
-          height="240"
           class="video-js vjs-default-skin"
           controls
           muted
@@ -46,32 +44,15 @@
           <source id="hls2"  src="" type="application/x-mpegURL" />
         </video>
       </td>
-    </tr>
-    <tr>
-     <td class="video-container">
+      <td class="video-container">
         <video
           id="vw3"
-          width="352"
-          height="240"
           class="video-js vjs-default-skin"
           controls
           muted
         >
           <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'" />
           <source id="hls3"  src="" type="application/x-mpegURL" />
-        </video>
-      </td>
-      <td class="video-container">
-        <video
-          id="vw4"
-          width="352"
-          height="240"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        >
-          <source id="src4" src="" type="video/mp4; codecs='avc1.42E01E'" />
-          <source id="hls4"  src="" type="application/x-mpegURL" />
         </video>
       </td>
     </tr>
@@ -81,188 +62,29 @@
     <tr><td colspan="2">URL format:   clsp://(sfs ip)/(stream name)</td></tr>
     <tr><td>CLSP URL</td><td>
       <input
+        id="url0"
+        style="width: 400px;"
+      /></td></tr>
+    <tr><td>CLSP URL</td><td>
+      <input
         id="url1"
-        value="clsp://172.28.12.248/testpattern"
         style="width: 400px;"
       /></td></tr>
     <tr><td>CLSP URL</td><td>
       <input
         id="url2"
-        value="clsp://172.28.12.247/testpattern"
         style="width: 400px;"
       /></td></tr>
     <tr><td>CLSP URL</td><td>
       <input
         id="url3"
-        value="clsps://sky-qa-dionysus.qa.skyline.local/testpattern"
-        style="width: 400px;"
-      /></td></tr>
-    <tr><td>CLSP URL</td><td>
-      <input
-        id="url4"
-        value="clsp://172.28.12.247/testpattern"
         style="width: 400px;"
       /></td></tr>
     <tr><td colspan="2"><button id="submit">Submit</button></td></tr>
     <tr><td colspan="2"><div id="message"></div></td></tr>
   </table>
 
-  <script src="//vjs.zencdn.net/6.7.1/video.js"></script>
-  <script src="/dist/videojs-mse-over-clsp.js"></script>
-  <script>
-    $('#submit').click(function(){
-      var ip = $('#ip').val();
-      var vwallsrc = ['','','',''];
-      vwallsrc[0] = $('#src1').val();
-      vwallsrc[1] = $('#name2').val();
-      vwallsrc[2] = $('#name3').val();
-      vwallsrc[3] = $('#name4').val();
-
-      function browserIsCompatable () {
-        // Chrome 1+
-        const isChrome = (Boolean(window.chrome) && Boolean(window.chrome.webstore));
-
-        if (!isChrome) {
-          return false;
-        }
-
-        try {
-          return (parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10) >= 52);
-        }
-        catch (error) {
-          return false;
-        }
-      }
-
-      if (browserIsCompatable()) {
-        console.log('found supported version of chrome!')
-      } else {
-        console.log('browser not supported!!')
-      }
-
-      setTimeout(function(){
-        var srcCount = 1;
-        vwallsrc.forEach(function(name){
-          var url = $( '#url' + srcCount ).val();
-          $( '#src' + srcCount ).attr('src',url);
-
-          // @todo
-          // var hls = "";
-          // $( '#hls' + srcCount ).attr('src', hls);
-
-          if (url) {
-            window.videojs('vw' + srcCount).clsp({
-              onPlayFailed: function(player) {
-                console.log("failed to play");
-                console.log(player);
-
-
-              }
-            });
-          } else {
-            // window.videojs('vw' + srcCount, {
-            //   muted: true,
-            //   sources: [{
-            //     src: "http://vjs.zencdn.net/v/oceans.mp4",
-            //     type: "video/mp4"
-            //   }, {
-            //     src: "http://vjs.zencdn.net/v/oceans.webm",
-            //     type: "video/webm"
-            //   }, {
-            //     src: "http://vjs.zencdn.net/v/oceans.ogv",
-            //     type: "video/ogg"
-            //   }]
-            // });
-          }
-
-          srcCount++;
-        });
-      }, 0);
-
-      $('#message').html('videos configured');
-    });
-  </script>
-
   <hr />
-
-  <script>
-    function setupVwallCell(eid, src, cellId) {
-        if (document.getElementById(eid) === null) {
-            alert("(1) No match for " + eid);
-            return;
-        }
-
-        // return markup for
-        var cell = document.getElementById('cell');
-        var html = cell.innerHTML.replace(/\$cellId/g,parseInt(cellId));
-        var html = html.replace("$src",src);
-
-        $('#'+eid).html(html);
-        $(function(){
-            var celm = document.getElementById('video-'+parseInt(cellId));
-            if (celm !== null){
-                $(function(){
-                    window.videojs(celm).clsp({
-                           onPlayFailed: function(player) {
-                               console.log("failed to play");
-                               console.log(player);
-                           }
-                    });
-
-                });
-
-                //window.videojs(celm).clsp();
-            } else {
-                alert("(2) No match for video-"+parseInt(cellId));
-            }
-        });
-    }
-
-    function setupVwall(eid, urlList) {
-        var html = "<table>";
-        for(var cellId = 0; cellId < urlList.length; cellId++){
-            if (cellId % 4 === 0) {
-                html += "<tr>";
-            }
-
-            var vwcel = 'vwcell-'+parseInt(cellId);
-            html += '<td id="'+vwcel+'"></td>';
-            if (cellId % 4 === 3) {
-                html += "</tr>";
-            }
-        }
-        if (urlList.length < 4) {
-            html += "</tr>";
-        }
-        html += "</table>";
-        console.log(html);
-        $('#'+eid).html(html);
-
-        $(function(){
-            for(cellId = 0; cellId < urlList.length; cellId++){
-                var vwcel = 'vwcell-'+parseInt(cellId);
-                var url = urlList[cellId];
-                setupVwallCell(vwcel, url, cellId);
-            }
-        });
-
-    }
-
-    function onclick() {
-        var urlList = [];
-        var eid = "videowall";
-
-        var numvideos = $('#numvideos').val();
-        for(var i = 0; i < numvideos; i++) {
-            urlList.push( $('#url').val() );
-        }
-        setupVwall(eid,urlList);
-    }
-
-    $(function(){
-       $('#walltest').click(onclick);
-    });
-  </script>
 
   <div>
     <span>Url:</span>
@@ -286,105 +108,42 @@
 
   <div id="videowall"></div>
 
+  <hr>
 
-<hr>
-<h2>Video tour</h2>
-Enter a list of clsp urls separated by newline.
-<br>
-<textarea id="tour-list" rows="10" cols="80" style="overflow: scroll;">
-clsp://172.28.12.247/testpattern
-clsp://172.28.12.57:9001/FairfaxVideo0520
-clsp://172.28.12.57:9001/40004
-</textarea>
+  <h2>Video tour</h2>
+  <span>Enter a list of clsp urls separated by newline.</span>
 
-<h3 id="now-playing"></h3>
+  <br>
+
+  <textarea
+    id="tour-list"
+    rows="10"
+    cols="80"
+    style="overflow: scroll;"
+  ></textarea>
+
+  <h3 id="now-playing"></h3>
+
   <video id="tour-video"
     width="352"
     height="240"
     autoplay
     muted
   >
-  <source id="tour-first-source"
-    src=""
-    type="video/mp4; codecs='avc1.42E01E'"
-  />
-
+    <source id="tour-first-source"
+      src=""
+      type="video/mp4; codecs='avc1.42E01E'"
+    />
   </video>
 
-<br>
-
-Play time per <input type="number" id="tour-switch-interval" value="10"/>
-<button id="start-tour">Start Video Tour</button>
-
-
-<script>
-$(function(){
-  var tour = {
-    player: null,
-    plist: [],
-    interval: 10,
-    counter: 0,
-    timer: null
-  };
-
-  $('#start-tour').click(function(){
-    tour.interval = parseInt($('#tour-switch-interval').val());
-    tour.plist = [];
-
-    var x = $('#tour-list').val().split("\n");
-    for(var i = 0; i < x.length; i++) {
-        if (x[i].length > 0) {
-            tour.plist.push(x[i]);
-        }
-    }
-
-
-
-
-    if (tour.plist.length < 2) {
-       alert("at least two source needed!");
-       return;
-    }
-    $('#tour-first-source').attr('src',tour.plist[0]);
-
-    tour.counter = 1;
-    tour.player = null;
-
-    if (tour.timer !== null) {
-      clearInterval(tour.timer);
-    }
-
-    $(function(){
-      tour.player = window.videojs('#tour-video');
-      tour.player.clsp(); // start playing first stream
-      $('#now-playing').html(tour.plist[0]);
-
-      tour.player.on("network-error", function(evt, message){
-          console.log("!!!!! Handled network-error", evt);
-          console.log(message);
-      });
-
-
-      tour.timer = setInterval(function(){
-        var url = tour.plist[ tour.counter % tour.plist.length ];
-        $('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
-
-        tour.counter += 1;
-        console.log("selected url", url, tour.plist);
-        tour.player.trigger('changesrc', {eid: 'tour-video', url:url});
-      }, tour.interval * 1000);
-
-    });
-
-  });
-
-});
-</script>
-
-
-
-<hr>
   <br>
+
+  <span>Play time per</span>
+  <input type="number" id="tour-switch-interval" value="10" />
+  <button id="start-tour">Start Video Tour</button>
+
+  <hr>
+
   <h3>Headless clsp player</h3>
   <video id="headless"
     width="352"
@@ -392,110 +151,12 @@ $(function(){
     controls
     autoplay
     muted
-  >
-
-
-   </video>
+  ></video>
 
   <hr>
-<!--
-Example of how to play clsp without video js
-
--->
-
-
-
 
   <div>Url for headless player: <input id="headless_url" tyle="text"/></div>
   <div><button id="headless_play">Headless Player</button></div>
-
-
-
-<script>
-function parseUrl(_src) {
-    var iov_config = {};
-    var parser = document.createElement('a');
-
-    var useSSL = false;
-    var default_port;
-    var kluged_src;
-
-    if (_src.substring(0,5).toLowerCase() === 'clsps') {
-        useSSL = true;
-        kluged_src = _src.replace('clsps','https');
-        default_port = 443;
-    } else {
-        // firefox/ie hack!
-        kluged_src = _src.replace('clsp','http');
-        default_port = 9001;
-    }
-
-    parser.href = kluged_src;
-            //parser.href = "http:" + parser.pathname;
-
-    var hostname = parser.hostname;
-    var port = parser.port;
-    var t = parser.pathname.split("/");
-    var streamName = t[t.length-1];
-
-    if (port.length === 0) {
-        port = default_port;
-    }
-
-
-    // @ is a special address maening the server that loaded the web page.
-    if (hostname === '@') {
-        hostname = window.location.hostname;
-    }
-
-    iov_config.mqtt_player = null;
-    iov_config.port = parseInt(port);
-    iov_config.address = hostname;
-    iov_config.streamName = streamName;
-    iov_config.enabled = true;
-    iov_config.useSSL = useSSL;
-
-    return iov_config;
-}
-
-$(function(){
-    $('#headless_play').click(function(){
-////////////////////////////////////////////////
-// headless play demo
-////////////////////////////////////////////////
-     var src = $('#headless_url').val();
-     var iov_config = parseUrl(src);
-
-     iov_config.videoElement = document.getElementById('headless');
-     iov_config.appStart = function(iov) {
-        iovPlayer = iov.player();
-        iovPlayer.play('headless', iov_config.streamName,
-           function() {
-              console.log("first chunk of video received, remove poster if its playing");
-           },
-           function() {
-              console.log("video received");
-           }
-       );
-     };
-
-     var IOV = videojs.getPlugin('clsp').clsp_IOV;
-     var iov = new IOV(iov_config);
-     iov.initialize();
-/////////////////////////////////////////////////
-   });
-});
-
-</script>
-
-
-
-
-
-
-</script>
-
-
 
   <template id="cell">
     <div class="video-container">
@@ -517,8 +178,6 @@ $(function(){
     </div>
   </template>
 
-
-
-
+  <script src="/dist/videojs-mse-over-clsp.js"></script>
 </body>
 </html>

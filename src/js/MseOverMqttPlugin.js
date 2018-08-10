@@ -74,7 +74,9 @@ export default function (defaults = {}) {
 
         var videoElement = player.el();
 
-        var iov = IOV.factory(player, {
+        console.log(videoElement)
+
+        this.iov = IOV.factory(player, {
           port: mqttHandler.port,
           address: mqttHandler.address,
           useSSL: mqttHandler.useSSL,
@@ -122,7 +124,12 @@ export default function (defaults = {}) {
           },
         });
 
-        iov.initialize();
+        this.iov.initialize();
+
+        this.iov.player.on('metric', ({ type, value }) => {
+          // @see - https://docs.videojs.com/tutorial-plugins.html#events
+          this.trigger('metric', { type, value });
+        });
       });
     }
   }
