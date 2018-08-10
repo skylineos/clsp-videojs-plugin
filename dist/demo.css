@@ -1428,10 +1428,15 @@ video::-webkit-media-text-track-display {
   height: 244px; }
 
 .video-metrics {
-  display: flex; }
-  .video-metrics div {
-    height: 100%; }
-  .video-metrics span {
-    display: block; }
+  display: flex;
+  flex-direction: column; }
+  .video-metrics .metric {
+    display: flex; }
+    .video-metrics .metric:nth-of-type(2n) {
+      background: lightslategrey; }
+    .video-metrics .metric .type {
+      flex-grow: 1;
+      flex-shrink: 0;
+      text-align: right; }
 
 /*# sourceMappingURL=demo.css.map*/

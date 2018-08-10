@@ -117,6 +117,7 @@ export default class MSEWrapper {
       return;
     }
 
+    console.log(type, value)
     switch (type) {
       case 'sourceBuffer.lastKnownBufferSize': {
         this.metrics[type] = value;
@@ -204,6 +205,7 @@ export default class MSEWrapper {
 
   destroyVideoElementSrc () {
     debug('destroyVideoElementSrc...');
+    console.log('destroygin...');
 
     if (!this.mediaSource) {
       // @todo - should this throw?
@@ -215,20 +217,22 @@ export default class MSEWrapper {
       return;
     }
 
-    this.metric('objectURL.revoked', 1);
+    // this.metric('objectURL.revoked', 1);
+
+    this.objectURL = null;
 
     // free the resource
     return window.URL.revokeObjectURL(this.mediaSource);
   }
 
   reinitializeVideoElementSrc () {
-    this.metric('mediaSource.reinitialized', 1);
+    // this.metric('mediaSource.reinitialized', 1);
 
-    this.destroyVideoElementSrc();
+    // this.destroyVideoElementSrc();
 
-    // reallocate, this will call media source open which will
-    // append the MOOV atom.
-    return this.getVideoElementSrc();
+    // // reallocate, this will call media source open which will
+    // // append the MOOV atom.
+    // return this.getVideoElementSrc();
   }
 
   isMediaSourceReady () {

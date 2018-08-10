@@ -10,13 +10,19 @@ $icon-font-path: '~videojs-font/fonts';
 
 .video-metrics {
   display: flex;
+  flex-direction: column;
 
-  div {
-    // width: 25%;
-    height: 100%;
-  }
+  .metric {
+    display: flex;
 
-  span {
-    display: block;
+    &:nth-of-type(2n) {
+      background: lightslategrey;
+    }
+
+    .type {
+      flex-grow: 1;
+      flex-shrink: 0;
+      text-align: right;
+    }
   }
 }

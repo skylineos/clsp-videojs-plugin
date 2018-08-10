@@ -65,7 +65,7 @@ function initializeWall () {
     const $videoMetricContainer = $container.find('.video-metrics');
 
     tech.on('metric', (event, { metric }) => {
-      $videoMetricContainer.find(`.${metric.type.replace(/\./g, '-')}-value`).html(metric.value);
+      $videoMetricContainer.find(`.${metric.type.replace(/\./g, '-')} .value`).html(metric.value);
     });
   }
 

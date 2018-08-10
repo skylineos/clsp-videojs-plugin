@@ -159,7 +159,7 @@ function initializeWall() {
     tech.on('metric', function (event, _ref) {
       var metric = _ref.metric;
 
-      $videoMetricContainer.find('.' + metric.type.replace(/\./g, '-') + '-value').html(metric.value);
+      $videoMetricContainer.find('.' + metric.type.replace(/\./g, '-') + ' .value').html(metric.value);
     });
   }
 
