@@ -10574,7 +10574,7 @@ var _typeof2=typeof Symbol==="function"&&typeof Symbol.iterator==="symbol"?funct
  * Includes vtt.js <https://github.com/mozilla/vtt.js>
  * Available under Apache License Version 2.0
  * <https://github.com/mozilla/vtt.js/blob/master/LICENSE>
- */function _interopDefault(ex){return ex&&(typeof ex==='undefined'?'undefined':_typeof2(ex))==='object'&&'default'in ex?ex['default']:ex;}var window=_interopDefault(__webpack_require__(/*! global/window */ "./node_modules/global/window.js"));var document=_interopDefault(__webpack_require__(/*! global/document */ "./node_modules/global/document.js"));var tsml=_interopDefault(__webpack_require__(/*! tsml */ "./node_modules/tsml/tsml.js"));var safeParseTuple=_interopDefault(__webpack_require__(/*! safe-json-parse/tuple */ "./node_modules/safe-json-parse/tuple.js"));var xhr=_interopDefault(__webpack_require__(/*! xhr */ "./node_modules/xhr/index.js"));var vtt=_interopDefault(__webpack_require__(/*! videojs-vtt.js */ "./node_modules/videojs-vtt.js/lib/browser-index.js"));var version="6.7.1";/**
+ */function _interopDefault(ex){return ex&&(typeof ex==='undefined'?'undefined':_typeof2(ex))==='object'&&'default'in ex?ex['default']:ex;}var window=_interopDefault(__webpack_require__(/*! global/window */ "./node_modules/global/window.js"));var document=_interopDefault(__webpack_require__(/*! global/document */ "./node_modules/global/document.js"));var tsml=_interopDefault(__webpack_require__(/*! tsml */ "./node_modules/tsml/tsml.js"));var safeParseTuple=_interopDefault(__webpack_require__(/*! safe-json-parse/tuple */ "./node_modules/safe-json-parse/tuple.js"));var xhr=_interopDefault(__webpack_require__(/*! xhr */ "./node_modules/xhr/index.js"));var vtt=_interopDefault(__webpack_require__(/*! videojs-vtt.js */ "./node_modules/video.js/node_modules/videojs-vtt.js/lib/browser-index.js"));var version="6.7.1";/**
  * @file browser.js
  * @module browser
  */var USER_AGENT=window.navigator&&window.navigator.userAgent||'';var webkitVersionMap=/AppleWebKit\/([\d.]+)/i.exec(USER_AGENT);var appleWebkitVersion=webkitVersionMap?parseFloat(webkitVersionMap.pop()):null;/*
@@ -20242,10 +20242,10 @@ if(!IS_IE8&&Object.defineProperty){Object.defineProperty(videojs,'middleware',{v
 
 /***/ }),
 
-/***/ "./node_modules/videojs-vtt.js/lib/browser-index.js":
-/*!**********************************************************!*\
-  !*** ./node_modules/videojs-vtt.js/lib/browser-index.js ***!
-  \**********************************************************/
+/***/ "./node_modules/video.js/node_modules/videojs-vtt.js/lib/browser-index.js":
+/*!********************************************************************************!*\
+  !*** ./node_modules/video.js/node_modules/videojs-vtt.js/lib/browser-index.js ***!
+  \********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -20273,9 +20273,9 @@ if(!IS_IE8&&Object.defineProperty){Object.defineProperty(videojs,'middleware',{v
 var window = __webpack_require__(/*! global/window */ "./node_modules/global/window.js");
 
 var vttjs = module.exports = {
-  WebVTT: __webpack_require__(/*! ./vtt.js */ "./node_modules/videojs-vtt.js/lib/vtt.js"),
-  VTTCue: __webpack_require__(/*! ./vttcue.js */ "./node_modules/videojs-vtt.js/lib/vttcue.js"),
-  VTTRegion: __webpack_require__(/*! ./vttregion.js */ "./node_modules/videojs-vtt.js/lib/vttregion.js")
+  WebVTT: __webpack_require__(/*! ./vtt.js */ "./node_modules/video.js/node_modules/videojs-vtt.js/lib/vtt.js"),
+  VTTCue: __webpack_require__(/*! ./vttcue.js */ "./node_modules/video.js/node_modules/videojs-vtt.js/lib/vttcue.js"),
+  VTTRegion: __webpack_require__(/*! ./vttregion.js */ "./node_modules/video.js/node_modules/videojs-vtt.js/lib/vttregion.js")
 };
 
 window.vttjs = vttjs;
@@ -20302,10 +20302,10 @@ if (!window.VTTCue) {
 
 /***/ }),
 
-/***/ "./node_modules/videojs-vtt.js/lib/vtt.js":
-/*!************************************************!*\
-  !*** ./node_modules/videojs-vtt.js/lib/vtt.js ***!
-  \************************************************/
+/***/ "./node_modules/video.js/node_modules/videojs-vtt.js/lib/vtt.js":
+/*!**********************************************************************!*\
+  !*** ./node_modules/video.js/node_modules/videojs-vtt.js/lib/vtt.js ***!
+  \**********************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
@@ -21594,10 +21594,10 @@ module.exports = WebVTT;
 
 /***/ }),
 
-/***/ "./node_modules/videojs-vtt.js/lib/vttcue.js":
-/*!***************************************************!*\
-  !*** ./node_modules/videojs-vtt.js/lib/vttcue.js ***!
-  \***************************************************/
+/***/ "./node_modules/video.js/node_modules/videojs-vtt.js/lib/vttcue.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/video.js/node_modules/videojs-vtt.js/lib/vttcue.js ***!
+  \*************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
@@ -21895,10 +21895,10 @@ module.exports = VTTCue;
 
 /***/ }),
 
-/***/ "./node_modules/videojs-vtt.js/lib/vttregion.js":
-/*!******************************************************!*\
-  !*** ./node_modules/videojs-vtt.js/lib/vttregion.js ***!
-  \******************************************************/
+/***/ "./node_modules/video.js/node_modules/videojs-vtt.js/lib/vttregion.js":
+/*!****************************************************************************!*\
+  !*** ./node_modules/video.js/node_modules/videojs-vtt.js/lib/vttregion.js ***!
+  \****************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
