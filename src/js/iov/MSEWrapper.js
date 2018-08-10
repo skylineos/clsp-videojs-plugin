@@ -44,6 +44,33 @@ export default class MSEWrapper {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
     }
 
+    this.METRIC_TYPES = [
+      'mediaSource.created',
+      'mediaSource.destroyed',
+      'objectURL.created',
+      'objectURL.revoked',
+      'mediaSource.reinitialized',
+      'sourceBuffer.created',
+      'sourceBuffer.destroyed',
+      'queue.added',
+      'queue.removed',
+      'sourceBuffer.append',
+      'error.sourceBuffer.append',
+      'frameDrop.hiddenTab',
+      'queue.mediaSourceNotReady',
+      'queue.sourceBufferNotReady',
+      'queue.shift',
+      'queue.append',
+      'sourceBuffer.lastKnownBufferSize',
+      'sourceBuffer.trim',
+      'sourceBuffer.trim.error',
+      'sourceBuffer.updateEnd',
+      'sourceBuffer.updateEnd.bufferLength.empty',
+      'sourceBuffer.updateEnd.bufferLength.error',
+      'sourceBuffer.updateEnd.removeEvent',
+      'sourceBuffer.updateEnd.appendEvent',
+    ];
+
     this.metrics = {};
 
     // @todo - there must be a more proper way to do events than this...
@@ -82,6 +109,11 @@ export default class MSEWrapper {
 
   metric (type, value) {
     if (!this.options.enableMetrics) {
+      return;
+    }
+
+    if (!this.METRIC_TYPES.includes(type)) {
+      // @todo - should this throw?
       return;
     }
 

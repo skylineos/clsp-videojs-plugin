@@ -101,6 +101,16 @@
       type="number"
     />
   </div>
+  <div>
+    <label for="showMetrics">
+      <input
+        id="showMetrics"
+        checked="true"
+        type="checkbox"
+      />
+      <span>Show Metrics</span>
+    </label>
+  </div>
 
   <br />
 
@@ -124,13 +134,15 @@
 
   <h3 id="now-playing"></h3>
 
-  <video id="tour-video"
+  <video
+    id="tour-video"
     width="352"
     height="240"
     autoplay
     muted
   >
-    <source id="tour-first-source"
+    <source
+      id="tour-first-source"
       src=""
       type="video/mp4; codecs='avc1.42E01E'"
     />
@@ -139,7 +151,11 @@
   <br>
 
   <span>Play time per</span>
-  <input type="number" id="tour-switch-interval" value="10" />
+  <input
+    id="tour-switch-interval"
+    type="number"
+    value="10"
+  />
   <button id="start-tour">Start Video Tour</button>
 
   <hr>
@@ -175,6 +191,60 @@
           type="video/mp4; codecs='avc1.42E01E'"
         />
       </video>
+    </div>
+    <div class="video-metrics">
+      <div>
+        <span class="mediaSource-created-value"></span>
+        <span class="mediaSource-destroyed-value"></span>
+        <span class="objectURL-created-value"></span>
+        <span class="objectURL-revoked-value"></span>
+        <span class="mediaSource-reinitialized-value"></span>
+        <span class="sourceBuffer-created-value"></span>
+        <span class="sourceBuffer-destroyed-value"></span>
+        <span class="queue-added-value"></span>
+        <span class="queue-removed-value"></span>
+        <span class="sourceBuffer-append-value"></span>
+        <span class="error-sourceBuffer-append-value"></span>
+        <span class="frameDrop-hiddenTab-value"></span>
+        <span class="queue-mediaSourceNotReady-value"></span>
+        <span class="queue-sourceBufferNotReady-value"></span>
+        <span class="queue-shift-value"></span>
+        <span class="queue-append-value"></span>
+        <span class="sourceBuffer-lastKnownBufferSize-value"></span>
+        <span class="sourceBuffer-trim-value"></span>
+        <span class="sourceBuffer-trim-error-value"></span>
+        <span class="sourceBuffer-updateEnd-value"></span>
+        <span class="sourceBuffer-updateEnd-bufferLength-empty-value"></span>
+        <span class="sourceBuffer-updateEnd-bufferLength-error-value"></span>
+        <span class="sourceBuffer-updateEnd-removeEvent-value"></span>
+        <span class="sourceBuffer-updateEnd-appendEvent-value"></span>
+      </div>
+      <div>
+        <span>mediaSource.created</span>
+        <span>mediaSource.destroyed</span>
+        <span>objectURL.created</span>
+        <span>objectURL.revoked</span>
+        <span>mediaSource.reinitialized</span>
+        <span>sourceBuffer.created</span>
+        <span>sourceBuffer.destroyed</span>
+        <span>queue.added</span>
+        <span>queue.removed</span>
+        <span>sourceBuffer.append</span>
+        <span>error.sourceBuffer.append</span>
+        <span>frameDrop.hiddenTab</span>
+        <span>queue.mediaSourceNotReady</span>
+        <span>queue.sourceBufferNotReady</span>
+        <span>queue.shift</span>
+        <span>queue.append</span>
+        <span>sourceBuffer.lastKnownBufferSize</span>
+        <span>sourceBuffer.trim</span>
+        <span>sourceBuffer.trim.error</span>
+        <span>sourceBuffer.updateEnd</span>
+        <span>sourceBuffer.updateEnd.bufferLength.empty</span>
+        <span>sourceBuffer.updateEnd.bufferLength.error</span>
+        <span>sourceBuffer.updateEnd.removeEvent</span>
+        <span>sourceBuffer.updateEnd.appendEvent</span>
+      </div>
     </div>
   </template>
 

@@ -110,230 +110,194 @@ __webpack_require__.r(__webpack_exports__);
 
 window.videojs = video_js__WEBPACK_IMPORTED_MODULE_2___default.a;
 
-jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
-  jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
-    var tour = {
-      player: null,
-      plist: [],
-      interval: 10,
-      counter: 0,
-      timer: null
-    };
+var tourUrls = ['clsp://172.28.12.247/testpattern', 'clsp://172.28.12.57:9001/FairfaxVideo0520', 'clsp://172.28.12.57:9001/40004'];
 
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#start-tour').click(function () {
-      tour.interval = parseInt(jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-switch-interval').val());
-      tour.plist = [];
+var playerUrls = ['clsp://172.28.12.248/testpattern', 'clsp://172.28.12.247/testpattern', 'clsps://sky-qa-dionysus.qa.skyline.local/testpattern', 'clsp://172.28.12.247/testpattern'];
 
-      var x = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-list').val().split("\n");
-      for (var i = 0; i < x.length; i++) {
-        if (x[i].length > 0) {
-          tour.plist.push(x[i]);
-        }
+function initializePlayers() {
+  for (var i = 0; i < playerUrls.length; i++) {
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#url' + i).val(playerUrls[i]);
+  }
+
+  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#submit').click(function () {
+    for (var _i = 0; _i < playerUrls.length && _i < 4; _i++) {
+      var url = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#url' + _i).val();
+
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#src' + _i).attr('src', url);
+
+      if (url) {
+        window.videojs('vw' + _i).clsp();
       }
-
-      if (tour.plist.length < 2) {
-        alert("at least two source needed!");
-        return;
-      }
-      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-first-source').attr('src', tour.plist[0]);
-
-      tour.counter = 1;
-      tour.player = null;
-
-      if (tour.timer !== null) {
-        clearInterval(tour.timer);
-      }
-
-      jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
-        tour.player = window.videojs('#tour-video');
-        tour.player.clsp(); // start playing first stream
-        jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html(tour.plist[0]);
-
-        tour.player.on("network-error", function (evt, message) {
-          console.log("!!!!! Handled network-error", evt);
-          console.log(message);
-        });
-
-        tour.timer = setInterval(function () {
-          var url = tour.plist[tour.counter % tour.plist.length];
-          jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
-
-          tour.counter += 1;
-          console.log("selected url", url, tour.plist);
-          tour.player.trigger('changesrc', { eid: 'tour-video', url: url });
-        }, tour.interval * 1000);
-      });
-    });
+    }
   });
+}
 
+function initializeWall() {
   function setupVwallCell(eid, src, cellId) {
-    if (document.getElementById(eid) === null) {
-      alert("(1) No match for " + eid);
+    var $container = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#' + eid);
+
+    if (!$container.length) {
+      window.alert('No match for element "' + eid + '"');
       return;
     }
 
-    // return markup for
-    var cell = document.getElementById('cell');
-    var html = cell.innerHTML.replace(/\$cellId/g, parseInt(cellId));
-    var html = html.replace("$src", src);
+    var html = document.getElementById('cell').innerHTML.replace(/\$cellId/g, cellId).replace('$src', src);
 
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#' + eid).html(html);
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
-      var celm = document.getElementById('video-' + parseInt(cellId));
-      if (celm !== null) {
-        jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
-          window.videojs(celm).clsp({
-            onPlayFailed: function onPlayFailed(player) {
-              console.log("failed to play");
-              console.log(player);
-            }
-          });
-        });
+    $container.html(html);
 
-        //window.videojs(celm).clsp();
-      } else {
-        alert("(2) No match for video-" + parseInt(cellId));
-      }
-    });
-  }
+    var cell = document.getElementById('video-' + cellId);
 
-  function setupVwall(eid, urlList) {
-    var html = "<table>";
-    for (var cellId = 0; cellId < urlList.length; cellId++) {
-      if (cellId % 4 === 0) {
-        html += "<tr>";
-      }
-
-      var vwcel = 'vwcell-' + parseInt(cellId);
-      html += '<td id="' + vwcel + '"></td>';
-      if (cellId % 4 === 3) {
-        html += "</tr>";
-      }
+    if (!cell) {
+      window.alert('No match for element "video-' + parseInt(cellId) + '"');
     }
-    if (urlList.length < 4) {
-      html += "</tr>";
-    }
-    html += "</table>";
-    console.log(html);
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#' + eid).html(html);
 
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
-      for (cellId = 0; cellId < urlList.length; cellId++) {
-        var vwcel = 'vwcell-' + parseInt(cellId);
-        var url = urlList[cellId];
-        setupVwallCell(vwcel, url, cellId);
-      }
+    var player = window.videojs(cell);
+    var tech = player.clsp();
+
+    var $videoMetricContainer = $container.find('.video-metrics');
+
+    tech.on('metric', function (event, _ref) {
+      var metric = _ref.metric;
+
+      $videoMetricContainer.find('.' + metric.type.replace(/\./g, '-') + '-value').html(metric.value);
     });
   }
 
   function onclick() {
     var urlList = [];
-    var eid = "videowall";
-
     var numvideos = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#numvideos').val();
+
     for (var i = 0; i < numvideos; i++) {
       urlList.push(jquery__WEBPACK_IMPORTED_MODULE_1___default()('#url').val());
     }
-    setupVwall(eid, urlList);
+
+    var html = '<table>';
+
+    for (var _i2 = 0; _i2 < urlList.length; _i2++) {
+      if (_i2 % 4 === 0) {
+        html += '<tr>';
+      }
+
+      html += '<td id="vwcell-' + _i2 + '"></td>';
+
+      if (_i2 % 4 === 3) {
+        html += '</tr>';
+      }
+    }
+
+    if (urlList.length < 4) {
+      html += '</tr>';
+    }
+
+    html += '</table>';
+
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#videowall').html(html);
+
+    for (var _i3 = 0; _i3 < urlList.length; _i3++) {
+      setupVwallCell('vwcell-' + _i3, urlList[_i3], _i3);
+    }
   }
 
-  jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#walltest').click(onclick);
-  });
+  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#walltest').click(onclick);
 
-  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#submit').click(function () {
-    var ip = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#ip').val();
-    var vwallsrc = ['', '', '', ''];
-    vwallsrc[0] = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#src1').val();
-    vwallsrc[1] = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#name2').val();
-    vwallsrc[2] = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#name3').val();
-    vwallsrc[3] = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#name4').val();
+  var $showMetrics = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#showMetrics');
 
-    function browserIsCompatable() {
-      // Chrome 1+
-      var isChrome = Boolean(window.chrome) && Boolean(window.chrome.webstore);
-
-      if (!isChrome) {
-        return false;
-      }
-
-      try {
-        return parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10) >= 52;
-      } catch (error) {
-        return false;
-      }
-    }
-
-    if (browserIsCompatable()) {
-      console.log('found supported version of chrome!');
+  $showMetrics.on('change', function () {
+    if ($showMetrics.prop('checked')) {
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('.video-metrics').show();
     } else {
-      console.log('browser not supported!!');
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('.video-metrics').hide();
+    }
+  });
+}
+
+function initializeTours() {
+  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-list').val(tourUrls.join('\n'));
+
+  var tour = {
+    player: null,
+    plist: [],
+    interval: 10,
+    counter: 0,
+    timer: null
+  };
+
+  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#start-tour').click(function () {
+    tour.interval = parseInt(jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-switch-interval').val());
+    tour.plist = [];
+
+    var x = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-list').val().split('\n');
+    for (var i = 0; i < x.length; i++) {
+      if (x[i].length > 0) {
+        tour.plist.push(x[i]);
+      }
     }
 
-    setTimeout(function () {
-      var srcCount = 1;
-      vwallsrc.forEach(function (name) {
-        var url = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#url' + srcCount).val();
-        jquery__WEBPACK_IMPORTED_MODULE_1___default()('#src' + srcCount).attr('src', url);
+    if (tour.plist.length < 2) {
+      alert("at least two source needed!");
+      return;
+    }
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-first-source').attr('src', tour.plist[0]);
 
-        // @todo
-        // var hls = "";
-        // $( '#hls' + srcCount ).attr('src', hls);
+    tour.counter = 1;
+    tour.player = null;
 
-        if (url) {
-          window.videojs('vw' + srcCount).clsp({
-            onPlayFailed: function onPlayFailed(player) {
-              console.log("failed to play");
-              console.log(player);
-            }
-          });
-        } else {
-          // window.videojs('vw' + srcCount, {
-          //   muted: true,
-          //   sources: [{
-          //     src: "http://vjs.zencdn.net/v/oceans.mp4",
-          //     type: "video/mp4"
-          //   }, {
-          //     src: "http://vjs.zencdn.net/v/oceans.webm",
-          //     type: "video/webm"
-          //   }, {
-          //     src: "http://vjs.zencdn.net/v/oceans.ogv",
-          //     type: "video/ogg"
-          //   }]
-          // });
-        }
+    if (tour.timer !== null) {
+      clearInterval(tour.timer);
+    }
 
-        srcCount++;
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
+      tour.player = window.videojs('#tour-video');
+      tour.player.clsp(); // start playing first stream
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html(tour.plist[0]);
+
+      tour.player.on("network-error", function (evt, message) {
+        console.log("!!!!! Handled network-error", evt);
+        console.log(message);
       });
-    }, 0);
 
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#message').html('videos configured');
-  });
+      tour.timer = setInterval(function () {
+        var url = tour.plist[tour.counter % tour.plist.length];
+        jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
 
-  jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#headless_play').click(function () {
-      ////////////////////////////////////////////////
-      // headless play demo
-      ////////////////////////////////////////////////
-      var src = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#headless_url').val();
-      var iov_config = parseUrl(src);
-
-      iov_config.videoElement = document.getElementById('headless');
-      iov_config.appStart = function (iov) {
-        iovPlayer = iov.player();
-        iovPlayer.play('headless', iov_config.streamName, function () {
-          console.log("first chunk of video received, remove poster if its playing");
-        }, function () {
-          console.log("video received");
-        });
-      };
-
-      var IOV = video_js__WEBPACK_IMPORTED_MODULE_2___default.a.getPlugin('clsp').clsp_IOV;
-      var iov = new IOV(iov_config);
-      iov.initialize();
-      /////////////////////////////////////////////////
+        tour.counter += 1;
+        console.log("selected url", url, tour.plist);
+        tour.player.trigger('changesrc', { eid: 'tour-video', url: url });
+      }, tour.interval * 1000);
     });
   });
+}
+
+function initializeHeadless() {
+  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#headless_play').click(function () {
+    ////////////////////////////////////////////////
+    // headless play demo
+    ////////////////////////////////////////////////
+    var src = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#headless_url').val();
+    var iov_config = parseUrl(src);
+
+    iov_config.videoElement = document.getElementById('headless');
+    iov_config.appStart = function (iov) {
+      iovPlayer = iov.player();
+      iovPlayer.play('headless', iov_config.streamName, function () {
+        console.log("first chunk of video received, remove poster if its playing");
+      }, function () {
+        console.log("video received");
+      });
+    };
+
+    var IOV = video_js__WEBPACK_IMPORTED_MODULE_2___default.a.getPlugin('clsp').clsp_IOV;
+    var iov = new IOV(iov_config);
+    iov.initialize();
+    /////////////////////////////////////////////////
+  });
+}
+
+jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
+  initializePlayers();
+  initializeWall();
+  initializeTours();
+  initializeHeadless();
 });
 
 /***/ }),

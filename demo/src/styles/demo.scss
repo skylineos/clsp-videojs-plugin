@@ -7,3 +7,16 @@ $icon-font-path: '~videojs-font/fonts';
   width: 356px;
   height: 244px;
 }
+
+.video-metrics {
+  display: flex;
+
+  div {
+    // width: 25%;
+    height: 100%;
+  }
+
+  span {
+    display: block;
+  }
+}

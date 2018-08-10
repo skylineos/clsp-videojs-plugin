@@ -40,7 +40,9 @@ function initializePlayers () {
 
 function initializeWall () {
   function setupVwallCell (eid, src, cellId) {
-    if (!document.getElementById(eid)) {
+    const $container = $(`#${eid}`);
+
+    if (!$container.length) {
       window.alert(`No match for element "${eid}"`);
       return;
     }
@@ -49,7 +51,7 @@ function initializeWall () {
       .replace(/\$cellId/g, cellId)
       .replace('$src', src);
 
-    $(`#${eid}`).html(html);
+    $container.html(html);
 
     const cell = document.getElementById(`video-${cellId}`);
 
@@ -57,9 +59,14 @@ function initializeWall () {
       window.alert(`No match for element "video-${parseInt(cellId)}"`);
     }
 
-    const player = window.videojs(cell).clsp();
+    const player = window.videojs(cell);
+    const tech = player.clsp();
 
-    console.log(player)
+    const $videoMetricContainer = $container.find('.video-metrics');
+
+    tech.on('metric', (event, { metric }) => {
+      $videoMetricContainer.find(`.${metric.type.replace(/\./g, '-')}-value`).html(metric.value);
+    });
   }
 
   function onclick () {
@@ -98,6 +105,17 @@ function initializeWall () {
   }
 
   $('#walltest').click(onclick);
+
+  const $showMetrics = $('#showMetrics');
+
+  $showMetrics.on('change', () => {
+    if ($showMetrics.prop('checked')) {
+      $('.video-metrics').show();
+    }
+    else {
+      $('.video-metrics').hide();
+    }
+  });
 }
 
 function initializeTours () {

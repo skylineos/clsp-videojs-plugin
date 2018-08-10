@@ -3477,8 +3477,6 @@ var registered = false;
       };
 
       player.on('firstplay', function (e) {
-        var _this2 = this;
-
         // @todo - the use of the tech here is discouraged.  What is the "right" way to
         // get the information from the mqttHandler?
         // And, really, all this does is parse the clsp url - do we really need a
@@ -3491,9 +3489,7 @@ var registered = false;
 
         var videoElement = player.el();
 
-        console.log(videoElement);
-
-        this.iov = _iov_IOV__WEBPACK_IMPORTED_MODULE_3__["default"].factory(player, {
+        _this.iov = _iov_IOV__WEBPACK_IMPORTED_MODULE_3__["default"].factory(player, {
           port: mqttHandler.port,
           address: mqttHandler.address,
           useSSL: mqttHandler.useSSL,
@@ -3536,14 +3532,11 @@ var registered = false;
           }
         });
 
-        this.iov.initialize();
+        _this.iov.initialize();
 
-        this.iov.player.on('metric', function (_ref) {
-          var type = _ref.type,
-              value = _ref.value;
-
+        _this.iov.player.on('metric', function (metric) {
           // @see - https://docs.videojs.com/tutorial-plugins.html#events
-          _this2.trigger('metric', { type: type, value: value });
+          _this.trigger('metric', { metric: metric });
         });
       });
       return _this;
@@ -3979,6 +3972,8 @@ var MSEWrapper = function () {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
     }
 
+    this.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent'];
+
     this.metrics = {};
 
     // @todo - there must be a more proper way to do events than this...
@@ -4019,6 +4014,11 @@ var MSEWrapper = function () {
     key: 'metric',
     value: function metric(type, value) {
       if (!this.options.enableMetrics) {
+        return;
+      }
+
+      if (!this.METRIC_TYPES.includes(type)) {
+        // @todo - should this throw?
         return;
       }
 

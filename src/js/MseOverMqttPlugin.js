@@ -61,7 +61,7 @@ export default function (defaults = {}) {
         return {};
       };
 
-      player.on('firstplay', function (e) {
+      player.on('firstplay', (e) => {
         // @todo - the use of the tech here is discouraged.  What is the "right" way to
         // get the information from the mqttHandler?
         // And, really, all this does is parse the clsp url - do we really need a
@@ -73,8 +73,6 @@ export default function (defaults = {}) {
         }
 
         var videoElement = player.el();
-
-        console.log(videoElement)
 
         this.iov = IOV.factory(player, {
           port: mqttHandler.port,
@@ -126,9 +124,9 @@ export default function (defaults = {}) {
 
         this.iov.initialize();
 
-        this.iov.player.on('metric', ({ type, value }) => {
+        this.iov.player.on('metric', (metric) => {
           // @see - https://docs.videojs.com/tutorial-plugins.html#events
-          this.trigger('metric', { type, value });
+          this.trigger('metric', { metric });
         });
       });
     }
