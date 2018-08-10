@@ -160,6 +160,8 @@ export default class IOVPlayer {
         }
 
         this.metrics[type] += value;
+
+        break;
       }
       default: {
         this.metrics[type] = value;

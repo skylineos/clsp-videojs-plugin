@@ -4886,6 +4886,7 @@ var IOVPlayer = function () {
             }
 
             this.metrics[type] += value;
+            break;
           }
         default:
           {
