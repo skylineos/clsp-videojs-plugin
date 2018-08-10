@@ -100,6 +100,9 @@ export default class IOVPlayer {
       'metric',
     ];
 
+    this.timeVideoCurrentTimeShifted = 0;
+
+
     for (let i = 0; i < this.EVENT_NAMES.length; i++) {
       this.events[this.EVENT_NAMES[i]] = [];
     }
@@ -384,6 +387,16 @@ export default class IOVPlayer {
             },
             onAppendFinish: (info) => {
               silly('On Append Finish...');
+              debug("video time: " + this.video.currentTime + ", buffer end: " + info.bufferTimeEnd +
+                ", diff: " + (info.bufferTimeEnd - this.video.currentTime)  );
+              this.trigger("metric", {type: 'sourceBuffer.bufferTimeEnd',value: info.bufferTimeEnd});
+              this.trigger("metric", {type: 'video.currentTime', value: this.video.currentTime});
+              if ((info.bufferTimeEnd - this.video.currentTime) > 5)
+              {
+               this.timeVideoCurrentTimeShifted++; 
+               this.trigger("metric", {type: 'video.currentTimeShifted', value: this.timeVideoCurrentTimehifted});
+                video.currentTime = info.bufferTimeEnd - 2;
+              }
 
               if (self.video.paused === true) {
                 debug('Video is paused!');

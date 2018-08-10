@@ -68,7 +68,7 @@ export default class MSEWrapper {
       'sourceBuffer.updateEnd.bufferLength.empty',
       'sourceBuffer.updateEnd.bufferLength.error',
       'sourceBuffer.updateEnd.removeEvent',
-      'sourceBuffer.updateEnd.appendEvent',
+      'sourceBuffer.updateEnd.appendEvent'
     ];
 
     this.metrics = {};
@@ -279,6 +279,7 @@ export default class MSEWrapper {
     this.options.onRemoveFinish = options.onRemoveFinish;
     this.options.onAppendFinish = options.onAppendFinish;
     this.options.onRemoveError = options.onRemoveError;
+
   }
 
   destroySourceBuffer () {
