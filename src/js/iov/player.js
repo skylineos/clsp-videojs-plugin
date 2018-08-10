@@ -102,10 +102,17 @@ export default class IOVPlayer {
 
     this.timeVideoCurrentTimeShifted = 0;
 
-
     for (let i = 0; i < this.EVENT_NAMES.length; i++) {
       this.events[this.EVENT_NAMES[i]] = [];
     }
+
+    this.METRIC_TYPES = [
+      'sourceBuffer.bufferTimeEnd',
+      'video.currentTime',
+      'video.drift',
+    ];
+
+    this.metrics = {};
 
     this.mseWrapper = MSEWrapper.factory();
     this.mseWrapper.on('metric', ({ type, value }) => {
@@ -133,6 +140,28 @@ export default class IOVPlayer {
     for (let i = 0; i < this.events[name].length; i++) {
       this.events[name][i](value, this);
     }
+  }
+
+  metric (type, value) {
+    // if (!this.options.enableMetrics) {
+    //   return;
+    // }
+
+    if (!this.METRIC_TYPES.includes(type)) {
+      // @todo - should this throw?
+      return;
+    }
+
+    switch (type) {
+      default: {
+        this.metrics[type] = value;
+      }
+    }
+
+    this.trigger('metric', {
+      type,
+      value: this.metrics[type],
+    });
   }
 
   isMimeCodecSupported (mimeCodec) {
@@ -387,15 +416,16 @@ export default class IOVPlayer {
             },
             onAppendFinish: (info) => {
               silly('On Append Finish...');
-              debug("video time: " + this.video.currentTime + ", buffer end: " + info.bufferTimeEnd +
-                ", diff: " + (info.bufferTimeEnd - this.video.currentTime)  );
-              this.trigger("metric", {type: 'sourceBuffer.bufferTimeEnd',value: info.bufferTimeEnd});
-              this.trigger("metric", {type: 'video.currentTime', value: this.video.currentTime});
-              if ((info.bufferTimeEnd - this.video.currentTime) > 5)
-              {
-               this.timeVideoCurrentTimeShifted++; 
-               this.trigger("metric", {type: 'video.currentTimeShifted', value: this.timeVideoCurrentTimehifted});
-                video.currentTime = info.bufferTimeEnd - 2;
+
+              this.drift = info.bufferTimeEnd - this.video.currentTime;
+
+              this.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+              this.metric('video.currentTime', this.video.currentTime);
+              this.metric('video.drift', this.drift);
+
+              if (this.drift > 5) {
+                this.video.currentTime = info.bufferTimeEnd - 2;
+                // return this.reinitializeMse();
               }
 
               if (self.video.paused === true) {

@@ -4249,7 +4249,7 @@ var MSEWrapper = function () {
           // starved, but I don't know if that's correct
           this.metric('queue.removed', this.segmentQueue.length + 1);
           this.segmentQueue = [];
-          this.sourceBuffer.abort();
+          // this.sourceBuffer.abort();
           return;
         }
 
@@ -4827,6 +4827,10 @@ var IOVPlayer = function () {
       this.events[this.EVENT_NAMES[i]] = [];
     }
 
+    this.METRIC_TYPES = ['sourceBuffer.bufferTimeEnd', 'video.currentTime', 'video.drift'];
+
+    this.metrics = {};
+
     this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory();
     this.mseWrapper.on('metric', function (_ref) {
       var type = _ref.type,
@@ -4859,6 +4863,30 @@ var IOVPlayer = function () {
       for (var i = 0; i < this.events[name].length; i++) {
         this.events[name][i](value, this);
       }
+    }
+  }, {
+    key: 'metric',
+    value: function metric(type, value) {
+      // if (!this.options.enableMetrics) {
+      //   return;
+      // }
+
+      if (!this.METRIC_TYPES.includes(type)) {
+        // @todo - should this throw?
+        return;
+      }
+
+      switch (type) {
+        default:
+          {
+            this.metrics[type] = value;
+          }
+      }
+
+      this.trigger('metric', {
+        type: type,
+        value: this.metrics[type]
+      });
     }
   }, {
     key: 'isMimeCodecSupported',
@@ -5149,13 +5177,16 @@ var IOVPlayer = function () {
               },
               onAppendFinish: function onAppendFinish(info) {
                 silly('On Append Finish...');
-                debug("video time: " + _this6.video.currentTime + ", buffer end: " + info.bufferTimeEnd + ", diff: " + (info.bufferTimeEnd - _this6.video.currentTime));
-                _this6.trigger("metric", { type: 'sourceBuffer.bufferTimeEnd', value: info.bufferTimeEnd });
-                _this6.trigger("metric", { type: 'video.currentTime', value: _this6.video.currentTime });
-                if (info.bufferTimeEnd - _this6.video.currentTime > 5) {
-                  _this6.timeVideoCurrentTimeShifted++;
-                  _this6.trigger("metric", { type: 'video.currentTimeShifted', value: _this6.timeVideoCurrentTimehifted });
-                  video.currentTime = info.bufferTimeEnd - 2;
+
+                _this6.drift = info.bufferTimeEnd - _this6.video.currentTime;
+
+                _this6.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+                _this6.metric('video.currentTime', _this6.video.currentTime);
+                _this6.metric('video.drift', _this6.drift);
+
+                if (_this6.drift > 5) {
+                  _this6.video.currentTime = info.bufferTimeEnd - 2;
+                  // return this.reinitializeMse();
                 }
 
                 if (self.video.paused === true) {
