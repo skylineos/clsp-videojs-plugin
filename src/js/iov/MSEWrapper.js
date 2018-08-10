@@ -194,6 +194,7 @@ export default class MSEWrapper {
         // timestamp?  I think one cause of stream freezing is the sourceBuffer getting
         // starved, but I don't know if that's correct
         this.segmentQueue = [];
+        this.sourceBuffer.abort();
         return;
       }
 
