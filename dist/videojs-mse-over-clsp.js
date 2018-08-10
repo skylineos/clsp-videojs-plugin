@@ -4025,7 +4025,6 @@ var MSEWrapper = function () {
         return;
       }
 
-      console.log(type, value);
       switch (type) {
         case 'sourceBuffer.lastKnownBufferSize':
           {
@@ -4123,7 +4122,6 @@ var MSEWrapper = function () {
     key: 'destroyVideoElementSrc',
     value: function destroyVideoElementSrc() {
       debug('destroyVideoElementSrc...');
-      console.log('destroygin...');
 
       if (!this.mediaSource) {
         // @todo - should this throw?
@@ -4267,39 +4265,48 @@ var MSEWrapper = function () {
       }
     }
   }, {
-    key: 'append',
-    value: function append(byteArray) {
-      silly('Append');
-
-      this.options.onAppendStart(byteArray);
+    key: 'processNextInQueue',
+    value: function processNextInQueue() {
+      silly('processNextInQueue');
 
       if (document.visibilityState === 'hidden') {
         debug('Tab not in focus - dropping frame...');
         this.metric('frameDrop.hiddenTab', 1);
+        this.metric('queue.cannotProcessNext', 1);
         return;
       }
 
       if (!this.isMediaSourceReady()) {
         debug('The mediaSource is not ready');
         this.metric('queue.mediaSourceNotReady', 1);
-        this.queueSegment(byteArray);
+        this.metric('queue.cannotProcessNext', 1);
         return;
       }
 
       if (!this.isSourceBufferReady()) {
         debug('The sourceBuffer is busy');
         this.metric('queue.sourceBufferNotReady', 1);
-        this.queueSegment(byteArray);
+        this.metric('queue.cannotProcessNext', 1);
         return;
       }
 
       if (this.segmentQueue.length > 0) {
         this.metric('queue.shift', 1);
+        this.metric('queue.canProcessNext', 1);
         this._append(this.segmentQueue.shift());
       }
+    }
+  }, {
+    key: 'append',
+    value: function append(byteArray) {
+      silly('Append');
+
+      this.options.onAppendStart(byteArray);
 
       this.metric('queue.append', 1);
       this.queueSegment(byteArray);
+
+      this.processNextInQueue();
     }
   }, {
     key: 'getBufferTimes',
@@ -4375,6 +4382,8 @@ var MSEWrapper = function () {
         this.options.onAppendFinish(info);
         this.trimBuffer(info);
       }
+
+      this.processNextInQueue();
     }
   }]);
 
@@ -4812,6 +4821,8 @@ var IOVPlayer = function () {
 
     this.EVENT_NAMES = ['metric'];
 
+    this.timeVideoCurrentTimeShifted = 0;
+
     for (var i = 0; i < this.EVENT_NAMES.length; i++) {
       this.events[this.EVENT_NAMES[i]] = [];
     }
@@ -5138,6 +5149,14 @@ var IOVPlayer = function () {
               },
               onAppendFinish: function onAppendFinish(info) {
                 silly('On Append Finish...');
+                debug("video time: " + _this6.video.currentTime + ", buffer end: " + info.bufferTimeEnd + ", diff: " + (info.bufferTimeEnd - _this6.video.currentTime));
+                _this6.trigger("metric", { type: 'sourceBuffer.bufferTimeEnd', value: info.bufferTimeEnd });
+                _this6.trigger("metric", { type: 'video.currentTime', value: _this6.video.currentTime });
+                if (info.bufferTimeEnd - _this6.video.currentTime > 5) {
+                  _this6.timeVideoCurrentTimeShifted++;
+                  _this6.trigger("metric", { type: 'video.currentTimeShifted', value: _this6.timeVideoCurrentTimehifted });
+                  video.currentTime = info.bufferTimeEnd - 2;
+                }
 
                 if (self.video.paused === true) {
                   debug('Video is paused!');

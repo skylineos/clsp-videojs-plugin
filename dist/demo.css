@@ -1433,7 +1433,9 @@ video::-webkit-media-text-track-display {
   .video-metrics .metric {
     display: flex; }
     .video-metrics .metric:nth-of-type(2n) {
-      background: lightslategrey; }
+      background: lightgrey; }
+    .video-metrics .metric .value {
+      max-width: 1rem; }
     .video-metrics .metric .type {
       flex-grow: 1;
       flex-shrink: 0;

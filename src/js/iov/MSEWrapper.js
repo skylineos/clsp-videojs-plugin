@@ -316,7 +316,7 @@ export default class MSEWrapper {
         // starved, but I don't know if that's correct
         this.metric('queue.removed', this.segmentQueue.length + 1);
         this.segmentQueue = [];
-        this.sourceBuffer.abort();
+        // this.sourceBuffer.abort();
         return;
       }
 
