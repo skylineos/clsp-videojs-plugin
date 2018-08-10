@@ -68,7 +68,7 @@ export default class MSEWrapper {
       'sourceBuffer.updateEnd.bufferLength.empty',
       'sourceBuffer.updateEnd.bufferLength.error',
       'sourceBuffer.updateEnd.removeEvent',
-      'sourceBuffer.updateEnd.appendEvent',
+      'sourceBuffer.updateEnd.appendEvent'
     ];
 
     this.metrics = {};
@@ -117,7 +117,6 @@ export default class MSEWrapper {
       return;
     }
 
-    console.log(type, value)
     switch (type) {
       case 'sourceBuffer.lastKnownBufferSize': {
         this.metrics[type] = value;
@@ -205,7 +204,6 @@ export default class MSEWrapper {
 
   destroyVideoElementSrc () {
     debug('destroyVideoElementSrc...');
-    console.log('destroygin...');
 
     if (!this.mediaSource) {
       // @todo - should this throw?
@@ -281,6 +279,7 @@ export default class MSEWrapper {
     this.options.onRemoveFinish = options.onRemoveFinish;
     this.options.onAppendFinish = options.onAppendFinish;
     this.options.onRemoveError = options.onRemoveError;
+
   }
 
   destroySourceBuffer () {
