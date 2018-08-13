@@ -3975,7 +3975,7 @@ var MSEWrapper = function () {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
     }
 
-    this.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent'];
+    this.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen'];
 
     this.metrics = {};
 
@@ -4181,6 +4181,7 @@ var MSEWrapper = function () {
         onRemoveFinish: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
         onAppendError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
         onRemoveError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        onStreamFrozen: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
         onError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
         retry: true
       });
@@ -4209,6 +4210,7 @@ var MSEWrapper = function () {
       this.options.onRemoveFinish = options.onRemoveFinish;
       this.options.onAppendFinish = options.onAppendFinish;
       this.options.onRemoveError = options.onRemoveError;
+      this.options.onStreamFrozen = options.onStreamFrozen;
     }
   }, {
     key: 'destroySourceBuffer',
@@ -4316,11 +4318,11 @@ var MSEWrapper = function () {
       var previousBufferSize = this.timeBuffered;
       var bufferTimeStart = this.sourceBuffer.buffered.start(0);
       var bufferTimeEnd = this.sourceBuffer.buffered.end(0);
-      this.timeBuffered = bufferTimeEnd - bufferTimeStart;
+      var currentBufferSize = bufferTimeEnd - bufferTimeStart;
 
       var info = {
         previousBufferSize: previousBufferSize,
-        currentBufferSize: this.timeBuffered,
+        currentBufferSize: currentBufferSize,
         bufferTimeStart: bufferTimeStart,
         bufferTimeEnd: bufferTimeEnd
       };
@@ -4350,6 +4352,39 @@ var MSEWrapper = function () {
       }
     }
   }, {
+    key: 'onRemoveFinish',
+    value: function onRemoveFinish() {
+      var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
+
+      debug('On remove finish...');
+
+      this.metric('sourceBuffer.updateEnd.removeEvent', 1);
+      this.options.onRemoveFinish(info);
+    }
+  }, {
+    key: 'onAppendFinish',
+    value: function onAppendFinish() {
+      var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
+
+      silly('On append finish...');
+
+      this.metric('sourceBuffer.updateEnd.appendEvent', 1);
+
+      // The current buffer size should always be bigger.If it isn't, there is a problem,
+      // and we need to reinitialize or something.
+      if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
+        console.log('frozen?');
+        this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
+        this.options.onStreamFrozen();
+        return;
+      }
+
+      this.previousTimeEnd = info.bufferTimeEnd;
+
+      this.options.onAppendFinish(info);
+      this.trimBuffer(info);
+    }
+  }, {
     key: 'onSourceBufferUpdateEnd',
     value: function onSourceBufferUpdateEnd() {
       silly('onUpdateEnd');
@@ -4374,15 +4409,12 @@ var MSEWrapper = function () {
 
       var info = this.getBufferTimes();
 
+      this.timeBuffered = info.currentBufferSize;
+
       if (info.previousBufferSize !== null && info.previousBufferSize > this.timeBuffered) {
-        debug('On remove finish...');
-        this.metric('sourceBuffer.updateEnd.removeEvent', 1);
-        this.options.onRemoveFinish(info);
+        this.onRemoveFinish(info);
       } else {
-        debug('On append finish...');
-        this.metric('sourceBuffer.updateEnd.appendEvent', 1);
-        this.options.onAppendFinish(info);
-        this.trimBuffer(info);
+        this.onAppendFinish(info);
       }
 
       this.processNextInQueue();
@@ -4886,6 +4918,7 @@ var IOVPlayer = function () {
             }
 
             this.metrics[type] += value;
+
             break;
           }
         default:
@@ -5243,6 +5276,11 @@ var IOVPlayer = function () {
                 // observed this fail during a memry snapshot in chrome
                 // otherwise no observed failure, so ignore exception.
                 _this6._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
+              },
+              onStreamFrozen: function onStreamFrozen() {
+                debug('stream appears to be frozen - reinitializing...');
+
+                _this6.reinitializeMse();
               },
               onError: function onError(error) {
                 _this6._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);

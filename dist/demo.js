@@ -101,6 +101,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(jquery__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! video.js */ "./node_modules/video.js/dist/video.cjs.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../package.json */ "./package.json");
+var _package_json__WEBPACK_IMPORTED_MODULE_3___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../../package.json */ "./package.json", 1);
+
+
 
 
 
@@ -109,6 +113,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 window.videojs = video_js__WEBPACK_IMPORTED_MODULE_2___default.a;
+window.CLSP_DEMO_VERSION = _package_json__WEBPACK_IMPORTED_MODULE_3__.version;
 
 var tourUrls = ['clsp://172.28.12.247/testpattern', 'clsp://172.28.12.57:9001/FairfaxVideo0520', 'clsp://172.28.12.57:9001/40004'];
 
@@ -294,6 +299,10 @@ function initializeHeadless() {
 }
 
 jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
+  var pageTitle = 'CLSP ' + CLSP_DEMO_VERSION + ' Demo Page';
+  document.title = pageTitle;
+  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#page-title').html(pageTitle);
+
   initializePlayers();
   initializeWall();
   initializeTours();
@@ -22379,6 +22388,17 @@ function extend() {
 
     return target;
 }
+
+/***/ }),
+
+/***/ "./package.json":
+/*!**********************!*\
+  !*** ./package.json ***!
+  \**********************/
+/*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
+/***/ (function(module) {
+
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.11.2","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","jquery":"^3.3.1","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2"}};
 
 /***/ }),
 
