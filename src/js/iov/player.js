@@ -114,10 +114,7 @@ export default class IOVPlayer {
 
     this.metrics = {};
 
-    this.mseWrapper = MSEWrapper.factory();
-    this.mseWrapper.on('metric', ({ type, value }) => {
-      this.trigger('metric', { type, value });
-    });
+    this.mseWrapper = null;
   }
 
   on (name, action) {
@@ -349,6 +346,151 @@ export default class IOVPlayer {
     this.iov.transport.transaction(topic, (...args) => this._start_play(...args), request);
   }
 
+  reinitializeMseWrapper (mimeCodec) {
+    if (this.mseWrapper) {
+      this.mseWrapper.destroy();
+    }
+
+    this.mseWrapper = MSEWrapper.factory();
+
+    this.mseWrapper.on('metric', ({ type, value }) => {
+      this.trigger('metric', { type, value });
+    });
+
+    this.mseWrapper.initializeMediaSource({
+      onSourceOpen: () => {
+        debug('on mediaSource sourceopen');
+
+        this.mseWrapper.initializeSourceBuffer(mimeCodec, {
+          onAppendStart: (byteArray) => {
+            silly('On Append Start...');
+
+            if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
+              debug(`Recording ${parseInt(byteArray.length)} bytes of data.`);
+
+              const mqtt_msg = new window.Paho.MQTT.Message(byteArray);
+              mqtt_msg.destinationName = this.LogSourceBufferTopic;
+              window.MQTTClient.send(mqtt_msg);
+            }
+
+            this.onVideoRecv();
+
+            this.iov.statsMsg.byteCount += byteArray.length;
+          },
+          onAppendFinish: (info) => {
+            silly('On Append Finish...');
+
+            this.drift = info.bufferTimeEnd - this.video.currentTime;
+
+            this.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+            this.metric('video.currentTime', this.video.currentTime);
+            this.metric('video.drift', this.drift);
+
+            if (this.drift > 3) {
+              this.metric('video.driftCorrection', 1);
+              this.video.currentTime = info.bufferTimeEnd;
+              // return this.reinitializeMse();
+            }
+
+            if (this.video.paused === true) {
+              debug('Video is paused!');
+
+              try {
+                const promise = this.video.play();
+
+                if (typeof promise !== 'undefined') {
+                  promise.catch((error) => {
+                    this._onError(
+                      'videojs.play.promise',
+                      'Error while trying to play videojs player',
+                      error
+                    );
+                  });
+                }
+              }
+              catch (error) {
+                this._onError(
+                  'videojs.play.notPromise',
+                  'Error while trying to play videojs player',
+                  error
+                );
+              }
+            }
+          },
+          onRemoveFinish: (info) => {
+            debug('onRemoveFinish');
+
+            // wait around for 3 seconds to simulate unpredictable browser interruptions.
+            var now = new Date().getTime();
+            for (var i = 0; i < 1e7; i++) {
+              var diff = new Date().getTime() - now;
+              if (diff > 1000) {
+                debug("breaking out of 1 second sleep");
+                break;
+              }
+            }
+          },
+          onAppendError: (error) => {
+            // internal error, this has been observed to happen the tab
+            // in the browser where this video player lives is hidden
+            // then reselected. 'ex' is undefined the error is bug
+            // within the MSE C++ implementation in the browser.
+            this._onError(
+              'sourceBuffer.append',
+              'Error while appending to sourceBuffer',
+              error
+            );
+            this.videoPlayer.error({ code: 3 });
+            this.reinitializeMse();
+          },
+          onRemoveError: (error) => {
+            // observed this fail during a memry snapshot in chrome
+            // otherwise no observed failure, so ignore exception.
+            this._onError(
+              'sourceBuffer.remove',
+              'Error while removing segments from sourceBuffer',
+              error
+            );
+          },
+          onStreamFrozen: () => {
+            debug('stream appears to be frozen - reinitializing...');
+
+            const clone = this.mseWrapper.clone();
+
+            this.mseWrapper.destroy();
+            this.mseWrapper = clone;
+          },
+          onError: (error) => {
+            this._onError(
+              'mediaSource.sourceBuffer.generic',
+              'mediaSource sourceBuffer error',
+              error
+            );
+          },
+        });
+
+        this.mseWrapper.append(this.moovBox);
+      },
+      onSourceEnded: () => {
+        debug('on mediaSource sourceended');
+
+        // @todo - do we need to clear the buffer manually?
+        this.stop();
+      },
+      onError: (error) => {
+        this._onError(
+          'mediaSource.generic',
+          'mediaSource error',
+          error
+        );
+      },
+    });
+
+    if (this.mseWrapper.mediaSource && this.video) {
+      this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
+    }
+  }
+
   stop () {
     debug('stop');
 
@@ -403,132 +545,6 @@ export default class IOVPlayer {
 
       self.onFirstChunk(); // first chunk of video received.
 
-      this.mseWrapper.initializeMediaSource({
-        onSourceOpen: () => {
-          debug('on mediaSource sourceopen');
-
-          this.mseWrapper.initializeSourceBuffer(mimeCodec, {
-            onAppendStart: (byteArray) => {
-              silly('On Append Start...');
-
-              if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
-                debug(`Recording ${parseInt(byteArray.length)} bytes of data.`);
-
-                const mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-                mqtt_msg.destinationName = this.LogSourceBufferTopic;
-                window.MQTTClient.send(mqtt_msg);
-              }
-
-              this.onVideoRecv();
-
-              this.iov.statsMsg.byteCount += byteArray.length;
-            },
-            onAppendFinish: (info) => {
-              silly('On Append Finish...');
-
-              this.drift = info.bufferTimeEnd - this.video.currentTime;
-
-              this.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
-              this.metric('video.currentTime', this.video.currentTime);
-              this.metric('video.drift', this.drift);
-
-              if (this.drift > 3) {
-                this.metric('video.driftCorrection', 1);
-                this.video.currentTime = info.bufferTimeEnd;
-                // return this.reinitializeMse();
-              }
-
-              if (self.video.paused === true) {
-                debug('Video is paused!');
-
-                try {
-                  const promise = self.video.play();
-
-                  if (typeof promise !== 'undefined') {
-                    promise.catch((error) => {
-                      this._onError(
-                        'videojs.play.promise',
-                        'Error while trying to play videojs player',
-                        error
-                      );
-                    });
-                  }
-                }
-                catch (error) {
-                  this._onError(
-                    'videojs.play.notPromise',
-                    'Error while trying to play videojs player',
-                    error
-                  );
-                }
-              }
-            },
-            onRemoveFinish: (info) => {
-              debug('onRemoveFinish');
-
-              // wait around for 3 seconds to simulate unpredictable browser interruptions.
-              var now = new Date().getTime();
-              for (var i = 0; i < 1e7; i++) {
-                var diff = new Date().getTime() - now;
-                if (diff > 1000) {
-                  debug("breaking out of 1 second sleep");
-                  break;
-                }
-              }
-            },
-            onAppendError: (error) => {
-              // internal error, this has been observed to happen the tab
-              // in the browser where this video player lives is hidden
-              // then reselected. 'ex' is undefined the error is bug
-              // within the MSE C++ implementation in the browser.
-              this._onError(
-                'sourceBuffer.append',
-                'Error while appending to sourceBuffer',
-                error
-              );
-              this.videoPlayer.error({ code: 3 });
-              this.reinitializeMse();
-            },
-            onRemoveError: (error) => {
-              // observed this fail during a memry snapshot in chrome
-              // otherwise no observed failure, so ignore exception.
-              this._onError(
-                'sourceBuffer.remove',
-                'Error while removing segments from sourceBuffer',
-                error
-              );
-            },
-            onStreamFrozen: () => {
-              debug('stream appears to be frozen - reinitializing...');
-
-              this.reinitializeMse();
-            },
-            onError: (error) => {
-              this._onError(
-                'mediaSource.sourceBuffer.generic',
-                'mediaSource sourceBuffer error',
-                error
-              );
-            },
-          });
-
-          this.mseWrapper.append(this.moovBox);
-        },
-        onSourceEnded: () => {
-          debug('on mediaSource sourceended');
-
-          // @todo - do we need to clear the buffer manually?
-          this.stop();
-        },
-        onError: (error) => {
-          this._onError(
-            'mediaSource.generic',
-            'mediaSource error',
-            error
-          );
-        },
-      });
-
       // when videojs initializes the video element (or something like that),
       // it creates events and listeners on that element that it uses, however
       // these events interfere with our ability to play clsp streams.  Cloning
@@ -567,8 +583,7 @@ export default class IOVPlayer {
         self.iov.clone(new_cfg);
       });
 
-      // debug("Disregard: The play() request was interrupted ... its not an error!");
-      self.video.src = this.mseWrapper.getVideoElementSrc();
+      this.reinitializeMseWrapper(mimeCodec);
 
       // subscribe to a sync topic that will be called if the stream that is feeding
       // the mse service dies and has to be restarted that this player should restart the stream

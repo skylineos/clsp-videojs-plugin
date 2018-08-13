@@ -84,6 +84,13 @@ export default class MSEWrapper {
     for (let i = 0; i < this.EVENT_NAMES.length; i++) {
       this.events[this.EVENT_NAMES[i]] = [];
     }
+
+    this.eventListeners = {
+      mediaSource: {},
+      sourceBuffer: {},
+    };
+
+    this.onSourceBufferUpdateEnd = this.onSourceBufferUpdateEnd.bind(this);
   }
 
   on (name, action) {
@@ -154,7 +161,7 @@ export default class MSEWrapper {
 
     this.mediaSource = new window.MediaSource();
 
-    this.mediaSource.addEventListener('sourceopen', () => {
+    this.eventListeners.mediaSource.sourceopen = () => {
       // This can only be set when the media source is open.
       // @todo - does this do memory management for us so we don't have
       // to call remove on the buffer, which is expensive?  It seems
@@ -162,20 +169,13 @@ export default class MSEWrapper {
       this.mediaSource.duration = this.options.duration;
 
       options.onSourceOpen();
-    });
+    };
+    this.eventListeners.mediaSource.sourceended = options.onSourceEnded;
+    this.eventListeners.mediaSource.error = options.onError;
 
-    this.mediaSource.addEventListener('sourceended', options.onSourceEnded);
-    this.mediaSource.addEventListener('error', options.onError);
-  }
-
-  destroyMediaSource () {
-    debug('Destroying mediaSource...');
-
-    if (!this.mediaSource) {
-      return;
-    }
-
-    this.metric('mediaSource.destroyed', 1);
+    this.mediaSource.addEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
+    this.mediaSource.addEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
+    this.mediaSource.addEventListener('error', this.eventListeners.mediaSource.error);
   }
 
   getVideoElementSrc () {
@@ -273,27 +273,18 @@ export default class MSEWrapper {
     this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
     this.sourceBuffer.mode = 'sequence';
 
-    // Supported Events
-    this.sourceBuffer.addEventListener('updateend', () => this.onSourceBufferUpdateEnd());
-    this.sourceBuffer.addEventListener('error', options.onError);
-
     // Custom Events
-    this.options.onAppendStart = options.onAppendStart;
-    this.options.onAppendError = options.onAppendError;
-    this.options.onRemoveFinish = options.onRemoveFinish;
-    this.options.onAppendFinish = options.onAppendFinish;
-    this.options.onRemoveError = options.onRemoveError;
-    this.options.onStreamFrozen = options.onStreamFrozen;
-  }
+    this.eventListeners.sourceBuffer.onAppendStart = options.onAppendStart;
+    this.eventListeners.sourceBuffer.onAppendError = options.onAppendError;
+    this.eventListeners.sourceBuffer.onRemoveFinish = options.onRemoveFinish;
+    this.eventListeners.sourceBuffer.onAppendFinish = options.onAppendFinish;
+    this.eventListeners.sourceBuffer.onRemoveError = options.onRemoveError;
+    this.eventListeners.sourceBuffer.onStreamFrozen = options.onStreamFrozen;
+    this.eventListeners.sourceBuffer.onError = options.onError;
 
-  destroySourceBuffer () {
-    debug('destroySourceBuffer...');
-
-    if (!this.sourceBuffer) {
-      return;
-    }
-
-    this.metric('sourceBuffer.destroyed', 1);
+    // Supported Events
+    this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
+    this.sourceBuffer.addEventListener('error', this.eventListeners.sourceBuffer.onError);
   }
 
   queueSegment (segment) {
@@ -333,7 +324,7 @@ export default class MSEWrapper {
     catch (error) {
       this.metric('error.sourceBuffer.append', 1);
 
-      this.options.onAppendError(error, byteArray);
+      this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
     }
   }
 
@@ -371,7 +362,7 @@ export default class MSEWrapper {
   append (byteArray) {
     silly('Append');
 
-    this.options.onAppendStart(byteArray);
+    this.eventListeners.sourceBuffer.onAppendStart(byteArray);
 
     this.metric('queue.append', 1);
     this.queueSegment(byteArray);
@@ -395,10 +386,10 @@ export default class MSEWrapper {
     return info;
   }
 
-  trimBuffer (info = this.getBufferTimes()) {
+  trimBuffer (info = this.getBufferTimes(), force = false) {
     this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
-    if (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
+    if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
       debug('Removing old stuff from sourceBuffer...');
 
       try {
@@ -410,7 +401,7 @@ export default class MSEWrapper {
       }
       catch (error) {
         this.metric('sourceBuffer.trim.error', 1);
-        this.options.onRemoveError(error);
+        this.eventListeners.sourceBuffer.onRemoveError(error);
       }
     }
   }
@@ -419,7 +410,7 @@ export default class MSEWrapper {
     debug('On remove finish...');
 
     this.metric('sourceBuffer.updateEnd.removeEvent', 1);
-    this.options.onRemoveFinish(info);
+    this.eventListeners.sourceBuffer.onRemoveFinish(info);
   }
 
   onAppendFinish (info = this.getBufferTimes()) {
@@ -432,13 +423,13 @@ export default class MSEWrapper {
     if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
       console.log('frozen?');
       this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
-      this.options.onStreamFrozen();
+      this.eventListeners.sourceBuffer.onStreamFrozen();
       return;
     }
 
     this.previousTimeEnd = info.bufferTimeEnd;
 
-    this.options.onAppendFinish(info);
+    this.eventListeners.sourceBuffer.onAppendFinish(info);
     this.trimBuffer(info);
   }
 
@@ -476,5 +467,76 @@ export default class MSEWrapper {
     }
 
     this.processNextInQueue();
+  }
+
+  clone () {
+
+  }
+
+  destroySourceBuffer () {
+    debug('destroySourceBuffer...');
+
+    if (!this.sourceBuffer) {
+      return;
+    }
+
+    this.sourceBuffer.abort();
+
+    this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
+    this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
+
+    this.trimBuffer(undefined, true);
+
+    this.sourceBuffer = null;
+
+    this.timeBuffered = null;
+    this.previousTimeEnd = null;
+    this.segmentQueue = null;
+
+    this.metric('sourceBuffer.destroyed', 1);
+  }
+
+  destroyMediaSource () {
+    debug('Destroying mediaSource...');
+
+    if (!this.mediaSource) {
+      return;
+    }
+
+    this.mediaSource.removeEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
+    this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
+    this.mediaSource.removeEventListener('error', this.eventListeners.mediaSource.error);
+
+    let sourceBuffers = this.mediaSource.sourceBuffers;
+
+    if (sourceBuffers.SourceBuffers) {
+      // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
+      sourceBuffers = sourceBuffers.SourceBuffers();
+    }
+
+    for (let i = 0; i < sourceBuffers.length; i++) {
+      this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
+    }
+
+    // @todo - is this happening at the right time, or should it happen
+    // prior to removing the source buffers?
+    this.destroyVideoElementSrc();
+
+    this.mediaSource = null;
+
+    this.metric('mediaSource.destroyed', 1);
+  }
+
+  destroy () {
+    this.destroySourceBuffer();
+    this.destroyMediaSource();
+
+    this.options = null;
+    this.METRIC_TYPES = null;
+    this.EVENT_NAMES = null;
+    this.metrics = null;
+    this.events = null;
+    this.eventListeners = null;
+    this.onSourceBufferUpdateEnd = null;
   }
 }
