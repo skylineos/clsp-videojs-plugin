@@ -3987,6 +3987,13 @@ var MSEWrapper = function () {
     for (var i = 0; i < this.EVENT_NAMES.length; i++) {
       this.events[this.EVENT_NAMES[i]] = [];
     }
+
+    this.eventListeners = {
+      mediaSource: {},
+      sourceBuffer: {}
+    };
+
+    this.onSourceBufferUpdateEnd = this.onSourceBufferUpdateEnd.bind(this);
   }
 
   _createClass(MSEWrapper, [{
@@ -4068,7 +4075,7 @@ var MSEWrapper = function () {
 
       this.mediaSource = new window.MediaSource();
 
-      this.mediaSource.addEventListener('sourceopen', function () {
+      this.eventListeners.mediaSource.sourceopen = function () {
         // This can only be set when the media source is open.
         // @todo - does this do memory management for us so we don't have
         // to call remove on the buffer, which is expensive?  It seems
@@ -4076,21 +4083,13 @@ var MSEWrapper = function () {
         _this.mediaSource.duration = _this.options.duration;
 
         options.onSourceOpen();
-      });
+      };
+      this.eventListeners.mediaSource.sourceended = options.onSourceEnded;
+      this.eventListeners.mediaSource.error = options.onError;
 
-      this.mediaSource.addEventListener('sourceended', options.onSourceEnded);
-      this.mediaSource.addEventListener('error', options.onError);
-    }
-  }, {
-    key: 'destroyMediaSource',
-    value: function destroyMediaSource() {
-      debug('Destroying mediaSource...');
-
-      if (!this.mediaSource) {
-        return;
-      }
-
-      this.metric('mediaSource.destroyed', 1);
+      this.mediaSource.addEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
+      this.mediaSource.addEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
+      this.mediaSource.addEventListener('error', this.eventListeners.mediaSource.error);
     }
   }, {
     key: 'getVideoElementSrc',
@@ -4169,8 +4168,6 @@ var MSEWrapper = function () {
   }, {
     key: 'initializeSourceBuffer',
     value: function initializeSourceBuffer(mimeCodec) {
-      var _this2 = this;
-
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
       debug('initializeSourceBuffer...');
@@ -4198,30 +4195,18 @@ var MSEWrapper = function () {
       this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
       this.sourceBuffer.mode = 'sequence';
 
-      // Supported Events
-      this.sourceBuffer.addEventListener('updateend', function () {
-        return _this2.onSourceBufferUpdateEnd();
-      });
-      this.sourceBuffer.addEventListener('error', options.onError);
-
       // Custom Events
-      this.options.onAppendStart = options.onAppendStart;
-      this.options.onAppendError = options.onAppendError;
-      this.options.onRemoveFinish = options.onRemoveFinish;
-      this.options.onAppendFinish = options.onAppendFinish;
-      this.options.onRemoveError = options.onRemoveError;
-      this.options.onStreamFrozen = options.onStreamFrozen;
-    }
-  }, {
-    key: 'destroySourceBuffer',
-    value: function destroySourceBuffer() {
-      debug('destroySourceBuffer...');
+      this.eventListeners.sourceBuffer.onAppendStart = options.onAppendStart;
+      this.eventListeners.sourceBuffer.onAppendError = options.onAppendError;
+      this.eventListeners.sourceBuffer.onRemoveFinish = options.onRemoveFinish;
+      this.eventListeners.sourceBuffer.onAppendFinish = options.onAppendFinish;
+      this.eventListeners.sourceBuffer.onRemoveError = options.onRemoveError;
+      this.eventListeners.sourceBuffer.onStreamFrozen = options.onStreamFrozen;
+      this.eventListeners.sourceBuffer.onError = options.onError;
 
-      if (!this.sourceBuffer) {
-        return;
-      }
-
-      this.metric('sourceBuffer.destroyed', 1);
+      // Supported Events
+      this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
+      this.sourceBuffer.addEventListener('error', this.eventListeners.sourceBuffer.onError);
     }
   }, {
     key: 'queueSegment',
@@ -4265,7 +4250,7 @@ var MSEWrapper = function () {
       } catch (error) {
         this.metric('error.sourceBuffer.append', 1);
 
-        this.options.onAppendError(error, byteArray);
+        this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
       }
     }
   }, {
@@ -4305,7 +4290,7 @@ var MSEWrapper = function () {
     value: function append(byteArray) {
       silly('Append');
 
-      this.options.onAppendStart(byteArray);
+      this.eventListeners.sourceBuffer.onAppendStart(byteArray);
 
       this.metric('queue.append', 1);
       this.queueSegment(byteArray);
@@ -4333,10 +4318,11 @@ var MSEWrapper = function () {
     key: 'trimBuffer',
     value: function trimBuffer() {
       var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
+      var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
       this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
-      if (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
+      if (force || this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
         debug('Removing old stuff from sourceBuffer...');
 
         try {
@@ -4347,7 +4333,7 @@ var MSEWrapper = function () {
           this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
         } catch (error) {
           this.metric('sourceBuffer.trim.error', 1);
-          this.options.onRemoveError(error);
+          this.eventListeners.sourceBuffer.onRemoveError(error);
         }
       }
     }
@@ -4359,7 +4345,7 @@ var MSEWrapper = function () {
       debug('On remove finish...');
 
       this.metric('sourceBuffer.updateEnd.removeEvent', 1);
-      this.options.onRemoveFinish(info);
+      this.eventListeners.sourceBuffer.onRemoveFinish(info);
     }
   }, {
     key: 'onAppendFinish',
@@ -4375,13 +4361,13 @@ var MSEWrapper = function () {
       if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
         console.log('frozen?');
         this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
-        this.options.onStreamFrozen();
+        this.eventListeners.sourceBuffer.onStreamFrozen();
         return;
       }
 
       this.previousTimeEnd = info.bufferTimeEnd;
 
-      this.options.onAppendFinish(info);
+      this.eventListeners.sourceBuffer.onAppendFinish(info);
       this.trimBuffer(info);
     }
   }, {
@@ -4418,6 +4404,76 @@ var MSEWrapper = function () {
       }
 
       this.processNextInQueue();
+    }
+  }, {
+    key: 'destroySourceBuffer',
+    value: function destroySourceBuffer() {
+      debug('destroySourceBuffer...');
+
+      if (!this.sourceBuffer) {
+        return;
+      }
+
+      this.sourceBuffer.abort();
+
+      this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
+      this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
+
+      this.trimBuffer(undefined, true);
+
+      this.sourceBuffer = null;
+
+      this.timeBuffered = null;
+      this.previousTimeEnd = null;
+      this.segmentQueue = null;
+
+      this.metric('sourceBuffer.destroyed', 1);
+    }
+  }, {
+    key: 'destroyMediaSource',
+    value: function destroyMediaSource() {
+      debug('Destroying mediaSource...');
+
+      if (!this.mediaSource) {
+        return;
+      }
+
+      this.mediaSource.removeEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
+      this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
+      this.mediaSource.removeEventListener('error', this.eventListeners.mediaSource.error);
+
+      var sourceBuffers = this.mediaSource.sourceBuffers;
+
+      if (sourceBuffers.SourceBuffers) {
+        // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
+        sourceBuffers = sourceBuffers.SourceBuffers();
+      }
+
+      for (var i = 0; i < sourceBuffers.length; i++) {
+        this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
+      }
+
+      // @todo - is this happening at the right time, or should it happen
+      // prior to removing the source buffers?
+      this.destroyVideoElementSrc();
+
+      this.mediaSource = null;
+
+      this.metric('mediaSource.destroyed', 1);
+    }
+  }, {
+    key: 'destroy',
+    value: function destroy() {
+      this.destroySourceBuffer();
+      this.destroyMediaSource();
+
+      this.options = null;
+      this.METRIC_TYPES = null;
+      this.EVENT_NAMES = null;
+      this.metrics = null;
+      this.events = null;
+      this.eventListeners = null;
+      this.onSourceBufferUpdateEnd = null;
     }
   }]);
 
@@ -4830,8 +4886,6 @@ var IOVPlayer = function () {
   }]);
 
   function IOVPlayer(iov) {
-    var _this = this;
-
     _classCallCheck(this, IOVPlayer);
 
     debug('constructor');
@@ -4865,13 +4919,7 @@ var IOVPlayer = function () {
 
     this.metrics = {};
 
-    this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory();
-    this.mseWrapper.on('metric', function (_ref) {
-      var type = _ref.type,
-          value = _ref.value;
-
-      _this.trigger('metric', { type: type, value: value });
-    });
+    this.mseWrapper = null;
   }
 
   _createClass(IOVPlayer, [{
@@ -4947,7 +4995,7 @@ var IOVPlayer = function () {
   }, {
     key: 'onTransportTransaction',
     value: function onTransportTransaction(iov, response) {
-      var _this2 = this;
+      var _this = this;
 
       var new_mimeCodec = response.mimeCodec;
       var new_guid = response.guid; // stream guid
@@ -4965,7 +5013,7 @@ var IOVPlayer = function () {
 
         transport.unsubscribe(initSegmentTopic);
 
-        var oldTopic = 'iov/video/' + _this2.guid + '/live';
+        var oldTopic = 'iov/video/' + _this.guid + '/live';
         var newTopic = 'iov/video/' + new_guid + '/live';
 
         transport.subscribe(newTopic, function (moof_mqtt_msg) {
@@ -4976,27 +5024,27 @@ var IOVPlayer = function () {
           transport.unsubscribe(newTopic);
 
           // 2) unsubscribe to live callback for the old stream
-          _this2.iov.transport.unsubscribe(oldTopic);
+          _this.iov.transport.unsubscribe(oldTopic);
 
           // 3) resubscribe with different callback
           transport.subscribe(newTopic, function (mqtt_msg) {
-            _this2.mseWrapper.append(mqtt_msg.payloadBytes);
+            _this.mseWrapper.append(mqtt_msg.payloadBytes);
           });
 
           // alter object properties to reflect new stream
-          _this2.guid = new_guid;
-          _this2.moovBox = moov;
-          _this2.mimeCodec = new_mimeCodec;
+          _this.guid = new_guid;
+          _this.moovBox = moov;
+          _this.mimeCodec = new_mimeCodec;
 
           // remove media source buffer, reinitialize
-          _this2.reinitializeMse();
+          _this.reinitializeMse();
 
           if (!iov) {
             return;
           }
 
           if (iov.config.parentNodeId !== null) {
-            var iframe_elm = document.getElementById(_this2.iov.config.clientId);
+            var iframe_elm = document.getElementById(_this.iov.config.clientId);
             var parent = document.getElementById(iov.config.parentNodeId);
 
             if (parent) {
@@ -5008,7 +5056,7 @@ var IOVPlayer = function () {
           }
 
           // replace iov variable with the new one created.
-          _this2.iov = iov;
+          _this.iov = iov;
         });
       });
 
@@ -5022,7 +5070,7 @@ var IOVPlayer = function () {
   }, {
     key: 'change',
     value: function change(newStream, iov) {
-      var _this3 = this;
+      var _this2 = this;
 
       debug('change');
 
@@ -5035,7 +5083,7 @@ var IOVPlayer = function () {
             args[_key] = arguments[_key];
           }
 
-          return _this3.onTransportTransaction.apply(_this3, [iov].concat(args));
+          return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
         }, request);
         return;
       }
@@ -5045,7 +5093,7 @@ var IOVPlayer = function () {
           args[_key2] = arguments[_key2];
         }
 
-        return _this3.onTransportTransaction.apply(_this3, [iov].concat(args));
+        return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
       }, request);
     }
   }, {
@@ -5097,7 +5145,7 @@ var IOVPlayer = function () {
   }, {
     key: 'play',
     value: function play(eid, streamName, onFirstChunk, onVideoRecv) {
-      var _this4 = this;
+      var _this3 = this;
 
       debug('play');
 
@@ -5118,13 +5166,13 @@ var IOVPlayer = function () {
       var topic = 'iov/video/' + window.btoa(this.streamName) + '/request';
 
       this.iov.transport.transaction(topic, function () {
-        return _this4._start_play.apply(_this4, arguments);
+        return _this3._start_play.apply(_this3, arguments);
       }, request);
     }
   }, {
     key: 'resume',
     value: function resume(onFirstChunk, onVideoRecv) {
-      var _this5 = this;
+      var _this4 = this;
 
       debug('resume');
 
@@ -5134,8 +5182,131 @@ var IOVPlayer = function () {
       var request = { clientId: this.iov.config.clientId };
       var topic = "iov/video/" + window.btoa(this.streamName) + "/request";
       this.iov.transport.transaction(topic, function () {
-        return _this5._start_play.apply(_this5, arguments);
+        return _this4._start_play.apply(_this4, arguments);
       }, request);
+    }
+  }, {
+    key: 'reinitializeMseWrapper',
+    value: function reinitializeMseWrapper(mimeCodec) {
+      var _this5 = this;
+
+      if (this.mseWrapper) {
+        this.mseWrapper.destroy();
+      }
+
+      this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory();
+
+      this.mseWrapper.on('metric', function (_ref) {
+        var type = _ref.type,
+            value = _ref.value;
+
+        _this5.trigger('metric', { type: type, value: value });
+      });
+
+      this.mseWrapper.initializeMediaSource({
+        onSourceOpen: function onSourceOpen() {
+          debug('on mediaSource sourceopen');
+
+          _this5.mseWrapper.initializeSourceBuffer(mimeCodec, {
+            onAppendStart: function onAppendStart(byteArray) {
+              silly('On Append Start...');
+
+              if (_this5.LogSourceBuffer === true && _this5.LogSourceBufferTopic !== null) {
+                debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
+
+                var mqtt_msg = new window.Paho.MQTT.Message(byteArray);
+                mqtt_msg.destinationName = _this5.LogSourceBufferTopic;
+                window.MQTTClient.send(mqtt_msg);
+              }
+
+              _this5.onVideoRecv();
+
+              _this5.iov.statsMsg.byteCount += byteArray.length;
+            },
+            onAppendFinish: function onAppendFinish(info) {
+              silly('On Append Finish...');
+
+              _this5.drift = info.bufferTimeEnd - _this5.video.currentTime;
+
+              _this5.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+              _this5.metric('video.currentTime', _this5.video.currentTime);
+              _this5.metric('video.drift', _this5.drift);
+
+              if (_this5.drift > 3) {
+                _this5.metric('video.driftCorrection', 1);
+                _this5.video.currentTime = info.bufferTimeEnd;
+                // return this.reinitializeMse();
+              }
+
+              if (_this5.video.paused === true) {
+                debug('Video is paused!');
+
+                try {
+                  var promise = _this5.video.play();
+
+                  if (typeof promise !== 'undefined') {
+                    promise.catch(function (error) {
+                      _this5._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                    });
+                  }
+                } catch (error) {
+                  _this5._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+                }
+              }
+            },
+            onRemoveFinish: function onRemoveFinish(info) {
+              debug('onRemoveFinish');
+
+              // wait around for 3 seconds to simulate unpredictable browser interruptions.
+              var now = new Date().getTime();
+              for (var i = 0; i < 1e7; i++) {
+                var diff = new Date().getTime() - now;
+                if (diff > 1000) {
+                  debug("breaking out of 1 second sleep");
+                  break;
+                }
+              }
+            },
+            onAppendError: function onAppendError(error) {
+              // internal error, this has been observed to happen the tab
+              // in the browser where this video player lives is hidden
+              // then reselected. 'ex' is undefined the error is bug
+              // within the MSE C++ implementation in the browser.
+              _this5._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
+              _this5.videoPlayer.error({ code: 3 });
+              _this5.reinitializeMse();
+            },
+            onRemoveError: function onRemoveError(error) {
+              // observed this fail during a memry snapshot in chrome
+              // otherwise no observed failure, so ignore exception.
+              _this5._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
+            },
+            onStreamFrozen: function onStreamFrozen() {
+              debug('stream appears to be frozen - reinitializing...');
+
+              _this5.reinitializeMseWrapper(mimeCodec);
+            },
+            onError: function onError(error) {
+              _this5._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+            }
+          });
+
+          _this5.mseWrapper.append(_this5.moovBox);
+        },
+        onSourceEnded: function onSourceEnded() {
+          debug('on mediaSource sourceended');
+
+          // @todo - do we need to clear the buffer manually?
+          _this5.stop();
+        },
+        onError: function onError(error) {
+          _this5._onError('mediaSource.generic', 'mediaSource error', error);
+        }
+      });
+
+      if (this.mseWrapper.mediaSource && this.video) {
+        this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
+      }
     }
   }, {
     key: 'stop',
@@ -5199,107 +5370,6 @@ var IOVPlayer = function () {
 
         self.onFirstChunk(); // first chunk of video received.
 
-        _this6.mseWrapper.initializeMediaSource({
-          onSourceOpen: function onSourceOpen() {
-            debug('on mediaSource sourceopen');
-
-            _this6.mseWrapper.initializeSourceBuffer(mimeCodec, {
-              onAppendStart: function onAppendStart(byteArray) {
-                silly('On Append Start...');
-
-                if (_this6.LogSourceBuffer === true && _this6.LogSourceBufferTopic !== null) {
-                  debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
-
-                  var _mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-                  _mqtt_msg.destinationName = _this6.LogSourceBufferTopic;
-                  window.MQTTClient.send(_mqtt_msg);
-                }
-
-                _this6.onVideoRecv();
-
-                _this6.iov.statsMsg.byteCount += byteArray.length;
-              },
-              onAppendFinish: function onAppendFinish(info) {
-                silly('On Append Finish...');
-
-                _this6.drift = info.bufferTimeEnd - _this6.video.currentTime;
-
-                _this6.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
-                _this6.metric('video.currentTime', _this6.video.currentTime);
-                _this6.metric('video.drift', _this6.drift);
-
-                if (_this6.drift > 3) {
-                  _this6.metric('video.driftCorrection', 1);
-                  _this6.video.currentTime = info.bufferTimeEnd;
-                  // return this.reinitializeMse();
-                }
-
-                if (self.video.paused === true) {
-                  debug('Video is paused!');
-
-                  try {
-                    var promise = self.video.play();
-
-                    if (typeof promise !== 'undefined') {
-                      promise.catch(function (error) {
-                        _this6._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
-                      });
-                    }
-                  } catch (error) {
-                    _this6._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
-                  }
-                }
-              },
-              onRemoveFinish: function onRemoveFinish(info) {
-                debug('onRemoveFinish');
-
-                // wait around for 3 seconds to simulate unpredictable browser interruptions.
-                var now = new Date().getTime();
-                for (var i = 0; i < 1e7; i++) {
-                  var diff = new Date().getTime() - now;
-                  if (diff > 1000) {
-                    debug("breaking out of 1 second sleep");
-                    break;
-                  }
-                }
-              },
-              onAppendError: function onAppendError(error) {
-                // internal error, this has been observed to happen the tab
-                // in the browser where this video player lives is hidden
-                // then reselected. 'ex' is undefined the error is bug
-                // within the MSE C++ implementation in the browser.
-                _this6._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
-                _this6.videoPlayer.error({ code: 3 });
-                _this6.reinitializeMse();
-              },
-              onRemoveError: function onRemoveError(error) {
-                // observed this fail during a memry snapshot in chrome
-                // otherwise no observed failure, so ignore exception.
-                _this6._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
-              },
-              onStreamFrozen: function onStreamFrozen() {
-                debug('stream appears to be frozen - reinitializing...');
-
-                _this6.reinitializeMse();
-              },
-              onError: function onError(error) {
-                _this6._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
-              }
-            });
-
-            _this6.mseWrapper.append(_this6.moovBox);
-          },
-          onSourceEnded: function onSourceEnded() {
-            debug('on mediaSource sourceended');
-
-            // @todo - do we need to clear the buffer manually?
-            _this6.stop();
-          },
-          onError: function onError(error) {
-            _this6._onError('mediaSource.generic', 'mediaSource error', error);
-          }
-        });
-
         // when videojs initializes the video element (or something like that),
         // it creates events and listeners on that element that it uses, however
         // these events interfere with our ability to play clsp streams.  Cloning
@@ -5341,8 +5411,7 @@ var IOVPlayer = function () {
           self.iov.clone(new_cfg);
         });
 
-        // debug("Disregard: The play() request was interrupted ... its not an error!");
-        self.video.src = _this6.mseWrapper.getVideoElementSrc();
+        _this6.reinitializeMseWrapper(mimeCodec);
 
         // subscribe to a sync topic that will be called if the stream that is feeding
         // the mse service dies and has to be restarted that this player should restart the stream
