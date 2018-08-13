@@ -455,10 +455,7 @@ export default class IOVPlayer {
           onStreamFrozen: () => {
             debug('stream appears to be frozen - reinitializing...');
 
-            const clone = this.mseWrapper.clone();
-
-            this.mseWrapper.destroy();
-            this.mseWrapper = clone;
+            this.reinitializeMseWrapper(mimeCodec);
           },
           onError: (error) => {
             this._onError(

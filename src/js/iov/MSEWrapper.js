@@ -469,10 +469,6 @@ export default class MSEWrapper {
     this.processNextInQueue();
   }
 
-  clone () {
-
-  }
-
   destroySourceBuffer () {
     debug('destroySourceBuffer...');
 
