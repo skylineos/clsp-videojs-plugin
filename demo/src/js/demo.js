@@ -4,17 +4,12 @@ import '../styles/demo.scss';
 
 import $ from 'jquery';
 import videojs from 'video.js';
+import moment from 'moment';
 
 import packageJson from '../../../package.json';
 
 window.videojs = videojs;
 window.CLSP_DEMO_VERSION = packageJson.version;
-
-const tourUrls = [
-  'clsp://172.28.12.247/testpattern',
-  'clsp://172.28.12.57:9001/FairfaxVideo0520',
-  'clsp://172.28.12.57:9001/40004',
-];
 
 const playerUrls = [
   'clsp://172.28.12.248/testpattern',
@@ -23,23 +18,13 @@ const playerUrls = [
   'clsp://172.28.12.247/testpattern',
 ];
 
-function initializePlayers () {
-  for (let i = 0; i < playerUrls.length; i++) {
-    $(`#url${i}`).val(playerUrls[i]);
-  }
+const tourUrls = [
+  'clsp://172.28.12.247/testpattern',
+  'clsp://172.28.12.57:9001/FairfaxVideo0520',
+  'clsp://172.28.12.57:9001/40004',
+];
 
-  $('#submit').click(() => {
-    for (let i = 0; i < playerUrls.length && i < 4; i++) {
-      const url = $(`#url${i}`).val();
-
-      $(`#src${i}`).attr('src', url);
-
-      if (url) {
-        window.videojs(`vw${i}`).clsp();
-      }
-    }
-  });
-}
+let wallInterval = null;
 
 function initializeWall () {
   function setupVwallCell (eid, src, cellId) {
@@ -73,24 +58,25 @@ function initializeWall () {
   }
 
   function onclick () {
-    const urlList = [];
-    const numvideos = $('#numvideos').val();
-
-    for (let i = 0; i < numvideos; i++) {
-      urlList.push($('#url').val());
-    }
+    const urlList = $('#wallUrls').val().split('\n');
+    const timesToReplicate = $('#wallReplicate').val();
 
     let html = '<table>';
+    let cellIndex = 0;
 
-    for (let i = 0; i < urlList.length; i++) {
-      if (i % 4 === 0) {
-        html += '<tr>';
-      }
+    for (let i = 0; i < timesToReplicate; i++) {
+      for (let j = 0; j < urlList.length; j++) {
+        if (cellIndex % 4 === 0) {
+          html += '<tr>';
+        }
 
-      html += `<td id="vwcell-${i}"></td>`;
+        html += `<td id="vwcell-${cellIndex}"></td>`;
 
-      if (i % 4 === 3) {
-        html += '</tr>';
+        if (cellIndex % 4 === 3) {
+          html += '</tr>';
+        }
+
+        cellIndex++;
       }
     }
 
@@ -102,9 +88,28 @@ function initializeWall () {
 
     $(`#videowall`).html(html);
 
-    for (let i = 0; i < urlList.length; i++) {
-      setupVwallCell(`vwcell-${i}`, urlList[i], i);
+    for (let i = 0; i < cellIndex; i++) {
+      const urlListIndex = i % urlList.length;
+
+      setupVwallCell(`vwcell-${i}`, urlList[urlListIndex], i);
     }
+
+    const now = Date.now();
+
+    $('#tourTotalVideos').html(`Total videos playing: ${cellIndex}`);
+    $('#tourStartTime').html(`Time Started: ${moment(now).format('MMMM Do YYYY, h:mm:ss a')}`);
+
+    if (wallInterval) {
+      window.clearInterval(wallInterval);
+    }
+
+    wallInterval = setInterval(() => {
+      const hoursFromStart = Math.floor(moment.duration(Date.now() - now).asHours());
+      const minutesFromStart = Math.floor(moment.duration(Date.now() - now).asMinutes()) - (hoursFromStart * 60);
+      const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60) - (minutesFromStart * 60);
+
+      $('#tourDuration').html(`This tour has been running for ${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+    }, 1000);
   }
 
   $('#walltest').click(onclick);
@@ -117,6 +122,24 @@ function initializeWall () {
     }
     else {
       $('.video-metrics').hide();
+    }
+  });
+}
+
+function initializePlayers () {
+  for (let i = 0; i < playerUrls.length; i++) {
+    $(`#url${i}`).val(playerUrls[i]);
+  }
+
+  $('#submit').click(() => {
+    for (let i = 0; i < playerUrls.length && i < 4; i++) {
+      const url = $(`#url${i}`).val();
+
+      $(`#src${i}`).attr('src', url);
+
+      if (url) {
+        window.videojs(`vw${i}`).clsp();
+      }
     }
   });
 }

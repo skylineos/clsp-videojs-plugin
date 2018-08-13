@@ -8,310 +8,294 @@
 </head>
 <body>
   <h1 id="page-title">CLSP Demo</h1>
-  <table>
-    <tr>
-      <td class="video-container">
-        <video
-          id="vw0"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        >
-          <source id="src0" src="" type="video/mp4; codecs='avc1.42E01E'"/>
-          <source id="hls0"  src="" type="application/x-mpegURL" />
-        </video>
-      </td>
-      <td  class="video-container">
-        <video
-          id="vw1"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        >
-          <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'" />
-          <source id="hls1"  src="" type="application/x-mpegURL" />
-        </video>
-      </td>
-    </tr>
-    <tr>
-     <td class="video-container">
-        <video
-          id="vw2"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        >
-          <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'" />
-          <source id="hls2"  src="" type="application/x-mpegURL" />
-        </video>
-      </td>
-      <td class="video-container">
-        <video
-          id="vw3"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        >
-          <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'" />
-          <source id="hls3"  src="" type="application/x-mpegURL" />
-        </video>
-      </td>
-    </tr>
 
-    <tr><td colspan="2"><hr></td></tr>
-
-    <tr><td colspan="2">URL format:   clsp://(sfs ip)/(stream name)</td></tr>
-    <tr><td>CLSP URL</td><td>
+  <section class="wall">
+    <h2>Wall</h2>
+    <div>
+      <span>Urls:</span>
+      <br />
+      <textarea
+        id="wallUrls"
+        rows="25"
+        cols="80"
+      >clsp://172.28.12.247/testpattern</textarea>
+    </div>
+    <br />
+    <div>
+      <span>Times to Replicate</span>
+      <br />
       <input
-        id="url0"
-        style="width: 400px;"
-      /></td></tr>
-    <tr><td>CLSP URL</td><td>
-      <input
-        id="url1"
-        style="width: 400px;"
-      /></td></tr>
-    <tr><td>CLSP URL</td><td>
-      <input
-        id="url2"
-        style="width: 400px;"
-      /></td></tr>
-    <tr><td>CLSP URL</td><td>
-      <input
-        id="url3"
-        style="width: 400px;"
-      /></td></tr>
-    <tr><td colspan="2"><button id="submit">Submit</button></td></tr>
-    <tr><td colspan="2"><div id="message"></div></td></tr>
-  </table>
-
-  <hr />
-
-  <div>
-    <span>Url:</span>
-    <input
-      id="url"
-      value="clsp://172.28.12.247/testpattern"
-    />
-  </div>
-  <div>
-    <span>Number of videos:</span>
-    <input
-      id="numvideos"
-      value="8"
-      type="number"
-    />
-  </div>
-  <div>
-    <label for="showMetrics">
-      <input
-        id="showMetrics"
-        checked="true"
-        type="checkbox"
+        id="wallReplicate"
+        value="1"
+        type="number"
       />
-      <span>Show Metrics</span>
-    </label>
-  </div>
-
-  <br />
-
-  <button id="walltest">video wall</button>
-
-  <div id="videowall"></div>
-
-  <hr>
-
-  <h2>Video tour</h2>
-  <span>Enter a list of clsp urls separated by newline.</span>
-
-  <br>
-
-  <textarea
-    id="tour-list"
-    rows="10"
-    cols="80"
-    style="overflow: scroll;"
-  ></textarea>
-
-  <h3 id="now-playing"></h3>
-
-  <video
-    id="tour-video"
-    width="352"
-    height="240"
-    autoplay
-    muted
-  >
-    <source
-      id="tour-first-source"
-      src=""
-      type="video/mp4; codecs='avc1.42E01E'"
-    />
-  </video>
-
-  <br>
-
-  <span>Play time per</span>
-  <input
-    id="tour-switch-interval"
-    type="number"
-    value="10"
-  />
-  <button id="start-tour">Start Video Tour</button>
-
-  <hr>
-
-  <h3>Headless clsp player</h3>
-  <video id="headless"
-    width="352"
-    height="240"
-    controls
-    autoplay
-    muted
-  ></video>
-
-  <hr>
-
-  <div>Url for headless player: <input id="headless_url" tyle="text"/></div>
-  <div><button id="headless_play">Headless Player</button></div>
-
-  <template id="cell">
-    <div class="video-container">
-      <video
-        id="video-$cellId"
-        width="352"
-        height="240"
-        class="video-js vjs-default-skin"
-        controls
-        autoplay
-        muted
-      >
-        <source
-          id="src-$cellId"
-          src="$src"
-          type="video/mp4; codecs='avc1.42E01E'"
+    </div>
+    <br />
+    <div>
+      <label for="showMetrics">
+        <input
+          id="showMetrics"
+          checked="true"
+          type="checkbox"
         />
-      </video>
+        <span>Show Metrics</span>
+      </label>
     </div>
-    <div class="video-metrics">
-      <div class="metric mediaSource-created">
-        <span class="value"></span>
-        <span class="type">mediaSource.created</span>
-      </div>
-      <div class="metric mediaSource-destroyed">
-        <span class="value"></span>
-        <span class="type">mediaSource.destroyed</span>
-      </div>
-      <div class="metric objectURL-created">
-        <span class="value"></span>
-        <span class="type">objectURL.created</span>
-      </div>
-      <div class="metric objectURL-revoked">
-        <span class="value"></span>
-        <span class="type">objectURL.revoked</span>
-      </div>
-      <div class="metric mediaSource-reinitialized">
-        <span class="value"></span>
-        <span class="type">mediaSource.reinitialized</span>
-      </div>
-      <div class="metric sourceBuffer-created">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.created</span>
-      </div>
-      <div class="metric sourceBuffer-destroyed">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.destroyed</span>
-      </div>
-      <div class="metric queue-added">
-        <span class="value"></span>
-        <span class="type">queue.added</span>
-      </div>
-      <div class="metric queue-removed">
-        <span class="value"></span>
-        <span class="type">queue.removed</span>
-      </div>
-      <div class="metric sourceBuffer-append">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.append</span>
-      </div>
-      <div class="metric error-sourceBuffer-append">
-        <span class="value"></span>
-        <span class="type">error.sourceBuffer.append</span>
-      </div>
-      <div class="metric frameDrop-hiddenTab">
-        <span class="value"></span>
-        <span class="type">frameDrop.hiddenTab</span>
-      </div>
-      <div class="metric queue-mediaSourceNotReady">
-        <span class="value"></span>
-        <span class="type">queue.mediaSourceNotReady</span>
-      </div>
-      <div class="metric queue-sourceBufferNotReady">
-        <span class="value"></span>
-        <span class="type">queue.sourceBufferNotReady</span>
-      </div>
-      <div class="metric queue-shift">
-        <span class="value"></span>
-        <span class="type">queue.shift</span>
-      </div>
-      <div class="metric queue-append">
-        <span class="value"></span>
-        <span class="type">queue.append</span>
-      </div>
-      <div class="metric sourceBuffer-lastKnownBufferSize">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.lastKnownBufferSize</span>
-      </div>
-      <div class="metric sourceBuffer-trim">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.trim</span>
-      </div>
-      <div class="metric sourceBuffer-trim-error">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.trim.error</span>
-      </div>
-      <div class="metric sourceBuffer-updateEnd">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.updateEnd</span>
-      </div>
-      <div class="metric sourceBuffer-updateEnd-bufferLength-empty">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.updateEnd.bufferLength.empty</span>
-      </div>
-      <div class="metric sourceBuffer-updateEnd-bufferLength-error">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.updateEnd.bufferLength.error</span>
-      </div>
-      <div class="metric sourceBuffer-updateEnd-removeEvent">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.updateEnd.removeEvent</span>
-      </div>
-      <div class="metric sourceBuffer-updateEnd-appendEvent">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.updateEnd.appendEvent</span>
-      </div>
-      <div class="metric sourceBuffer-bufferTimeEnd">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.bufferTimeEnd</span>
-      </div>
-      <div class="metric video-currentTime">
-        <span class="value"></span>
-        <span class="type">video.currentTime</span>
-      </div>
-      <div class="metric video-drift">
-        <span class="value"></span>
-        <span class="type">video.drift</span>
-      </div>
-      <div class="metric video-driftCorrection">
-        <span class="value"></span>
-        <span class="type">video.driftCorrection</span>
-      </div>
-      <div class="metric sourceBuffer-updateEnd-bufferFrozen">
-        <span class="value"></span>
-        <span class="type">sourceBuffer.updateEnd.bufferFrozen</span>
-      </div>
+    <br />
+    <br />
+    <button id="walltest">video wall</button>
+    <br />
+    <div id="tourSummary">
+      <span id="tourTotalVideos"></span>
+      <br />
+      <span id="tourStartTime"></span>
+      <br />
+      <span id="tourDuration"></span>
     </div>
-  </template>
+
+    <div id="videowall"></div>
+
+    <template id="cell">
+      <div class="video-container">
+        <video id="video-$cellId" width="352" height="240" class="video-js vjs-default-skin" controls autoplay muted>
+          <source id="src-$cellId" src="$src" type="video/mp4; codecs='avc1.42E01E'" />
+        </video>
+      </div>
+      <div class="video-metrics">
+        <div class="metric mediaSource-created">
+          <span class="value"></span>
+          <span class="type">mediaSource.created</span>
+        </div>
+        <div class="metric mediaSource-destroyed">
+          <span class="value"></span>
+          <span class="type">mediaSource.destroyed</span>
+        </div>
+        <div class="metric objectURL-created">
+          <span class="value"></span>
+          <span class="type">objectURL.created</span>
+        </div>
+        <div class="metric objectURL-revoked">
+          <span class="value"></span>
+          <span class="type">objectURL.revoked</span>
+        </div>
+        <div class="metric mediaSource-reinitialized">
+          <span class="value"></span>
+          <span class="type">mediaSource.reinitialized</span>
+        </div>
+        <div class="metric sourceBuffer-created">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.created</span>
+        </div>
+        <div class="metric sourceBuffer-destroyed">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.destroyed</span>
+        </div>
+        <div class="metric queue-added">
+          <span class="value"></span>
+          <span class="type">queue.added</span>
+        </div>
+        <div class="metric queue-removed">
+          <span class="value"></span>
+          <span class="type">queue.removed</span>
+        </div>
+        <div class="metric sourceBuffer-append">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.append</span>
+        </div>
+        <div class="metric error-sourceBuffer-append">
+          <span class="value"></span>
+          <span class="type">error.sourceBuffer.append</span>
+        </div>
+        <div class="metric frameDrop-hiddenTab">
+          <span class="value"></span>
+          <span class="type">frameDrop.hiddenTab</span>
+        </div>
+        <div class="metric queue-mediaSourceNotReady">
+          <span class="value"></span>
+          <span class="type">queue.mediaSourceNotReady</span>
+        </div>
+        <div class="metric queue-sourceBufferNotReady">
+          <span class="value"></span>
+          <span class="type">queue.sourceBufferNotReady</span>
+        </div>
+        <div class="metric queue-shift">
+          <span class="value"></span>
+          <span class="type">queue.shift</span>
+        </div>
+        <div class="metric queue-append">
+          <span class="value"></span>
+          <span class="type">queue.append</span>
+        </div>
+        <div class="metric sourceBuffer-lastKnownBufferSize">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.lastKnownBufferSize</span>
+        </div>
+        <div class="metric sourceBuffer-trim">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.trim</span>
+        </div>
+        <div class="metric sourceBuffer-trim-error">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.trim.error</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-bufferLength-empty">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.bufferLength.empty</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-bufferLength-error">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.bufferLength.error</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-removeEvent">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.removeEvent</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-appendEvent">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.appendEvent</span>
+        </div>
+        <div class="metric sourceBuffer-bufferTimeEnd">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.bufferTimeEnd</span>
+        </div>
+        <div class="metric video-currentTime">
+          <span class="value"></span>
+          <span class="type">video.currentTime</span>
+        </div>
+        <div class="metric video-drift">
+          <span class="value"></span>
+          <span class="type">video.drift</span>
+        </div>
+        <div class="metric video-driftCorrection">
+          <span class="value"></span>
+          <span class="type">video.driftCorrection</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-bufferFrozen">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.bufferFrozen</span>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <section class="players">
+    <h2>Players</h2>
+    <table>
+      <tr>
+        <td class="video-container">
+          <video
+            id="vw0"
+            class="video-js vjs-default-skin"
+            controls
+            muted
+          >
+            <source id="src0" src="" type="video/mp4; codecs='avc1.42E01E'"/>
+            <source id="hls0"  src="" type="application/x-mpegURL" />
+          </video>
+        </td>
+        <td  class="video-container">
+          <video
+            id="vw1"
+            class="video-js vjs-default-skin"
+            controls
+            muted
+          >
+            <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'" />
+            <source id="hls1"  src="" type="application/x-mpegURL" />
+          </video>
+        </td>
+      </tr>
+      <tr>
+       <td class="video-container">
+          <video
+            id="vw2"
+            class="video-js vjs-default-skin"
+            controls
+            muted
+          >
+            <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'" />
+            <source id="hls2"  src="" type="application/x-mpegURL" />
+          </video>
+        </td>
+        <td class="video-container">
+          <video
+            id="vw3"
+            class="video-js vjs-default-skin"
+            controls
+            muted
+          >
+            <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'" />
+            <source id="hls3"  src="" type="application/x-mpegURL" />
+          </video>
+        </td>
+      </tr>
+
+      <tr><td colspan="2"><hr></td></tr>
+
+      <tr><td colspan="2">URL format:   clsp://(sfs ip)/(stream name)</td></tr>
+      <tr><td>CLSP URL</td><td>
+        <input
+          id="url0"
+          style="width: 400px;"
+        /></td></tr>
+      <tr><td>CLSP URL</td><td>
+        <input
+          id="url1"
+          style="width: 400px;"
+        /></td></tr>
+      <tr><td>CLSP URL</td><td>
+        <input
+          id="url2"
+          style="width: 400px;"
+        /></td></tr>
+      <tr><td>CLSP URL</td><td>
+        <input
+          id="url3"
+          style="width: 400px;"
+        /></td></tr>
+      <tr><td colspan="2"><button id="submit">Submit</button></td></tr>
+      <tr><td colspan="2"><div id="message"></div></td></tr>
+    </table>
+  </section>
+
+  <section class="tour">
+    <h2>Tour</h2>
+    <span>Enter a list of clsp urls separated by newline.</span>
+
+    <br>
+
+    <textarea id="tour-list" rows="10" cols="80" style="overflow: scroll;"></textarea>
+
+    <h3 id="now-playing"></h3>
+
+    <video id="tour-video" width="352" height="240" autoplay muted>
+      <source id="tour-first-source" src="" type="video/mp4; codecs='avc1.42E01E'" />
+    </video>
+
+    <br>
+
+    <span>Play time per</span>
+    <input id="tour-switch-interval" type="number" value="10" />
+    <button id="start-tour">Start Video Tour</button>
+  </section>
+
+  <section class="headless">
+    <h2>Headless CLSP Player</h2>
+    <video id="headless" width="352" height="240" controls autoplay muted></video>
+
+    <hr>
+
+    <div>Url for headless player:
+      <input id="headless_url" tyle="text" />
+    </div>
+    <div>
+      <button id="headless_play">Headless Player</button>
+    </div>
+  </section>
 
   <script src="/dist/videojs-mse-over-clsp.js"></script>
 </body>

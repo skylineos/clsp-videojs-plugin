@@ -364,6 +364,12 @@ export default class MSEWrapper {
   append (byteArray) {
     silly('Append');
 
+    // Sometimes this can get hit after destroy is called
+    if (!this.eventListeners.sourceBuffer.onAppendStart) {
+      // @todo - should we do something else here?
+      return;
+    }
+
     this.eventListeners.sourceBuffer.onAppendStart(byteArray);
 
     this.metric('queue.append', 1);
@@ -423,7 +429,6 @@ export default class MSEWrapper {
     // The current buffer size should always be bigger.If it isn't, there is a problem,
     // and we need to reinitialize or something.
     if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
-      console.log('frozen?');
       this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
       this.eventListeners.sourceBuffer.onStreamFrozen();
       return;
