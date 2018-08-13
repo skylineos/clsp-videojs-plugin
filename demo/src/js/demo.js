@@ -5,7 +5,10 @@ import '../styles/demo.scss';
 import $ from 'jquery';
 import videojs from 'video.js';
 
+import packageJson from '../../../package.json';
+
 window.videojs = videojs;
+window.CLSP_DEMO_VERSION = packageJson.version;
 
 const tourUrls = [
   'clsp://172.28.12.247/testpattern',
@@ -207,6 +210,10 @@ function initializeHeadless () {
 }
 
 $(() => {
+  const pageTitle = `CLSP ${CLSP_DEMO_VERSION} Demo Page`;
+  document.title = pageTitle;
+  $('#page-title').html(pageTitle);
+
   initializePlayers();
   initializeWall();
   initializeTours();
