@@ -1,0 +1,32 @@
+$icon-font-path: '~videojs-font/fonts';
+@import 'node_modules/video.js/src/css/video-js.scss';
+
+@import '~/dist/videojs-mse-over-clsp.css';
+
+.video-js {
+  width: 356px;
+  height: 244px;
+}
+
+.video-metrics {
+  display: flex;
+  flex-direction: column;
+
+  .metric {
+    display: flex;
+
+    &:nth-of-type(2n) {
+      background: lightgrey;
+    }
+
+    .value {
+      max-width: 1rem;
+    }
+
+    .type {
+      flex-grow: 1;
+      flex-shrink: 0;
+      text-align: right;
+    }
+  }
+}

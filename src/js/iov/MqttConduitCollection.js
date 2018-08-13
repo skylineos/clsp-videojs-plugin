@@ -5,7 +5,7 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 export default class MqttConduitCollection {
   constructor (id) {
     this.id = id;
-    this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:MqttConduitCollection`);
+    this.debug = Debug(`${DEBUG_PREFIX}:MqttConduitCollection:${this.id}`);
 
     this.debug('constructing...');
 

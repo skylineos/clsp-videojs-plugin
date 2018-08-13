@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/js/videojs-mse-over-clsp.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -507,6 +507,33 @@ function coerce(val) {
 
 /***/ }),
 
+/***/ "./node_modules/global/document.js":
+/*!*****************************************!*\
+  !*** ./node_modules/global/document.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var topLevel = typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : {};
+var minDoc = __webpack_require__(/*! min-document */ 1);
+
+var doccy;
+
+if (typeof document !== 'undefined') {
+    doccy = document;
+} else {
+    doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'];
+
+    if (!doccy) {
+        doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'] = minDoc;
+    }
+}
+
+module.exports = doccy;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
 /***/ "./node_modules/lodash/_Symbol.js":
 /*!****************************************!*\
   !*** ./node_modules/lodash/_Symbol.js ***!
@@ -520,6 +547,98 @@ var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js");
 var _Symbol = root.Symbol;
 
 module.exports = _Symbol;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_apply.js":
+/*!***************************************!*\
+  !*** ./node_modules/lodash/_apply.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * A faster alternative to `Function#apply`, this function invokes `func`
+ * with the `this` binding of `thisArg` and the arguments of `args`.
+ *
+ * @private
+ * @param {Function} func The function to invoke.
+ * @param {*} thisArg The `this` binding of `func`.
+ * @param {Array} args The arguments to invoke `func` with.
+ * @returns {*} Returns the result of `func`.
+ */
+function apply(func, thisArg, args) {
+  switch (args.length) {
+    case 0:
+      return func.call(thisArg);
+    case 1:
+      return func.call(thisArg, args[0]);
+    case 2:
+      return func.call(thisArg, args[0], args[1]);
+    case 3:
+      return func.call(thisArg, args[0], args[1], args[2]);
+  }
+  return func.apply(thisArg, args);
+}
+
+module.exports = apply;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_arrayLikeKeys.js":
+/*!***********************************************!*\
+  !*** ./node_modules/lodash/_arrayLikeKeys.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseTimes = __webpack_require__(/*! ./_baseTimes */ "./node_modules/lodash/_baseTimes.js"),
+    isArguments = __webpack_require__(/*! ./isArguments */ "./node_modules/lodash/isArguments.js"),
+    isArray = __webpack_require__(/*! ./isArray */ "./node_modules/lodash/isArray.js"),
+    isBuffer = __webpack_require__(/*! ./isBuffer */ "./node_modules/lodash/isBuffer.js"),
+    isIndex = __webpack_require__(/*! ./_isIndex */ "./node_modules/lodash/_isIndex.js"),
+    isTypedArray = __webpack_require__(/*! ./isTypedArray */ "./node_modules/lodash/isTypedArray.js");
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Creates an array of the enumerable property names of the array-like `value`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @param {boolean} inherited Specify returning inherited property names.
+ * @returns {Array} Returns the array of property names.
+ */
+function arrayLikeKeys(value, inherited) {
+  var isArr = isArray(value),
+      isArg = !isArr && isArguments(value),
+      isBuff = !isArr && !isArg && isBuffer(value),
+      isType = !isArr && !isArg && !isBuff && isTypedArray(value),
+      skipIndexes = isArr || isArg || isBuff || isType,
+      result = skipIndexes ? baseTimes(value.length, String) : [],
+      length = result.length;
+
+  for (var key in value) {
+    if ((inherited || hasOwnProperty.call(value, key)) && !(skipIndexes && (
+    // Safari 9 has enumerable `arguments.length` in strict mode.
+    key == 'length' ||
+    // Node.js 0.10 has enumerable non-index properties on buffers.
+    isBuff && (key == 'offset' || key == 'parent') ||
+    // PhantomJS 2 has enumerable non-index properties on typed arrays.
+    isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset') ||
+    // Skip index properties.
+    isIndex(key, length)))) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+module.exports = arrayLikeKeys;
 
 /***/ }),
 
@@ -559,6 +678,339 @@ module.exports = baseGetTag;
 
 /***/ }),
 
+/***/ "./node_modules/lodash/_baseIsArguments.js":
+/*!*************************************************!*\
+  !*** ./node_modules/lodash/_baseIsArguments.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseGetTag = __webpack_require__(/*! ./_baseGetTag */ "./node_modules/lodash/_baseGetTag.js"),
+    isObjectLike = __webpack_require__(/*! ./isObjectLike */ "./node_modules/lodash/isObjectLike.js");
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]';
+
+/**
+ * The base implementation of `_.isArguments`.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ */
+function baseIsArguments(value) {
+  return isObjectLike(value) && baseGetTag(value) == argsTag;
+}
+
+module.exports = baseIsArguments;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_baseIsNative.js":
+/*!**********************************************!*\
+  !*** ./node_modules/lodash/_baseIsNative.js ***!
+  \**********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isFunction = __webpack_require__(/*! ./isFunction */ "./node_modules/lodash/isFunction.js"),
+    isMasked = __webpack_require__(/*! ./_isMasked */ "./node_modules/lodash/_isMasked.js"),
+    isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js"),
+    toSource = __webpack_require__(/*! ./_toSource */ "./node_modules/lodash/_toSource.js");
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Used for built-in method references. */
+var funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' + funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&').replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$');
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+module.exports = baseIsNative;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_baseIsTypedArray.js":
+/*!**************************************************!*\
+  !*** ./node_modules/lodash/_baseIsTypedArray.js ***!
+  \**************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseGetTag = __webpack_require__(/*! ./_baseGetTag */ "./node_modules/lodash/_baseGetTag.js"),
+    isLength = __webpack_require__(/*! ./isLength */ "./node_modules/lodash/isLength.js"),
+    isObjectLike = __webpack_require__(/*! ./isObjectLike */ "./node_modules/lodash/isObjectLike.js");
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    arrayTag = '[object Array]',
+    boolTag = '[object Boolean]',
+    dateTag = '[object Date]',
+    errorTag = '[object Error]',
+    funcTag = '[object Function]',
+    mapTag = '[object Map]',
+    numberTag = '[object Number]',
+    objectTag = '[object Object]',
+    regexpTag = '[object RegExp]',
+    setTag = '[object Set]',
+    stringTag = '[object String]',
+    weakMapTag = '[object WeakMap]';
+
+var arrayBufferTag = '[object ArrayBuffer]',
+    dataViewTag = '[object DataView]',
+    float32Tag = '[object Float32Array]',
+    float64Tag = '[object Float64Array]',
+    int8Tag = '[object Int8Array]',
+    int16Tag = '[object Int16Array]',
+    int32Tag = '[object Int32Array]',
+    uint8Tag = '[object Uint8Array]',
+    uint8ClampedTag = '[object Uint8ClampedArray]',
+    uint16Tag = '[object Uint16Array]',
+    uint32Tag = '[object Uint32Array]';
+
+/** Used to identify `toStringTag` values of typed arrays. */
+var typedArrayTags = {};
+typedArrayTags[float32Tag] = typedArrayTags[float64Tag] = typedArrayTags[int8Tag] = typedArrayTags[int16Tag] = typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] = typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] = typedArrayTags[uint32Tag] = true;
+typedArrayTags[argsTag] = typedArrayTags[arrayTag] = typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] = typedArrayTags[dataViewTag] = typedArrayTags[dateTag] = typedArrayTags[errorTag] = typedArrayTags[funcTag] = typedArrayTags[mapTag] = typedArrayTags[numberTag] = typedArrayTags[objectTag] = typedArrayTags[regexpTag] = typedArrayTags[setTag] = typedArrayTags[stringTag] = typedArrayTags[weakMapTag] = false;
+
+/**
+ * The base implementation of `_.isTypedArray` without Node.js optimizations.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+ */
+function baseIsTypedArray(value) {
+    return isObjectLike(value) && isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
+}
+
+module.exports = baseIsTypedArray;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_baseKeysIn.js":
+/*!********************************************!*\
+  !*** ./node_modules/lodash/_baseKeysIn.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js"),
+    isPrototype = __webpack_require__(/*! ./_isPrototype */ "./node_modules/lodash/_isPrototype.js"),
+    nativeKeysIn = __webpack_require__(/*! ./_nativeKeysIn */ "./node_modules/lodash/_nativeKeysIn.js");
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ */
+function baseKeysIn(object) {
+  if (!isObject(object)) {
+    return nativeKeysIn(object);
+  }
+  var isProto = isPrototype(object),
+      result = [];
+
+  for (var key in object) {
+    if (!(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+module.exports = baseKeysIn;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_baseRest.js":
+/*!******************************************!*\
+  !*** ./node_modules/lodash/_baseRest.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var identity = __webpack_require__(/*! ./identity */ "./node_modules/lodash/identity.js"),
+    overRest = __webpack_require__(/*! ./_overRest */ "./node_modules/lodash/_overRest.js"),
+    setToString = __webpack_require__(/*! ./_setToString */ "./node_modules/lodash/_setToString.js");
+
+/**
+ * The base implementation of `_.rest` which doesn't validate or coerce arguments.
+ *
+ * @private
+ * @param {Function} func The function to apply a rest parameter to.
+ * @param {number} [start=func.length-1] The start position of the rest parameter.
+ * @returns {Function} Returns the new function.
+ */
+function baseRest(func, start) {
+  return setToString(overRest(func, start, identity), func + '');
+}
+
+module.exports = baseRest;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_baseSetToString.js":
+/*!*************************************************!*\
+  !*** ./node_modules/lodash/_baseSetToString.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var constant = __webpack_require__(/*! ./constant */ "./node_modules/lodash/constant.js"),
+    defineProperty = __webpack_require__(/*! ./_defineProperty */ "./node_modules/lodash/_defineProperty.js"),
+    identity = __webpack_require__(/*! ./identity */ "./node_modules/lodash/identity.js");
+
+/**
+ * The base implementation of `setToString` without support for hot loop shorting.
+ *
+ * @private
+ * @param {Function} func The function to modify.
+ * @param {Function} string The `toString` result.
+ * @returns {Function} Returns `func`.
+ */
+var baseSetToString = !defineProperty ? identity : function (func, string) {
+  return defineProperty(func, 'toString', {
+    'configurable': true,
+    'enumerable': false,
+    'value': constant(string),
+    'writable': true
+  });
+};
+
+module.exports = baseSetToString;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_baseTimes.js":
+/*!*******************************************!*\
+  !*** ./node_modules/lodash/_baseTimes.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * The base implementation of `_.times` without support for iteratee shorthands
+ * or max array length checks.
+ *
+ * @private
+ * @param {number} n The number of times to invoke `iteratee`.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the array of results.
+ */
+function baseTimes(n, iteratee) {
+  var index = -1,
+      result = Array(n);
+
+  while (++index < n) {
+    result[index] = iteratee(index);
+  }
+  return result;
+}
+
+module.exports = baseTimes;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_baseUnary.js":
+/*!*******************************************!*\
+  !*** ./node_modules/lodash/_baseUnary.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * The base implementation of `_.unary` without support for storing metadata.
+ *
+ * @private
+ * @param {Function} func The function to cap arguments for.
+ * @returns {Function} Returns the new capped function.
+ */
+function baseUnary(func) {
+  return function (value) {
+    return func(value);
+  };
+}
+
+module.exports = baseUnary;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_coreJsData.js":
+/*!********************************************!*\
+  !*** ./node_modules/lodash/_coreJsData.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js");
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+module.exports = coreJsData;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_defineProperty.js":
+/*!************************************************!*\
+  !*** ./node_modules/lodash/_defineProperty.js ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var getNative = __webpack_require__(/*! ./_getNative */ "./node_modules/lodash/_getNative.js");
+
+var defineProperty = function () {
+  try {
+    var func = getNative(Object, 'defineProperty');
+    func({}, '', {});
+    return func;
+  } catch (e) {}
+}();
+
+module.exports = defineProperty;
+
+/***/ }),
+
 /***/ "./node_modules/lodash/_freeGlobal.js":
 /*!********************************************!*\
   !*** ./node_modules/lodash/_freeGlobal.js ***!
@@ -573,6 +1025,33 @@ var freeGlobal = (typeof global === 'undefined' ? 'undefined' : _typeof(global))
 
 module.exports = freeGlobal;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_getNative.js":
+/*!*******************************************!*\
+  !*** ./node_modules/lodash/_getNative.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseIsNative = __webpack_require__(/*! ./_baseIsNative */ "./node_modules/lodash/_baseIsNative.js"),
+    getValue = __webpack_require__(/*! ./_getValue */ "./node_modules/lodash/_getValue.js");
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+module.exports = getNative;
 
 /***/ }),
 
@@ -632,6 +1111,233 @@ module.exports = getRawTag;
 
 /***/ }),
 
+/***/ "./node_modules/lodash/_getValue.js":
+/*!******************************************!*\
+  !*** ./node_modules/lodash/_getValue.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+module.exports = getValue;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_isIndex.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/_isIndex.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/** Used to detect unsigned integer values. */
+var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+/**
+ * Checks if `value` is a valid array-like index.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+ * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+ */
+function isIndex(value, length) {
+  var type = typeof value === 'undefined' ? 'undefined' : _typeof(value);
+  length = length == null ? MAX_SAFE_INTEGER : length;
+
+  return !!length && (type == 'number' || type != 'symbol' && reIsUint.test(value)) && value > -1 && value % 1 == 0 && value < length;
+}
+
+module.exports = isIndex;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_isIterateeCall.js":
+/*!************************************************!*\
+  !*** ./node_modules/lodash/_isIterateeCall.js ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var eq = __webpack_require__(/*! ./eq */ "./node_modules/lodash/eq.js"),
+    isArrayLike = __webpack_require__(/*! ./isArrayLike */ "./node_modules/lodash/isArrayLike.js"),
+    isIndex = __webpack_require__(/*! ./_isIndex */ "./node_modules/lodash/_isIndex.js"),
+    isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js");
+
+/**
+ * Checks if the given arguments are from an iteratee call.
+ *
+ * @private
+ * @param {*} value The potential iteratee value argument.
+ * @param {*} index The potential iteratee index or key argument.
+ * @param {*} object The potential iteratee object argument.
+ * @returns {boolean} Returns `true` if the arguments are from an iteratee call,
+ *  else `false`.
+ */
+function isIterateeCall(value, index, object) {
+  if (!isObject(object)) {
+    return false;
+  }
+  var type = typeof index === 'undefined' ? 'undefined' : _typeof(index);
+  if (type == 'number' ? isArrayLike(object) && isIndex(index, object.length) : type == 'string' && index in object) {
+    return eq(object[index], value);
+  }
+  return false;
+}
+
+module.exports = isIterateeCall;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_isMasked.js":
+/*!******************************************!*\
+  !*** ./node_modules/lodash/_isMasked.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var coreJsData = __webpack_require__(/*! ./_coreJsData */ "./node_modules/lodash/_coreJsData.js");
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = function () {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? 'Symbol(src)_1.' + uid : '';
+}();
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && maskSrcKey in func;
+}
+
+module.exports = isMasked;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_isPrototype.js":
+/*!*********************************************!*\
+  !*** ./node_modules/lodash/_isPrototype.js ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/**
+ * Checks if `value` is likely a prototype object.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+ */
+function isPrototype(value) {
+  var Ctor = value && value.constructor,
+      proto = typeof Ctor == 'function' && Ctor.prototype || objectProto;
+
+  return value === proto;
+}
+
+module.exports = isPrototype;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_nativeKeysIn.js":
+/*!**********************************************!*\
+  !*** ./node_modules/lodash/_nativeKeysIn.js ***!
+  \**********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * This function is like
+ * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+ * except that it includes inherited enumerable properties.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ */
+function nativeKeysIn(object) {
+  var result = [];
+  if (object != null) {
+    for (var key in Object(object)) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+module.exports = nativeKeysIn;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_nodeUtil.js":
+/*!******************************************!*\
+  !*** ./node_modules/lodash/_nodeUtil.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(module) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var freeGlobal = __webpack_require__(/*! ./_freeGlobal */ "./node_modules/lodash/_freeGlobal.js");
+
+/** Detect free variable `exports`. */
+var freeExports = ( false ? undefined : _typeof(exports)) == 'object' && exports && !exports.nodeType && exports;
+
+/** Detect free variable `module`. */
+var freeModule = freeExports && ( false ? undefined : _typeof(module)) == 'object' && module && !module.nodeType && module;
+
+/** Detect the popular CommonJS extension `module.exports`. */
+var moduleExports = freeModule && freeModule.exports === freeExports;
+
+/** Detect free variable `process` from Node.js. */
+var freeProcess = moduleExports && freeGlobal.process;
+
+/** Used to access faster Node.js helpers. */
+var nodeUtil = function () {
+  try {
+    // Use `util.types` for Node.js 10+.
+    var types = freeModule && freeModule.require && freeModule.require('util').types;
+
+    if (types) {
+      return types;
+    }
+
+    // Legacy `process.binding('util')` for Node.js < 10.
+    return freeProcess && freeProcess.binding && freeProcess.binding('util');
+  } catch (e) {}
+}();
+
+module.exports = nodeUtil;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/module.js */ "./node_modules/webpack/buildin/module.js")(module)))
+
+/***/ }),
+
 /***/ "./node_modules/lodash/_objectToString.js":
 /*!************************************************!*\
   !*** ./node_modules/lodash/_objectToString.js ***!
@@ -664,6 +1370,52 @@ module.exports = objectToString;
 
 /***/ }),
 
+/***/ "./node_modules/lodash/_overRest.js":
+/*!******************************************!*\
+  !*** ./node_modules/lodash/_overRest.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var apply = __webpack_require__(/*! ./_apply */ "./node_modules/lodash/_apply.js");
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * A specialized version of `baseRest` which transforms the rest array.
+ *
+ * @private
+ * @param {Function} func The function to apply a rest parameter to.
+ * @param {number} [start=func.length-1] The start position of the rest parameter.
+ * @param {Function} transform The rest array transform.
+ * @returns {Function} Returns the new function.
+ */
+function overRest(func, start, transform) {
+  start = nativeMax(start === undefined ? func.length - 1 : start, 0);
+  return function () {
+    var args = arguments,
+        index = -1,
+        length = nativeMax(args.length - start, 0),
+        array = Array(length);
+
+    while (++index < length) {
+      array[index] = args[start + index];
+    }
+    index = -1;
+    var otherArgs = Array(start + 1);
+    while (++index < start) {
+      otherArgs[index] = args[index];
+    }
+    otherArgs[start] = transform(array);
+    return apply(func, this, otherArgs);
+  };
+}
+
+module.exports = overRest;
+
+/***/ }),
+
 /***/ "./node_modules/lodash/_root.js":
 /*!**************************************!*\
   !*** ./node_modules/lodash/_root.js ***!
@@ -685,200 +1437,565 @@ module.exports = root;
 
 /***/ }),
 
-/***/ "./node_modules/lodash/debounce.js":
+/***/ "./node_modules/lodash/_setToString.js":
+/*!*********************************************!*\
+  !*** ./node_modules/lodash/_setToString.js ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseSetToString = __webpack_require__(/*! ./_baseSetToString */ "./node_modules/lodash/_baseSetToString.js"),
+    shortOut = __webpack_require__(/*! ./_shortOut */ "./node_modules/lodash/_shortOut.js");
+
+/**
+ * Sets the `toString` method of `func` to return `string`.
+ *
+ * @private
+ * @param {Function} func The function to modify.
+ * @param {Function} string The `toString` result.
+ * @returns {Function} Returns `func`.
+ */
+var setToString = shortOut(baseSetToString);
+
+module.exports = setToString;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_shortOut.js":
+/*!******************************************!*\
+  !*** ./node_modules/lodash/_shortOut.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/** Used to detect hot functions by number of calls within a span of milliseconds. */
+var HOT_COUNT = 800,
+    HOT_SPAN = 16;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeNow = Date.now;
+
+/**
+ * Creates a function that'll short out and invoke `identity` instead
+ * of `func` when it's called `HOT_COUNT` or more times in `HOT_SPAN`
+ * milliseconds.
+ *
+ * @private
+ * @param {Function} func The function to restrict.
+ * @returns {Function} Returns the new shortable function.
+ */
+function shortOut(func) {
+  var count = 0,
+      lastCalled = 0;
+
+  return function () {
+    var stamp = nativeNow(),
+        remaining = HOT_SPAN - (stamp - lastCalled);
+
+    lastCalled = stamp;
+    if (remaining > 0) {
+      if (++count >= HOT_COUNT) {
+        return arguments[0];
+      }
+    } else {
+      count = 0;
+    }
+    return func.apply(undefined, arguments);
+  };
+}
+
+module.exports = shortOut;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_toSource.js":
+/*!******************************************!*\
+  !*** ./node_modules/lodash/_toSource.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/** Used for built-in method references. */
+var funcProto = Function.prototype;
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to convert.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return func + '';
+    } catch (e) {}
+  }
+  return '';
+}
+
+module.exports = toSource;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/constant.js":
 /*!*****************************************!*\
-  !*** ./node_modules/lodash/debounce.js ***!
+  !*** ./node_modules/lodash/constant.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Creates a function that returns `value`.
+ *
+ * @static
+ * @memberOf _
+ * @since 2.4.0
+ * @category Util
+ * @param {*} value The value to return from the new function.
+ * @returns {Function} Returns the new constant function.
+ * @example
+ *
+ * var objects = _.times(2, _.constant({ 'a': 1 }));
+ *
+ * console.log(objects);
+ * // => [{ 'a': 1 }, { 'a': 1 }]
+ *
+ * console.log(objects[0] === objects[1]);
+ * // => true
+ */
+function constant(value) {
+  return function () {
+    return value;
+  };
+}
+
+module.exports = constant;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/defaults.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/defaults.js ***!
   \*****************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js"),
-    now = __webpack_require__(/*! ./now */ "./node_modules/lodash/now.js"),
-    toNumber = __webpack_require__(/*! ./toNumber */ "./node_modules/lodash/toNumber.js");
+var baseRest = __webpack_require__(/*! ./_baseRest */ "./node_modules/lodash/_baseRest.js"),
+    eq = __webpack_require__(/*! ./eq */ "./node_modules/lodash/eq.js"),
+    isIterateeCall = __webpack_require__(/*! ./_isIterateeCall */ "./node_modules/lodash/_isIterateeCall.js"),
+    keysIn = __webpack_require__(/*! ./keysIn */ "./node_modules/lodash/keysIn.js");
 
-/** Error message constants. */
-var FUNC_ERROR_TEXT = 'Expected a function';
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
 
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max,
-    nativeMin = Math.min;
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
 
 /**
- * Creates a debounced function that delays invoking `func` until after `wait`
- * milliseconds have elapsed since the last time the debounced function was
- * invoked. The debounced function comes with a `cancel` method to cancel
- * delayed `func` invocations and a `flush` method to immediately invoke them.
- * Provide `options` to indicate whether `func` should be invoked on the
- * leading and/or trailing edge of the `wait` timeout. The `func` is invoked
- * with the last arguments provided to the debounced function. Subsequent
- * calls to the debounced function return the result of the last `func`
- * invocation.
+ * Assigns own and inherited enumerable string keyed properties of source
+ * objects to the destination object for all destination properties that
+ * resolve to `undefined`. Source objects are applied from left to right.
+ * Once a property is set, additional values of the same property are ignored.
  *
- * **Note:** If `leading` and `trailing` options are `true`, `func` is
- * invoked on the trailing edge of the timeout only if the debounced function
- * is invoked more than once during the `wait` timeout.
+ * **Note:** This method mutates `object`.
  *
- * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
- * until to the next tick, similar to `setTimeout` with a timeout of `0`.
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The destination object.
+ * @param {...Object} [sources] The source objects.
+ * @returns {Object} Returns `object`.
+ * @see _.defaultsDeep
+ * @example
  *
- * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
- * for details over the differences between `_.debounce` and `_.throttle`.
+ * _.defaults({ 'a': 1 }, { 'b': 2 }, { 'a': 3 });
+ * // => { 'a': 1, 'b': 2 }
+ */
+var defaults = baseRest(function (object, sources) {
+  object = Object(object);
+
+  var index = -1;
+  var length = sources.length;
+  var guard = length > 2 ? sources[2] : undefined;
+
+  if (guard && isIterateeCall(sources[0], sources[1], guard)) {
+    length = 1;
+  }
+
+  while (++index < length) {
+    var source = sources[index];
+    var props = keysIn(source);
+    var propsIndex = -1;
+    var propsLength = props.length;
+
+    while (++propsIndex < propsLength) {
+      var key = props[propsIndex];
+      var value = object[key];
+
+      if (value === undefined || eq(value, objectProto[key]) && !hasOwnProperty.call(object, key)) {
+        object[key] = source[key];
+      }
+    }
+  }
+
+  return object;
+});
+
+module.exports = defaults;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/eq.js":
+/*!***********************************!*\
+  !*** ./node_modules/lodash/eq.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || value !== value && other !== other;
+}
+
+module.exports = eq;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/identity.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/identity.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * This method returns the first argument it receives.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Util
+ * @param {*} value Any value.
+ * @returns {*} Returns `value`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ *
+ * console.log(_.identity(object) === object);
+ * // => true
+ */
+function identity(value) {
+  return value;
+}
+
+module.exports = identity;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/isArguments.js":
+/*!********************************************!*\
+  !*** ./node_modules/lodash/isArguments.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseIsArguments = __webpack_require__(/*! ./_baseIsArguments */ "./node_modules/lodash/_baseIsArguments.js"),
+    isObjectLike = __webpack_require__(/*! ./isObjectLike */ "./node_modules/lodash/isObjectLike.js");
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/** Built-in value references. */
+var propertyIsEnumerable = objectProto.propertyIsEnumerable;
+
+/**
+ * Checks if `value` is likely an `arguments` object.
  *
  * @static
  * @memberOf _
  * @since 0.1.0
- * @category Function
- * @param {Function} func The function to debounce.
- * @param {number} [wait=0] The number of milliseconds to delay.
- * @param {Object} [options={}] The options object.
- * @param {boolean} [options.leading=false]
- *  Specify invoking on the leading edge of the timeout.
- * @param {number} [options.maxWait]
- *  The maximum time `func` is allowed to be delayed before it's invoked.
- * @param {boolean} [options.trailing=true]
- *  Specify invoking on the trailing edge of the timeout.
- * @returns {Function} Returns the new debounced function.
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ *  else `false`.
  * @example
  *
- * // Avoid costly calculations while the window size is in flux.
- * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
+ * _.isArguments(function() { return arguments; }());
+ * // => true
  *
- * // Invoke `sendMail` when clicked, debouncing subsequent calls.
- * jQuery(element).on('click', _.debounce(sendMail, 300, {
- *   'leading': true,
- *   'trailing': false
- * }));
- *
- * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
- * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
- * var source = new EventSource('/stream');
- * jQuery(source).on('message', debounced);
- *
- * // Cancel the trailing debounced invocation.
- * jQuery(window).on('popstate', debounced.cancel);
+ * _.isArguments([1, 2, 3]);
+ * // => false
  */
-function debounce(func, wait, options) {
-  var lastArgs,
-      lastThis,
-      maxWait,
-      result,
-      timerId,
-      lastCallTime,
-      lastInvokeTime = 0,
-      leading = false,
-      maxing = false,
-      trailing = true;
+var isArguments = baseIsArguments(function () {
+    return arguments;
+}()) ? baseIsArguments : function (value) {
+    return isObjectLike(value) && hasOwnProperty.call(value, 'callee') && !propertyIsEnumerable.call(value, 'callee');
+};
 
-  if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  wait = toNumber(wait) || 0;
-  if (isObject(options)) {
-    leading = !!options.leading;
-    maxing = 'maxWait' in options;
-    maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
-    trailing = 'trailing' in options ? !!options.trailing : trailing;
-  }
+module.exports = isArguments;
 
-  function invokeFunc(time) {
-    var args = lastArgs,
-        thisArg = lastThis;
+/***/ }),
 
-    lastArgs = lastThis = undefined;
-    lastInvokeTime = time;
-    result = func.apply(thisArg, args);
-    return result;
-  }
+/***/ "./node_modules/lodash/isArray.js":
+/*!****************************************!*\
+  !*** ./node_modules/lodash/isArray.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-  function leadingEdge(time) {
-    // Reset any `maxWait` timer.
-    lastInvokeTime = time;
-    // Start the timer for the trailing edge.
-    timerId = setTimeout(timerExpired, wait);
-    // Invoke the leading edge.
-    return leading ? invokeFunc(time) : result;
-  }
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
 
-  function remainingWait(time) {
-    var timeSinceLastCall = time - lastCallTime,
-        timeSinceLastInvoke = time - lastInvokeTime,
-        timeWaiting = wait - timeSinceLastCall;
+module.exports = isArray;
 
-    return maxing ? nativeMin(timeWaiting, maxWait - timeSinceLastInvoke) : timeWaiting;
-  }
+/***/ }),
 
-  function shouldInvoke(time) {
-    var timeSinceLastCall = time - lastCallTime,
-        timeSinceLastInvoke = time - lastInvokeTime;
+/***/ "./node_modules/lodash/isArrayLike.js":
+/*!********************************************!*\
+  !*** ./node_modules/lodash/isArrayLike.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-    // Either this is the first call, activity has stopped and we're at the
-    // trailing edge, the system time has gone backwards and we're treating
-    // it as the trailing edge, or we've hit the `maxWait` limit.
-    return lastCallTime === undefined || timeSinceLastCall >= wait || timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= maxWait;
-  }
+var isFunction = __webpack_require__(/*! ./isFunction */ "./node_modules/lodash/isFunction.js"),
+    isLength = __webpack_require__(/*! ./isLength */ "./node_modules/lodash/isLength.js");
 
-  function timerExpired() {
-    var time = now();
-    if (shouldInvoke(time)) {
-      return trailingEdge(time);
-    }
-    // Restart the timer.
-    timerId = setTimeout(timerExpired, remainingWait(time));
-  }
-
-  function trailingEdge(time) {
-    timerId = undefined;
-
-    // Only invoke if we have `lastArgs` which means `func` has been
-    // debounced at least once.
-    if (trailing && lastArgs) {
-      return invokeFunc(time);
-    }
-    lastArgs = lastThis = undefined;
-    return result;
-  }
-
-  function cancel() {
-    if (timerId !== undefined) {
-      clearTimeout(timerId);
-    }
-    lastInvokeTime = 0;
-    lastArgs = lastCallTime = lastThis = timerId = undefined;
-  }
-
-  function flush() {
-    return timerId === undefined ? result : trailingEdge(now());
-  }
-
-  function debounced() {
-    var time = now(),
-        isInvoking = shouldInvoke(time);
-
-    lastArgs = arguments;
-    lastThis = this;
-    lastCallTime = time;
-
-    if (isInvoking) {
-      if (timerId === undefined) {
-        return leadingEdge(lastCallTime);
-      }
-      if (maxing) {
-        // Handle invocations in a tight loop.
-        timerId = setTimeout(timerExpired, wait);
-        return invokeFunc(lastCallTime);
-      }
-    }
-    if (timerId === undefined) {
-      timerId = setTimeout(timerExpired, wait);
-    }
-    return result;
-  }
-  debounced.cancel = cancel;
-  debounced.flush = flush;
-  return debounced;
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(value.length) && !isFunction(value);
 }
 
-module.exports = debounce;
+module.exports = isArrayLike;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/isBuffer.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/isBuffer.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(module) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js"),
+    stubFalse = __webpack_require__(/*! ./stubFalse */ "./node_modules/lodash/stubFalse.js");
+
+/** Detect free variable `exports`. */
+var freeExports = ( false ? undefined : _typeof(exports)) == 'object' && exports && !exports.nodeType && exports;
+
+/** Detect free variable `module`. */
+var freeModule = freeExports && ( false ? undefined : _typeof(module)) == 'object' && module && !module.nodeType && module;
+
+/** Detect the popular CommonJS extension `module.exports`. */
+var moduleExports = freeModule && freeModule.exports === freeExports;
+
+/** Built-in value references. */
+var Buffer = moduleExports ? root.Buffer : undefined;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined;
+
+/**
+ * Checks if `value` is a buffer.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.3.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
+ * @example
+ *
+ * _.isBuffer(new Buffer(2));
+ * // => true
+ *
+ * _.isBuffer(new Uint8Array(2));
+ * // => false
+ */
+var isBuffer = nativeIsBuffer || stubFalse;
+
+module.exports = isBuffer;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/module.js */ "./node_modules/webpack/buildin/module.js")(module)))
+
+/***/ }),
+
+/***/ "./node_modules/lodash/isFunction.js":
+/*!*******************************************!*\
+  !*** ./node_modules/lodash/isFunction.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseGetTag = __webpack_require__(/*! ./_baseGetTag */ "./node_modules/lodash/_baseGetTag.js"),
+    isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js");
+
+/** `Object#toString` result references. */
+var asyncTag = '[object AsyncFunction]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    proxyTag = '[object Proxy]';
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+    if (!isObject(value)) {
+        return false;
+    }
+    // The use of `Object#toString` avoids issues with the `typeof` operator
+    // in Safari 9 which returns 'object' for typed arrays and other constructors.
+    var tag = baseGetTag(value);
+    return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
+}
+
+module.exports = isFunction;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/isLength.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/isLength.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' && value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+module.exports = isLength;
 
 /***/ }),
 
@@ -966,150 +2083,137 @@ module.exports = isObjectLike;
 
 /***/ }),
 
-/***/ "./node_modules/lodash/isSymbol.js":
-/*!*****************************************!*\
-  !*** ./node_modules/lodash/isSymbol.js ***!
-  \*****************************************/
+/***/ "./node_modules/lodash/isTypedArray.js":
+/*!*********************************************!*\
+  !*** ./node_modules/lodash/isTypedArray.js ***!
+  \*********************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var baseIsTypedArray = __webpack_require__(/*! ./_baseIsTypedArray */ "./node_modules/lodash/_baseIsTypedArray.js"),
+    baseUnary = __webpack_require__(/*! ./_baseUnary */ "./node_modules/lodash/_baseUnary.js"),
+    nodeUtil = __webpack_require__(/*! ./_nodeUtil */ "./node_modules/lodash/_nodeUtil.js");
 
-var baseGetTag = __webpack_require__(/*! ./_baseGetTag */ "./node_modules/lodash/_baseGetTag.js"),
-    isObjectLike = __webpack_require__(/*! ./isObjectLike */ "./node_modules/lodash/isObjectLike.js");
-
-/** `Object#toString` result references. */
-var symbolTag = '[object Symbol]';
+/* Node.js helper references. */
+var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
 
 /**
- * Checks if `value` is classified as a `Symbol` primitive or object.
+ * Checks if `value` is classified as a typed array.
  *
  * @static
  * @memberOf _
- * @since 4.0.0
+ * @since 3.0.0
  * @category Lang
  * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
  * @example
  *
- * _.isSymbol(Symbol.iterator);
+ * _.isTypedArray(new Uint8Array);
  * // => true
  *
- * _.isSymbol('abc');
+ * _.isTypedArray([]);
  * // => false
  */
-function isSymbol(value) {
-    return (typeof value === 'undefined' ? 'undefined' : _typeof(value)) == 'symbol' || isObjectLike(value) && baseGetTag(value) == symbolTag;
-}
+var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
 
-module.exports = isSymbol;
+module.exports = isTypedArray;
 
 /***/ }),
 
-/***/ "./node_modules/lodash/now.js":
-/*!************************************!*\
-  !*** ./node_modules/lodash/now.js ***!
-  \************************************/
+/***/ "./node_modules/lodash/keysIn.js":
+/*!***************************************!*\
+  !*** ./node_modules/lodash/keysIn.js ***!
+  \***************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js");
+var arrayLikeKeys = __webpack_require__(/*! ./_arrayLikeKeys */ "./node_modules/lodash/_arrayLikeKeys.js"),
+    baseKeysIn = __webpack_require__(/*! ./_baseKeysIn */ "./node_modules/lodash/_baseKeysIn.js"),
+    isArrayLike = __webpack_require__(/*! ./isArrayLike */ "./node_modules/lodash/isArrayLike.js");
 
 /**
- * Gets the timestamp of the number of milliseconds that have elapsed since
- * the Unix epoch (1 January 1970 00:00:00 UTC).
+ * Creates an array of the own and inherited enumerable property names of `object`.
+ *
+ * **Note:** Non-object values are coerced to objects.
  *
  * @static
  * @memberOf _
- * @since 2.4.0
- * @category Date
- * @returns {number} Returns the timestamp.
+ * @since 3.0.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
  * @example
  *
- * _.defer(function(stamp) {
- *   console.log(_.now() - stamp);
- * }, _.now());
- * // => Logs the number of milliseconds it took for the deferred invocation.
+ * function Foo() {
+ *   this.a = 1;
+ *   this.b = 2;
+ * }
+ *
+ * Foo.prototype.c = 3;
+ *
+ * _.keysIn(new Foo);
+ * // => ['a', 'b', 'c'] (iteration order is not guaranteed)
  */
-var now = function now() {
-  return root.Date.now();
-};
+function keysIn(object) {
+  return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object);
+}
 
-module.exports = now;
+module.exports = keysIn;
 
 /***/ }),
 
-/***/ "./node_modules/lodash/toNumber.js":
-/*!*****************************************!*\
-  !*** ./node_modules/lodash/toNumber.js ***!
-  \*****************************************/
+/***/ "./node_modules/lodash/noop.js":
+/*!*************************************!*\
+  !*** ./node_modules/lodash/noop.js ***!
+  \*************************************/
 /*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js"),
-    isSymbol = __webpack_require__(/*! ./isSymbol */ "./node_modules/lodash/isSymbol.js");
-
-/** Used as references for various `Number` constants. */
-var NAN = 0 / 0;
-
-/** Used to match leading and trailing whitespace. */
-var reTrim = /^\s+|\s+$/g;
-
-/** Used to detect bad signed hexadecimal string values. */
-var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
-
-/** Used to detect binary string values. */
-var reIsBinary = /^0b[01]+$/i;
-
-/** Used to detect octal string values. */
-var reIsOctal = /^0o[0-7]+$/i;
-
-/** Built-in method references without a dependency on `root`. */
-var freeParseInt = parseInt;
+/***/ (function(module, exports) {
 
 /**
- * Converts `value` to a number.
+ * This method returns `undefined`.
  *
  * @static
  * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {number} Returns the number.
+ * @since 2.3.0
+ * @category Util
  * @example
  *
- * _.toNumber(3.2);
- * // => 3.2
- *
- * _.toNumber(Number.MIN_VALUE);
- * // => 5e-324
- *
- * _.toNumber(Infinity);
- * // => Infinity
- *
- * _.toNumber('3.2');
- * // => 3.2
+ * _.times(2, _.noop);
+ * // => [undefined, undefined]
  */
-function toNumber(value) {
-  if (typeof value == 'number') {
-    return value;
-  }
-  if (isSymbol(value)) {
-    return NAN;
-  }
-  if (isObject(value)) {
-    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
-    value = isObject(other) ? other + '' : other;
-  }
-  if (typeof value != 'string') {
-    return value === 0 ? value : +value;
-  }
-  value = value.replace(reTrim, '');
-  var isBinary = reIsBinary.test(value);
-  return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
+function noop() {
+  // No operation performed.
 }
 
-module.exports = toNumber;
+module.exports = noop;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/stubFalse.js":
+/*!******************************************!*\
+  !*** ./node_modules/lodash/stubFalse.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * This method returns `false`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.13.0
+ * @category Util
+ * @returns {boolean} Returns `false`.
+ * @example
+ *
+ * _.times(2, _.stubFalse);
+ * // => [false, false]
+ */
+function stubFalse() {
+  return false;
+}
+
+module.exports = stubFalse;
 
 /***/ }),
 
@@ -1701,38 +2805,15 @@ module.exports = v4;
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(global) {/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
-/*! @name videojs-errors @version 4.1.1 @license Apache-2.0 */
+/* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! global/document */ "./node_modules/global/document.js");
+/* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(global_document__WEBPACK_IMPORTED_MODULE_1__);
+/*! @name videojs-errors @version 4.1.2 @license Apache-2.0 */
 
 
-var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
-var empty = {};
-
-var empty$1 = /*#__PURE__*/Object.freeze({
-  default: empty
-});
-
-var minDoc = empty$1 && empty || empty$1;
-
-var topLevel = typeof commonjsGlobal !== 'undefined' ? commonjsGlobal : typeof window !== 'undefined' ? window : {};
-
-var doccy;
-
-if (typeof document !== 'undefined') {
-  doccy = document;
-} else {
-  doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'];
-
-  if (!doccy) {
-    doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'] = minDoc;
-  }
-}
-
-var document_1 = doccy;
-
-var version = "4.1.1";
+var version = "4.1.2";
 
 var FlashObj = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getComponent('Flash');
 var defaultDismiss = !video_js__WEBPACK_IMPORTED_MODULE_0___default.a.browser.IS_IPHONE;
@@ -1940,7 +3021,7 @@ var initPlugin = function initPlugin(player, options) {
   var onErrorHandler = function onErrorHandler() {
     var details = '';
     var error = player.error();
-    var content = document_1.createElement('div');
+    var content = global_document__WEBPACK_IMPORTED_MODULE_1___default.a.createElement('div');
     var dialogContent = '';
 
     // In the rare case when `error()` does not return an error object,
@@ -2073,7 +3154,6 @@ errors.VERSION = version;
 registerPlugin('errors', errors);
 
 /* harmony default export */ __webpack_exports__["default"] = (errors);
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
 /***/ }),
 
@@ -2109,6 +3189,38 @@ module.exports = g;
 
 /***/ }),
 
+/***/ "./node_modules/webpack/buildin/module.js":
+/*!***********************************!*\
+  !*** (webpack)/buildin/module.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = function (module) {
+	if (!module.webpackPolyfill) {
+		module.deprecate = function () {};
+		module.paths = [];
+		// module.parent = undefined by default
+		if (!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function get() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function get() {
+				return module.i;
+			}
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+/***/ }),
+
 /***/ "./package.json":
 /*!**********************!*\
   !*** ./package.json ***!
@@ -2116,7 +3228,7 @@ module.exports = g;
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.11.1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.12.0","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","jquery":"^3.3.1","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2"}};
 
 /***/ }),
 
@@ -2380,7 +3492,7 @@ var registered = false;
 
         var videoElement = player.el();
 
-        var iov = _iov_IOV__WEBPACK_IMPORTED_MODULE_3__["default"].factory(player, {
+        _this.iov = _iov_IOV__WEBPACK_IMPORTED_MODULE_3__["default"].factory(player, {
           port: mqttHandler.port,
           address: mqttHandler.address,
           useSSL: mqttHandler.useSSL,
@@ -2423,7 +3535,12 @@ var registered = false;
           }
         });
 
-        iov.initialize();
+        _this.iov.initialize();
+
+        _this.iov.player.on('metric', function (metric) {
+          // @see - https://docs.videojs.com/tutorial-plugins.html#events
+          _this.trigger('metric', { metric: metric });
+        });
       });
       return _this;
     }
@@ -2658,7 +3775,7 @@ var IOV = function () {
     _classCallCheck(this, IOV);
 
     this.id = uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':main');
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':main:' + this.id);
 
     this.playerInstance = player;
 
@@ -2783,6 +3900,597 @@ var IOV = function () {
 
 /***/ }),
 
+/***/ "./src/js/iov/MSEWrapper.js":
+/*!**********************************!*\
+  !*** ./src/js/iov/MSEWrapper.js ***!
+  \**********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
+/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var lodash_noop__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lodash/noop */ "./node_modules/lodash/noop.js");
+/* harmony import */ var lodash_noop__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lodash_noop__WEBPACK_IMPORTED_MODULE_2__);
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+
+
+
+
+var DEBUG_PREFIX = 'skyline:clsp:iov';
+
+var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MSEWrapper');
+var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX + ':MSEWrapper');
+
+var MSEWrapper = function () {
+  _createClass(MSEWrapper, null, [{
+    key: 'isMimeCodecSupported',
+    value: function isMimeCodecSupported(mimeCodec) {
+      return window.MediaSource && window.MediaSource.isTypeSupported(mimeCodec);
+    }
+  }, {
+    key: 'factory',
+    value: function factory() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      return new MSEWrapper(options);
+    }
+  }]);
+
+  function MSEWrapper() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    _classCallCheck(this, MSEWrapper);
+
+    debug('Constructing...');
+
+    this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
+      // These default buffer value provide the best results in my testing.
+      // It keeps the memory usage as low as is practical, and rarely causes
+      // the video to stutter
+      bufferSizeLimit: 90 + Math.floor(Math.random() * 200),
+      bufferTruncateFactor: 2,
+      bufferTruncateValue: null,
+      driftThreshold: 2000,
+      duration: 10,
+      enableMetrics: true
+    });
+
+    this.segmentQueue = [];
+
+    this.mediaSource = null;
+    this.sourceBuffer = null;
+    this.objectURL = null;
+    this.timeBuffered = null;
+
+    if (!this.options.bufferTruncateValue) {
+      this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
+    }
+
+    this.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen'];
+
+    this.metrics = {};
+
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
+
+    this.EVENT_NAMES = ['metric'];
+
+    for (var i = 0; i < this.EVENT_NAMES.length; i++) {
+      this.events[this.EVENT_NAMES[i]] = [];
+    }
+
+    this.eventListeners = {
+      mediaSource: {},
+      sourceBuffer: {}
+    };
+
+    this.onSourceBufferUpdateEnd = this.onSourceBufferUpdateEnd.bind(this);
+  }
+
+  _createClass(MSEWrapper, [{
+    key: 'on',
+    value: function on(name, action) {
+      debug('Registering Listener for ' + name + ' event...');
+
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
+      }
+
+      this.events[name].push(action);
+    }
+  }, {
+    key: 'trigger',
+    value: function trigger(name, value) {
+      debug('Triggering ' + name + ' event...');
+
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
+      }
+
+      for (var i = 0; i < this.events[name].length; i++) {
+        this.events[name][i](value, this);
+      }
+    }
+  }, {
+    key: 'metric',
+    value: function metric(type, value) {
+      if (!this.options || !this.options.enableMetrics) {
+        return;
+      }
+
+      if (!this.METRIC_TYPES.includes(type)) {
+        // @todo - should this throw?
+        return;
+      }
+
+      switch (type) {
+        case 'sourceBuffer.lastKnownBufferSize':
+          {
+            this.metrics[type] = value;
+            break;
+          }
+        default:
+          {
+            if (!this.metrics.hasOwnProperty(type)) {
+              this.metrics[type] = 0;
+            }
+
+            this.metrics[type] += value;
+          }
+      }
+
+      this.trigger('metric', {
+        type: type,
+        value: this.metrics[type]
+      });
+    }
+  }, {
+    key: 'initializeMediaSource',
+    value: function initializeMediaSource() {
+      var _this = this;
+
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      debug('Initializing mediaSource...');
+
+      options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
+        onSourceOpen: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        onSourceEnded: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        onError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a
+      });
+
+      this.metric('mediaSource.created', 1);
+
+      // Kill the existing media source
+      this.destroyMediaSource();
+
+      this.mediaSource = new window.MediaSource();
+
+      this.eventListeners.mediaSource.sourceopen = function () {
+        // This can only be set when the media source is open.
+        // @todo - does this do memory management for us so we don't have
+        // to call remove on the buffer, which is expensive?  It seems
+        // like it...
+        _this.mediaSource.duration = _this.options.duration;
+
+        options.onSourceOpen();
+      };
+      this.eventListeners.mediaSource.sourceended = options.onSourceEnded;
+      this.eventListeners.mediaSource.error = options.onError;
+
+      this.mediaSource.addEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
+      this.mediaSource.addEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
+      this.mediaSource.addEventListener('error', this.eventListeners.mediaSource.error);
+    }
+  }, {
+    key: 'getVideoElementSrc',
+    value: function getVideoElementSrc() {
+      debug('getVideoElementSrc...');
+
+      if (!this.mediaSource) {
+        // @todo - should this throw?
+        return;
+      }
+
+      // @todo - should multiple calls to this method with the same mediaSource
+      // result in multiple objectURLs being created?  The docs for this say that
+      // it creates something on the document, which lives until revokeObjectURL
+      // is called on it.  Does that mean we should only ever have one per
+      // this.mediaSource?  It seems like it, but I do not know.  Having only one
+      // seems more predictable, and more memory efficient.
+
+      // Ensure only a single objectURL exists at one time
+      if (!this.objectURL) {
+        this.metric('objectURL.created', 1);
+
+        this.objectURL = window.URL.createObjectURL(this.mediaSource);
+      }
+
+      return this.objectURL;
+    }
+  }, {
+    key: 'destroyVideoElementSrc',
+    value: function destroyVideoElementSrc() {
+      debug('destroyVideoElementSrc...');
+
+      if (!this.mediaSource) {
+        // @todo - should this throw?
+        return;
+      }
+
+      if (!this.objectURL) {
+        // @todo - should this throw?
+        return;
+      }
+
+      // this.metric('objectURL.revoked', 1);
+
+      this.objectURL = null;
+
+      if (this.sourceBuffer) {
+        this.sourceBuffer.abort();
+      }
+
+      // free the resource
+      return window.URL.revokeObjectURL(this.mediaSource);
+    }
+  }, {
+    key: 'reinitializeVideoElementSrc',
+    value: function reinitializeVideoElementSrc() {
+      this.metric('mediaSource.reinitialized', 1);
+
+      this.destroyVideoElementSrc();
+
+      // reallocate, this will call media source open which will
+      // append the MOOV atom.
+      return this.getVideoElementSrc();
+    }
+  }, {
+    key: 'isMediaSourceReady',
+    value: function isMediaSourceReady() {
+      // found when stress testing many videos, it is possible for the
+      // media source ready state not to be open even though
+      // source open callback is being called.
+      return this.mediaSource && this.mediaSource.readyState === 'open';
+    }
+  }, {
+    key: 'isSourceBufferReady',
+    value: function isSourceBufferReady() {
+      return this.sourceBuffer && this.sourceBuffer.updating === false;
+    }
+  }, {
+    key: 'initializeSourceBuffer',
+    value: function initializeSourceBuffer(mimeCodec) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+      debug('initializeSourceBuffer...');
+
+      options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
+        onAppendStart: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        onAppendFinish: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        onRemoveFinish: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        onAppendError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        onRemoveError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        onStreamFrozen: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        onError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+        retry: true
+      });
+
+      if (!this.isMediaSourceReady()) {
+        throw new Error('Cannot create the sourceBuffer if the mediaSource is not ready.');
+      }
+
+      // Kill the existing source buffer
+      this.destroySourceBuffer();
+
+      this.metric('sourceBuffer.created', 1);
+
+      this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
+      this.sourceBuffer.mode = 'sequence';
+
+      // Custom Events
+      this.eventListeners.sourceBuffer.onAppendStart = options.onAppendStart;
+      this.eventListeners.sourceBuffer.onAppendError = options.onAppendError;
+      this.eventListeners.sourceBuffer.onRemoveFinish = options.onRemoveFinish;
+      this.eventListeners.sourceBuffer.onAppendFinish = options.onAppendFinish;
+      this.eventListeners.sourceBuffer.onRemoveError = options.onRemoveError;
+      this.eventListeners.sourceBuffer.onStreamFrozen = options.onStreamFrozen;
+      this.eventListeners.sourceBuffer.onError = options.onError;
+
+      // Supported Events
+      this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
+      this.sourceBuffer.addEventListener('error', this.eventListeners.sourceBuffer.onError);
+    }
+  }, {
+    key: 'queueSegment',
+    value: function queueSegment(segment) {
+      debug('Queueing segment.  The queue now has ' + this.segmentQueue.length + ' segments.');
+
+      this.metric('queue.added', 1);
+
+      this.segmentQueue.push({
+        timestamp: Date.now(),
+        byteArray: segment
+      });
+    }
+  }, {
+    key: '_append',
+    value: function _append(_ref) {
+      var timestamp = _ref.timestamp,
+          byteArray = _ref.byteArray;
+
+      silly('Appending to the sourceBuffer...');
+
+      try {
+        var estimatedDrift = Date.now() - timestamp;
+
+        if (estimatedDrift > this.options.driftThreshold) {
+          debug('Estimated drift of ' + estimatedDrift + ' is above the ' + this.options.driftThreshold + ' threshold.  Flushing queue...');
+          // @todo - perhaps we should re-add the last segment to the queue with a fresh
+          // timestamp?  I think one cause of stream freezing is the sourceBuffer getting
+          // starved, but I don't know if that's correct
+          this.metric('queue.removed', this.segmentQueue.length + 1);
+          this.segmentQueue = [];
+          // this.sourceBuffer.abort();
+          return;
+        }
+
+        debug('Appending to the buffer with an estimated drift of ' + estimatedDrift);
+
+        this.metric('sourceBuffer.append', 1);
+
+        this.sourceBuffer.appendBuffer(byteArray);
+      } catch (error) {
+        this.metric('error.sourceBuffer.append', 1);
+
+        this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
+      }
+    }
+  }, {
+    key: 'processNextInQueue',
+    value: function processNextInQueue() {
+      silly('processNextInQueue');
+
+      if (document.visibilityState === 'hidden') {
+        debug('Tab not in focus - dropping frame...');
+        this.metric('frameDrop.hiddenTab', 1);
+        this.metric('queue.cannotProcessNext', 1);
+        return;
+      }
+
+      if (!this.isMediaSourceReady()) {
+        debug('The mediaSource is not ready');
+        this.metric('queue.mediaSourceNotReady', 1);
+        this.metric('queue.cannotProcessNext', 1);
+        return;
+      }
+
+      if (!this.isSourceBufferReady()) {
+        debug('The sourceBuffer is busy');
+        this.metric('queue.sourceBufferNotReady', 1);
+        this.metric('queue.cannotProcessNext', 1);
+        return;
+      }
+
+      if (this.segmentQueue.length > 0) {
+        this.metric('queue.shift', 1);
+        this.metric('queue.canProcessNext', 1);
+        this._append(this.segmentQueue.shift());
+      }
+    }
+  }, {
+    key: 'append',
+    value: function append(byteArray) {
+      silly('Append');
+
+      // Sometimes this can get hit after destroy is called
+      if (!this.eventListeners.sourceBuffer.onAppendStart) {
+        // @todo - should we do something else here?
+        return;
+      }
+
+      this.eventListeners.sourceBuffer.onAppendStart(byteArray);
+
+      this.metric('queue.append', 1);
+      this.queueSegment(byteArray);
+
+      this.processNextInQueue();
+    }
+  }, {
+    key: 'getBufferTimes',
+    value: function getBufferTimes() {
+      var previousBufferSize = this.timeBuffered;
+      var bufferTimeStart = this.sourceBuffer.buffered.start(0);
+      var bufferTimeEnd = this.sourceBuffer.buffered.end(0);
+      var currentBufferSize = bufferTimeEnd - bufferTimeStart;
+
+      var info = {
+        previousBufferSize: previousBufferSize,
+        currentBufferSize: currentBufferSize,
+        bufferTimeStart: bufferTimeStart,
+        bufferTimeEnd: bufferTimeEnd
+      };
+
+      return info;
+    }
+  }, {
+    key: 'trimBuffer',
+    value: function trimBuffer() {
+      var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
+      var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+      this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
+
+      if (force || this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
+        debug('Removing old stuff from sourceBuffer...');
+
+        try {
+          // @todo - this is the biggest performance problem we have with this player.
+          // Can you figure out how to manage the memory usage without causing the streams
+          // to stutter?
+          this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
+          this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
+        } catch (error) {
+          this.metric('sourceBuffer.trim.error', 1);
+          this.eventListeners.sourceBuffer.onRemoveError(error);
+        }
+      }
+    }
+  }, {
+    key: 'onRemoveFinish',
+    value: function onRemoveFinish() {
+      var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
+
+      debug('On remove finish...');
+
+      this.metric('sourceBuffer.updateEnd.removeEvent', 1);
+      this.eventListeners.sourceBuffer.onRemoveFinish(info);
+    }
+  }, {
+    key: 'onAppendFinish',
+    value: function onAppendFinish() {
+      var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
+
+      silly('On append finish...');
+
+      this.metric('sourceBuffer.updateEnd.appendEvent', 1);
+
+      // The current buffer size should always be bigger.If it isn't, there is a problem,
+      // and we need to reinitialize or something.
+      if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
+        this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
+        this.eventListeners.sourceBuffer.onStreamFrozen();
+        return;
+      }
+
+      this.previousTimeEnd = info.bufferTimeEnd;
+
+      this.eventListeners.sourceBuffer.onAppendFinish(info);
+      this.trimBuffer(info);
+    }
+  }, {
+    key: 'onSourceBufferUpdateEnd',
+    value: function onSourceBufferUpdateEnd() {
+      silly('onUpdateEnd');
+
+      this.metric('sourceBuffer.updateEnd', 1);
+
+      try {
+        // Sometimes the mediaSource is removed while an update is being
+        // processed, resulting in an error when trying to read the
+        // "buffered" property.
+        if (this.sourceBuffer.buffered.length <= 0) {
+          this.metric('sourceBuffer.updateEnd.bufferLength.empty', 1);
+          debug('After updating, the sourceBuffer has no length!');
+          return;
+        }
+      } catch (error) {
+        // @todo - do we need to handle this?
+        this.metric('sourceBuffer.updateEnd.bufferLength.error', 1);
+        debug('The mediaSource was removed while an update operation was occurring.');
+        return;
+      }
+
+      var info = this.getBufferTimes();
+
+      this.timeBuffered = info.currentBufferSize;
+
+      if (info.previousBufferSize !== null && info.previousBufferSize > this.timeBuffered) {
+        this.onRemoveFinish(info);
+      } else {
+        this.onAppendFinish(info);
+      }
+
+      this.processNextInQueue();
+    }
+  }, {
+    key: 'destroySourceBuffer',
+    value: function destroySourceBuffer() {
+      debug('destroySourceBuffer...');
+
+      if (!this.sourceBuffer) {
+        return;
+      }
+
+      this.sourceBuffer.abort();
+
+      this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
+      this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
+
+      this.trimBuffer(undefined, true);
+
+      this.sourceBuffer = null;
+
+      this.timeBuffered = null;
+      this.previousTimeEnd = null;
+      this.segmentQueue = null;
+
+      this.metric('sourceBuffer.destroyed', 1);
+    }
+  }, {
+    key: 'destroyMediaSource',
+    value: function destroyMediaSource() {
+      debug('Destroying mediaSource...');
+
+      if (!this.mediaSource) {
+        return;
+      }
+
+      this.mediaSource.removeEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
+      this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
+      this.mediaSource.removeEventListener('error', this.eventListeners.mediaSource.error);
+
+      var sourceBuffers = this.mediaSource.sourceBuffers;
+
+      if (sourceBuffers.SourceBuffers) {
+        // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
+        sourceBuffers = sourceBuffers.SourceBuffers();
+      }
+
+      for (var i = 0; i < sourceBuffers.length; i++) {
+        this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
+      }
+
+      // @todo - is this happening at the right time, or should it happen
+      // prior to removing the source buffers?
+      this.destroyVideoElementSrc();
+
+      this.mediaSource = null;
+
+      this.metric('mediaSource.destroyed', 1);
+    }
+  }, {
+    key: 'destroy',
+    value: function destroy() {
+      this.destroySourceBuffer();
+      this.destroyMediaSource();
+
+      this.options = null;
+      this.METRIC_TYPES = null;
+      this.EVENT_NAMES = null;
+      this.metrics = null;
+      this.events = null;
+      this.eventListeners = null;
+      this.onSourceBufferUpdateEnd = null;
+    }
+  }]);
+
+  return MSEWrapper;
+}();
+
+/* harmony default export */ __webpack_exports__["default"] = (MSEWrapper);
+
+/***/ }),
+
 /***/ "./src/js/iov/MqttConduitCollection.js":
 /*!*********************************************!*\
   !*** ./src/js/iov/MqttConduitCollection.js ***!
@@ -2807,7 +4515,7 @@ var MqttConduitCollection = function () {
     _classCallCheck(this, MqttConduitCollection);
 
     this.id = id;
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':MqttConduitCollection');
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MqttConduitCollection:' + this.id);
 
     this.debug('constructing...');
 
@@ -2898,7 +4606,7 @@ var MqttTopicHandlers = function () {
     _classCallCheck(this, MqttTopicHandlers);
 
     this.id = id;
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':MqttTopicHandlers');
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MqttTopicHandlers:' + this.id);
 
     this.debug('constructing...');
 
@@ -2997,7 +4705,7 @@ var MqttTransport = function () {
     _classCallCheck(this, MqttTransport);
 
     this.id = id;
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':MqttConduitCollection');
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MqttTransport:' + this.id);
 
     this.debug('constructing...');
 
@@ -3099,8 +4807,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lodash/debounce */ "./node_modules/lodash/debounce.js");
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MSEWrapper */ "./src/js/iov/MSEWrapper.js");
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -3109,11 +4816,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 
 
+
 var DEBUG_PREFIX = 'skyline:clsp:iov';
 var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':IOVPlayer');
 var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX + ':IOVPlayer');
-
-var DEBOUNCE_INTERVAL_SAMPLE_SIZE = 10;
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -3187,15 +4893,11 @@ var IOVPlayer = function () {
   }]);
 
   function IOVPlayer(iov) {
-    var _this = this;
-
     _classCallCheck(this, IOVPlayer);
 
     debug('constructor');
 
     this.iov = iov;
-
-    this.MAX_SEQ_PROC = 2;
 
     // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
@@ -3203,63 +4905,104 @@ var IOVPlayer = function () {
     this.LogSourceBuffer = false;
     this.LogSourceBufferTopic = null;
 
-    this.resetPlayState();
+    this.state = 'idle';
 
     this.moovBox = null;
-    this.moofBox = null;
 
-    this.lastAppendAttemptTime = null;
-    this.appendInterval = null;
-    this.moofSplits = [];
+    this.accumulatedErrors = {};
 
-    // We determined that these debounce settings are "good enough"
-    // for the append interval debounce.
-    this.appendIntervalTolerance = 0.5;
-    this.appendIntervalSettings = {
-      leading: true,
-      trailing: false
-    };
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
 
-    this.appendBuffer = function (moofBox) {
-      return _this._appendBuffer(moofBox);
-    };
+    this.EVENT_NAMES = ['metric'];
 
-    // -1 is forever
-    this.retry_count = 3;
+    this.timeVideoCurrentTimeShifted = 0;
 
-    this._start_play = this._start_play.bind(this);
-    this._on_sourceopen = this._on_sourceopen.bind(this);
-    this._on_sourceended = this._on_sourceended.bind(this);
-    this._on_moof = this._on_moof.bind(this);
-    this._on_updateend = this._on_updateend.bind(this);
-    this.onTransportTransaction = this.onTransportTransaction.bind(this);
+    for (var i = 0; i < this.EVENT_NAMES.length; i++) {
+      this.events[this.EVENT_NAMES[i]] = [];
+    }
+
+    this.METRIC_TYPES = ['sourceBuffer.bufferTimeEnd', 'video.currentTime', 'video.drift', 'video.driftCorrection'];
+
+    this.metrics = {};
+
+    this.mseWrapper = null;
   }
 
   _createClass(IOVPlayer, [{
-    key: 'resetPlayState',
-    value: function resetPlayState() {
-      this.state = 'idle';
-      this.seqnum = 1;
-      this.seqnumProcessed = 1; // last sequence number processed
-      this.source_buffer_ready = false;
-      this.dropCounter = 0;
+    key: 'on',
+    value: function on(name, action) {
+      debug('Registering Listener for ' + name + ' event...');
+
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
+      }
+
+      this.events[name].push(action);
+    }
+  }, {
+    key: 'trigger',
+    value: function trigger(name, value) {
+      debug('Triggering ' + name + ' event...');
+
+      if (!this.EVENT_NAMES.includes(name)) {
+        throw new Error('"' + name + '" is not a valid event."');
+      }
+
+      for (var i = 0; i < this.events[name].length; i++) {
+        this.events[name][i](value, this);
+      }
+    }
+  }, {
+    key: 'metric',
+    value: function metric(type, value) {
+      // if (!this.options.enableMetrics) {
+      //   return;
+      // }
+
+      if (!this.METRIC_TYPES.includes(type)) {
+        // @todo - should this throw?
+        return;
+      }
+
+      switch (type) {
+        case 'video.driftCorrection':
+          {
+            if (!this.metrics[type]) {
+              this.metrics[type] = 0;
+            }
+
+            this.metrics[type] += value;
+
+            break;
+          }
+        default:
+          {
+            this.metrics[type] = value;
+          }
+      }
+
+      this.trigger('metric', {
+        type: type,
+        value: this.metrics[type]
+      });
     }
   }, {
     key: 'isMimeCodecSupported',
     value: function isMimeCodecSupported(mimeCodec) {
-      if (!window.MediaSource || !window.MediaSource.isTypeSupported(mimeCodec)) {
-        // the browser does not support this video format
-        this._fault('Unsupported mime codec: ' + mimeCodec);
-
-        return false;
+      if (_MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].isMimeCodecSupported(mimeCodec)) {
+        return true;
       }
 
-      return true;
+      // the browser does not support this video format
+      this.displayVideoJsError('Unsupported mime codec: ' + mimeCodec);
+
+      return false;
     }
   }, {
     key: 'onTransportTransaction',
     value: function onTransportTransaction(iov, response) {
-      var _this2 = this;
+      var _this = this;
 
       var new_mimeCodec = response.mimeCodec;
       var new_guid = response.guid; // stream guid
@@ -3277,38 +5020,38 @@ var IOVPlayer = function () {
 
         transport.unsubscribe(initSegmentTopic);
 
-        var oldTopic = 'iov/video/' + _this2.guid + '/live';
+        var oldTopic = 'iov/video/' + _this.guid + '/live';
         var newTopic = 'iov/video/' + new_guid + '/live';
 
         transport.subscribe(newTopic, function (moof_mqtt_msg) {
           var moofBox = moof_mqtt_msg.payloadBytes;
-
-          // this.vqueue.push(moofBox.slice(0));
 
           // unsubscribe to existing live
           // 1) unsubscribe to remove avoid callback
           transport.unsubscribe(newTopic);
 
           // 2) unsubscribe to live callback for the old stream
-          _this2.iov.transport.unsubscribe(oldTopic);
+          _this.iov.transport.unsubscribe(oldTopic);
 
           // 3) resubscribe with different callback
-          transport.subscribe(newTopic, _this2._on_moof);
+          transport.subscribe(newTopic, function (mqtt_msg) {
+            _this.mseWrapper.append(mqtt_msg.payloadBytes);
+          });
 
           // alter object properties to reflect new stream
-          _this2.guid = new_guid;
-          _this2.moovBox = moov;
-          _this2.mimeCodec = new_mimeCodec;
+          _this.guid = new_guid;
+          _this.moovBox = moov;
+          _this.mimeCodec = new_mimeCodec;
 
           // remove media source buffer, reinitialize
-          _this2.reinitializeMse();
+          _this.reinitializeMse();
 
           if (!iov) {
             return;
           }
 
           if (iov.config.parentNodeId !== null) {
-            var iframe_elm = document.getElementById(_this2.iov.config.clientId);
+            var iframe_elm = document.getElementById(_this.iov.config.clientId);
             var parent = document.getElementById(iov.config.parentNodeId);
 
             if (parent) {
@@ -3320,7 +5063,7 @@ var IOVPlayer = function () {
           }
 
           // replace iov variable with the new one created.
-          _this2.iov = iov;
+          _this.iov = iov;
         });
       });
 
@@ -3334,7 +5077,7 @@ var IOVPlayer = function () {
   }, {
     key: 'change',
     value: function change(newStream, iov) {
-      var _this3 = this;
+      var _this2 = this;
 
       debug('change');
 
@@ -3347,7 +5090,7 @@ var IOVPlayer = function () {
             args[_key] = arguments[_key];
           }
 
-          return _this3.onTransportTransaction.apply(_this3, [iov].concat(args));
+          return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
         }, request);
         return;
       }
@@ -3357,13 +5100,25 @@ var IOVPlayer = function () {
           args[_key2] = arguments[_key2];
         }
 
-        return _this3.onTransportTransaction.apply(_this3, [iov].concat(args));
+        return _this2.onTransportTransaction.apply(_this2, [iov].concat(args));
       }, request);
     }
   }, {
-    key: '_fault',
-    value: function _fault(message) {
-      debug('_fault');
+    key: '_onError',
+    value: function _onError(type, message, error) {
+      if (!this.accumulatedErrors[type]) {
+        this.accumulatedErrors[type] = 0;
+      }
+
+      this.accumulatedErrors[type]++;
+
+      console.error(message);
+      console.error(error);
+    }
+  }, {
+    key: 'displayVideoJsError',
+    value: function displayVideoJsError(message) {
+      debug('displayVideoJsError');
 
       this.videoPlayer.errors.extend({
         PLAYER_ERR_IOV: {
@@ -3380,15 +5135,10 @@ var IOVPlayer = function () {
     value: function reinitializeMse() {
       debug('reinitializeMse');
 
-      this.resetPlayState();
+      this.state = 'idle';
 
-      // free resource
-      if (this.mediaSource) {
-        URL.revokeObjectURL(this.mediaSource);
-
-        // reallocate, this will call media source open which will
-        // append the MOOV atom.
-        this.video.src = URL.createObjectURL(this.mediaSource);
+      if (this.mseWrapper.mediaSource) {
+        this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
       }
     }
   }, {
@@ -3402,6 +5152,8 @@ var IOVPlayer = function () {
   }, {
     key: 'play',
     value: function play(eid, streamName, onFirstChunk, onVideoRecv) {
+      var _this3 = this;
+
       debug('play');
 
       this.video = document.getElementById(eid);
@@ -3414,47 +5166,154 @@ var IOVPlayer = function () {
       this.videoPlayer = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlayer(this.id);
 
       if (typeof this.video === 'undefined') {
-        this._fault("Unable to match id '" + eid + "'");
-        return;
+        throw new Error("Unable to match id '" + eid + "'");
       }
 
       var request = { clientId: this.iov.config.clientId };
       var topic = 'iov/video/' + window.btoa(this.streamName) + '/request';
 
-      this.iov.transport.transaction(topic, this._start_play, request);
+      this.iov.transport.transaction(topic, function () {
+        return _this3._start_play.apply(_this3, arguments);
+      }, request);
     }
   }, {
     key: 'resume',
     value: function resume(onFirstChunk, onVideoRecv) {
+      var _this4 = this;
+
       debug('resume');
 
-      var self = this;
+      this.onFirstChunk = onFirstChunk;
+      this.onVideoRecv = onVideoRecv;
 
-      self.onFirstChunk = onFirstChunk;
-      self.onVideoRecv = onVideoRecv;
-
-      var request = { clientId: self.iov.config.clientId };
-      var topic = "iov/video/" + window.btoa(self.streamName) + "/request";
-      self.iov.transport.transaction(topic, self._start_play, request);
+      var request = { clientId: this.iov.config.clientId };
+      var topic = "iov/video/" + window.btoa(this.streamName) + "/request";
+      this.iov.transport.transaction(topic, function () {
+        return _this4._start_play.apply(_this4, arguments);
+      }, request);
     }
   }, {
-    key: '_appendBuffer_event',
-    value: function _appendBuffer_event(bytearray) {
-      silly('_appendBuffer_event');
+    key: 'reinitializeMseWrapper',
+    value: function reinitializeMseWrapper(mimeCodec) {
+      var _this5 = this;
 
-      var self = this;
-
-      if (self.LogSourceBuffer === true && self.LogSourceBufferTopic !== null) {
-        //debug("recording "+parseInt(bytearray.length)+" bytes of data");
-        var mqtt_msg = new Paho.MQTT.Message(bytearray);
-        mqtt_msg.destinationName = self.LogSourceBufferTopic;
-        MQTTClient.send(mqtt_msg);
+      if (this.mseWrapper) {
+        this.mseWrapper.destroy();
       }
 
-      self.onVideoRecv();
+      this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory();
 
-      // increment bytecount stats
-      self.iov.statsMsg.byteCount += bytearray.length;
+      this.mseWrapper.on('metric', function (_ref) {
+        var type = _ref.type,
+            value = _ref.value;
+
+        _this5.trigger('metric', { type: type, value: value });
+      });
+
+      this.mseWrapper.initializeMediaSource({
+        onSourceOpen: function onSourceOpen() {
+          debug('on mediaSource sourceopen');
+
+          _this5.mseWrapper.initializeSourceBuffer(mimeCodec, {
+            onAppendStart: function onAppendStart(byteArray) {
+              silly('On Append Start...');
+
+              if (_this5.LogSourceBuffer === true && _this5.LogSourceBufferTopic !== null) {
+                debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
+
+                var mqtt_msg = new window.Paho.MQTT.Message(byteArray);
+                mqtt_msg.destinationName = _this5.LogSourceBufferTopic;
+                window.MQTTClient.send(mqtt_msg);
+              }
+
+              _this5.onVideoRecv();
+
+              _this5.iov.statsMsg.byteCount += byteArray.length;
+            },
+            onAppendFinish: function onAppendFinish(info) {
+              silly('On Append Finish...');
+
+              _this5.drift = info.bufferTimeEnd - _this5.video.currentTime;
+
+              _this5.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+              _this5.metric('video.currentTime', _this5.video.currentTime);
+              _this5.metric('video.drift', _this5.drift);
+
+              if (_this5.drift > 3) {
+                _this5.metric('video.driftCorrection', 1);
+                _this5.video.currentTime = info.bufferTimeEnd;
+                // return this.reinitializeMse();
+              }
+
+              if (_this5.video.paused === true) {
+                debug('Video is paused!');
+
+                try {
+                  var promise = _this5.video.play();
+
+                  if (typeof promise !== 'undefined') {
+                    promise.catch(function (error) {
+                      _this5._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                    });
+                  }
+                } catch (error) {
+                  _this5._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+                }
+              }
+            },
+            onRemoveFinish: function onRemoveFinish(info) {
+              debug('onRemoveFinish');
+
+              // wait around for 3 seconds to simulate unpredictable browser interruptions.
+              var now = new Date().getTime();
+              for (var i = 0; i < 1e7; i++) {
+                var diff = new Date().getTime() - now;
+                if (diff > 1000) {
+                  debug("breaking out of 1 second sleep");
+                  break;
+                }
+              }
+            },
+            onAppendError: function onAppendError(error) {
+              // internal error, this has been observed to happen the tab
+              // in the browser where this video player lives is hidden
+              // then reselected. 'ex' is undefined the error is bug
+              // within the MSE C++ implementation in the browser.
+              _this5._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
+              _this5.videoPlayer.error({ code: 3 });
+              _this5.reinitializeMse();
+            },
+            onRemoveError: function onRemoveError(error) {
+              // observed this fail during a memry snapshot in chrome
+              // otherwise no observed failure, so ignore exception.
+              _this5._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
+            },
+            onStreamFrozen: function onStreamFrozen() {
+              debug('stream appears to be frozen - reinitializing...');
+
+              _this5.reinitializeMseWrapper(mimeCodec);
+            },
+            onError: function onError(error) {
+              _this5._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+            }
+          });
+
+          _this5.mseWrapper.append(_this5.moovBox);
+        },
+        onSourceEnded: function onSourceEnded() {
+          debug('on mediaSource sourceended');
+
+          // @todo - do we need to clear the buffer manually?
+          _this5.stop();
+        },
+        onError: function onError(error) {
+          _this5._onError('mediaSource.generic', 'mediaSource error', error);
+        }
+      });
+
+      if (this.mseWrapper.mediaSource && this.video) {
+        this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
+      }
     }
   }, {
     key: 'stop',
@@ -3471,56 +5330,39 @@ var IOVPlayer = function () {
       self.state = "idle";
 
       // free resources associated with player
-      self.seqnum = 1;
       self.moovBox = null;
-      self.moofBox = null;
 
       var request = { clientId: self.iov.config.clientId };
       self.iov.transport.publish("iov/video/" + self.guid + "/stop", request);
     }
   }, {
     key: '_start_play',
-    value: function _start_play(resp) {
+    value: function _start_play(_ref2) {
+      var _this6 = this;
+
+      var mimeCodec = _ref2.mimeCodec,
+          guid = _ref2.guid;
+
       debug('_start_play');
 
-      var self = this;
-
-      self.mimeCodec = resp.mimeCodec;
-      self.guid = resp.guid; // stream guid
-
-      if ('MediaSource' in window && MediaSource.isTypeSupported(self.mimeCodec)) {
-        var initseg_topic = self.iov.config.clientId + "/init-segment/" + parseInt(Math.random() * 1000000);
-
-        self._async_play_loop(resp, initseg_topic);
-        var play_request_topic = "iov/video/" + self.guid + "/play";
-        self.iov.transport.publish(play_request_topic, {
-          initSegmentTopic: initseg_topic,
-          clientId: self.iov.config.clientId
-        });
-      } else {
-        // the browser does not support this video format
-        self._fault("Unsupported mime codec " + self.mimeCodec);
+      if (!this.isMimeCodecSupported(mimeCodec)) {
+        return;
       }
-    }
-  }, {
-    key: '_async_play_loop',
-    value: function _async_play_loop(resp, initSegmentTopic) {
-      debug('_async_play_loop');
+
+      this.mimeCodec = mimeCodec;
+      this.guid = guid;
+
+      var initSegmentTopic = this.iov.config.clientId + '/init-segment/' + parseInt(Math.random() * 1000000);
 
       var self = this;
 
-      // setup handlers for video
-      // self.vqueue = []; // used if the media source buffer is busy
-
-      self.state = "waiting-for-moov";
+      self.state = 'waiting-for-moov';
 
       self.iov.transport.subscribe(initSegmentTopic, function (mqtt_msg) {
-
         // capture the initial segment
         self.moovBox = mqtt_msg.payloadBytes;
-        //debug(typeof mqtt_msg.payloadBytes);
-        //debug("received moov from server");
-
+        // debug(typeof mqtt_msg.payloadBytes);
+        // debug("received moov from server");
 
         self.state = "waiting-for-moof";
         // unsubscribe to this group
@@ -3528,13 +5370,12 @@ var IOVPlayer = function () {
 
         // subscribe to the live video topic.
         self.state = "playing";
-        self.iov.transport.subscribe("iov/video/" + self.guid + "/live", self._on_moof);
+        self.iov.transport.subscribe("iov/video/" + self.guid + "/live", function (mqtt_msg) {
+          _this6.mseWrapper.append(mqtt_msg.payloadBytes);
+        });
         // create media source buffer and start routing video traffic.
 
-
         self.onFirstChunk(); // first chunk of video received.
-
-        self.mediaSource = new MediaSource();
 
         // when videojs initializes the video element (or something like that),
         // it creates events and listeners on that element that it uses, however
@@ -3549,9 +5390,9 @@ var IOVPlayer = function () {
           self.video = clone;
         }
 
-        self.videoPlayer.on('changesrc', function (event, _ref) {
-          var eid = _ref.eid,
-              url = _ref.url;
+        self.videoPlayer.on('changesrc', function (event, _ref3) {
+          var eid = _ref3.eid,
+              url = _ref3.url;
 
           debug('iov-change-src on id ' + self.videoPlayer.id());
 
@@ -3577,16 +5418,7 @@ var IOVPlayer = function () {
           self.iov.clone(new_cfg);
         });
 
-        self.mediaSource.addEventListener('sourceopen', self._on_sourceopen);
-        self.mediaSource.addEventListener('sourceended', self._on_sourceended);
-        self.mediaSource.addEventListener('error', function (e) {
-          console.error("MSE error");
-          console.error(e);
-        });
-
-        // now assign media source extensions
-        //debug("Disregard: The play() request was interrupted ... its not an error!");
-        self.video.src = URL.createObjectURL(self.mediaSource);
+        _this6.reinitializeMseWrapper(mimeCodec);
 
         // subscribe to a sync topic that will be called if the stream that is feeding
         // the mse service dies and has to be restarted that this player should restart the stream
@@ -3597,225 +5429,13 @@ var IOVPlayer = function () {
           self.reinitializeMse();
         });
       });
-    }
-  }, {
-    key: '_appendBuffer',
-    value: function _appendBuffer(moofBox) {
-      if (this.sourceBuffer.updating !== false || document.visibilityState === 'hidden') {
-        debug('Dropping frame...');
-        return;
-      }
 
-      try {
-        // debug(typeof moofBox);
-        // debug("calling append buffer");
-        this._appendBuffer_event(moofBox);
-        this.sourceBuffer.appendBuffer(moofBox);
-        // console.log('Actually appended moof at ' + Date.now())
-        this.seqnum += 1; // increment sequence number for next chunk
-      } catch (e) {
-        console.error("Excetion thrown from appendBuffer", e);
-        this.videoPlayer.error({ code: 3 });
-        this.reinitializeMse();
-      }
-    }
-  }, {
-    key: '_on_moof',
-    value: function _on_moof(mqtt_msg) {
-      var _this4 = this;
+      var play_request_topic = 'iov/video/' + this.guid + '/play';
 
-      silly('_on_moof');
-
-      var self = this;
-
-      if (self.source_buffer_ready == false) {
-        //debug("media source not yet open dropping frame");
-        return;
-      }
-
-      /**
-          Enqueues or sends to the media source buffer an MP4 moof atom. This contains a
-          chunk of video/audio tracks.
-        */
-      // pace control. Allow a maximum of MAX_SEQ_PROC MOOF boxes to be held within
-      // the source buffer.
-      if (self.seqnum - self.seqnumProcessed > self.MAX_SEQ_PROC) {
-        //debug("DROPPING FRAME DRIFT TOO HIGH, dropCounter = " + parseInt(self.dropCounter));
-        return; // DROP this frame since the borwser is falling
-      }
-
-      var moofBox = mqtt_msg.payloadBytes;
-      moofBox[20] = (self.seqnum & 0xFF000000) >> 24;
-      moofBox[21] = (self.seqnum & 0x00FF0000) >> 16;
-      moofBox[22] = (self.seqnum & 0x0000FF00) >> 8;
-      moofBox[23] = self.seqnum & 0xFF;
-
-      if (!this.appendInterval && this.moofSplits.length < DEBOUNCE_INTERVAL_SAMPLE_SIZE) {
-        var currentAppendTime = Date.now();
-        var moofSplit = this.lastAppendAttemptTime ? currentAppendTime - this.lastAppendAttemptTime : 0;
-
-        this.lastAppendAttemptTime = currentAppendTime;
-
-        if (moofSplit) {
-          this.moofSplits.push(moofSplit);
-        }
-
-        if (this.moofSplits.length === DEBOUNCE_INTERVAL_SAMPLE_SIZE) {
-          var moofSplitSum = 0;
-
-          for (var i = 0; i < this.moofSplits.length; i++) {
-            moofSplitSum += this.moofSplits[i];
-          }
-
-          var moofSplitAverage = moofSplitSum / DEBOUNCE_INTERVAL_SAMPLE_SIZE;
-
-          this.appendInterval = Math.round(moofSplitAverage * this.appendIntervalTolerance);
-          this.moofSplits = null;
-
-          debug('set append debounce interval', this.appendInterval);
-
-          this.appendBuffer = lodash_debounce__WEBPACK_IMPORTED_MODULE_2___default()(function (moofBox) {
-            _this4._appendBuffer(moofBox);
-          }, this.appendInterval, this.appendIntervalSettings);
-        }
-      }
-
-      // console.log('tried to append at ' + this.lastAppendAttemptTime, );
-
-      this.appendBuffer(moofBox);
-    }
-
-    // found when stress testing many videos, it is possible for the
-    // media source ready state not to be open even though
-    // source open callback is being called.
-
-  }, {
-    key: '_on_sourceopen',
-    value: function _on_sourceopen() {
-      debug('_on_sourceopen');
-
-      var self = this;
-
-      if (self.mediaSource.readyState === "open") {
-        self._do_on_sourceopen();
-        return;
-      }
-
-      var t = setInterval(function () {
-        if (self.mediaSource.readyState === "open") {
-          self._do_on_sourceopen();
-          clearInterval(t);
-        }
-      }, 1000);
-    }
-  }, {
-    key: '_do_on_sourceopen',
-    value: function _do_on_sourceopen() {
-      debug('_do_on_sourceopen');
-
-      var self = this;
-
-      /** New media source opened. Add a buffer and append the moov MP4 video data.
-      */
-
-      // add buffer
-      self.sourceBuffer = self.mediaSource.addSourceBuffer(self.mimeCodec);
-      self.sourceBuffer.mode = 'sequence';
-      self.sourceBuffer.addEventListener('updateend', self._on_updateend);
-
-      self.sourceBuffer.addEventListener('error', function (e) {
-        console.error("MSE sourceBffer error");
-        console.error(e);
+      this.iov.transport.publish(play_request_topic, {
+        initSegmentTopic: initSegmentTopic,
+        clientId: this.iov.config.clientId
       });
-
-      // we are now able to process video
-      self.source_buffer_ready = true;
-
-      self._appendBuffer_event(self.moovBox);
-      self.sourceBuffer.appendBuffer(self.moovBox);
-    }
-  }, {
-    key: '_on_sourceended',
-    value: function _on_sourceended() {
-      debug('_on_sourceended');
-
-      var self = this;
-
-      // @todo - do we need to clear the buffer manually?
-      self.stop();
-      self.source_buffer_ready = false;
-    }
-  }, {
-    key: '_on_updateend',
-    value: function _on_updateend() {
-      silly('_on_updateend');
-
-      var self = this;
-
-      // identify what seqnum of the MOOF message has actually been processed.
-      self.seqnumProcessed += 1;
-
-      if (self.video.paused === true) {
-        try {
-          // console.log("video paused calling video.play()", self.videoPlayer.id());
-          var promise = self.video.play();
-          // console.log("video.play() called", self.videoPlayer.id());
-          if (typeof promise !== 'undefined') {
-            promise.then(function (_) {}).catch(function (e) {});
-          }
-        } catch (ex) {
-          console.error("Exception while trying to play:" + ex.message);
-        }
-        //debug("setting video player from paused to play");
-      }
-
-      /*
-      var logmsg =
-          "_on_updateend: " +
-          ((self.video.paused) ? " video is paused,": "video is playing,")   +
-          " ready state = '" + self.mediaSource.readyState + "', " +
-          " video queue size = " + parseInt(self.vqueue.length)
-      ;
-      debug(logmsg);
-      */
-      if (self.mediaSource.readyState === "open") {
-        if (self.sourceBuffer.buffered.length > 0) {
-          var start = self.sourceBuffer.buffered.start(0);
-          var end = self.sourceBuffer.buffered.end(0);
-          var time_buffered = end - start;
-          var limit = 15.0;
-          if (time_buffered > 30.0) {
-            try {
-              // observed this fail during a memry snapshot in chrome
-              // otherwise no observed failure, so ignore exception.
-              self.sourceBuffer.remove(start, start + limit);
-            } catch (e) {
-              console.log('error while removing', self.videoPlayer.id());
-              console.error(e);
-            }
-          }
-        }
-
-        // if (self.vqueue.length > 0) {
-        //   self._appendBuffer_event(self.vqueue[0]);
-        //   setTimeout(function () {
-        //     // deqeue next prepared moof atom
-        //     if (self.sourceBuffer.updating === false) {
-        //       try {
-        //         self.sourceBuffer.appendBuffer(self.vqueue[0]);
-        //       } catch (ex) {
-        //         // internal error, this has been observed to happen the tab
-        //         // in the browser where this video player lives is hidden
-        //         // then reselected. 'ex' is undefined the error is bug
-        //         // within the MSE C++ implementation in the browser.
-        //         self.reinitializeMse();
-        //       }
-        //     }
-        //     // regardless we must proceed to the frame.
-        //     self.vqueue = self.vqueue.slice(1);
-        //   }, 0);
-        // }
-      }
     }
   }]);
 
@@ -3904,6 +5524,29 @@ clspPlugin.register();
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+
+/***/ 0:
+/*!***********************************************!*\
+  !*** multi ./src/js/videojs-mse-over-clsp.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(/*! ./src/js/videojs-mse-over-clsp.js */"./src/js/videojs-mse-over-clsp.js");
+
+
+/***/ }),
+
+/***/ 1:
+/*!******************************!*\
+  !*** min-document (ignored) ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/* (ignored) */
 
 /***/ }),
 

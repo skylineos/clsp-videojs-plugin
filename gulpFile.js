@@ -67,10 +67,12 @@ gulp.task('build-prod', () => webpackBuild('./webpack.config.prod'));
 gulp.task('start-dev', (done) => {
   const webpackConfig = require('./webpack.config');
 
-  serve({
-    config: webpackConfig,
-    content: __dirname,
+  serve({}, {
+    compiler: webpack(webpackConfig),
     port: 9999,
+    content: __dirname,
+    clipboard: false,
+    hotClient: false,
   });
 });
 

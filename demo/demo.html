@@ -2,523 +2,301 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>videojs-mse-over-clsp Demo</title>
-  <link href="//vjs.zencdn.net/6.7.1/video-js.css" rel="stylesheet">
-  <link href="/dist/videojs-mse-over-clsp.css" rel="stylesheet">
-  <script
-    src="//code.jquery.com/jquery-3.3.1.min.js"
-    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-    crossorigin="anonymous"
-  ></script>
-  <style>
-    video-container {
-      width: 356,
-      height: 244
-    }
-  </style>
+  <title>CLSP Demo</title>
+  <link href="/dist/demo.css" rel="stylesheet">
+  <script src="/dist/demo.js"></script>
 </head>
 <body>
-  <table>
-    <tr>
-      <td class="video-container">
-        <video
-          id="vw1"
-          width="352"
-          height="240"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        >
-          <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'"/>
-          <source id="hls1"  src="" type="application/x-mpegURL" />
-        </video>
-      </td>
-      <td  class="video-container">
-        <video
-          id="vw2"
-          width="352"
-          height="240"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        >
-          <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'" />
-          <source id="hls2"  src="" type="application/x-mpegURL" />
-        </video>
-      </td>
-    </tr>
-    <tr>
-     <td class="video-container">
-        <video
-          id="vw3"
-          width="352"
-          height="240"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        >
-          <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'" />
-          <source id="hls3"  src="" type="application/x-mpegURL" />
-        </video>
-      </td>
-      <td class="video-container">
-        <video
-          id="vw4"
-          width="352"
-          height="240"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        >
-          <source id="src4" src="" type="video/mp4; codecs='avc1.42E01E'" />
-          <source id="hls4"  src="" type="application/x-mpegURL" />
-        </video>
-      </td>
-    </tr>
-
-    <tr><td colspan="2"><hr></td></tr>
-
-    <tr><td colspan="2">URL format:   clsp://(sfs ip)/(stream name)</td></tr>
-    <tr><td>CLSP URL</td><td>
-      <input
-        id="url1"
-        value="clsp://172.28.12.248/testpattern"
-        style="width: 400px;"
-      /></td></tr>
-    <tr><td>CLSP URL</td><td>
-      <input
-        id="url2"
-        value="clsp://172.28.12.247/testpattern"
-        style="width: 400px;"
-      /></td></tr>
-    <tr><td>CLSP URL</td><td>
-      <input
-        id="url3"
-        value="clsps://sky-qa-dionysus.qa.skyline.local/testpattern"
-        style="width: 400px;"
-      /></td></tr>
-    <tr><td>CLSP URL</td><td>
-      <input
-        id="url4"
-        value="clsp://172.28.12.247/testpattern"
-        style="width: 400px;"
-      /></td></tr>
-    <tr><td colspan="2"><button id="submit">Submit</button></td></tr>
-    <tr><td colspan="2"><div id="message"></div></td></tr>
-  </table>
-
-  <script src="//vjs.zencdn.net/6.7.1/video.js"></script>
-  <script src="/dist/videojs-mse-over-clsp.js"></script>
-  <script>
-    $('#submit').click(function(){
-      var ip = $('#ip').val();
-      var vwallsrc = ['','','',''];
-      vwallsrc[0] = $('#src1').val();
-      vwallsrc[1] = $('#name2').val();
-      vwallsrc[2] = $('#name3').val();
-      vwallsrc[3] = $('#name4').val();
-
-      function browserIsCompatable () {
-        // Chrome 1+
-        const isChrome = (Boolean(window.chrome) && Boolean(window.chrome.webstore));
-
-        if (!isChrome) {
-          return false;
-        }
-
-        try {
-          return (parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10) >= 52);
-        }
-        catch (error) {
-          return false;
-        }
-      }
-
-      if (browserIsCompatable()) {
-        console.log('found supported version of chrome!')
-      } else {
-        console.log('browser not supported!!')
-      }
-
-      setTimeout(function(){
-        var srcCount = 1;
-        vwallsrc.forEach(function(name){
-          var url = $( '#url' + srcCount ).val();
-          $( '#src' + srcCount ).attr('src',url);
-
-          // @todo
-          // var hls = "";
-          // $( '#hls' + srcCount ).attr('src', hls);
-
-          if (url) {
-            window.videojs('vw' + srcCount).clsp({
-              onPlayFailed: function(player) {
-                console.log("failed to play");
-                console.log(player);
-
-
-              }
-            });
-          } else {
-            // window.videojs('vw' + srcCount, {
-            //   muted: true,
-            //   sources: [{
-            //     src: "http://vjs.zencdn.net/v/oceans.mp4",
-            //     type: "video/mp4"
-            //   }, {
-            //     src: "http://vjs.zencdn.net/v/oceans.webm",
-            //     type: "video/webm"
-            //   }, {
-            //     src: "http://vjs.zencdn.net/v/oceans.ogv",
-            //     type: "video/ogg"
-            //   }]
-            // });
-          }
-
-          srcCount++;
-        });
-      }, 0);
-
-      $('#message').html('videos configured');
-    });
-  </script>
-
-  <hr />
-
-  <script>
-    function setupVwallCell(eid, src, cellId) {
-        if (document.getElementById(eid) === null) {
-            alert("(1) No match for " + eid);
-            return;
-        }
-
-        // return markup for
-        var cell = document.getElementById('cell');
-        var html = cell.innerHTML.replace(/\$cellId/g,parseInt(cellId));
-        var html = html.replace("$src",src);
-
-        $('#'+eid).html(html);
-        $(function(){
-            var celm = document.getElementById('video-'+parseInt(cellId));
-            if (celm !== null){
-                $(function(){
-                    window.videojs(celm).clsp({
-                           onPlayFailed: function(player) {
-                               console.log("failed to play");
-                               console.log(player);
-                           }
-                    });
-
-                });
-
-                //window.videojs(celm).clsp();
-            } else {
-                alert("(2) No match for video-"+parseInt(cellId));
-            }
-        });
-    }
-
-    function setupVwall(eid, urlList) {
-        var html = "<table>";
-        for(var cellId = 0; cellId < urlList.length; cellId++){
-            if (cellId % 4 === 0) {
-                html += "<tr>";
-            }
-
-            var vwcel = 'vwcell-'+parseInt(cellId);
-            html += '<td id="'+vwcel+'"></td>';
-            if (cellId % 4 === 3) {
-                html += "</tr>";
-            }
-        }
-        if (urlList.length < 4) {
-            html += "</tr>";
-        }
-        html += "</table>";
-        console.log(html);
-        $('#'+eid).html(html);
-
-        $(function(){
-            for(cellId = 0; cellId < urlList.length; cellId++){
-                var vwcel = 'vwcell-'+parseInt(cellId);
-                var url = urlList[cellId];
-                setupVwallCell(vwcel, url, cellId);
-            }
-        });
-
-    }
-
-    function onclick() {
-        var urlList = [];
-        var eid = "videowall";
-
-        var numvideos = $('#numvideos').val();
-        for(var i = 0; i < numvideos; i++) {
-            urlList.push( $('#url').val() );
-        }
-        setupVwall(eid,urlList);
-    }
-
-    $(function(){
-       $('#walltest').click(onclick);
-    });
-  </script>
-
-  <div>
-    <span>Url:</span>
-    <input
-      id="url"
-      value="clsp://172.28.12.247/testpattern"
-    />
-  </div>
-  <div>
-    <span>Number of videos:</span>
-    <input
-      id="numvideos"
-      value="8"
-      type="number"
-    />
-  </div>
-
-  <br />
-
-  <button id="walltest">video wall</button>
-
-  <div id="videowall"></div>
-
-
-<hr>
-<h2>Video tour</h2>
-Enter a list of clsp urls separated by newline.
-<br>
-<textarea id="tour-list" rows="10" cols="80" style="overflow: scroll;">
-clsp://172.28.12.247/testpattern
-clsp://172.28.12.57:9001/FairfaxVideo0520
-clsp://172.28.12.57:9001/40004
-</textarea>
-
-<h3 id="now-playing"></h3>
-  <video id="tour-video"
-    width="352"
-    height="240"
-    autoplay
-    muted
-  >
-  <source id="tour-first-source"
-    src=""
-    type="video/mp4; codecs='avc1.42E01E'"
-  />
-
-  </video>
-
-<br>
-
-Play time per <input type="number" id="tour-switch-interval" value="10"/>
-<button id="start-tour">Start Video Tour</button>
-
-
-<script>
-$(function(){
-  var tour = {
-    player: null,
-    plist: [],
-    interval: 10,
-    counter: 0,
-    timer: null
-  };
-
-  $('#start-tour').click(function(){
-    tour.interval = parseInt($('#tour-switch-interval').val());
-    tour.plist = [];
-
-    var x = $('#tour-list').val().split("\n");
-    for(var i = 0; i < x.length; i++) {
-        if (x[i].length > 0) {
-            tour.plist.push(x[i]);
-        }
-    }
-
-
-
-
-    if (tour.plist.length < 2) {
-       alert("at least two source needed!");
-       return;
-    }
-    $('#tour-first-source').attr('src',tour.plist[0]);
-
-    tour.counter = 1;
-    tour.player = null;
-
-    if (tour.timer !== null) {
-      clearInterval(tour.timer);
-    }
-
-    $(function(){
-      tour.player = window.videojs('#tour-video');
-      tour.player.clsp(); // start playing first stream
-      $('#now-playing').html(tour.plist[0]);
-
-      tour.player.on("network-error", function(evt, message){
-          console.log("!!!!! Handled network-error", evt);
-          console.log(message);
-      });
-
-
-      tour.timer = setInterval(function(){
-        var url = tour.plist[ tour.counter % tour.plist.length ];
-        $('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
-
-        tour.counter += 1;
-        console.log("selected url", url, tour.plist);
-        tour.player.trigger('changesrc', {eid: 'tour-video', url:url});
-      }, tour.interval * 1000);
-
-    });
-
-  });
-
-});
-</script>
-
-
-
-<hr>
-  <br>
-  <h3>Headless clsp player</h3>
-  <video id="headless"
-    width="352"
-    height="240"
-    controls
-    autoplay
-    muted
-  >
-
-
-   </video>
-
-  <hr>
-<!--
-Example of how to play clsp without video js
-
--->
-
-
-
-
-  <div>Url for headless player: <input id="headless_url" tyle="text"/></div>
-  <div><button id="headless_play">Headless Player</button></div>
-
-
-
-<script>
-function parseUrl(_src) {
-    var iov_config = {};
-    var parser = document.createElement('a');
-
-    var useSSL = false;
-    var default_port;
-    var kluged_src;
-
-    if (_src.substring(0,5).toLowerCase() === 'clsps') {
-        useSSL = true;
-        kluged_src = _src.replace('clsps','https');
-        default_port = 443;
-    } else {
-        // firefox/ie hack!
-        kluged_src = _src.replace('clsp','http');
-        default_port = 9001;
-    }
-
-    parser.href = kluged_src;
-            //parser.href = "http:" + parser.pathname;
-
-    var hostname = parser.hostname;
-    var port = parser.port;
-    var t = parser.pathname.split("/");
-    var streamName = t[t.length-1];
-
-    if (port.length === 0) {
-        port = default_port;
-    }
-
-
-    // @ is a special address maening the server that loaded the web page.
-    if (hostname === '@') {
-        hostname = window.location.hostname;
-    }
-
-    iov_config.mqtt_player = null;
-    iov_config.port = parseInt(port);
-    iov_config.address = hostname;
-    iov_config.streamName = streamName;
-    iov_config.enabled = true;
-    iov_config.useSSL = useSSL;
-
-    return iov_config;
-}
-
-$(function(){
-    $('#headless_play').click(function(){
-////////////////////////////////////////////////
-// headless play demo
-////////////////////////////////////////////////
-     var src = $('#headless_url').val();
-     var iov_config = parseUrl(src);
-
-     iov_config.videoElement = document.getElementById('headless');
-     iov_config.appStart = function(iov) {
-        iovPlayer = iov.player();
-        iovPlayer.play('headless', iov_config.streamName,
-           function() {
-              console.log("first chunk of video received, remove poster if its playing");
-           },
-           function() {
-              console.log("video received");
-           }
-       );
-     };
-
-     var IOV = videojs.getPlugin('clsp').clsp_IOV;
-     var iov = new IOV(iov_config);
-     iov.initialize();
-/////////////////////////////////////////////////
-   });
-});
-
-</script>
-
-
-
-
-
-
-</script>
-
-
-
-  <template id="cell">
-    <div class="video-container">
-      <video
-        id="video-$cellId"
-        width="352"
-        height="240"
-        class="video-js vjs-default-skin"
-        controls
-        autoplay
-        muted
-      >
-        <source
-          id="src-$cellId"
-          src="$src"
-          type="video/mp4; codecs='avc1.42E01E'"
-        />
-      </video>
+  <h1 id="page-title">CLSP Demo</h1>
+
+  <section class="wall">
+    <h2>Wall</h2>
+    <div>
+      <span>Urls:</span>
+      <br />
+      <textarea
+        id="wallUrls"
+        rows="25"
+        cols="80"
+      >clsp://172.28.12.247/testpattern</textarea>
     </div>
-  </template>
+    <br />
+    <div>
+      <span>Times to Replicate</span>
+      <br />
+      <input
+        id="wallReplicate"
+        value="1"
+        type="number"
+      />
+    </div>
+    <br />
+    <div>
+      <label for="showMetrics">
+        <input
+          id="showMetrics"
+          checked="true"
+          type="checkbox"
+        />
+        <span>Show Metrics</span>
+      </label>
+    </div>
+    <br />
+    <br />
+    <button id="walltest">video wall</button>
+    <br />
+    <div id="tourSummary">
+      <span id="tourTotalVideos"></span>
+      <br />
+      <span id="tourStartTime"></span>
+      <br />
+      <span id="tourDuration"></span>
+    </div>
 
+    <div id="videowall"></div>
 
+    <template id="cell">
+      <div class="video-container">
+        <video id="video-$cellId" width="352" height="240" class="video-js vjs-default-skin" controls autoplay muted>
+          <source id="src-$cellId" src="$src" type="video/mp4; codecs='avc1.42E01E'" />
+        </video>
+      </div>
+      <div class="video-metrics">
+        <div class="metric mediaSource-created">
+          <span class="value"></span>
+          <span class="type">mediaSource.created</span>
+        </div>
+        <div class="metric mediaSource-destroyed">
+          <span class="value"></span>
+          <span class="type">mediaSource.destroyed</span>
+        </div>
+        <div class="metric objectURL-created">
+          <span class="value"></span>
+          <span class="type">objectURL.created</span>
+        </div>
+        <div class="metric objectURL-revoked">
+          <span class="value"></span>
+          <span class="type">objectURL.revoked</span>
+        </div>
+        <div class="metric mediaSource-reinitialized">
+          <span class="value"></span>
+          <span class="type">mediaSource.reinitialized</span>
+        </div>
+        <div class="metric sourceBuffer-created">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.created</span>
+        </div>
+        <div class="metric sourceBuffer-destroyed">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.destroyed</span>
+        </div>
+        <div class="metric queue-added">
+          <span class="value"></span>
+          <span class="type">queue.added</span>
+        </div>
+        <div class="metric queue-removed">
+          <span class="value"></span>
+          <span class="type">queue.removed</span>
+        </div>
+        <div class="metric sourceBuffer-append">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.append</span>
+        </div>
+        <div class="metric error-sourceBuffer-append">
+          <span class="value"></span>
+          <span class="type">error.sourceBuffer.append</span>
+        </div>
+        <div class="metric frameDrop-hiddenTab">
+          <span class="value"></span>
+          <span class="type">frameDrop.hiddenTab</span>
+        </div>
+        <div class="metric queue-mediaSourceNotReady">
+          <span class="value"></span>
+          <span class="type">queue.mediaSourceNotReady</span>
+        </div>
+        <div class="metric queue-sourceBufferNotReady">
+          <span class="value"></span>
+          <span class="type">queue.sourceBufferNotReady</span>
+        </div>
+        <div class="metric queue-shift">
+          <span class="value"></span>
+          <span class="type">queue.shift</span>
+        </div>
+        <div class="metric queue-append">
+          <span class="value"></span>
+          <span class="type">queue.append</span>
+        </div>
+        <div class="metric sourceBuffer-lastKnownBufferSize">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.lastKnownBufferSize</span>
+        </div>
+        <div class="metric sourceBuffer-trim">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.trim</span>
+        </div>
+        <div class="metric sourceBuffer-trim-error">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.trim.error</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-bufferLength-empty">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.bufferLength.empty</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-bufferLength-error">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.bufferLength.error</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-removeEvent">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.removeEvent</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-appendEvent">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.appendEvent</span>
+        </div>
+        <div class="metric sourceBuffer-bufferTimeEnd">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.bufferTimeEnd</span>
+        </div>
+        <div class="metric video-currentTime">
+          <span class="value"></span>
+          <span class="type">video.currentTime</span>
+        </div>
+        <div class="metric video-drift">
+          <span class="value"></span>
+          <span class="type">video.drift</span>
+        </div>
+        <div class="metric video-driftCorrection">
+          <span class="value"></span>
+          <span class="type">video.driftCorrection</span>
+        </div>
+        <div class="metric sourceBuffer-updateEnd-bufferFrozen">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.updateEnd.bufferFrozen</span>
+        </div>
+      </div>
+    </template>
+  </section>
 
+  <section class="players">
+    <h2>Players</h2>
+    <table>
+      <tr>
+        <td class="video-container">
+          <video
+            id="vw0"
+            class="video-js vjs-default-skin"
+            controls
+            muted
+          >
+            <source id="src0" src="" type="video/mp4; codecs='avc1.42E01E'"/>
+            <source id="hls0"  src="" type="application/x-mpegURL" />
+          </video>
+        </td>
+        <td  class="video-container">
+          <video
+            id="vw1"
+            class="video-js vjs-default-skin"
+            controls
+            muted
+          >
+            <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'" />
+            <source id="hls1"  src="" type="application/x-mpegURL" />
+          </video>
+        </td>
+      </tr>
+      <tr>
+       <td class="video-container">
+          <video
+            id="vw2"
+            class="video-js vjs-default-skin"
+            controls
+            muted
+          >
+            <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'" />
+            <source id="hls2"  src="" type="application/x-mpegURL" />
+          </video>
+        </td>
+        <td class="video-container">
+          <video
+            id="vw3"
+            class="video-js vjs-default-skin"
+            controls
+            muted
+          >
+            <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'" />
+            <source id="hls3"  src="" type="application/x-mpegURL" />
+          </video>
+        </td>
+      </tr>
 
+      <tr><td colspan="2"><hr></td></tr>
+
+      <tr><td colspan="2">URL format:   clsp://(sfs ip)/(stream name)</td></tr>
+      <tr><td>CLSP URL</td><td>
+        <input
+          id="url0"
+          style="width: 400px;"
+        /></td></tr>
+      <tr><td>CLSP URL</td><td>
+        <input
+          id="url1"
+          style="width: 400px;"
+        /></td></tr>
+      <tr><td>CLSP URL</td><td>
+        <input
+          id="url2"
+          style="width: 400px;"
+        /></td></tr>
+      <tr><td>CLSP URL</td><td>
+        <input
+          id="url3"
+          style="width: 400px;"
+        /></td></tr>
+      <tr><td colspan="2"><button id="submit">Submit</button></td></tr>
+      <tr><td colspan="2"><div id="message"></div></td></tr>
+    </table>
+  </section>
+
+  <section class="tour">
+    <h2>Tour</h2>
+    <span>Enter a list of clsp urls separated by newline.</span>
+
+    <br>
+
+    <textarea id="tour-list" rows="10" cols="80" style="overflow: scroll;"></textarea>
+
+    <h3 id="now-playing"></h3>
+
+    <video id="tour-video" width="352" height="240" autoplay muted>
+      <source id="tour-first-source" src="" type="video/mp4; codecs='avc1.42E01E'" />
+    </video>
+
+    <br>
+
+    <span>Play time per</span>
+    <input id="tour-switch-interval" type="number" value="10" />
+    <button id="start-tour">Start Video Tour</button>
+  </section>
+
+  <section class="headless">
+    <h2>Headless CLSP Player</h2>
+    <video id="headless" width="352" height="240" controls autoplay muted></video>
+
+    <hr>
+
+    <div>Url for headless player:
+      <input id="headless_url" tyle="text" />
+    </div>
+    <div>
+      <button id="headless_play">Headless Player</button>
+    </div>
+  </section>
+
+  <script src="/dist/videojs-mse-over-clsp.js"></script>
 </body>
 </html>

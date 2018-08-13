@@ -1,6 +1,6 @@
 {
   "name": "videojs-mse-over-clsp",
-  "version": "0.11.2",
+  "version": "0.12.0",
   "description": "Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ",
   "main": "dist/videojs-mse-over-clsp.js",
   "generator-videojs-plugin": {
@@ -22,6 +22,7 @@
   "dependencies": {
     "debug": "^3.1.0",
     "lodash": "^4.17.10",
+    "moment": "^2.22.2",
     "node-sass": "^4.9.1",
     "paho-mqtt": "^1.0.4",
     "videojs-errors": "^4.1.1"
@@ -40,6 +41,7 @@
     "gulp": "^3.9.1",
     "gulp-load-plugins": "^1.5.0",
     "gulp-rm": "^1.0.5",
+    "jquery": "^3.3.1",
     "js-string-escape": "^1.0.1",
     "pre-commit": "^1.2.2",
     "run-sequence": "^2.2.0",
@@ -48,7 +50,9 @@
     "standard": "^11.0.1",
     "style-loader": "^0.21.0",
     "uglifyjs-webpack-plugin": "^1.2.7",
+    "url-loader": "^1.0.1",
+    "video.js": "6.7.1",
     "webpack": "^4.15.1",
-    "webpack-serve": "^0.1.5"
+    "webpack-serve": "^2.0.2"
   }
 }
