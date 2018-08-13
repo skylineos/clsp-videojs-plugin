@@ -116,7 +116,7 @@ export default class MSEWrapper {
   }
 
   metric (type, value) {
-    if (!this.options.enableMetrics) {
+    if (!this.options || !this.options.enableMetrics) {
       return;
     }
 
@@ -220,7 +220,9 @@ export default class MSEWrapper {
 
     this.objectURL = null;
 
-    this.sourceBuffer.abort();
+    if (this.sourceBuffer) {
+      this.sourceBuffer.abort();
+    }
 
     // free the resource
     return window.URL.revokeObjectURL(this.mediaSource);
