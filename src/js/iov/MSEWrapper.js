@@ -69,6 +69,7 @@ export default class MSEWrapper {
       'sourceBuffer.updateEnd.bufferLength.error',
       'sourceBuffer.updateEnd.removeEvent',
       'sourceBuffer.updateEnd.appendEvent',
+      'sourceBuffer.updateEnd.bufferFrozen',
     ];
 
     this.metrics = {};
@@ -255,6 +256,7 @@ export default class MSEWrapper {
       onRemoveFinish: noop,
       onAppendError: noop,
       onRemoveError: noop,
+      onStreamFrozen: noop,
       onError: noop,
       retry: true,
     });
@@ -281,6 +283,7 @@ export default class MSEWrapper {
     this.options.onRemoveFinish = options.onRemoveFinish;
     this.options.onAppendFinish = options.onAppendFinish;
     this.options.onRemoveError = options.onRemoveError;
+    this.options.onStreamFrozen = options.onStreamFrozen;
   }
 
   destroySourceBuffer () {
@@ -380,11 +383,11 @@ export default class MSEWrapper {
     const previousBufferSize = this.timeBuffered;
     const bufferTimeStart = this.sourceBuffer.buffered.start(0);
     const bufferTimeEnd = this.sourceBuffer.buffered.end(0);
-    this.timeBuffered = bufferTimeEnd - bufferTimeStart;
+    const currentBufferSize = bufferTimeEnd - bufferTimeStart;
 
     const info = {
       previousBufferSize,
-      currentBufferSize: this.timeBuffered,
+      currentBufferSize,
       bufferTimeStart,
       bufferTimeEnd,
     };
@@ -412,6 +415,33 @@ export default class MSEWrapper {
     }
   }
 
+  onRemoveFinish (info = this.getBufferTimes()) {
+    debug('On remove finish...');
+
+    this.metric('sourceBuffer.updateEnd.removeEvent', 1);
+    this.options.onRemoveFinish(info);
+  }
+
+  onAppendFinish (info = this.getBufferTimes()) {
+    silly('On append finish...');
+
+    this.metric('sourceBuffer.updateEnd.appendEvent', 1);
+
+    // The current buffer size should always be bigger.If it isn't, there is a problem,
+    // and we need to reinitialize or something.
+    if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
+      console.log('frozen?');
+      this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
+      this.options.onStreamFrozen();
+      return;
+    }
+
+    this.previousTimeEnd = info.bufferTimeEnd;
+
+    this.options.onAppendFinish(info);
+    this.trimBuffer(info);
+  }
+
   onSourceBufferUpdateEnd () {
     silly('onUpdateEnd');
 
@@ -436,16 +466,13 @@ export default class MSEWrapper {
 
     const info = this.getBufferTimes();
 
+    this.timeBuffered = info.currentBufferSize;
+
     if (info.previousBufferSize !== null && info.previousBufferSize > this.timeBuffered) {
-      debug('On remove finish...');
-      this.metric('sourceBuffer.updateEnd.removeEvent', 1);
-      this.options.onRemoveFinish(info);
+      this.onRemoveFinish(info);
     }
     else {
-      debug('On append finish...');
-      this.metric('sourceBuffer.updateEnd.appendEvent', 1);
-      this.options.onAppendFinish(info);
-      this.trimBuffer(info);
+      this.onAppendFinish(info);
     }
 
     this.processNextInQueue();

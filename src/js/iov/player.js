@@ -7,7 +7,6 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
 const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
 
-
 /**
  * Responsible for receiving stream input and routing it to the media source
  * buffer for rendering on the video tag. There is some 'light' reworking of
@@ -498,6 +497,11 @@ export default class IOVPlayer {
                 'Error while removing segments from sourceBuffer',
                 error
               );
+            },
+            onStreamFrozen: () => {
+              debug('stream appears to be frozen - reinitializing...');
+
+              this.reinitializeMse();
             },
             onError: (error) => {
               this._onError(
