@@ -8,7 +8,7 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 export default class MqttTopicHandlers {
   constructor (id, iov) {
     this.id = id;
-    this.debug = Debug(`${DEBUG_PREFIX}:MqttTopicHandlers:${this.id}`);
+    this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:MqttTopicHandlers`);
 
     this.debug('constructing...');
 

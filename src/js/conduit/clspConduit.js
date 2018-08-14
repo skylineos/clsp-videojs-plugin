@@ -14,9 +14,10 @@ var iframe_code = "__IFRAME_CODE__";
 
 
 
-function pframe_client(iframe, config, onReady) {
+function pframe_client(iframe, iov) {
     var self = {
-        dispatch: {}
+        dispatch: {},
+        iov: iov
     };
 
 
@@ -35,10 +36,6 @@ function pframe_client(iframe, config, onReady) {
             }
         },1000);
     }
-
-
-    // called when mqtt has connected
-    self.onReady = onReady;
 
     /* message from mqttRouter routeInbound go handler which associates this
        client with the clientId. It then calls self.inboundHandler handler to
@@ -85,7 +82,7 @@ function pframe_client(iframe, config, onReady) {
 
 
     self.transaction = function( topic, callback, obj ) {
-        obj.resp_topic = config.clientId + "/response/"+parseInt(Math.random()*1000000);
+        obj.resp_topic = iov.config.clientId + "/response/"+parseInt(Math.random()*1000000);
         self.subscribe(obj.resp_topic,function(mqtt_resp){
             //call user specified callback to handle response from remote process
             var resp = JSON.parse(mqtt_resp.payloadString);
@@ -105,14 +102,8 @@ function pframe_client(iframe, config, onReady) {
 }
 
 
-window.mqttConduit = function( config, onReady ){
-    /*
-        config = {
-            ip: ... mqtt ip address
-            port: websocket port
-        }
-      }
-    */
+window.mqttConduit = function (iov) {
+    var config = iov.config;
     var client = {};
     var iframe = document.createElement('iframe');
     var MqttUseSSL = (config.useSSL || false) ? "true": "false";
@@ -161,5 +152,5 @@ window.mqttConduit = function( config, onReady ){
     }
 
 
-    return pframe_client(iframe,config,onReady);
+    return pframe_client(iframe, iov, config, onReady);
 }
