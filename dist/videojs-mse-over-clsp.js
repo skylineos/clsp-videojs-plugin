@@ -3975,7 +3975,7 @@ var MSEWrapper = function () {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
     }
 
-    this.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen'];
+    this.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen', 'sourceBuffer.abort', 'error.sourceBuffer.abort'];
 
     this.metrics = {};
 
@@ -4137,7 +4137,7 @@ var MSEWrapper = function () {
       this.objectURL = null;
 
       if (this.sourceBuffer) {
-        this.sourceBuffer.abort();
+        this.sourceBufferAbort();
       }
 
       // free the resource
@@ -4223,6 +4223,21 @@ var MSEWrapper = function () {
       });
     }
   }, {
+    key: 'sourceBufferAbort',
+    value: function sourceBufferAbort() {
+      debug('Aborting current sourceBuffer operation');
+
+      try {
+        this.metric('sourceBuffer.abort', 1);
+
+        this.sourceBuffer.abort();
+      } catch (error) {
+        this.metric('error.sourceBuffer.abort', 1);
+
+        this.eventListeners.sourceBuffer.onAbortError(error);
+      }
+    }
+  }, {
     key: '_append',
     value: function _append(_ref) {
       var timestamp = _ref.timestamp,
@@ -4240,7 +4255,6 @@ var MSEWrapper = function () {
           // starved, but I don't know if that's correct
           this.metric('queue.removed', this.segmentQueue.length + 1);
           this.segmentQueue = [];
-          // this.sourceBuffer.abort();
           return;
         }
 
@@ -4421,7 +4435,7 @@ var MSEWrapper = function () {
         return;
       }
 
-      this.sourceBuffer.abort();
+      this.sourceBufferAbort();
 
       this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
       this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
@@ -5044,7 +5058,7 @@ var IOVPlayer = function () {
           _this.mimeCodec = new_mimeCodec;
 
           // remove media source buffer, reinitialize
-          _this.reinitializeMse();
+          _this.reinitializeMseWrapper(_this.mimeCodec);
 
           if (!iov) {
             return;
@@ -5129,17 +5143,6 @@ var IOVPlayer = function () {
 
       this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
       this.state = 'fault';
-    }
-  }, {
-    key: 'reinitializeMse',
-    value: function reinitializeMse() {
-      debug('reinitializeMse');
-
-      this.state = 'idle';
-
-      if (this.mseWrapper.mediaSource) {
-        this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
-      }
     }
   }, {
     key: 'restart',
@@ -5280,8 +5283,19 @@ var IOVPlayer = function () {
               // then reselected. 'ex' is undefined the error is bug
               // within the MSE C++ implementation in the browser.
               _this5._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
-              _this5.videoPlayer.error({ code: 3 });
-              _this5.reinitializeMse();
+
+              // @todo - now that we are reinitializing the mseWrapper,
+              // do we need this videojs error?
+              // this.videoPlayer.error({ code: 3 });
+              _this5.reinitializeMseWrapper(mimeCodec);
+            },
+            onAbortError: function onAbortError(error) {
+              _this5._onError('sourceBuffer.abort', 'Error while aborting sourceBuffer operation', error);
+
+              // @todo - now that we are reinitializing the mseWrapper,
+              // do we need this videojs error?
+              // this.videoPlayer.error({ code: 3 });
+              _this5.reinitializeMseWrapper(mimeCodec);
             },
             onRemoveError: function onRemoveError(error) {
               // observed this fail during a memry snapshot in chrome
@@ -5426,7 +5440,7 @@ var IOVPlayer = function () {
         debug("Call " + resync_topic + " to resync stream");
         self.iov.transport.subscribe(resync_topic, function (mqtt_msg) {
           debug("sync received re-initialize media source buffer");
-          self.reinitializeMse();
+          self.reinitializeMseWrapper(mimeCodec);
         });
       });
 
