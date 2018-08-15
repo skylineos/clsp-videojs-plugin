@@ -224,7 +224,7 @@ export default class IOVPlayer {
         this.mimeCodec = new_mimeCodec;
 
         // remove media source buffer, reinitialize
-        this.reinitializeMse();
+        this.reinitializeMseWrapper(this.mimeCodec);
 
         if (!iov) {
           return;
@@ -294,16 +294,6 @@ export default class IOVPlayer {
 
     this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
     this.state = 'fault';
-  }
-
-  reinitializeMse () {
-    debug('reinitializeMse');
-
-    this.state = 'idle';
-
-    if (this.mseWrapper.mediaSource) {
-      this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
-    }
   }
 
   restart () {
@@ -440,8 +430,23 @@ export default class IOVPlayer {
               'Error while appending to sourceBuffer',
               error
             );
-            this.videoPlayer.error({ code: 3 });
-            this.reinitializeMse();
+
+            // @todo - now that we are reinitializing the mseWrapper,
+            // do we need this videojs error?
+            // this.videoPlayer.error({ code: 3 });
+            this.reinitializeMseWrapper(mimeCodec);
+          },
+          onAbortError: (error) => {
+            this._onError(
+              'sourceBuffer.abort',
+              'Error while aborting sourceBuffer operation',
+              error
+            );
+
+            // @todo - now that we are reinitializing the mseWrapper,
+            // do we need this videojs error?
+            // this.videoPlayer.error({ code: 3 });
+            this.reinitializeMseWrapper(mimeCodec);
           },
           onRemoveError: (error) => {
             // observed this fail during a memry snapshot in chrome
@@ -589,7 +594,7 @@ export default class IOVPlayer {
       self.iov.transport.subscribe(resync_topic,
         function (mqtt_msg) {
           debug("sync received re-initialize media source buffer");
-          self.reinitializeMse();
+          self.reinitializeMseWrapper(mimeCodec);
         }
       );
     });
