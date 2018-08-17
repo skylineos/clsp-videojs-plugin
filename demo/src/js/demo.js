@@ -11,15 +11,16 @@ import packageJson from '../../../package.json';
 window.videojs = videojs;
 window.CLSP_DEMO_VERSION = packageJson.version;
 
-const playerUrls = [
+const defaultTourUrls = [
+  'clsp://172.28.12.247/testpattern',
+  'clsp://172.28.12.57:9001/FairfaxVideo0520',
+  'clsp://172.28.12.57:9001/40004',
+];
+
+const defaultWallUrls = [
   'clsp://172.28.12.248/testpattern',
   'clsp://172.28.12.247/testpattern',
   'clsps://sky-qa-dionysus.qa.skyline.local/testpattern',
-  'clsp://172.28.12.247/testpattern',
-];
-
-const tourUrls = [
-  'clsp://172.28.12.247/testpattern',
   'clsp://172.28.12.57:9001/FairfaxVideo0520',
   'clsp://172.28.12.57:9001/40004',
 ];
@@ -113,9 +114,7 @@ function initializeWall () {
   }
 
   if (!window.localStorage.getItem('skyline.clspPlugin.wallUrls')) {
-    window.localStorage.setItem('skyline.clspPlugin.wallUrls', [
-      'clsp://172.28.12.247/testpattern',
-    ]);
+    window.localStorage.setItem('skyline.clspPlugin.wallUrls', defaultWallUrls.join('\n'));
   }
 
   $('#walltest').click(onclick);
@@ -132,57 +131,43 @@ function initializeWall () {
     }
   });
 
-  $wallUrls.val(window.localStorage.getItem('skyline.clspPlugin.wallUrls').split(',').join('\n'));
+  $wallUrls.val(window.localStorage.getItem('skyline.clspPlugin.wallUrls'));
 
   $wallUrls.on('change', () => {
-    window.localStorage.setItem('skyline.clspPlugin.wallUrls', $wallUrls.val());
-  });
-}
-
-function initializePlayers () {
-  for (let i = 0; i < playerUrls.length; i++) {
-    $(`#url${i}`).val(playerUrls[i]);
-  }
-
-  $('#submit').click(() => {
-    for (let i = 0; i < playerUrls.length && i < 4; i++) {
-      const url = $(`#url${i}`).val();
-
-      $(`#src${i}`).attr('src', url);
-
-      if (url) {
-        window.videojs(`vw${i}`).clsp();
-      }
-    }
+    window.localStorage.setItem('skyline.clspPlugin.wallUrls', $wallUrls.val().trim());
   });
 }
 
 function initializeTours () {
-  $('#tour-list').val(tourUrls.join('\n'));
+  if (!window.localStorage.getItem('skyline.clspPlugin.tourUrls')) {
+    window.localStorage.setItem('skyline.clspPlugin.tourUrls', defaultTourUrls.join('\n'));
+  }
 
-  var tour = {
+  const tour = {
     player: null,
     plist: [],
     interval: 10,
     counter: 0,
-    timer: null
+    timer: null,
   };
 
-  $('#start-tour').click(function () {
+  $('#start-tour').on('click', () => {
     tour.interval = parseInt($('#tour-switch-interval').val());
     tour.plist = [];
 
-    var x = $('#tour-list').val().split('\n');
-    for (var i = 0; i < x.length; i++) {
-      if (x[i].length > 0) {
-        tour.plist.push(x[i]);
+    const tourUrls = window.localStorage.getItem('skyline.clspPlugin.tourUrls').split('\n');
+
+    for (let i = 0; i < tourUrls.length; i++) {
+      if (tourUrls[i].length > 0) {
+        tour.plist.push(tourUrls[i]);
       }
     }
 
     if (tour.plist.length < 2) {
-      alert("at least two source needed!");
+      window.alert('at least two source needed!');
       return;
     }
+
     $('#tour-first-source').attr('src', tour.plist[0]);
 
     tour.counter = 1;
@@ -192,28 +177,35 @@ function initializeTours () {
       clearInterval(tour.timer);
     }
 
-    $(function () {
-      tour.player = window.videojs('#tour-video');
-      tour.player.clsp(); // start playing first stream
-      $('#now-playing').html(tour.plist[0]);
+    tour.player = window.videojs('#tour-video');
+    tour.player.clsp(); // start playing first stream
+    $('#now-playing').html(tour.plist[0]);
 
-      tour.player.on("network-error", function (evt, message) {
-        console.log("!!!!! Handled network-error", evt);
-        console.log(message);
-      });
-
-
-      tour.timer = setInterval(function () {
-        var url = tour.plist[tour.counter % tour.plist.length];
-        $('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
-
-        tour.counter += 1;
-        console.log("selected url", url, tour.plist);
-        tour.player.trigger('changesrc', { eid: 'tour-video', url: url });
-      }, tour.interval * 1000);
-
+    tour.player.on('network-error', (evt, message) => {
+      console.log('!!!!! Handled network-error', evt);
+      console.log(message);
     });
 
+    tour.timer = setInterval(() => {
+      const url = tour.plist[tour.counter % tour.plist.length];
+      $('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
+
+      tour.counter += 1;
+      console.log('selected url', url, tour.plist);
+
+      tour.player.trigger('changesrc', {
+        eid: 'tour-video',
+        url,
+      });
+    }, tour.interval * 1000);
+  });
+
+  const $tourUrls = $('#tour-list');
+
+  $tourUrls.val(window.localStorage.getItem('skyline.clspPlugin.tourUrls'));
+
+  $tourUrls.on('change', () => {
+    window.localStorage.setItem('skyline.clspPlugin.tourUrls', $tourUrls.val());
   });
 }
 
@@ -250,7 +242,6 @@ $(() => {
   document.title = pageTitle;
   $('#page-title').html(pageTitle);
 
-  initializePlayers();
   initializeWall();
   initializeTours();
   initializeHeadless();

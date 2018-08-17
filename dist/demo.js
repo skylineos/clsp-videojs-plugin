@@ -118,9 +118,9 @@ var _package_json__WEBPACK_IMPORTED_MODULE_4___namespace = /*#__PURE__*/__webpac
 window.videojs = video_js__WEBPACK_IMPORTED_MODULE_2___default.a;
 window.CLSP_DEMO_VERSION = _package_json__WEBPACK_IMPORTED_MODULE_4__.version;
 
-var playerUrls = ['clsp://172.28.12.248/testpattern', 'clsp://172.28.12.247/testpattern', 'clsps://sky-qa-dionysus.qa.skyline.local/testpattern', 'clsp://172.28.12.247/testpattern'];
+var defaultTourUrls = ['clsp://172.28.12.247/testpattern', 'clsp://172.28.12.57:9001/FairfaxVideo0520', 'clsp://172.28.12.57:9001/40004'];
 
-var tourUrls = ['clsp://172.28.12.247/testpattern', 'clsp://172.28.12.57:9001/FairfaxVideo0520', 'clsp://172.28.12.57:9001/40004'];
+var defaultWallUrls = ['clsp://172.28.12.248/testpattern', 'clsp://172.28.12.247/testpattern', 'clsps://sky-qa-dionysus.qa.skyline.local/testpattern', 'clsp://172.28.12.57:9001/FairfaxVideo0520', 'clsp://172.28.12.57:9001/40004'];
 
 var wallInterval = null;
 
@@ -211,7 +211,7 @@ function initializeWall() {
   }
 
   if (!window.localStorage.getItem('skyline.clspPlugin.wallUrls')) {
-    window.localStorage.setItem('skyline.clspPlugin.wallUrls', ['clsp://172.28.12.247/testpattern']);
+    window.localStorage.setItem('skyline.clspPlugin.wallUrls', defaultWallUrls.join('\n'));
   }
 
   jquery__WEBPACK_IMPORTED_MODULE_1___default()('#walltest').click(onclick);
@@ -227,33 +227,17 @@ function initializeWall() {
     }
   });
 
-  $wallUrls.val(window.localStorage.getItem('skyline.clspPlugin.wallUrls').split(',').join('\n'));
+  $wallUrls.val(window.localStorage.getItem('skyline.clspPlugin.wallUrls'));
 
   $wallUrls.on('change', function () {
-    window.localStorage.setItem('skyline.clspPlugin.wallUrls', $wallUrls.val());
-  });
-}
-
-function initializePlayers() {
-  for (var i = 0; i < playerUrls.length; i++) {
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#url' + i).val(playerUrls[i]);
-  }
-
-  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#submit').click(function () {
-    for (var _i2 = 0; _i2 < playerUrls.length && _i2 < 4; _i2++) {
-      var url = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#url' + _i2).val();
-
-      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#src' + _i2).attr('src', url);
-
-      if (url) {
-        window.videojs('vw' + _i2).clsp();
-      }
-    }
+    window.localStorage.setItem('skyline.clspPlugin.wallUrls', $wallUrls.val().trim());
   });
 }
 
 function initializeTours() {
-  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-list').val(tourUrls.join('\n'));
+  if (!window.localStorage.getItem('skyline.clspPlugin.tourUrls')) {
+    window.localStorage.setItem('skyline.clspPlugin.tourUrls', defaultTourUrls.join('\n'));
+  }
 
   var tour = {
     player: null,
@@ -263,21 +247,23 @@ function initializeTours() {
     timer: null
   };
 
-  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#start-tour').click(function () {
+  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#start-tour').on('click', function () {
     tour.interval = parseInt(jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-switch-interval').val());
     tour.plist = [];
 
-    var x = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-list').val().split('\n');
-    for (var i = 0; i < x.length; i++) {
-      if (x[i].length > 0) {
-        tour.plist.push(x[i]);
+    var tourUrls = window.localStorage.getItem('skyline.clspPlugin.tourUrls').split('\n');
+
+    for (var i = 0; i < tourUrls.length; i++) {
+      if (tourUrls[i].length > 0) {
+        tour.plist.push(tourUrls[i]);
       }
     }
 
     if (tour.plist.length < 2) {
-      alert("at least two source needed!");
+      window.alert('at least two source needed!');
       return;
     }
+
     jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-first-source').attr('src', tour.plist[0]);
 
     tour.counter = 1;
@@ -287,25 +273,35 @@ function initializeTours() {
       clearInterval(tour.timer);
     }
 
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
-      tour.player = window.videojs('#tour-video');
-      tour.player.clsp(); // start playing first stream
-      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html(tour.plist[0]);
+    tour.player = window.videojs('#tour-video');
+    tour.player.clsp(); // start playing first stream
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html(tour.plist[0]);
 
-      tour.player.on("network-error", function (evt, message) {
-        console.log("!!!!! Handled network-error", evt);
-        console.log(message);
-      });
-
-      tour.timer = setInterval(function () {
-        var url = tour.plist[tour.counter % tour.plist.length];
-        jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
-
-        tour.counter += 1;
-        console.log("selected url", url, tour.plist);
-        tour.player.trigger('changesrc', { eid: 'tour-video', url: url });
-      }, tour.interval * 1000);
+    tour.player.on('network-error', function (evt, message) {
+      console.log('!!!!! Handled network-error', evt);
+      console.log(message);
     });
+
+    tour.timer = setInterval(function () {
+      var url = tour.plist[tour.counter % tour.plist.length];
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
+
+      tour.counter += 1;
+      console.log('selected url', url, tour.plist);
+
+      tour.player.trigger('changesrc', {
+        eid: 'tour-video',
+        url: url
+      });
+    }, tour.interval * 1000);
+  });
+
+  var $tourUrls = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-list');
+
+  $tourUrls.val(window.localStorage.getItem('skyline.clspPlugin.tourUrls'));
+
+  $tourUrls.on('change', function () {
+    window.localStorage.setItem('skyline.clspPlugin.tourUrls', $tourUrls.val());
   });
 }
 
@@ -339,7 +335,6 @@ jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
   document.title = pageTitle;
   jquery__WEBPACK_IMPORTED_MODULE_1___default()('#page-title').html(pageTitle);
 
-  initializePlayers();
   initializeWall();
   initializeTours();
   initializeHeadless();
