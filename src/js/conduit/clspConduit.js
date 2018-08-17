@@ -103,18 +103,16 @@ function pframe_client(iframe, iov) {
 
 
 window.mqttConduit = function (iov) {
-    var config = iov.config;
-    var client = {};
     var iframe = document.createElement('iframe');
-    var MqttUseSSL = (config.useSSL || false) ? "true": "false";
+    var MqttUseSSL = (iov.config.useSSL || false) ? "true": "false";
 
     var markup =
         '<html><head>'+
         '<script>\n' +
-            "var MqttIp = '" + config.wsbroker + "' ; \n" +
-            "var MqttPort = " + config.wsport + "; \n" +
+            "var MqttIp = '" + iov.config.wsbroker + "' ; \n" +
+            "var MqttPort = " + iov.config.wsport + "; \n" +
             "var MqttUseSSL = " + MqttUseSSL + "; \n" +
-            "var MqttClientId = '" + config.clientId + "' ; \n" +
+            "var MqttClientId = '" + iov.config.clientId + "' ; \n" +
             "var Origin = '" + window.location.origin + "' ; \n" +
             iframe_code + '\n' +
         '</script>\n' +
@@ -131,26 +129,26 @@ window.mqttConduit = function (iov) {
     iframe.width = 0;
     iframe.height = 0;
     iframe.setAttribute('style','display:none;');
-    iframe.setAttribute('id',config.clientId);
+    iframe.setAttribute('id',iov.config.clientId);
 
 
     // attach hidden iframe to player
     //document.body.appendChild(iframe);
-    if (config.videoElementParent !== null) {
-        config.videoElementParent.appendChild(iframe);
-    } else if (config.videoElement.parentNode !== null) {
-        config.videoElement.parentNode.appendChild(iframe);
-        config.videoElementParent = config.videoElement.parentNode;
+    if (iov.config.videoElementParent !== null) {
+        iov.config.videoElementParent.appendChild(iframe);
+    } else if (iov.videoElement.parentNode !== null) {
+        iov.videoElement.parentNode.appendChild(iframe);
+        iov.config.videoElementParent = iov.videoElement.parentNode;
     } else {
         var t = setInterval(function(){
-            if (config.videoElement.parentNode !== null) {
-                config.videoElement.parentNode.appendChild(iframe);
-                config.videoElementParent = config.videoElement.parentNode;
+            if (iov.videoElement.parentNode !== null) {
+                iov.videoElement.parentNode.appendChild(iframe);
+                iov.config.videoElementParent = iov.videoElement.parentNode;
                 clearInterval(t);
             }
         },1000);
     }
 
 
-    return pframe_client(iframe, iov, config, onReady);
+    return pframe_client(iframe, iov);
 }

@@ -58,7 +58,7 @@ function initializeWall () {
   }
 
   function onclick () {
-    const urlList = $('#wallUrls').val().split('\n');
+    const urlList = window.localStorage.getItem('skyline.clspPlugin.wallUrls').split('\n');
     const timesToReplicate = $('#wallReplicate').val();
 
     let html = '<table>';
@@ -106,15 +106,22 @@ function initializeWall () {
     wallInterval = setInterval(() => {
       const hoursFromStart = Math.floor(moment.duration(Date.now() - now).asHours());
       const minutesFromStart = Math.floor(moment.duration(Date.now() - now).asMinutes()) - (hoursFromStart * 60);
-      const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60) - (minutesFromStart * 60);
+      const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
 
       $('#tourDuration').html(`This tour has been running for ${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
     }, 1000);
   }
 
+  if (!window.localStorage.getItem('skyline.clspPlugin.wallUrls')) {
+    window.localStorage.setItem('skyline.clspPlugin.wallUrls', [
+      'clsp://172.28.12.247/testpattern',
+    ]);
+  }
+
   $('#walltest').click(onclick);
 
   const $showMetrics = $('#showMetrics');
+  const $wallUrls = $('#wallUrls');
 
   $showMetrics.on('change', () => {
     if ($showMetrics.prop('checked')) {
@@ -123,6 +130,12 @@ function initializeWall () {
     else {
       $('.video-metrics').hide();
     }
+  });
+
+  $wallUrls.val(window.localStorage.getItem('skyline.clspPlugin.wallUrls').split(',').join('\n'));
+
+  $wallUrls.on('change', () => {
+    window.localStorage.setItem('skyline.clspPlugin.wallUrls', $wallUrls.val());
   });
 }
 
@@ -233,7 +246,7 @@ function initializeHeadless () {
 }
 
 $(() => {
-  const pageTitle = `CLSP ${CLSP_DEMO_VERSION} Demo Page`;
+  const pageTitle = `CLSP ${window.CLSP_DEMO_VERSION} Demo Page`;
   document.title = pageTitle;
   $('#page-title').html(pageTitle);
 

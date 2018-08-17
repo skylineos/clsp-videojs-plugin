@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import videojs from 'video.js';
 
 import MSEWrapper from './MSEWrapper';
 
@@ -65,8 +64,8 @@ export default class IOVPlayer {
     // @todo - there must be a more proper way to do events than this...
     this.events = {};
 
-    for (let i = 0; i < this.EVENT_NAMES.length; i++) {
-      this.events[this.EVENT_NAMES[i]] = [];
+    for (let i = 0; i < IOVPlayer.EVENT_NAMES.length; i++) {
+      this.events[IOVPlayer.EVENT_NAMES[i]] = [];
     }
 
     this.mseWrapper = null;
@@ -78,7 +77,7 @@ export default class IOVPlayer {
   on (name, action) {
     debug(`Registering Listener for ${name} event...`);
 
-    if (!this.EVENT_NAMES.includes(name)) {
+    if (!IOVPlayer.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -88,7 +87,7 @@ export default class IOVPlayer {
   trigger (name, value) {
     debug(`Triggering ${name} event...`);
 
-    if (!this.EVENT_NAMES.includes(name)) {
+    if (!IOVPlayer.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -102,7 +101,7 @@ export default class IOVPlayer {
     //   return;
     // }
 
-    if (!this.METRIC_TYPES.includes(type)) {
+    if (!IOVPlayer.METRIC_TYPES.includes(type)) {
       // @todo - should this throw?
       return;
     }
@@ -179,29 +178,27 @@ export default class IOVPlayer {
               window.MQTTClient.send(mqtt_msg);
             }
 
-            this.onVideoRecv();
-
             this.iov.statsMsg.byteCount += byteArray.length;
           },
           onAppendFinish: (info) => {
             silly('On Append Finish...');
 
-            this.drift = info.bufferTimeEnd - this.video.currentTime;
+            this.drift = info.bufferTimeEnd - this.videoElement.currentTime;
 
             this.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
-            this.metric('video.currentTime', this.video.currentTime);
+            this.metric('video.currentTime', this.videoElement.currentTime);
             this.metric('video.drift', this.drift);
 
             if (this.drift > 3) {
               this.metric('video.driftCorrection', 1);
-              this.video.currentTime = info.bufferTimeEnd;
+              this.videoElement.currentTime = info.bufferTimeEnd;
             }
 
-            if (this.video.paused === true) {
+            if (this.videoElement.paused === true) {
               debug('Video is paused!');
 
               try {
-                const promise = this.video.play();
+                const promise = this.videoElement.play();
 
                 if (typeof promise !== 'undefined') {
                   promise.catch((error) => {
@@ -289,8 +286,8 @@ export default class IOVPlayer {
       },
     });
 
-    if (this.mseWrapper.mediaSource && this.video) {
-      this.video.src = this.mseWrapper.reinitializeVideoElementSrc();
+    if (this.mseWrapper.mediaSource && this.videoElement) {
+      this.videoElement.src = this.mseWrapper.reinitializeVideoElementSrc();
     }
   }
 
@@ -384,6 +381,7 @@ export default class IOVPlayer {
         this.videoElement = clone;
       }
 
+      this.reinitializeMseWrapper(mimeCodec);
       this.resyncStream(mimeCodec);
     });
 
