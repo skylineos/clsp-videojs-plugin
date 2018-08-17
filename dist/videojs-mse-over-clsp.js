@@ -4419,7 +4419,7 @@ var MSEWrapper = function () {
       this.objectURL = null;
 
       if (this.sourceBuffer) {
-        this.sourceBuffer.abort();
+        this.sourceBufferAbort();
       }
 
       // free the resource
@@ -4505,6 +4505,21 @@ var MSEWrapper = function () {
       });
     }
   }, {
+    key: 'sourceBufferAbort',
+    value: function sourceBufferAbort() {
+      debug('Aborting current sourceBuffer operation');
+
+      try {
+        this.metric('sourceBuffer.abort', 1);
+
+        this.sourceBuffer.abort();
+      } catch (error) {
+        this.metric('error.sourceBuffer.abort', 1);
+
+        this.eventListeners.sourceBuffer.onAbortError(error);
+      }
+    }
+  }, {
     key: '_append',
     value: function _append(_ref) {
       var timestamp = _ref.timestamp,
@@ -4522,7 +4537,6 @@ var MSEWrapper = function () {
           // starved, but I don't know if that's correct
           this.metric('queue.removed', this.segmentQueue.length + 1);
           this.segmentQueue = [];
-          // this.sourceBuffer.abort();
           return;
         }
 
@@ -4702,7 +4716,7 @@ var MSEWrapper = function () {
         return;
       }
 
-      this.sourceBuffer.abort();
+      this.sourceBufferAbort();
 
       this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
       this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
@@ -4767,7 +4781,7 @@ var MSEWrapper = function () {
 }();
 
 MSEWrapper.EVENT_NAMES = ['metric'];
-MSEWrapper.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen'];
+MSEWrapper.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen', 'sourceBuffer.abort', 'error.sourceBuffer.abort'];
 /* harmony default export */ __webpack_exports__["default"] = (MSEWrapper);
 
 /***/ }),

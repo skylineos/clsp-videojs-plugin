@@ -40,6 +40,8 @@ export default class MSEWrapper {
     'sourceBuffer.updateEnd.removeEvent',
     'sourceBuffer.updateEnd.appendEvent',
     'sourceBuffer.updateEnd.bufferFrozen',
+    'sourceBuffer.abort',
+    'error.sourceBuffer.abort',
   ];
 
   static isMimeCodecSupported (mimeCodec) {
@@ -221,7 +223,7 @@ export default class MSEWrapper {
     this.objectURL = null;
 
     if (this.sourceBuffer) {
-      this.sourceBuffer.abort();
+      this.sourceBufferAbort();
     }
 
     // free the resource
@@ -300,6 +302,21 @@ export default class MSEWrapper {
     });
   }
 
+  sourceBufferAbort () {
+    debug('Aborting current sourceBuffer operation');
+
+    try {
+      this.metric('sourceBuffer.abort', 1);
+
+      this.sourceBuffer.abort();
+    }
+    catch (error) {
+      this.metric('error.sourceBuffer.abort', 1);
+
+      this.eventListeners.sourceBuffer.onAbortError(error);
+    }
+  }
+
   _append ({ timestamp, byteArray }) {
     silly('Appending to the sourceBuffer...');
 
@@ -313,7 +330,6 @@ export default class MSEWrapper {
         // starved, but I don't know if that's correct
         this.metric('queue.removed', this.segmentQueue.length + 1);
         this.segmentQueue = [];
-        // this.sourceBuffer.abort();
         return;
       }
 
@@ -482,7 +498,7 @@ export default class MSEWrapper {
       return;
     }
 
-    this.sourceBuffer.abort();
+    this.sourceBufferAbort();
 
     this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
     this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);

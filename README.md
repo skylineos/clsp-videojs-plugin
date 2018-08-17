@@ -70,6 +70,8 @@ npm install
 
 ## Build
 
+Note: If you ae installing on ubuntu the package for nodejs is way out of date, you will need to follow the instructions here to upgrade node: https://github.com/tj/n
+
 After making changes to the plugin, build the project to generate a distributable, standalone file:
 
 ```
