@@ -222,8 +222,7 @@ export default class IOV {
     }
 
     clone.player.on('firstChunk', () => {
-      this.updateIOV(clone);
-      this.destroy();
+      this.playerInstance.tech(true).mqtt.updateIOV(clone);
     });
   }
 
@@ -325,10 +324,6 @@ export default class IOV {
     }
   }
 
-  updateIOV (iov) {
-    this.playerInstance.tech(true).mqtt.updateIOV(iov);
-  }
-
   destroy () {
     this.debug('destroy');
 
@@ -348,6 +343,23 @@ export default class IOV {
 
     this.playerInstance = null;
     this.player = null;
+
+    this.mqttConduitCollection.remove(this.id);
+
+    const iframe = document.getElementById(this.config.clientId);
+    iframe.parentNode.removeChild(iframe);
+    iframe.srcdoc = '';
+
+    // if (this.config.parentNodeId !== null) {
+    //   console.log('parent stuff')
+    //   var iframe_elm = document.getElementById(this.config.clientId);
+    //   var parent = document.getElementById(clone.config.parentNodeId);
+    //   if (parent) {
+    //     parent.removeChild(iframe_elm);
+    //   }
+    //   // remove code from iframe.
+    //   iframe_elm.srcdoc = '';
+    // }
 
     // @todo
   }

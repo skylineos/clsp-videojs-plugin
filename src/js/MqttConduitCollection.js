@@ -24,6 +24,7 @@ export default class MqttConduitCollection {
       this.debug('window on message');
 
       const clientId = event.data.clientId;
+      console.log(event.data.event, 'message for', clientId)
 
       if (!this.exists(clientId)) {
         console.error(`No conduit with id "${clientId}" exists!`);
@@ -43,6 +44,10 @@ export default class MqttConduitCollection {
     this._conduits[id] = conduit;
 
     return conduit;
+  }
+
+  remove (id) {
+    delete this._conduits[id];
   }
 
   addFromIov (iov) {

@@ -106,7 +106,12 @@ export default class MSEWrapper {
   }
 
   trigger (name, value) {
-    debug(`Triggering ${name} event...`);
+    if (name === 'metric') {
+      silly(`Triggering ${name} event...`);
+    }
+    else {
+      debug(`Triggering ${name} event...`);
+    }
 
     if (!MSEWrapper.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);

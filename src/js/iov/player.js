@@ -1,4 +1,6 @@
 import Debug from 'debug';
+import uuidv4 from 'uuid/v4';
+import defaults from 'lodash/defaults';
 
 import MSEWrapper from './MSEWrapper';
 
@@ -22,7 +24,7 @@ const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
 export default class IOVPlayer {
   static EVENT_NAMES = [
     'metric',
-    'firstChunk',
+    'firstFrameShown',
     'videoReceived',
     'videoInfoReceived',
   ];
@@ -39,13 +41,14 @@ export default class IOVPlayer {
   static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
   static DRIFT_CORRECTION_CONSTANT = 2;
 
-  static factory (iov, playerInstance) {
-    return new IOVPlayer(iov, playerInstance);
+  static factory (iov, playerInstance, options = {}) {
+    return new IOVPlayer(iov, playerInstance, options);
   }
 
-  constructor (iov, playerInstance) {
+  constructor (iov, playerInstance, options) {
     debug('constructor');
 
+    this._id = uuidv4();
     this.iov = iov;
     this.playerInstance = playerInstance;
     this.eid = this.playerInstance.el().firstChild.id;
@@ -56,7 +59,13 @@ export default class IOVPlayer {
       throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
     }
 
+    this.options = defaults({}, options, {
+      segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
+      driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
+    });
+
     this.state = 'initializing';
+    this.firstFrameShown = false;
 
     // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
@@ -91,11 +100,24 @@ export default class IOVPlayer {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
+    if (this.destroyed) {
+      return;
+    }
+
     this.events[name].push(action);
   }
 
   trigger (name, value) {
-    debug(`Triggering ${name} event...`);
+    if (name === 'metric') {
+      silly(`Triggering ${name} event...`);
+    }
+    else {
+      debug(`Triggering ${name} event...`);
+    }
+
+    if (this.destroyed) {
+      return;
+    }
 
     if (!IOVPlayer.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
@@ -193,13 +215,18 @@ export default class IOVPlayer {
           onAppendFinish: (info) => {
             silly('On Append Finish...');
 
+            if (!this.firstFrameShown) {
+              this.firstFrameShown = true;
+              this.trigger('firstFrameShown');
+            }
+
             this.drift = info.bufferTimeEnd - this.videoElement.currentTime;
 
             this.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
             this.metric('video.currentTime', this.videoElement.currentTime);
             this.metric('video.drift', this.drift);
 
-            if (this.drift > ((this.segmentIntervalAverage / 1000) + IOVPlayer.DRIFT_CORRECTION_CONSTANT)) {
+            if (this.drift > ((this.segmentIntervalAverage / 1000) + this.options.driftCorrectionConstant)) {
               this.metric('video.driftCorrection', 1);
               this.videoElement.currentTime = info.bufferTimeEnd;
             }
@@ -353,7 +380,7 @@ export default class IOVPlayer {
     }
 
     if (this.segmentInterval) {
-      if (this.segmentIntervals.length >= IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE) {
+      if (this.segmentIntervals.length >= this.options.segmentIntervalSampleSize) {
         this.segmentIntervals.shift();
       }
 
@@ -405,7 +432,7 @@ export default class IOVPlayer {
       this.moovBox = moov;
       this.mimeCodec = mimeCodec;
 
-      this.trigger('firstChunk');
+      // this.trigger('firstChunk');
 
       // when videojs initializes the video element (or something like that),
       // it creates events and listeners on that element that it uses, however
@@ -431,11 +458,20 @@ export default class IOVPlayer {
   }
 
   destroy () {
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
     this.stop();
 
     // Note you will need to destroy the iov yourself.  The child should
     // probably not destroy the parent
     this.iov = null;
+
+    this.state = null;
+    this.firstFrameShown = null;
 
     this.playerInstance = null;
     this.videoElement = null;
@@ -458,93 +494,4 @@ export default class IOVPlayer {
     this.mseWrapper.destroy();
     this.mseWrapper = null;
   }
-
-  // onTransportTransaction (iov, response) {
-  //   const new_mimeCodec = response.mimeCodec;
-  //   const new_guid = response.guid; // stream guid
-
-  //   this.assertMimeCodecSupported(new_mimeCodec);
-
-  //   const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
-
-  //   const transport = (iov === null)
-  //     ? this.iov.transport
-  //     : iov.transport;
-
-  //   transport.subscribe(initSegmentTopic, (mqtt_msg) => {
-  //     const moov = mqtt_msg.payloadBytes; // store new MOOV atom.
-
-  //     transport.unsubscribe(initSegmentTopic);
-
-  //     const oldTopic = `iov/video/${this.guid}/live`;
-  //     const newTopic = `iov/video/${new_guid}/live`;
-
-  //     transport.subscribe(newTopic, (moof_mqtt_msg) => {
-  //       const moofBox = moof_mqtt_msg.payloadBytes;
-
-  //       // unsubscribe to existing live
-  //       // 1) unsubscribe to remove avoid callback
-  //       transport.unsubscribe(newTopic);
-
-  //       // 2) unsubscribe to live callback for the old stream
-  //       this.iov.transport.unsubscribe(oldTopic);
-
-  //       // 3) resubscribe with different callback
-  //       transport.subscribe(newTopic, (mqtt_msg) => {
-  //         this.trigger('videoReceived');
-  //         this.mseWrapper.append(mqtt_msg.payloadBytes);
-  //       });
-
-  //       // alter object properties to reflect new stream
-  //       this.guid = new_guid;
-  //       this.moovBox = moov;
-  //       this.mimeCodec = new_mimeCodec;
-
-  //       // remove media source buffer, reinitialize
-  //       this.reinitializeMseWrapper(this.mimeCodec);
-
-  //       if (!iov) {
-  //         return;
-  //       }
-
-  //       if (iov.config.parentNodeId !== null) {
-  //         var iframe_elm = document.getElementById(this.iov.config.clientId);
-  //         var parent = document.getElementById(iov.config.parentNodeId);
-
-  //         if (parent) {
-  //           parent.removeChild(iframe_elm);
-  //         }
-
-  //         // remove code from iframe.
-  //         iframe_elm.srcdoc = '';
-  //       }
-
-  //       // replace iov variable with the new one created.
-  //       this.iov = iov;
-  //     });
-  //   });
-
-  //   const play_request_topic = `iov/video/${new_guid}/play`;
-
-  //   transport.publish(play_request_topic, {
-  //     initSegmentTopic,
-  //     clientId: (iov === null)
-  //       ? this.iov.config.clientId
-  //       : iov.config.clientId,
-  //   });
-  // }
-
-  // change (newStream, iov) {
-  //   debug('change');
-
-  //   const request = { clientId: this.iov.config.clientId };
-  //   const topic = `iov/video/${window.btoa(newStream)}/request`;
-
-  //   if (iov) {
-  //     iov.transport.transaction(topic, (...args) => this.onTransportTransaction(iov, ...args), request);
-  //     return;
-  //   }
-
-  //   this.iov.transport.transaction(topic, (...args) => this.onTransportTransaction(iov, ...args), request);
-  // }
 };
