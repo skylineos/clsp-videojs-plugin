@@ -32,7 +32,12 @@ export default class IOVPlayer {
     'video.currentTime',
     'video.drift',
     'video.driftCorrection',
+    'video.segmentInterval',
+    'video.segmentIntervalAverage',
   ];
+
+  static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
+  static DRIFT_CORRECTION_CONSTANT = 2;
 
   static factory (iov, playerInstance) {
     return new IOVPlayer(iov, playerInstance);
@@ -58,6 +63,11 @@ export default class IOVPlayer {
     // and recording the time when the updateend event is called.
     this.LogSourceBuffer = false;
     this.LogSourceBufferTopic = null;
+
+    this.latestSegmentReceived = null;
+    this.segmentIntervalAverage = null;
+    this.segmentInterval = null;
+    this.segmentIntervals = [];
 
     this.metrics = {};
 
@@ -189,7 +199,7 @@ export default class IOVPlayer {
             this.metric('video.currentTime', this.videoElement.currentTime);
             this.metric('video.drift', this.drift);
 
-            if (this.drift > 3) {
+            if (this.drift > ((this.segmentIntervalAverage / 1000) + IOVPlayer.DRIFT_CORRECTION_CONSTANT)) {
               this.metric('video.driftCorrection', 1);
               this.videoElement.currentTime = info.bufferTimeEnd;
             }
@@ -334,6 +344,34 @@ export default class IOVPlayer {
     );
   }
 
+  getSegmentIntervalMetrics () {
+    const previousSegmentReceived = this.latestSegmentReceived;
+    this.latestSegmentReceived = Date.now();
+
+    if (previousSegmentReceived) {
+      this.segmentInterval = this.latestSegmentReceived - previousSegmentReceived;
+    }
+
+    if (this.segmentInterval) {
+      if (this.segmentIntervals.length >= IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE) {
+        this.segmentIntervals.shift();
+      }
+
+      this.segmentIntervals.push(this.segmentInterval);
+
+      let segmentIntervalSum = 0;
+
+      for (let i = 0; i < this.segmentIntervals.length; i++) {
+        segmentIntervalSum += this.segmentIntervals[i];
+      }
+
+      this.segmentIntervalAverage = segmentIntervalSum / this.segmentIntervals.length;
+
+      this.metric('video.segmentInterval', this.segmentInterval);
+      this.metric('video.segmentIntervalAverage', this.segmentIntervalAverage);
+    }
+  }
+
   // @todo - there is much shared between this and onChangeSourceTransaction
   onIovPlayTransaction ({ mimeCodec, guid }) {
     debug('onIovPlayTransaction');
@@ -359,6 +397,7 @@ export default class IOVPlayer {
       // subscribe to the live video topic.
       this.iov.conduit.subscribe(newTopic, (mqtt_msg) => {
         this.trigger('videoReceived');
+        this.getSegmentIntervalMetrics();
         this.mseWrapper.append(mqtt_msg.payloadBytes);
       });
 
@@ -406,6 +445,11 @@ export default class IOVPlayer {
 
     this.LogSourceBuffer = null;
     this.LogSourceBufferTopic = null;
+
+    this.latestSegmentReceived = null;
+    this.segmentIntervalAverage = null;
+    this.segmentInterval = null;
+    this.segmentIntervals = null;
 
     this.guid = null;
     this.moovBox = null;
