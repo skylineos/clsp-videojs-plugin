@@ -4960,6 +4960,11 @@ var IOVPlayer = function () {
     this.LogSourceBuffer = false;
     this.LogSourceBufferTopic = null;
 
+    this.latestSegmentReceived = null;
+    this.segmentIntervalAverage = null;
+    this.segmentInterval = null;
+    this.segmentIntervals = [];
+
     this.metrics = {};
 
     // @todo - there must be a more proper way to do events than this...
@@ -5104,7 +5109,7 @@ var IOVPlayer = function () {
               _this.metric('video.currentTime', _this.videoElement.currentTime);
               _this.metric('video.drift', _this.drift);
 
-              if (_this.drift > 3) {
+              if (_this.drift > _this.segmentIntervalAverage / 1000 + IOVPlayer.DRIFT_CORRECTION_CONSTANT) {
                 _this.metric('video.driftCorrection', 1);
                 _this.videoElement.currentTime = info.bufferTimeEnd;
               }
@@ -5226,6 +5231,35 @@ var IOVPlayer = function () {
 
       this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
     }
+  }, {
+    key: 'getSegmentIntervalMetrics',
+    value: function getSegmentIntervalMetrics() {
+      var previousSegmentReceived = this.latestSegmentReceived;
+      this.latestSegmentReceived = Date.now();
+
+      if (previousSegmentReceived) {
+        this.segmentInterval = this.latestSegmentReceived - previousSegmentReceived;
+      }
+
+      if (this.segmentInterval) {
+        if (this.segmentIntervals.length >= IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE) {
+          this.segmentIntervals.shift();
+        }
+
+        this.segmentIntervals.push(this.segmentInterval);
+
+        var segmentIntervalSum = 0;
+
+        for (var i = 0; i < this.segmentIntervals.length; i++) {
+          segmentIntervalSum += this.segmentIntervals[i];
+        }
+
+        this.segmentIntervalAverage = segmentIntervalSum / this.segmentIntervals.length;
+
+        this.metric('video.segmentInterval', this.segmentInterval);
+        this.metric('video.segmentIntervalAverage', this.segmentIntervalAverage);
+      }
+    }
 
     // @todo - there is much shared between this and onChangeSourceTransaction
 
@@ -5262,6 +5296,7 @@ var IOVPlayer = function () {
         // subscribe to the live video topic.
         _this4.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
           _this4.trigger('videoReceived');
+          _this4.getSegmentIntervalMetrics();
           _this4.mseWrapper.append(mqtt_msg.payloadBytes);
         });
 
@@ -5310,6 +5345,11 @@ var IOVPlayer = function () {
 
       this.LogSourceBuffer = null;
       this.LogSourceBufferTopic = null;
+
+      this.latestSegmentReceived = null;
+      this.segmentIntervalAverage = null;
+      this.segmentInterval = null;
+      this.segmentIntervals = null;
 
       this.guid = null;
       this.moovBox = null;
@@ -5414,7 +5454,9 @@ var IOVPlayer = function () {
 }();
 
 IOVPlayer.EVENT_NAMES = ['metric', 'firstChunk', 'videoReceived', 'videoInfoReceived'];
-IOVPlayer.METRIC_TYPES = ['sourceBuffer.bufferTimeEnd', 'video.currentTime', 'video.drift', 'video.driftCorrection'];
+IOVPlayer.METRIC_TYPES = ['sourceBuffer.bufferTimeEnd', 'video.currentTime', 'video.drift', 'video.driftCorrection', 'video.segmentInterval', 'video.segmentIntervalAverage'];
+IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
+IOVPlayer.DRIFT_CORRECTION_CONSTANT = 2;
 /* harmony default export */ __webpack_exports__["default"] = (IOVPlayer);
 ;
 
