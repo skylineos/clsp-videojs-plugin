@@ -18,7 +18,7 @@
         id="wallUrls"
         rows="25"
         cols="80"
-      >clsp://172.28.12.247/testpattern</textarea>
+      ></textarea>
     </div>
     <br />
     <div>
@@ -182,92 +182,20 @@
           <span class="value"></span>
           <span class="type">sourceBuffer.abort</span>
         </div>
-        <div class="metric error.sourceBuffer.abort">
+        <div class="metric error-sourceBuffer-abort">
           <span class="value"></span>
           <span class="type">error.sourceBuffer.abort</span>
         </div>
+        <div class="metric video-segmentInterval">
+          <span class="value"></span>
+          <span class="type">video.segmentInterval</span>
+        </div>
+        <div class="metric video-segmentIntervalAverage">
+          <span class="value"></span>
+          <span class="type">video.segmentIntervalAverage</span>
+        </div>
       </div>
     </template>
-  </section>
-
-  <section class="players">
-    <h2>Players</h2>
-    <table>
-      <tr>
-        <td class="video-container">
-          <video
-            id="vw0"
-            class="video-js vjs-default-skin"
-            controls
-            muted
-          >
-            <source id="src0" src="" type="video/mp4; codecs='avc1.42E01E'"/>
-            <source id="hls0"  src="" type="application/x-mpegURL" />
-          </video>
-        </td>
-        <td  class="video-container">
-          <video
-            id="vw1"
-            class="video-js vjs-default-skin"
-            controls
-            muted
-          >
-            <source id="src1" src="" type="video/mp4; codecs='avc1.42E01E'" />
-            <source id="hls1"  src="" type="application/x-mpegURL" />
-          </video>
-        </td>
-      </tr>
-      <tr>
-       <td class="video-container">
-          <video
-            id="vw2"
-            class="video-js vjs-default-skin"
-            controls
-            muted
-          >
-            <source id="src2" src="" type="video/mp4; codecs='avc1.42E01E'" />
-            <source id="hls2"  src="" type="application/x-mpegURL" />
-          </video>
-        </td>
-        <td class="video-container">
-          <video
-            id="vw3"
-            class="video-js vjs-default-skin"
-            controls
-            muted
-          >
-            <source id="src3" src="" type="video/mp4; codecs='avc1.42E01E'" />
-            <source id="hls3"  src="" type="application/x-mpegURL" />
-          </video>
-        </td>
-      </tr>
-
-      <tr><td colspan="2"><hr></td></tr>
-
-      <tr><td colspan="2">URL format:   clsp://(sfs ip)/(stream name)</td></tr>
-      <tr><td>CLSP URL</td><td>
-        <input
-          id="url0"
-          style="width: 400px;"
-        /></td></tr>
-      <tr><td>CLSP URL</td><td>
-        <input
-          id="url1"
-          style="width: 400px;"
-        /></td></tr>
-      <tr><td>CLSP URL</td><td>
-        <input
-          id="url2"
-          style="width: 400px;"
-        /></td></tr>
-      <tr><td>CLSP URL</td><td>
-        <input
-          id="url3"
-          style="width: 400px;"
-        /></td></tr>
-      <tr><td colspan="2"><button id="submit">Submit</button></td></tr>
-      <tr><td colspan="2"><div id="message"></div></td></tr>
-    </table>
   </section>
 
   <section class="tour">

@@ -1,34 +1,45 @@
 import Debug from 'debug';
 import videojs from 'video.js';
 
-import IOVPlayer from './iov/player';
+import IOV from './iov/IOV';
 
 const Component = videojs.getComponent('Component');
 
-export default function () {
-  class MqttHandler extends Component {
-    constructor (source, tech, options) {
-      super(tech, options.mqtt);
+const DEBUG_PREFIX = 'skyline:clsp';
 
-      this.tech_ = tech;
-      this.source_ = source;
-      this.debug = Debug('skyline:clsp:MqttHandler');
+export default class MqttHandler extends Component {
+  constructor (source, tech, mqttConduitCollection, options) {
+    super(tech, options.mqtt);
+
+    this.debug = Debug(`${DEBUG_PREFIX}:MqttHandler`);
+    this.debug('constructor');
+
+    this.tech_ = tech;
+    this.source_ = source;
+
+    // @todo - is there a better way to do this where we don't pollute the
+    // top level namespace?
+    this.iov = null;
+    this.mqttConduitCollection = mqttConduitCollection;
+  }
+
+  createIOV (player) {
+    this.debug('createIOV');
+
+    this.updateIOV(IOV.fromUrl(
+      this.source_.src,
+      this.mqttConduitCollection,
+      player
+    ));
+  }
+
+  updateIOV (iov) {
+    this.debug('updateIOV');
+
+    if (this.iov) {
+      this.iov.destroy();
     }
 
-    /**
-     * called when player.src gets called, handle a new source
-     *
-     * @param {Object} src the source object to handle
-     */
-    src (src) {
-      const srcConfig = IOVPlayer.generateIOVConfigFromCLSPURL(src);
-
-      this.port = srcConfig.port;
-      this.address = srcConfig.address;
-      this.streamName = srcConfig.streamName;
-      this.useSSL = srcConfig.useSSL;
-    }
-  };
-
-  return MqttHandler;
-}
+    this.iov = iov;
+  }
+};

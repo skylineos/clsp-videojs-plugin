@@ -10,6 +10,40 @@ const debug = Debug(`${DEBUG_PREFIX}:MSEWrapper`);
 const silly = Debug(`silly:${DEBUG_PREFIX}:MSEWrapper`);
 
 export default class MSEWrapper {
+  static EVENT_NAMES = [
+    'metric',
+  ];
+
+  static METRIC_TYPES = [
+    'mediaSource.created',
+    'mediaSource.destroyed',
+    'objectURL.created',
+    'objectURL.revoked',
+    'mediaSource.reinitialized',
+    'sourceBuffer.created',
+    'sourceBuffer.destroyed',
+    'queue.added',
+    'queue.removed',
+    'sourceBuffer.append',
+    'error.sourceBuffer.append',
+    'frameDrop.hiddenTab',
+    'queue.mediaSourceNotReady',
+    'queue.sourceBufferNotReady',
+    'queue.shift',
+    'queue.append',
+    'sourceBuffer.lastKnownBufferSize',
+    'sourceBuffer.trim',
+    'sourceBuffer.trim.error',
+    'sourceBuffer.updateEnd',
+    'sourceBuffer.updateEnd.bufferLength.empty',
+    'sourceBuffer.updateEnd.bufferLength.error',
+    'sourceBuffer.updateEnd.removeEvent',
+    'sourceBuffer.updateEnd.appendEvent',
+    'sourceBuffer.updateEnd.bufferFrozen',
+    'sourceBuffer.abort',
+    'error.sourceBuffer.abort',
+  ];
+
   static isMimeCodecSupported (mimeCodec) {
     return (window.MediaSource && window.MediaSource.isTypeSupported(mimeCodec));
   }
@@ -44,47 +78,13 @@ export default class MSEWrapper {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
     }
 
-    this.METRIC_TYPES = [
-      'mediaSource.created',
-      'mediaSource.destroyed',
-      'objectURL.created',
-      'objectURL.revoked',
-      'mediaSource.reinitialized',
-      'sourceBuffer.created',
-      'sourceBuffer.destroyed',
-      'queue.added',
-      'queue.removed',
-      'sourceBuffer.append',
-      'error.sourceBuffer.append',
-      'frameDrop.hiddenTab',
-      'queue.mediaSourceNotReady',
-      'queue.sourceBufferNotReady',
-      'queue.shift',
-      'queue.append',
-      'sourceBuffer.lastKnownBufferSize',
-      'sourceBuffer.trim',
-      'sourceBuffer.trim.error',
-      'sourceBuffer.updateEnd',
-      'sourceBuffer.updateEnd.bufferLength.empty',
-      'sourceBuffer.updateEnd.bufferLength.error',
-      'sourceBuffer.updateEnd.removeEvent',
-      'sourceBuffer.updateEnd.appendEvent',
-      'sourceBuffer.updateEnd.bufferFrozen',
-      'sourceBuffer.abort',
-      'error.sourceBuffer.abort',
-    ];
-
     this.metrics = {};
 
     // @todo - there must be a more proper way to do events than this...
     this.events = {};
 
-    this.EVENT_NAMES = [
-      'metric',
-    ];
-
-    for (let i = 0; i < this.EVENT_NAMES.length; i++) {
-      this.events[this.EVENT_NAMES[i]] = [];
+    for (let i = 0; i < MSEWrapper.EVENT_NAMES.length; i++) {
+      this.events[MSEWrapper.EVENT_NAMES[i]] = [];
     }
 
     this.eventListeners = {
@@ -98,7 +98,7 @@ export default class MSEWrapper {
   on (name, action) {
     debug(`Registering Listener for ${name} event...`);
 
-    if (!this.EVENT_NAMES.includes(name)) {
+    if (!MSEWrapper.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -108,7 +108,7 @@ export default class MSEWrapper {
   trigger (name, value) {
     debug(`Triggering ${name} event...`);
 
-    if (!this.EVENT_NAMES.includes(name)) {
+    if (!MSEWrapper.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -122,7 +122,7 @@ export default class MSEWrapper {
       return;
     }
 
-    if (!this.METRIC_TYPES.includes(type)) {
+    if (!MSEWrapper.METRIC_TYPES.includes(type)) {
       // @todo - should this throw?
       return;
     }
@@ -382,7 +382,6 @@ export default class MSEWrapper {
 
     // Sometimes this can get hit after destroy is called
     if (!this.eventListeners.sourceBuffer.onAppendStart) {
-      // @todo - should we do something else here?
       return;
     }
 
@@ -551,8 +550,6 @@ export default class MSEWrapper {
     this.destroyMediaSource();
 
     this.options = null;
-    this.METRIC_TYPES = null;
-    this.EVENT_NAMES = null;
     this.metrics = null;
     this.events = null;
     this.eventListeners = null;
