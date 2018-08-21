@@ -3,6 +3,22 @@ $icon-font-path: '~videojs-font/fonts';
 
 @import '~/dist/videojs-mse-over-clsp.css';
 
+section {
+  border: solid 3px black;
+  padding: 5px;
+  margin: 5px;
+
+  h2 {
+    width: 100%;
+    background: black;
+    color: white;
+    padding: 5px;
+    margin-left: -5px;
+    margin-top: -5px;
+    text-align: center;
+  }
+}
+
 .video-js {
   width: 356px;
   height: 244px;
@@ -29,4 +45,9 @@ $icon-font-path: '~videojs-font/fonts';
       text-align: right;
     }
   }
+}
+
+.wall-controls,
+.tour-controls {
+  display: flex;
 }

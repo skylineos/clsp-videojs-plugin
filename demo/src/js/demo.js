@@ -5,6 +5,7 @@ import '../styles/demo.scss';
 import $ from 'jquery';
 import videojs from 'video.js';
 import moment from 'moment';
+import compact from 'lodash/compact';
 import 'babel-polyfill';
 
 import packageJson from '../../../package.json';
@@ -98,8 +99,8 @@ function initializeWall () {
 
     const now = Date.now();
 
-    $('#tourTotalVideos').html(`Total videos playing: ${cellIndex}`);
-    $('#tourStartTime').html(`Time Started: ${moment(now).format('MMMM Do YYYY, h:mm:ss a')}`);
+    $('#wallTotalVideos').html(`Total videos playing: ${cellIndex}`);
+    $('#wallStartTime').html(`Time Started: ${moment(now).format('MMMM Do YYYY, h:mm:ss a')}`);
 
     if (wallInterval) {
       window.clearInterval(wallInterval);
@@ -110,7 +111,7 @@ function initializeWall () {
       const minutesFromStart = Math.floor(moment.duration(Date.now() - now).asMinutes()) - (hoursFromStart * 60);
       const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
 
-      $('#tourDuration').html(`This tour has been running for ${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+      $('#wallDuration').html(`This Video Wall has been running for ${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
     }, 1000);
   }
 
@@ -156,20 +157,14 @@ function initializeTours () {
     tour.interval = parseInt($('#tour-switch-interval').val());
     tour.plist = [];
 
-    const tourUrls = window.localStorage.getItem('skyline.clspPlugin.tourUrls').split('\n');
+    const tourUrls = compact(window.localStorage.getItem('skyline.clspPlugin.tourUrls').split('\n'));
 
-    for (let i = 0; i < tourUrls.length; i++) {
-      if (tourUrls[i].length > 0) {
-        tour.plist.push(tourUrls[i]);
-      }
-    }
-
-    if (tour.plist.length < 2) {
+    if (tourUrls.length < 2) {
       window.alert('at least two source needed!');
       return;
     }
 
-    $('#tour-first-source').attr('src', tour.plist[0]);
+    $('#tour-first-source').attr('src', tourUrls[0]);
 
     tour.counter = 1;
     tour.player = null;
@@ -180,7 +175,7 @@ function initializeTours () {
 
     tour.player = window.videojs('#tour-video');
     tour.player.clsp(); // start playing first stream
-    $('#now-playing').html(tour.plist[0]);
+    $('#now-playing').html(tourUrls[0]);
 
     tour.player.on('network-error', (evt, message) => {
       // console.log('!!!!! Handled network-error', evt);
@@ -188,20 +183,41 @@ function initializeTours () {
     });
 
     tour.timer = setInterval(() => {
-      const url = tour.plist[tour.counter % tour.plist.length];
-      $('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
+      const url = tourUrls[tour.counter % tourUrls.length];
+      $('#now-playing').html('switching to ' + tourUrls[tour.counter % tourUrls.length] + ' on next the h264 iframe');
 
       tour.counter += 1;
-      // console.log('selected url', url, tour.plist);
+      // console.log('selected url', url, tourUrls);
 
       tour.player.trigger('changesrc', {
         eid: 'tour-video',
         url,
       });
+
+      $('#tourCount').html(`Number of streams played: ${tour.counter}`);
     }, tour.interval * 1000);
+
+    const now = Date.now();
+
+    $('#tourTotalVideos').html(`Tour Playlist Length: ${tourUrls.length}`);
+    $('#tourStartTime').html(`Time Started: ${moment(now).format('MMMM Do YYYY, h:mm:ss a')}`);
+    $('#tour_duration').html(`Streams are playing ${tour.interval} seconds apart.`);
+    $('#tourCount').html(`Number of streams played: ${tour.counter}`);
+
+    if (wallInterval) {
+      window.clearInterval(wallInterval);
+    }
+
+    wallInterval = setInterval(() => {
+      const hoursFromStart = Math.floor(moment.duration(Date.now() - now).asHours());
+      const minutesFromStart = Math.floor(moment.duration(Date.now() - now).asMinutes()) - (hoursFromStart * 60);
+      const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
+
+      $('#tourDuration').html(`This Video Wall has been running for ${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+    }, 1000);
   });
 
-  const $tourUrls = $('#tour-list');
+  const $tourUrls = $('#tourUrls');
 
   $tourUrls.val(window.localStorage.getItem('skyline.clspPlugin.tourUrls'));
 
