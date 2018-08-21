@@ -577,10 +577,6 @@ export default class MSEWrapper {
       return;
     }
 
-    if (!this.videoElement) {
-      throw new Error('In order to destroy this MSEWrapper, you must pass the videoElement that this wrapper was associated with.');
-    }
-
     this.destroyed = true;
 
     this.destroyMediaSource();

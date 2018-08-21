@@ -515,7 +515,6 @@ export default class IOVPlayer {
     this.firstFrameShown = null;
 
     this.playerInstance = null;
-    this.videoElement = null;
     this.videoJsVideoElement = null;
     this.videoElementParent = null;
 
@@ -536,5 +535,12 @@ export default class IOVPlayer {
 
     this.mseWrapper.destroy();
     this.mseWrapper = null;
+
+    // Setting the src of the video element to an empty string is
+    // the only reliable way we have found to ensure that MediaSource,
+    // SourceBuffer, and various Video elements are properly dereferenced
+    // to avoid memory leaks
+    this.videoElement.src = '';
+    this.videoElement = null;
   }
 };
