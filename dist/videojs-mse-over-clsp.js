@@ -3282,7 +3282,13 @@ var MqttConduitCollection = function () {
       var clientId = event.data.clientId;
 
       if (!_this.exists(clientId)) {
-        console.error('No conduit with id "' + clientId + '" exists!');
+        // When the mqtt connection is interupted due to a listener being removed,
+        // a fail even is always sent.  It is not necessary to log this as an error
+        // in the console, because it is not an error.
+        if (!event.data.event === 'fail') {
+          console.error('No conduit with id "' + clientId + '" exists!');
+        }
+
         return;
       }
 
@@ -3301,6 +3307,11 @@ var MqttConduitCollection = function () {
       this._conduits[id] = conduit;
 
       return conduit;
+    }
+  }, {
+    key: 'remove',
+    value: function remove(id) {
+      delete this._conduits[id];
     }
   }, {
     key: 'addFromIov',
@@ -3399,10 +3410,17 @@ var MqttHandler = function (_Component) {
       this.debug('updateIOV');
 
       if (this.iov) {
+        // If the IOV is the same, do nothing
+        if (this.iov.id === iov.id) {
+          return;
+        }
+
         this.iov.destroy();
       }
 
       this.iov = iov;
+
+      this.iov.initialize();
     }
   }]);
 
@@ -3551,6 +3569,7 @@ var registered = false;
 
         // @todo - there is likely some way for videojs to tell us that the plugin has already
         // been registered, or perhaps videojs itself will not let you register a plugin twice
+        // `videojs.getPlugin('clsp')`
         registered = true;
 
         video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getTech('Html5').registerSourceHandler(Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_3__["default"])()('html5', _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_4__["default"].factory()), 0);
@@ -3923,7 +3942,8 @@ var IOV = function () {
       useSSL: config.useSSL,
       streamName: config.streamName,
       appStart: config.appStart,
-      videoElementParent: config.videoElementParent || null
+      videoElementParent: config.videoElementParent || null,
+      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT
     };
 
     this.statsMsg = {
@@ -3939,7 +3959,6 @@ var IOV = function () {
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
     this.mqttTopicHandlers = new _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__["default"](this.id, this);
-    this.conduit = this.mqttConduitCollection.addFromIov(this);
 
     this.events = {
       connection_lost: function connection_lost(responseObject) {
@@ -3959,11 +3978,15 @@ var IOV = function () {
         }
       }
     };
-
-    this.player = _player__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this, this.playerInstance);
   }
 
   _createClass(IOV, [{
+    key: 'initialize',
+    value: function initialize() {
+      this.conduit = this.mqttConduitCollection.addFromIov(this);
+      this.player = _player__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this, this.playerInstance);
+    }
+  }, {
     key: 'clone',
     value: function clone(config) {
       this.debug('clone');
@@ -3997,49 +4020,43 @@ var IOV = function () {
   }, {
     key: 'onChangeSource',
     value: function onChangeSource(url) {
-      var _this = this;
-
       this.debug('changeSource on player "' + this.id + '""');
 
       if (!url) {
         throw new Error('Unable to change source because there is no url!');
       }
 
-      // // @todo - it is possible to keep an IOV instance if the host for the
-      // // stream is the same.
-      // if (iovConfig.hostname === this.iov.config.wsbroker) {
-      //   this.iov.conduit.transaction(
-      //     topic,
-      //     (...args) => this.onChangeSourceTransaction(this.iov, ...args),
-      //     request
-      //   );
-      //   return;
-      // }
-
       var clone = this.cloneFromUrl(url);
 
-      // @todo - why is this needed?
-      if (this.config.parentNodeId !== null) {
-        var iframe_elm = document.getElementById(this.config.clientId);
-        var parent = document.getElementById(clone.config.parentNodeId);
+      clone.initialize();
 
-        if (parent) {
-          parent.removeChild(iframe_elm);
-        }
+      // When the tab is not in focus, chrome doesn't handle things the same
+      // way as when the tab is in focus, and it seems that the result of that
+      // is that the "firstFrameShown" event never fires.  Having the IOV be
+      // updated on a delay in case the "firstFrameShown" takes too long will
+      // ensure that the old IOVs are destroyed, ensuring that unnecessary
+      // socket connections, etc. are not being used, as this can cause the
+      // browser to crash.
+      // Note that if there is a better way to do this, it would likely reduce
+      // the number of try/catch blocks and null checks in the IOVPlayer and
+      // MSEWrapper, but I don't think that is likely to happen until the MSE
+      // is standardized, and even then, we may be subject to non-intuitive
+      // behavior based on tab switching, etc.
+      setTimeout(function () {
+        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+      }, clone.config.changeSourceMaxWait);
 
-        // remove code from iframe.
-        iframe_elm.srcdoc = '';
-      }
-
-      clone.player.on('firstChunk', function () {
-        _this.updateIOV(clone);
-        _this.destroy();
+      // Under normal circumstances, meaning when the tab is in focus, we want
+      // to respond by switching the IOV when the new IOV Player has something
+      // to display
+      clone.player.on('firstFrameShown', function () {
+        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
       });
     }
   }, {
     key: 'onReady',
     value: function onReady(event) {
-      var _this2 = this;
+      var _this = this;
 
       this.debug('onReady');
 
@@ -4063,24 +4080,24 @@ var IOV = function () {
 
       this.onReadyAlreadyCalled = true;
 
-      this.player.on('firstChunk', function () {
-        _this2.playerInstance.loadingSpinner.hide();
+      this.player.on('firstFrameShown', function () {
+        _this.playerInstance.loadingSpinner.hide();
       });
 
       this.player.on('videoReceived', function () {
         // reset the timeout monitor from videojs-errors
-        _this2.playerInstance.trigger('timeupdate');
+        _this.playerInstance.trigger('timeupdate');
       });
 
       this.player.on('videoInfoReceived', function () {
         // reset the timeout monitor from videojs-errors
-        _this2.playerInstance.trigger('timeupdate');
+        _this.playerInstance.trigger('timeupdate');
       });
 
       this.playerInstanceEventListeners = {
         changesrc: function changesrc(event, _ref) {
           var url = _ref.url;
-          return _this2.onChangeSource(url);
+          return _this.onChangeSource(url);
         }
       };
 
@@ -4089,18 +4106,18 @@ var IOV = function () {
       this.player.play(this.videoElement.firstChild.id, this.config.streamName);
 
       this.videoElement.addEventListener('mse-error-event', function (e) {
-        _this2.player.restart();
+        _this.player.restart();
       }, false);
 
       // the mse service will stop streaming to us if we don't send
       // a message to iov/stats within 1 minute.
       this._statsTimer = setInterval(function () {
-        _this2.statsMsg.inkbps = _this2.statsMsg.byteCount * 8 / 30000.0;
-        _this2.statsMsg.byteCount = 0;
+        _this.statsMsg.inkbps = _this.statsMsg.byteCount * 8 / 30000.0;
+        _this.statsMsg.byteCount = 0;
 
-        _this2.conduit.publish('iov/stats', _this2.statsMsg);
+        _this.conduit.publish('iov/stats', _this.statsMsg);
 
-        _this2.debug('iov status', _this2.statsMsg);
+        _this.debug('iov status', _this.statsMsg);
       }, 5000);
     }
   }, {
@@ -4110,6 +4127,7 @@ var IOV = function () {
 
       this.debug('network error', event.data.reason);
       this.playerInstance.trigger('network-error', event.data.reason);
+      // this.player.restart();
     }
   }, {
     key: 'onData',
@@ -4148,11 +4166,6 @@ var IOV = function () {
       }
     }
   }, {
-    key: 'updateIOV',
-    value: function updateIOV(iov) {
-      this.playerInstance.tech(true).mqtt.updateIOV(iov);
-    }
-  }, {
     key: 'destroy',
     value: function destroy() {
       this.debug('destroy');
@@ -4174,13 +4187,18 @@ var IOV = function () {
       this.playerInstance = null;
       this.player = null;
 
-      // @todo
+      this.mqttConduitCollection.remove(this.id);
+
+      var iframe = document.getElementById(this.config.clientId);
+      iframe.parentNode.removeChild(iframe);
+      iframe.srcdoc = '';
     }
   }]);
 
   return IOV;
 }();
 
+IOV.CHANGE_SOURCE_MAX_WAIT = 5000;
 /* harmony default export */ __webpack_exports__["default"] = (IOV);
 ;
 
@@ -4292,7 +4310,11 @@ var MSEWrapper = function () {
   }, {
     key: 'trigger',
     value: function trigger(name, value) {
-      debug('Triggering ' + name + ' event...');
+      if (name === 'metric') {
+        silly('Triggering ' + name + ' event...');
+      } else {
+        debug('Triggering ' + name + ' event...');
+      }
 
       if (!MSEWrapper.EVENT_NAMES.includes(name)) {
         throw new Error('"' + name + '" is not a valid event."');
@@ -4516,7 +4538,10 @@ var MSEWrapper = function () {
       } catch (error) {
         this.metric('error.sourceBuffer.abort', 1);
 
-        this.eventListeners.sourceBuffer.onAbortError(error);
+        // Somehow, this can be become undefined...
+        if (this.eventListeners.sourceBuffer.onAbortError) {
+          this.eventListeners.sourceBuffer.onAbortError(error);
+        }
       }
     }
   }, {
@@ -4625,6 +4650,11 @@ var MSEWrapper = function () {
 
       this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
+      if (!info) {
+        // @todo - should this be handled in some way?
+        return;
+      }
+
       if (force || this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
         debug('Removing old stuff from sourceBuffer...');
 
@@ -4721,7 +4751,11 @@ var MSEWrapper = function () {
       this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
       this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
 
-      this.trimBuffer(undefined, true);
+      try {
+        this.trimBuffer(undefined, true);
+      } catch (e) {
+        console.error(e);
+      }
 
       this.sourceBuffer = null;
 
@@ -4900,7 +4934,11 @@ var MqttTopicHandlers = function () {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _MSEWrapper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MSEWrapper */ "./src/js/iov/MSEWrapper.js");
+/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
+/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _MSEWrapper__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MSEWrapper */ "./src/js/iov/MSEWrapper.js");
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4911,9 +4949,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 
 
+
+
 var DEBUG_PREFIX = 'skyline:clsp:iov';
 var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':IOVPlayer');
 var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX + ':IOVPlayer');
+
+window.tryna = false;
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -4933,26 +4975,41 @@ var IOVPlayer = function () {
   _createClass(IOVPlayer, null, [{
     key: 'factory',
     value: function factory(iov, playerInstance) {
-      return new IOVPlayer(iov, playerInstance);
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+      return new IOVPlayer(iov, playerInstance, options);
     }
   }]);
 
-  function IOVPlayer(iov, playerInstance) {
+  function IOVPlayer(iov, playerInstance, options) {
     _classCallCheck(this, IOVPlayer);
 
     debug('constructor');
 
+    this.metrics = {};
+
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
+
+    for (var i = 0; i < IOVPlayer.EVENT_NAMES.length; i++) {
+      this.events[IOVPlayer.EVENT_NAMES[i]] = [];
+    }
+
+    this._id = uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
     this.iov = iov;
     this.playerInstance = playerInstance;
     this.eid = this.playerInstance.el().firstChild.id;
     this.id = this.eid.replace('_html5_api', '');
-    this.videoElement = document.getElementById(this.eid);
 
-    if (!this.videoElement) {
-      throw new Error('Unable to find an element in the DOM with id "' + this.eid + '".');
-    }
+    this.initializeVideoElement();
+
+    this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_2___default()({}, options, {
+      segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
+      driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT
+    });
 
     this.state = 'initializing';
+    this.firstFrameShown = false;
 
     // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
@@ -4964,15 +5021,6 @@ var IOVPlayer = function () {
     this.segmentIntervalAverage = null;
     this.segmentInterval = null;
     this.segmentIntervals = [];
-
-    this.metrics = {};
-
-    // @todo - there must be a more proper way to do events than this...
-    this.events = {};
-
-    for (var i = 0; i < IOVPlayer.EVENT_NAMES.length; i++) {
-      this.events[IOVPlayer.EVENT_NAMES[i]] = [];
-    }
 
     this.mseWrapper = null;
     this.moovBox = null;
@@ -4989,12 +5037,24 @@ var IOVPlayer = function () {
         throw new Error('"' + name + '" is not a valid event."');
       }
 
+      if (this.destroyed) {
+        return;
+      }
+
       this.events[name].push(action);
     }
   }, {
     key: 'trigger',
     value: function trigger(name, value) {
-      debug('Triggering ' + name + ' event...');
+      if (name === 'metric') {
+        silly('Triggering ' + name + ' event...');
+      } else {
+        debug('Triggering ' + name + ' event...');
+      }
+
+      if (this.destroyed) {
+        return;
+      }
 
       if (!IOVPlayer.EVENT_NAMES.includes(name)) {
         throw new Error('"' + name + '" is not a valid event."');
@@ -5047,7 +5107,7 @@ var IOVPlayer = function () {
   }, {
     key: 'assertMimeCodecSupported',
     value: function assertMimeCodecSupported(mimeCodec) {
-      if (!_MSEWrapper__WEBPACK_IMPORTED_MODULE_1__["default"].isMimeCodecSupported(mimeCodec)) {
+      if (!_MSEWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].isMimeCodecSupported(mimeCodec)) {
         this.state = 'unsupported-mime-codec';
 
         var message = 'Unsupported mime codec: ' + mimeCodec;
@@ -5065,119 +5125,156 @@ var IOVPlayer = function () {
       }
     }
   }, {
+    key: 'initializeVideoElement',
+    value: function initializeVideoElement() {
+      var _this = this;
+
+      this.originalVideoElement = document.getElementById(this.eid);
+
+      if (!this.originalVideoElement) {
+        throw new Error('Unable to find an element in the DOM with id "' + this.eid + '".');
+      }
+
+      // when videojs initializes the video element (or something like that),
+      // it creates events and listeners on that element that it uses, however
+      // these events interfere with our ability to play clsp streams.  Cloning
+      // the element like this and reinserting it is a blunt instrument to remove
+      // all of the videojs events so that we are in control of the player.
+      this.videoElement = this.originalVideoElement.cloneNode();
+      this.videoElementParent = this.originalVideoElement.parentNode;
+
+      this.on('firstFrameShown', function () {
+        // @todo - this may be overkill given the IOV changeSourceMaxWait...
+        // When the video is ready to be displayed, swap out the video player if
+        // the source has changed.  This is what allows tours to switch to the next
+        if (_this.videoElementParent !== null) {
+          try {
+            _this.videoElementParent.replaceChild(_this.videoElement, _this.originalVideoElement);
+          } catch (e) {
+            console.error(e);
+            try {
+              _this.originalVideoElement.parentNode.removeChild(_this.originalVideoElement);
+            } catch (e) {
+              console.error(e);
+              try {
+                _this.originalVideoElement.outerHTML = '';
+              } catch (e) {
+                _this.iov.destroy();
+              }
+            }
+          }
+        }
+      });
+    }
+  }, {
     key: 'reinitializeMseWrapper',
     value: function reinitializeMseWrapper(mimeCodec) {
-      var _this = this;
+      var _this2 = this;
 
       if (this.mseWrapper) {
         this.mseWrapper.destroy();
       }
 
-      this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_1__["default"].factory();
+      this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory();
 
       this.mseWrapper.on('metric', function (_ref) {
         var type = _ref.type,
             value = _ref.value;
 
-        _this.trigger('metric', { type: type, value: value });
+        _this2.trigger('metric', { type: type, value: value });
       });
 
       this.mseWrapper.initializeMediaSource({
         onSourceOpen: function onSourceOpen() {
           debug('on mediaSource sourceopen');
 
-          _this.mseWrapper.initializeSourceBuffer(mimeCodec, {
+          _this2.mseWrapper.initializeSourceBuffer(mimeCodec, {
             onAppendStart: function onAppendStart(byteArray) {
               silly('On Append Start...');
 
-              if (_this.LogSourceBuffer === true && _this.LogSourceBufferTopic !== null) {
+              if (_this2.LogSourceBuffer === true && _this2.LogSourceBufferTopic !== null) {
                 debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
 
                 var mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-                mqtt_msg.destinationName = _this.LogSourceBufferTopic;
+                mqtt_msg.destinationName = _this2.LogSourceBufferTopic;
                 window.MQTTClient.send(mqtt_msg);
               }
 
-              _this.iov.statsMsg.byteCount += byteArray.length;
+              _this2.iov.statsMsg.byteCount += byteArray.length;
             },
             onAppendFinish: function onAppendFinish(info) {
               silly('On Append Finish...');
 
-              _this.drift = info.bufferTimeEnd - _this.videoElement.currentTime;
-
-              _this.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
-              _this.metric('video.currentTime', _this.videoElement.currentTime);
-              _this.metric('video.drift', _this.drift);
-
-              if (_this.drift > _this.segmentIntervalAverage / 1000 + IOVPlayer.DRIFT_CORRECTION_CONSTANT) {
-                _this.metric('video.driftCorrection', 1);
-                _this.videoElement.currentTime = info.bufferTimeEnd;
+              if (!_this2.firstFrameShown) {
+                _this2.firstFrameShown = true;
+                _this2.trigger('firstFrameShown');
               }
 
-              if (_this.videoElement.paused === true) {
+              _this2.drift = info.bufferTimeEnd - _this2.videoElement.currentTime;
+
+              _this2.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+              _this2.metric('video.currentTime', _this2.videoElement.currentTime);
+              _this2.metric('video.drift', _this2.drift);
+
+              if (_this2.drift > _this2.segmentIntervalAverage / 1000 + _this2.options.driftCorrectionConstant) {
+                _this2.metric('video.driftCorrection', 1);
+                _this2.videoElement.currentTime = info.bufferTimeEnd;
+              }
+
+              if (_this2.videoElement.paused === true) {
                 debug('Video is paused!');
 
                 try {
-                  var promise = _this.videoElement.play();
+                  var promise = _this2.videoElement.play();
 
                   if (typeof promise !== 'undefined') {
                     promise.catch(function (error) {
-                      _this._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                      _this2._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
                     });
                   }
                 } catch (error) {
-                  _this._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+                  _this2._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
                 }
               }
             },
             onRemoveFinish: function onRemoveFinish(info) {
               debug('onRemoveFinish');
-
-              // wait around for 3 seconds to simulate unpredictable browser interruptions.
-              var now = new Date().getTime();
-              for (var i = 0; i < 1e7; i++) {
-                var diff = new Date().getTime() - now;
-                if (diff > 1000) {
-                  debug("breaking out of 1 second sleep");
-                  break;
-                }
-              }
             },
             onAppendError: function onAppendError(error) {
               // internal error, this has been observed to happen the tab
               // in the browser where this video player lives is hidden
               // then reselected. 'ex' is undefined the error is bug
               // within the MSE C++ implementation in the browser.
-              _this._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
+              _this2._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
               // this.videoPlayer.error({ code: 3 });
-              _this.reinitializeMseWrapper(mimeCodec);
+              _this2.reinitializeMseWrapper(mimeCodec);
             },
             onRemoveError: function onRemoveError(error) {
               // observed this fail during a memry snapshot in chrome
               // otherwise no observed failure, so ignore exception.
-              _this._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
+              _this2._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
             },
             onStreamFrozen: function onStreamFrozen() {
               debug('stream appears to be frozen - reinitializing...');
 
-              _this.reinitializeMseWrapper(mimeCodec);
+              _this2.reinitializeMseWrapper(mimeCodec);
             },
             onError: function onError(error) {
-              _this._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+              _this2._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
             }
           });
 
-          _this.trigger('videoInfoReceived');
-          _this.mseWrapper.append(_this.moovBox);
+          _this2.trigger('videoInfoReceived');
+          _this2.mseWrapper.append(_this2.moovBox);
         },
         onSourceEnded: function onSourceEnded() {
           debug('on mediaSource sourceended');
 
           // @todo - do we need to clear the buffer manually?
-          _this.stop();
+          _this2.stop();
         },
         onError: function onError(error) {
-          _this._onError('mediaSource.generic', 'mediaSource error', error);
+          _this2._onError('mediaSource.generic', 'mediaSource error', error);
         }
       });
 
@@ -5188,7 +5285,7 @@ var IOVPlayer = function () {
   }, {
     key: 'resyncStream',
     value: function resyncStream(mimeCodec) {
-      var _this2 = this;
+      var _this3 = this;
 
       // subscribe to a sync topic that will be called if the stream that is feeding
       // the mse service dies and has to be restarted that this player should restart the stream
@@ -5196,7 +5293,7 @@ var IOVPlayer = function () {
 
       this.iov.conduit.subscribe('iov/video/' + this.guid + '/resync', function () {
         debug('sync received re-initialize media source buffer');
-        _this2.reinitializeMseWrapper(mimeCodec);
+        _this3.reinitializeMseWrapper(mimeCodec);
       });
     }
   }, {
@@ -5210,12 +5307,12 @@ var IOVPlayer = function () {
   }, {
     key: 'play',
     value: function play(streamName) {
-      var _this3 = this;
+      var _this4 = this;
 
       debug('play');
 
       this.iov.conduit.transaction('iov/video/' + window.btoa(this.iov.config.streamName) + '/request', function () {
-        return _this3.onIovPlayTransaction.apply(_this3, arguments);
+        return _this4.onIovPlayTransaction.apply(_this4, arguments);
       }, { clientId: this.iov.config.clientId });
     }
   }, {
@@ -5242,7 +5339,7 @@ var IOVPlayer = function () {
       }
 
       if (this.segmentInterval) {
-        if (this.segmentIntervals.length >= IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE) {
+        if (this.segmentIntervals.length >= this.options.segmentIntervalSampleSize) {
           this.segmentIntervals.shift();
         }
 
@@ -5266,7 +5363,7 @@ var IOVPlayer = function () {
   }, {
     key: 'onIovPlayTransaction',
     value: function onIovPlayTransaction(_ref2) {
-      var _this4 = this;
+      var _this5 = this;
 
       var mimeCodec = _ref2.mimeCodec,
           guid = _ref2.guid;
@@ -5287,40 +5384,27 @@ var IOVPlayer = function () {
 
         var moov = payloadBytes;
 
-        _this4.state = 'waiting-for-first-moof';
+        _this5.state = 'waiting-for-first-moof';
 
-        _this4.iov.conduit.unsubscribe(initSegmentTopic);
+        _this5.iov.conduit.unsubscribe(initSegmentTopic);
 
         var newTopic = 'iov/video/' + guid + '/live';
 
         // subscribe to the live video topic.
-        _this4.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
-          _this4.trigger('videoReceived');
-          _this4.getSegmentIntervalMetrics();
-          _this4.mseWrapper.append(mqtt_msg.payloadBytes);
+        _this5.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
+          _this5.trigger('videoReceived');
+          _this5.getSegmentIntervalMetrics();
+          _this5.mseWrapper.append(mqtt_msg.payloadBytes);
         });
 
-        _this4.guid = guid;
-        _this4.moovBox = moov;
-        _this4.mimeCodec = mimeCodec;
+        _this5.guid = guid;
+        _this5.moovBox = moov;
+        _this5.mimeCodec = mimeCodec;
 
-        _this4.trigger('firstChunk');
+        // this.trigger('firstChunk');
 
-        // when videojs initializes the video element (or something like that),
-        // it creates events and listeners on that element that it uses, however
-        // these events interfere with our ability to play clsp streams.  Cloning
-        // the element like this and reinserting it is a blunt instrument to remove
-        // all of the videojs events so that we are in control of the player.
-        var clone = _this4.videoElement.cloneNode();
-        var parent = _this4.videoElement.parentNode;
-
-        if (parent !== null) {
-          parent.replaceChild(clone, _this4.videoElement);
-          _this4.videoElement = clone;
-        }
-
-        _this4.reinitializeMseWrapper(mimeCodec);
-        _this4.resyncStream(mimeCodec);
+        _this5.reinitializeMseWrapper(mimeCodec);
+        _this5.resyncStream(mimeCodec);
       });
 
       this.iov.conduit.publish('iov/video/' + guid + '/play', {
@@ -5331,11 +5415,20 @@ var IOVPlayer = function () {
   }, {
     key: 'destroy',
     value: function destroy() {
+      if (this.destroyed) {
+        return;
+      }
+
+      this.destroyed = true;
+
       this.stop();
 
       // Note you will need to destroy the iov yourself.  The child should
       // probably not destroy the parent
       this.iov = null;
+
+      this.state = null;
+      this.firstFrameShown = null;
 
       this.playerInstance = null;
       this.videoElement = null;
@@ -5355,105 +5448,19 @@ var IOVPlayer = function () {
       this.moovBox = null;
       this.mimeCodec = null;
 
-      this.mseWrapper.destroy();
-      this.mseWrapper = null;
+      // For some reason, this can be undefined when destroying.  Seems to be
+      // related to mqtt "fail" events, but I'm not sure
+      if (this.mseWrapper) {
+        this.mseWrapper.destroy();
+        this.mseWrapper = null;
+      }
     }
-
-    // onTransportTransaction (iov, response) {
-    //   const new_mimeCodec = response.mimeCodec;
-    //   const new_guid = response.guid; // stream guid
-
-    //   this.assertMimeCodecSupported(new_mimeCodec);
-
-    //   const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
-
-    //   const transport = (iov === null)
-    //     ? this.iov.transport
-    //     : iov.transport;
-
-    //   transport.subscribe(initSegmentTopic, (mqtt_msg) => {
-    //     const moov = mqtt_msg.payloadBytes; // store new MOOV atom.
-
-    //     transport.unsubscribe(initSegmentTopic);
-
-    //     const oldTopic = `iov/video/${this.guid}/live`;
-    //     const newTopic = `iov/video/${new_guid}/live`;
-
-    //     transport.subscribe(newTopic, (moof_mqtt_msg) => {
-    //       const moofBox = moof_mqtt_msg.payloadBytes;
-
-    //       // unsubscribe to existing live
-    //       // 1) unsubscribe to remove avoid callback
-    //       transport.unsubscribe(newTopic);
-
-    //       // 2) unsubscribe to live callback for the old stream
-    //       this.iov.transport.unsubscribe(oldTopic);
-
-    //       // 3) resubscribe with different callback
-    //       transport.subscribe(newTopic, (mqtt_msg) => {
-    //         this.trigger('videoReceived');
-    //         this.mseWrapper.append(mqtt_msg.payloadBytes);
-    //       });
-
-    //       // alter object properties to reflect new stream
-    //       this.guid = new_guid;
-    //       this.moovBox = moov;
-    //       this.mimeCodec = new_mimeCodec;
-
-    //       // remove media source buffer, reinitialize
-    //       this.reinitializeMseWrapper(this.mimeCodec);
-
-    //       if (!iov) {
-    //         return;
-    //       }
-
-    //       if (iov.config.parentNodeId !== null) {
-    //         var iframe_elm = document.getElementById(this.iov.config.clientId);
-    //         var parent = document.getElementById(iov.config.parentNodeId);
-
-    //         if (parent) {
-    //           parent.removeChild(iframe_elm);
-    //         }
-
-    //         // remove code from iframe.
-    //         iframe_elm.srcdoc = '';
-    //       }
-
-    //       // replace iov variable with the new one created.
-    //       this.iov = iov;
-    //     });
-    //   });
-
-    //   const play_request_topic = `iov/video/${new_guid}/play`;
-
-    //   transport.publish(play_request_topic, {
-    //     initSegmentTopic,
-    //     clientId: (iov === null)
-    //       ? this.iov.config.clientId
-    //       : iov.config.clientId,
-    //   });
-    // }
-
-    // change (newStream, iov) {
-    //   debug('change');
-
-    //   const request = { clientId: this.iov.config.clientId };
-    //   const topic = `iov/video/${window.btoa(newStream)}/request`;
-
-    //   if (iov) {
-    //     iov.transport.transaction(topic, (...args) => this.onTransportTransaction(iov, ...args), request);
-    //     return;
-    //   }
-
-    //   this.iov.transport.transaction(topic, (...args) => this.onTransportTransaction(iov, ...args), request);
-    // }
-
   }]);
 
   return IOVPlayer;
 }();
 
-IOVPlayer.EVENT_NAMES = ['metric', 'firstChunk', 'videoReceived', 'videoInfoReceived'];
+IOVPlayer.EVENT_NAMES = ['metric', 'firstFrameShown', 'videoReceived', 'videoInfoReceived'];
 IOVPlayer.METRIC_TYPES = ['sourceBuffer.bufferTimeEnd', 'video.currentTime', 'video.drift', 'video.driftCorrection', 'video.segmentInterval', 'video.segmentIntervalAverage'];
 IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
 IOVPlayer.DRIFT_CORRECTION_CONSTANT = 2;

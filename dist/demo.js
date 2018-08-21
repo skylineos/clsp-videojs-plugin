@@ -278,8 +278,8 @@ function initializeTours() {
     jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html(tour.plist[0]);
 
     tour.player.on('network-error', function (evt, message) {
-      console.log('!!!!! Handled network-error', evt);
-      console.log(message);
+      // console.log('!!!!! Handled network-error', evt);
+      // console.log(message);
     });
 
     tour.timer = setInterval(function () {
@@ -287,7 +287,7 @@ function initializeTours() {
       jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
 
       tour.counter += 1;
-      console.log('selected url', url, tour.plist);
+      // console.log('selected url', url, tour.plist);
 
       tour.player.trigger('changesrc', {
         eid: 'tour-video',
