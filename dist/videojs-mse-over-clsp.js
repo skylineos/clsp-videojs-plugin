@@ -4680,30 +4680,28 @@ var MSEWrapper = function () {
     }
   }, {
     key: 'trimBuffer',
-    value: function trimBuffer() {
-      var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
+    value: function trimBuffer(info) {
       var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
       this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
-      if (!info) {
-        // @todo - should this be handled in some way?
-        return;
-      }
+      try {
+        if (!info) {
+          info = this.getBufferTimes();
+        }
 
-      if (force || this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
-        debug('Removing old stuff from sourceBuffer...');
+        if (force || this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
+          debug('Removing old stuff from sourceBuffer...');
 
-        try {
           // @todo - this is the biggest performance problem we have with this player.
           // Can you figure out how to manage the memory usage without causing the streams
           // to stutter?
           this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
           this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
-        } catch (error) {
-          this.metric('sourceBuffer.trim.error', 1);
-          this.eventListeners.sourceBuffer.onRemoveError(error);
         }
+      } catch (error) {
+        this.metric('sourceBuffer.trim.error', 1);
+        this.eventListeners.sourceBuffer.onRemoveError(error);
       }
     }
   }, {
@@ -4792,11 +4790,7 @@ var MSEWrapper = function () {
           resolve();
         });
 
-        try {
-          _this2.trimBuffer(undefined, true);
-        } catch (e) {
-          console.error(e);
-        }
+        _this2.trimBuffer(undefined, true);
       });
     }
   }, {
@@ -4825,7 +4819,10 @@ var MSEWrapper = function () {
       // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
       // }
 
-      this.mediaSource.endOfStream();
+      if (this.isMediaSourceReady()) {
+        this.mediaSource.endOfStream();
+      }
+
       this.mediaSource.removeSourceBuffer(this.sourceBuffer);
 
       // @todo - is this happening at the right time, or should it happen
@@ -5241,7 +5238,7 @@ var IOVPlayer = function () {
         // the source has changed.  This is what allows tours to switch to the next
         if (_this.videoElementParent !== null) {
           try {
-            _this.videoElementParent.append(_this.videoElement);
+            _this.videoElementParent.insertBefore(_this.videoElement, _this.videoJsVideoElement);
 
             var videos = _this.videoElementParent.getElementsByTagName('video');
 
@@ -5361,6 +5358,12 @@ var IOVPlayer = function () {
                         _this2.reinitializeMseWrapper(mimeCodec);
                       },
                       onRemoveError: function onRemoveError(error) {
+                        if (error.constructor.name === 'DOMException') {
+                          // @todo - every time the mseWrapper is destroyed, there is a
+                          // sourceBuffer error.  No need to log that, but you should fix it
+                          return;
+                        }
+
                         // observed this fail during a memry snapshot in chrome
                         // otherwise no observed failure, so ignore exception.
                         _this2._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);

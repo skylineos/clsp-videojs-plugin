@@ -103,10 +103,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! moment */ "./node_modules/moment/moment.js");
 /* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(moment__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var babel_polyfill__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! babel-polyfill */ "./node_modules/babel-polyfill/lib/index.js");
-/* harmony import */ var babel_polyfill__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(babel_polyfill__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../../package.json */ "./package.json");
-var _package_json__WEBPACK_IMPORTED_MODULE_5___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../../package.json */ "./package.json", 1);
+/* harmony import */ var lodash_compact__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! lodash/compact */ "./node_modules/lodash/compact.js");
+/* harmony import */ var lodash_compact__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(lodash_compact__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var babel_polyfill__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! babel-polyfill */ "./node_modules/babel-polyfill/lib/index.js");
+/* harmony import */ var babel_polyfill__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(babel_polyfill__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../../package.json */ "./package.json");
+var _package_json__WEBPACK_IMPORTED_MODULE_6___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../../package.json */ "./package.json", 1);
+
 
 
 
@@ -119,7 +122,7 @@ var _package_json__WEBPACK_IMPORTED_MODULE_5___namespace = /*#__PURE__*/__webpac
 
 
 window.videojs = video_js__WEBPACK_IMPORTED_MODULE_2___default.a;
-window.CLSP_DEMO_VERSION = _package_json__WEBPACK_IMPORTED_MODULE_5__.version;
+window.CLSP_DEMO_VERSION = _package_json__WEBPACK_IMPORTED_MODULE_6__.version;
 
 var defaultTourUrls = ['clsp://172.28.12.247/testpattern', 'clsp://172.28.12.57:9001/FairfaxVideo0520', 'clsp://172.28.12.57:9001/40004'];
 
@@ -197,8 +200,8 @@ function initializeWall() {
 
     var now = Date.now();
 
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tourTotalVideos').html('Total videos playing: ' + cellIndex);
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tourStartTime').html('Time Started: ' + moment__WEBPACK_IMPORTED_MODULE_3___default()(now).format('MMMM Do YYYY, h:mm:ss a'));
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#wallTotalVideos').html('Total videos playing: ' + cellIndex);
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#wallStartTime').html('Time Started: ' + moment__WEBPACK_IMPORTED_MODULE_3___default()(now).format('MMMM Do YYYY, h:mm:ss a'));
 
     if (wallInterval) {
       window.clearInterval(wallInterval);
@@ -209,7 +212,7 @@ function initializeWall() {
       var minutesFromStart = Math.floor(moment__WEBPACK_IMPORTED_MODULE_3___default.a.duration(Date.now() - now).asMinutes()) - hoursFromStart * 60;
       var secondsFromStart = Math.floor(moment__WEBPACK_IMPORTED_MODULE_3___default.a.duration(Date.now() - now).asSeconds()) - hoursFromStart * 60 * 60 - minutesFromStart * 60;
 
-      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tourDuration').html('This tour has been running for ' + hoursFromStart + ' hours ' + minutesFromStart + ' minutes ' + secondsFromStart + ' seconds');
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#wallDuration').html('This Video Wall has been running for ' + hoursFromStart + ' hours ' + minutesFromStart + ' minutes ' + secondsFromStart + ' seconds');
     }, 1000);
   }
 
@@ -254,20 +257,14 @@ function initializeTours() {
     tour.interval = parseInt(jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-switch-interval').val());
     tour.plist = [];
 
-    var tourUrls = window.localStorage.getItem('skyline.clspPlugin.tourUrls').split('\n');
+    var tourUrls = lodash_compact__WEBPACK_IMPORTED_MODULE_4___default()(window.localStorage.getItem('skyline.clspPlugin.tourUrls').split('\n'));
 
-    for (var i = 0; i < tourUrls.length; i++) {
-      if (tourUrls[i].length > 0) {
-        tour.plist.push(tourUrls[i]);
-      }
-    }
-
-    if (tour.plist.length < 2) {
+    if (tourUrls.length < 2) {
       window.alert('at least two source needed!');
       return;
     }
 
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-first-source').attr('src', tour.plist[0]);
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-first-source').attr('src', tourUrls[0]);
 
     tour.counter = 1;
     tour.player = null;
@@ -278,7 +275,7 @@ function initializeTours() {
 
     tour.player = window.videojs('#tour-video');
     tour.player.clsp(); // start playing first stream
-    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html(tour.plist[0]);
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html(tourUrls[0]);
 
     tour.player.on('network-error', function (evt, message) {
       // console.log('!!!!! Handled network-error', evt);
@@ -286,20 +283,41 @@ function initializeTours() {
     });
 
     tour.timer = setInterval(function () {
-      var url = tour.plist[tour.counter % tour.plist.length];
-      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
+      var url = tourUrls[tour.counter % tourUrls.length];
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#now-playing').html('switching to ' + tourUrls[tour.counter % tourUrls.length] + ' on next the h264 iframe');
 
       tour.counter += 1;
-      // console.log('selected url', url, tour.plist);
+      // console.log('selected url', url, tourUrls);
 
       tour.player.trigger('changesrc', {
         eid: 'tour-video',
         url: url
       });
+
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tourCount').html('Number of streams played: ' + tour.counter);
     }, tour.interval * 1000);
+
+    var now = Date.now();
+
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tourTotalVideos').html('Tour Playlist Length: ' + tourUrls.length);
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tourStartTime').html('Time Started: ' + moment__WEBPACK_IMPORTED_MODULE_3___default()(now).format('MMMM Do YYYY, h:mm:ss a'));
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour_duration').html('Streams are playing ' + tour.interval + ' seconds apart.');
+    jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tourCount').html('Number of streams played: ' + tour.counter);
+
+    if (wallInterval) {
+      window.clearInterval(wallInterval);
+    }
+
+    wallInterval = setInterval(function () {
+      var hoursFromStart = Math.floor(moment__WEBPACK_IMPORTED_MODULE_3___default.a.duration(Date.now() - now).asHours());
+      var minutesFromStart = Math.floor(moment__WEBPACK_IMPORTED_MODULE_3___default.a.duration(Date.now() - now).asMinutes()) - hoursFromStart * 60;
+      var secondsFromStart = Math.floor(moment__WEBPACK_IMPORTED_MODULE_3___default.a.duration(Date.now() - now).asSeconds()) - hoursFromStart * 60 * 60 - minutesFromStart * 60;
+
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tourDuration').html('This Video Wall has been running for ' + hoursFromStart + ' hours ' + minutesFromStart + ' minutes ' + secondsFromStart + ' seconds');
+    }, 1000);
   });
 
-  var $tourUrls = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tour-list');
+  var $tourUrls = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#tourUrls');
 
   $tourUrls.val(window.localStorage.getItem('skyline.clspPlugin.tourUrls'));
 
@@ -20885,6 +20903,47 @@ function isFunction(fn) {
 	return jQuery;
 });
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../webpack/buildin/module.js */ "./node_modules/webpack/buildin/module.js")(module)))
+
+/***/ }),
+
+/***/ "./node_modules/lodash/compact.js":
+/*!****************************************!*\
+  !*** ./node_modules/lodash/compact.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Creates an array with all falsey values removed. The values `false`, `null`,
+ * `0`, `""`, `undefined`, and `NaN` are falsey.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Array
+ * @param {Array} array The array to compact.
+ * @returns {Array} Returns the new array of filtered values.
+ * @example
+ *
+ * _.compact([0, 1, false, 2, '', 3]);
+ * // => [1, 2, 3]
+ */
+function compact(array) {
+  var index = -1,
+      length = array == null ? 0 : array.length,
+      resIndex = 0,
+      result = [];
+
+  while (++index < length) {
+    var value = array[index];
+    if (value) {
+      result[resIndex++] = value;
+    }
+  }
+  return result;
+}
+
+module.exports = compact;
 
 /***/ }),
 
