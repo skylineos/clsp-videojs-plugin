@@ -425,28 +425,27 @@ export default class MSEWrapper {
     return info;
   }
 
-  trimBuffer (info = this.getBufferTimes(), force = false) {
+  trimBuffer (info, force = false) {
     this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
-    if (!info) {
-      // @todo - should this be handled in some way?
-      return;
-    }
+    try {
+      if (!info) {
+        info = this.getBufferTimes();
+      }
 
-    if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
-      debug('Removing old stuff from sourceBuffer...');
+      if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
+        debug('Removing old stuff from sourceBuffer...');
 
-      try {
         // @todo - this is the biggest performance problem we have with this player.
         // Can you figure out how to manage the memory usage without causing the streams
         // to stutter?
         this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
         this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
       }
-      catch (error) {
-        this.metric('sourceBuffer.trim.error', 1);
-        this.eventListeners.sourceBuffer.onRemoveError(error);
-      }
+    }
+    catch (error) {
+      this.metric('sourceBuffer.trim.error', 1);
+      this.eventListeners.sourceBuffer.onRemoveError(error);
     }
   }
 
@@ -527,12 +526,7 @@ export default class MSEWrapper {
         resolve();
       });
 
-      try {
-        this.trimBuffer(undefined, true);
-      }
-      catch (e) {
-        console.error(e);
-      }
+      this.trimBuffer(undefined, true);
     });
   }
 
@@ -560,7 +554,10 @@ export default class MSEWrapper {
     // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
     // }
 
-    this.mediaSource.endOfStream();
+    if (this.isMediaSourceReady()) {
+      this.mediaSource.endOfStream();
+    }
+
     this.mediaSource.removeSourceBuffer(this.sourceBuffer);
 
     // @todo - is this happening at the right time, or should it happen

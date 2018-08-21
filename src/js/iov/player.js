@@ -213,7 +213,7 @@ export default class IOVPlayer {
       // the source has changed.  This is what allows tours to switch to the next
       if (this.videoElementParent !== null) {
         try {
-          this.videoElementParent.append(this.videoElement);
+          this.videoElementParent.insertBefore(this.videoElement, this.videoJsVideoElement);
 
           let videos = this.videoElementParent.getElementsByTagName('video');
 
@@ -335,6 +335,12 @@ export default class IOVPlayer {
             this.reinitializeMseWrapper(mimeCodec);
           },
           onRemoveError: (error) => {
+            if (error.constructor.name === 'DOMException') {
+              // @todo - every time the mseWrapper is destroyed, there is a
+              // sourceBuffer error.  No need to log that, but you should fix it
+              return;
+            }
+
             // observed this fail during a memry snapshot in chrome
             // otherwise no observed failure, so ignore exception.
             this._onError(
