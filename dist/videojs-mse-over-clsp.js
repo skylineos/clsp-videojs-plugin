@@ -3403,6 +3403,8 @@ var MqttHandler = function (_Component) {
       this.debug('createIOV');
 
       this.updateIOV(_iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(this.source_.src, this.mqttConduitCollection, player));
+
+      this.iov.initialize();
     }
   }, {
     key: 'updateIOV',
@@ -3419,8 +3421,6 @@ var MqttHandler = function (_Component) {
       }
 
       this.iov = iov;
-
-      this.iov.initialize();
     }
   }]);
 
@@ -4082,6 +4082,8 @@ var IOV = function () {
 
       this.player.on('firstFrameShown', function () {
         _this.playerInstance.loadingSpinner.hide();
+
+        videoTag.style.display = 'none';
       });
 
       this.player.on('videoReceived', function () {
@@ -4223,6 +4225,8 @@ __webpack_require__.r(__webpack_exports__);
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 
@@ -4242,19 +4246,27 @@ var MSEWrapper = function () {
     }
   }, {
     key: 'factory',
-    value: function factory() {
-      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    value: function factory(videoElement) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-      return new MSEWrapper(options);
+      return new MSEWrapper(videoElement, options);
     }
   }]);
 
-  function MSEWrapper() {
-    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  function MSEWrapper(videoElement) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck(this, MSEWrapper);
 
     debug('Constructing...');
+
+    if (!videoElement) {
+      throw new Error('videoElement is required to construct an MSEWrapper.');
+    }
+
+    this.destroyed = false;
+
+    this.videoElement = videoElement;
 
     this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
       // These default buffer value provide the best results in my testing.
@@ -4419,7 +4431,7 @@ var MSEWrapper = function () {
         this.objectURL = window.URL.createObjectURL(this.mediaSource);
       }
 
-      return this.objectURL;
+      this.videoElement.src = this.objectURL;
     }
   }, {
     key: 'destroyVideoElementSrc',
@@ -4445,7 +4457,7 @@ var MSEWrapper = function () {
       }
 
       // free the resource
-      return window.URL.revokeObjectURL(this.mediaSource);
+      return window.URL.revokeObjectURL(this.videoElement.src);
     }
   }, {
     key: 'reinitializeVideoElementSrc',
@@ -4473,47 +4485,71 @@ var MSEWrapper = function () {
     }
   }, {
     key: 'initializeSourceBuffer',
-    value: function initializeSourceBuffer(mimeCodec) {
-      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    value: function () {
+      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(mimeCodec) {
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                debug('initializeSourceBuffer...');
 
-      debug('initializeSourceBuffer...');
+                options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
+                  onAppendStart: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+                  onAppendFinish: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+                  onRemoveFinish: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+                  onAppendError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+                  onRemoveError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+                  onStreamFrozen: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+                  onError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
+                  retry: true
+                });
 
-      options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
-        onAppendStart: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
-        onAppendFinish: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
-        onRemoveFinish: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
-        onAppendError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
-        onRemoveError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
-        onStreamFrozen: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
-        onError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
-        retry: true
-      });
+                if (this.isMediaSourceReady()) {
+                  _context.next = 4;
+                  break;
+                }
 
-      if (!this.isMediaSourceReady()) {
-        throw new Error('Cannot create the sourceBuffer if the mediaSource is not ready.');
+                throw new Error('Cannot create the sourceBuffer if the mediaSource is not ready.');
+
+              case 4:
+                _context.next = 6;
+                return this.destroySourceBuffer();
+
+              case 6:
+
+                this.metric('sourceBuffer.created', 1);
+
+                this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
+                this.sourceBuffer.mode = 'sequence';
+
+                // Custom Events
+                this.eventListeners.sourceBuffer.onAppendStart = options.onAppendStart;
+                this.eventListeners.sourceBuffer.onAppendError = options.onAppendError;
+                this.eventListeners.sourceBuffer.onRemoveFinish = options.onRemoveFinish;
+                this.eventListeners.sourceBuffer.onAppendFinish = options.onAppendFinish;
+                this.eventListeners.sourceBuffer.onRemoveError = options.onRemoveError;
+                this.eventListeners.sourceBuffer.onStreamFrozen = options.onStreamFrozen;
+                this.eventListeners.sourceBuffer.onError = options.onError;
+
+                // Supported Events
+                this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
+                this.sourceBuffer.addEventListener('error', this.eventListeners.sourceBuffer.onError);
+
+              case 18:
+              case 'end':
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function initializeSourceBuffer(_x5) {
+        return _ref.apply(this, arguments);
       }
 
-      // Kill the existing source buffer
-      this.destroySourceBuffer();
-
-      this.metric('sourceBuffer.created', 1);
-
-      this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
-      this.sourceBuffer.mode = 'sequence';
-
-      // Custom Events
-      this.eventListeners.sourceBuffer.onAppendStart = options.onAppendStart;
-      this.eventListeners.sourceBuffer.onAppendError = options.onAppendError;
-      this.eventListeners.sourceBuffer.onRemoveFinish = options.onRemoveFinish;
-      this.eventListeners.sourceBuffer.onAppendFinish = options.onAppendFinish;
-      this.eventListeners.sourceBuffer.onRemoveError = options.onRemoveError;
-      this.eventListeners.sourceBuffer.onStreamFrozen = options.onStreamFrozen;
-      this.eventListeners.sourceBuffer.onError = options.onError;
-
-      // Supported Events
-      this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
-      this.sourceBuffer.addEventListener('error', this.eventListeners.sourceBuffer.onError);
-    }
+      return initializeSourceBuffer;
+    }()
   }, {
     key: 'queueSegment',
     value: function queueSegment(segment) {
@@ -4546,9 +4582,9 @@ var MSEWrapper = function () {
     }
   }, {
     key: '_append',
-    value: function _append(_ref) {
-      var timestamp = _ref.timestamp,
-          byteArray = _ref.byteArray;
+    value: function _append(_ref2) {
+      var timestamp = _ref2.timestamp,
+          byteArray = _ref2.byteArray;
 
       silly('Appending to the sourceBuffer...');
 
@@ -4740,34 +4776,34 @@ var MSEWrapper = function () {
   }, {
     key: 'destroySourceBuffer',
     value: function destroySourceBuffer() {
-      debug('destroySourceBuffer...');
+      var _this2 = this;
 
-      if (!this.sourceBuffer) {
-        return;
-      }
+      return new Promise(function (resolve, reject) {
+        if (!_this2.sourceBuffer) {
+          return resolve();
+        }
 
-      this.sourceBufferAbort();
+        _this2.sourceBufferAbort();
 
-      this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
-      this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
+        _this2.sourceBuffer.removeEventListener('updateend', _this2.onSourceBufferUpdateEnd);
+        _this2.sourceBuffer.removeEventListener('error', _this2.eventListeners.sourceBuffer.onError);
 
-      try {
-        this.trimBuffer(undefined, true);
-      } catch (e) {
-        console.error(e);
-      }
+        _this2.sourceBuffer.addEventListener('updateend', function () {
+          resolve();
+        });
 
-      this.sourceBuffer = null;
-
-      this.timeBuffered = null;
-      this.previousTimeEnd = null;
-      this.segmentQueue = null;
-
-      this.metric('sourceBuffer.destroyed', 1);
+        try {
+          _this2.trimBuffer(undefined, true);
+        } catch (e) {
+          console.error(e);
+        }
+      });
     }
   }, {
     key: 'destroyMediaSource',
     value: function destroyMediaSource() {
+      this.metric('sourceBuffer.destroyed', 1);
+
       debug('Destroying mediaSource...');
 
       if (!this.mediaSource) {
@@ -4778,37 +4814,81 @@ var MSEWrapper = function () {
       this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
       this.mediaSource.removeEventListener('error', this.eventListeners.mediaSource.error);
 
-      var sourceBuffers = this.mediaSource.sourceBuffers;
+      // let sourceBuffers = this.mediaSource.sourceBuffers;
 
-      if (sourceBuffers.SourceBuffers) {
-        // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
-        sourceBuffers = sourceBuffers.SourceBuffers();
-      }
+      // if (sourceBuffers.SourceBuffers) {
+      //   // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
+      //   sourceBuffers = sourceBuffers.SourceBuffers();
+      // }
 
-      for (var i = 0; i < sourceBuffers.length; i++) {
-        this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
-      }
+      // for (let i = 0; i < sourceBuffers.length; i++) {
+      // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
+      // }
+
+      this.mediaSource.endOfStream();
+      this.mediaSource.removeSourceBuffer(this.sourceBuffer);
 
       // @todo - is this happening at the right time, or should it happen
       // prior to removing the source buffers?
       this.destroyVideoElementSrc();
 
-      this.mediaSource = null;
-
       this.metric('mediaSource.destroyed', 1);
     }
   }, {
     key: 'destroy',
-    value: function destroy() {
-      this.destroySourceBuffer();
-      this.destroyMediaSource();
+    value: function () {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                debug('destroySourceBuffer...');
 
-      this.options = null;
-      this.metrics = null;
-      this.events = null;
-      this.eventListeners = null;
-      this.onSourceBufferUpdateEnd = null;
-    }
+                if (!this.destroyed) {
+                  _context2.next = 3;
+                  break;
+                }
+
+                return _context2.abrupt('return');
+
+              case 3:
+
+                this.destroyed = true;
+
+                this.destroyMediaSource();
+                _context2.next = 7;
+                return this.destroySourceBuffer();
+
+              case 7:
+
+                this.mediaSource = null;
+                this.sourceBuffer = null;
+                this.videoElement = null;
+
+                this.timeBuffered = null;
+                this.previousTimeEnd = null;
+                this.segmentQueue = null;
+
+                this.options = null;
+                this.metrics = null;
+                this.events = null;
+                this.eventListeners = null;
+                this.onSourceBufferUpdateEnd = null;
+
+              case 18:
+              case 'end':
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function destroy() {
+        return _ref3.apply(this, arguments);
+      }
+
+      return destroy;
+    }()
   }]);
 
   return MSEWrapper;
@@ -4942,6 +5022,8 @@ __webpack_require__.r(__webpack_exports__);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -5129,19 +5211,29 @@ var IOVPlayer = function () {
     value: function initializeVideoElement() {
       var _this = this;
 
-      this.originalVideoElement = document.getElementById(this.eid);
+      this.videoJsVideoElement = document.getElementById(this.eid);
 
-      if (!this.originalVideoElement) {
+      if (!this.videoJsVideoElement) {
         throw new Error('Unable to find an element in the DOM with id "' + this.eid + '".');
       }
+
+      var videoId = 'clsp-video-' + this._id;
 
       // when videojs initializes the video element (or something like that),
       // it creates events and listeners on that element that it uses, however
       // these events interfere with our ability to play clsp streams.  Cloning
       // the element like this and reinserting it is a blunt instrument to remove
       // all of the videojs events so that we are in control of the player.
-      this.videoElement = this.originalVideoElement.cloneNode();
-      this.videoElementParent = this.originalVideoElement.parentNode;
+      // this.videoElement = this.videoJsVideoElement.cloneNode();
+      this.videoElement = document.createElement('video');
+      this.videoElement.setAttribute('id', videoId);
+      this.videoElement.setAttribute('autoplay', this.videoJsVideoElement.getAttribute('autoplay'));
+      this.videoElement.setAttribute('muted', this.videoJsVideoElement.getAttribute('muted'));
+      this.videoElement.setAttribute('tabindex', this.videoJsVideoElement.getAttribute('tabindex'));
+      this.videoElement.setAttribute('class', this.videoJsVideoElement.getAttribute('class'));
+      this.videoElement.classList.add('clsp-video');
+
+      this.videoElementParent = this.videoJsVideoElement.parentNode;
 
       this.on('firstFrameShown', function () {
         // @todo - this may be overkill given the IOV changeSourceMaxWait...
@@ -5149,19 +5241,32 @@ var IOVPlayer = function () {
         // the source has changed.  This is what allows tours to switch to the next
         if (_this.videoElementParent !== null) {
           try {
-            _this.videoElementParent.replaceChild(_this.videoElement, _this.originalVideoElement);
-          } catch (e) {
-            console.error(e);
-            try {
-              _this.originalVideoElement.parentNode.removeChild(_this.originalVideoElement);
-            } catch (e) {
-              console.error(e);
-              try {
-                _this.originalVideoElement.outerHTML = '';
-              } catch (e) {
-                _this.iov.destroy();
+            _this.videoElementParent.append(_this.videoElement);
+
+            var videos = _this.videoElementParent.getElementsByTagName('video');
+
+            for (var i = 0; i < videos.length; i++) {
+              var video = videos[i];
+              var id = video.getAttribute('id');
+
+              if (id !== _this.eid && id !== videoId) {
+                // video.pause();
+                // video.removeAttribute('src');
+                // video.load();
+                // video.style.display = 'none';
+                _this.videoElementParent.removeChild(video);
+                video.remove();
+                video = null;
+                videos = null;
+                break;
               }
             }
+
+            // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
+            // is there still a reference to this element?
+            // this.videoJsVideoElement = null;
+          } catch (e) {
+            console.error(e);
           }
         }
       });
@@ -5175,7 +5280,7 @@ var IOVPlayer = function () {
         this.mseWrapper.destroy();
       }
 
-      this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory();
+      this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this.videoElement);
 
       this.mseWrapper.on('metric', function (_ref) {
         var type = _ref.type,
@@ -5185,88 +5290,110 @@ var IOVPlayer = function () {
       });
 
       this.mseWrapper.initializeMediaSource({
-        onSourceOpen: function onSourceOpen() {
-          debug('on mediaSource sourceopen');
+        onSourceOpen: function () {
+          var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+            return regeneratorRuntime.wrap(function _callee$(_context) {
+              while (1) {
+                switch (_context.prev = _context.next) {
+                  case 0:
+                    debug('on mediaSource sourceopen');
 
-          _this2.mseWrapper.initializeSourceBuffer(mimeCodec, {
-            onAppendStart: function onAppendStart(byteArray) {
-              silly('On Append Start...');
+                    _context.next = 3;
+                    return _this2.mseWrapper.initializeSourceBuffer(mimeCodec, {
+                      onAppendStart: function onAppendStart(byteArray) {
+                        silly('On Append Start...');
 
-              if (_this2.LogSourceBuffer === true && _this2.LogSourceBufferTopic !== null) {
-                debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
+                        if (_this2.LogSourceBuffer === true && _this2.LogSourceBufferTopic !== null) {
+                          debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
 
-                var mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-                mqtt_msg.destinationName = _this2.LogSourceBufferTopic;
-                window.MQTTClient.send(mqtt_msg);
-              }
+                          var mqtt_msg = new window.Paho.MQTT.Message(byteArray);
+                          mqtt_msg.destinationName = _this2.LogSourceBufferTopic;
+                          window.MQTTClient.send(mqtt_msg);
+                        }
 
-              _this2.iov.statsMsg.byteCount += byteArray.length;
-            },
-            onAppendFinish: function onAppendFinish(info) {
-              silly('On Append Finish...');
+                        _this2.iov.statsMsg.byteCount += byteArray.length;
+                      },
+                      onAppendFinish: function onAppendFinish(info) {
+                        silly('On Append Finish...');
 
-              if (!_this2.firstFrameShown) {
-                _this2.firstFrameShown = true;
-                _this2.trigger('firstFrameShown');
-              }
+                        if (!_this2.firstFrameShown) {
+                          _this2.firstFrameShown = true;
+                          _this2.trigger('firstFrameShown');
+                        }
 
-              _this2.drift = info.bufferTimeEnd - _this2.videoElement.currentTime;
+                        _this2.drift = info.bufferTimeEnd - _this2.videoElement.currentTime;
 
-              _this2.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
-              _this2.metric('video.currentTime', _this2.videoElement.currentTime);
-              _this2.metric('video.drift', _this2.drift);
+                        _this2.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+                        _this2.metric('video.currentTime', _this2.videoElement.currentTime);
+                        _this2.metric('video.drift', _this2.drift);
 
-              if (_this2.drift > _this2.segmentIntervalAverage / 1000 + _this2.options.driftCorrectionConstant) {
-                _this2.metric('video.driftCorrection', 1);
-                _this2.videoElement.currentTime = info.bufferTimeEnd;
-              }
+                        if (_this2.drift > _this2.segmentIntervalAverage / 1000 + _this2.options.driftCorrectionConstant) {
+                          _this2.metric('video.driftCorrection', 1);
+                          _this2.videoElement.currentTime = info.bufferTimeEnd;
+                        }
 
-              if (_this2.videoElement.paused === true) {
-                debug('Video is paused!');
+                        if (_this2.videoElement.paused === true) {
+                          debug('Video is paused!');
 
-                try {
-                  var promise = _this2.videoElement.play();
+                          try {
+                            var promise = _this2.videoElement.play();
 
-                  if (typeof promise !== 'undefined') {
-                    promise.catch(function (error) {
-                      _this2._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                            if (typeof promise !== 'undefined') {
+                              promise.catch(function (error) {
+                                _this2._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                              });
+                            }
+                          } catch (error) {
+                            _this2._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+                          }
+                        }
+                      },
+                      onRemoveFinish: function onRemoveFinish(info) {
+                        debug('onRemoveFinish');
+                      },
+                      onAppendError: function onAppendError(error) {
+                        // internal error, this has been observed to happen the tab
+                        // in the browser where this video player lives is hidden
+                        // then reselected. 'ex' is undefined the error is bug
+                        // within the MSE C++ implementation in the browser.
+                        _this2._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
+                        // this.videoPlayer.error({ code: 3 });
+                        _this2.reinitializeMseWrapper(mimeCodec);
+                      },
+                      onRemoveError: function onRemoveError(error) {
+                        // observed this fail during a memry snapshot in chrome
+                        // otherwise no observed failure, so ignore exception.
+                        _this2._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
+                      },
+                      onStreamFrozen: function onStreamFrozen() {
+                        debug('stream appears to be frozen - reinitializing...');
+
+                        _this2.reinitializeMseWrapper(mimeCodec);
+                      },
+                      onError: function onError(error) {
+                        _this2._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+                      }
                     });
-                  }
-                } catch (error) {
-                  _this2._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+
+                  case 3:
+
+                    _this2.trigger('videoInfoReceived');
+                    _this2.mseWrapper.append(_this2.moovBox);
+
+                  case 5:
+                  case 'end':
+                    return _context.stop();
                 }
               }
-            },
-            onRemoveFinish: function onRemoveFinish(info) {
-              debug('onRemoveFinish');
-            },
-            onAppendError: function onAppendError(error) {
-              // internal error, this has been observed to happen the tab
-              // in the browser where this video player lives is hidden
-              // then reselected. 'ex' is undefined the error is bug
-              // within the MSE C++ implementation in the browser.
-              _this2._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
-              // this.videoPlayer.error({ code: 3 });
-              _this2.reinitializeMseWrapper(mimeCodec);
-            },
-            onRemoveError: function onRemoveError(error) {
-              // observed this fail during a memry snapshot in chrome
-              // otherwise no observed failure, so ignore exception.
-              _this2._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
-            },
-            onStreamFrozen: function onStreamFrozen() {
-              debug('stream appears to be frozen - reinitializing...');
+            }, _callee, _this2);
+          }));
 
-              _this2.reinitializeMseWrapper(mimeCodec);
-            },
-            onError: function onError(error) {
-              _this2._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
-            }
-          });
+          function onSourceOpen() {
+            return _ref2.apply(this, arguments);
+          }
 
-          _this2.trigger('videoInfoReceived');
-          _this2.mseWrapper.append(_this2.moovBox);
-        },
+          return onSourceOpen;
+        }(),
         onSourceEnded: function onSourceEnded() {
           debug('on mediaSource sourceended');
 
@@ -5278,9 +5405,11 @@ var IOVPlayer = function () {
         }
       });
 
-      if (this.mseWrapper.mediaSource && this.videoElement) {
-        this.videoElement.src = this.mseWrapper.reinitializeVideoElementSrc();
+      if (!this.mseWrapper.mediaSource || !this.videoElement) {
+        throw new Error('The video element or mediaSource is not ready!');
       }
+
+      this.mseWrapper.reinitializeVideoElementSrc();
     }
   }, {
     key: 'resyncStream',
@@ -5362,11 +5491,11 @@ var IOVPlayer = function () {
 
   }, {
     key: 'onIovPlayTransaction',
-    value: function onIovPlayTransaction(_ref2) {
+    value: function onIovPlayTransaction(_ref3) {
       var _this5 = this;
 
-      var mimeCodec = _ref2.mimeCodec,
-          guid = _ref2.guid;
+      var mimeCodec = _ref3.mimeCodec,
+          guid = _ref3.guid;
 
       debug('onIovPlayTransaction');
 
@@ -5376,8 +5505,8 @@ var IOVPlayer = function () {
 
       this.state = 'waiting-for-first-moov';
 
-      this.iov.conduit.subscribe(initSegmentTopic, function (_ref3) {
-        var payloadBytes = _ref3.payloadBytes;
+      this.iov.conduit.subscribe(initSegmentTopic, function (_ref4) {
+        var payloadBytes = _ref4.payloadBytes;
 
         debug('onIovPlayTransaction ' + initSegmentTopic + ' listener fired');
         debug('received moov of type "' + (typeof payloadBytes === 'undefined' ? 'undefined' : _typeof(payloadBytes)) + '" from server');
@@ -5431,7 +5560,8 @@ var IOVPlayer = function () {
       this.firstFrameShown = null;
 
       this.playerInstance = null;
-      this.videoElement = null;
+      this.videoJsVideoElement = null;
+      this.videoElementParent = null;
 
       this.events = null;
       this.metrics = null;
@@ -5448,12 +5578,15 @@ var IOVPlayer = function () {
       this.moovBox = null;
       this.mimeCodec = null;
 
-      // For some reason, this can be undefined when destroying.  Seems to be
-      // related to mqtt "fail" events, but I'm not sure
-      if (this.mseWrapper) {
-        this.mseWrapper.destroy();
-        this.mseWrapper = null;
-      }
+      this.mseWrapper.destroy();
+      this.mseWrapper = null;
+
+      // Setting the src of the video element to an empty string is
+      // the only reliable way we have found to ensure that MediaSource,
+      // SourceBuffer, and various Video elements are properly dereferenced
+      // to avoid memory leaks
+      this.videoElement.src = '';
+      this.videoElement = null;
     }
   }]);
 
