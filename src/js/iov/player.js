@@ -8,6 +8,8 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
 const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
 
+window.tryna = false;
+
 /**
  * Responsible for receiving stream input and routing it to the media source
  * buffer for rendering on the video tag. There is some 'light' reworking of
@@ -48,16 +50,22 @@ export default class IOVPlayer {
   constructor (iov, playerInstance, options) {
     debug('constructor');
 
+    this.metrics = {};
+
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
+
+    for (let i = 0; i < IOVPlayer.EVENT_NAMES.length; i++) {
+      this.events[IOVPlayer.EVENT_NAMES[i]] = [];
+    }
+
     this._id = uuidv4();
     this.iov = iov;
     this.playerInstance = playerInstance;
     this.eid = this.playerInstance.el().firstChild.id;
     this.id = this.eid.replace('_html5_api', '');
-    this.videoElement = document.getElementById(this.eid);
 
-    if (!this.videoElement) {
-      throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
-    }
+    this.initializeVideoElement();
 
     this.options = defaults({}, options, {
       segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
@@ -77,15 +85,6 @@ export default class IOVPlayer {
     this.segmentIntervalAverage = null;
     this.segmentInterval = null;
     this.segmentIntervals = [];
-
-    this.metrics = {};
-
-    // @todo - there must be a more proper way to do events than this...
-    this.events = {};
-
-    for (let i = 0; i < IOVPlayer.EVENT_NAMES.length; i++) {
-      this.events[IOVPlayer.EVENT_NAMES[i]] = [];
-    }
 
     this.mseWrapper = null;
     this.moovBox = null;
@@ -183,6 +182,48 @@ export default class IOVPlayer {
     }
   }
 
+  initializeVideoElement () {
+    this.originalVideoElement = document.getElementById(this.eid);
+
+    if (!this.originalVideoElement) {
+      throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
+    }
+
+    // when videojs initializes the video element (or something like that),
+    // it creates events and listeners on that element that it uses, however
+    // these events interfere with our ability to play clsp streams.  Cloning
+    // the element like this and reinserting it is a blunt instrument to remove
+    // all of the videojs events so that we are in control of the player.
+    this.videoElement = this.originalVideoElement.cloneNode();
+    this.videoElementParent = this.originalVideoElement.parentNode;
+
+    this.on('firstFrameShown', () => {
+      // @todo - this may be overkill given the IOV changeSourceMaxWait...
+      // When the video is ready to be displayed, swap out the video player if
+      // the source has changed.  This is what allows tours to switch to the next
+      if (this.videoElementParent !== null) {
+        try {
+          this.videoElementParent.replaceChild(this.videoElement, this.originalVideoElement);
+        }
+        catch (e) {
+          console.error(e);
+          try {
+            this.originalVideoElement.parentNode.removeChild(this.originalVideoElement);
+          }
+          catch (e) {
+            console.error(e);
+            try {
+              this.originalVideoElement.outerHTML = '';
+            }
+            catch (e) {
+              this.iov.destroy();
+            }
+          }
+        }
+      }
+    });
+  }
+
   reinitializeMseWrapper (mimeCodec) {
     if (this.mseWrapper) {
       this.mseWrapper.destroy();
@@ -258,16 +299,6 @@ export default class IOVPlayer {
           },
           onRemoveFinish: (info) => {
             debug('onRemoveFinish');
-
-            // wait around for 3 seconds to simulate unpredictable browser interruptions.
-            var now = new Date().getTime();
-            for (var i = 0; i < 1e7; i++) {
-              var diff = new Date().getTime() - now;
-              if (diff > 1000) {
-                debug("breaking out of 1 second sleep");
-                break;
-              }
-            }
           },
           onAppendError: (error) => {
             // internal error, this has been observed to happen the tab
@@ -434,19 +465,6 @@ export default class IOVPlayer {
 
       // this.trigger('firstChunk');
 
-      // when videojs initializes the video element (or something like that),
-      // it creates events and listeners on that element that it uses, however
-      // these events interfere with our ability to play clsp streams.  Cloning
-      // the element like this and reinserting it is a blunt instrument to remove
-      // all of the videojs events so that we are in control of the player.
-      var clone = this.videoElement.cloneNode();
-      var parent = this.videoElement.parentNode;
-
-      if (parent !== null) {
-        parent.replaceChild(clone, this.videoElement);
-        this.videoElement = clone;
-      }
-
       this.reinitializeMseWrapper(mimeCodec);
       this.resyncStream(mimeCodec);
     });
@@ -491,7 +509,11 @@ export default class IOVPlayer {
     this.moovBox = null;
     this.mimeCodec = null;
 
-    this.mseWrapper.destroy();
-    this.mseWrapper = null;
+    // For some reason, this can be undefined when destroying.  Seems to be
+    // related to mqtt "fail" events, but I'm not sure
+    if (this.mseWrapper) {
+      this.mseWrapper.destroy();
+      this.mseWrapper = null;
+    }
   }
 };

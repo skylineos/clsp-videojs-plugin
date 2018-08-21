@@ -33,13 +33,20 @@ export default class MqttHandler extends Component {
     ));
   }
 
-  updateIOV (iov, deleteOldIOV = true) {
+  updateIOV (iov) {
     this.debug('updateIOV');
 
-    if (this.iov && deleteOldIOV) {
+    if (this.iov) {
+      // If the IOV is the same, do nothing
+      if (this.iov.id === iov.id) {
+        return;
+      }
+
       this.iov.destroy();
     }
 
     this.iov = iov;
+
+    this.iov.initialize();
   }
 };

@@ -318,7 +318,10 @@ export default class MSEWrapper {
     catch (error) {
       this.metric('error.sourceBuffer.abort', 1);
 
-      this.eventListeners.sourceBuffer.onAbortError(error);
+      // Somehow, this can be become undefined...
+      if (this.eventListeners.sourceBuffer.onAbortError) {
+        this.eventListeners.sourceBuffer.onAbortError(error);
+      }
     }
   }
 
@@ -417,6 +420,11 @@ export default class MSEWrapper {
   trimBuffer (info = this.getBufferTimes(), force = false) {
     this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
+    if (!info) {
+      // @todo - should this be handled in some way?
+      return;
+    }
+
     if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
       debug('Removing old stuff from sourceBuffer...');
 
@@ -508,7 +516,12 @@ export default class MSEWrapper {
     this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
     this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
 
-    this.trimBuffer(undefined, true);
+    try {
+      this.trimBuffer(undefined, true);
+    }
+    catch (e) {
+      console.error(e);
+    }
 
     this.sourceBuffer = null;
 

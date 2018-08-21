@@ -14,6 +14,8 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 //  @todo - should this be the videojs component?  it seems like the
 // mqttHandler does nothing, and that this could replace it
 export default class IOV {
+  static CHANGE_SOURCE_MAX_WAIT = 5000;
+
   static compatibilityCheck () {
     // @todo - shouldn't this be done in the utils function?
     // @todo - does this need to throw an error?
@@ -117,6 +119,7 @@ export default class IOV {
       streamName: config.streamName,
       appStart: config.appStart,
       videoElementParent: config.videoElementParent || null,
+      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
     };
 
     this.statsMsg = {
@@ -132,7 +135,6 @@ export default class IOV {
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
     this.mqttTopicHandlers = new MqttTopicHandlers(this.id, this);
-    this.conduit = this.mqttConduitCollection.addFromIov(this);
 
     this.events = {
       connection_lost: (responseObject) => {
@@ -152,7 +154,10 @@ export default class IOV {
         }
       },
     };
+  }
 
+  initialize () {
+    this.conduit = this.mqttConduitCollection.addFromIov(this);
     this.player = IOVPlayer.factory(this, this.playerInstance);
   }
 
@@ -195,34 +200,31 @@ export default class IOV {
       throw new Error('Unable to change source because there is no url!');
     }
 
-    // // @todo - it is possible to keep an IOV instance if the host for the
-    // // stream is the same.
-    // if (iovConfig.hostname === this.iov.config.wsbroker) {
-    //   this.iov.conduit.transaction(
-    //     topic,
-    //     (...args) => this.onChangeSourceTransaction(this.iov, ...args),
-    //     request
-    //   );
-    //   return;
-    // }
-
     const clone = this.cloneFromUrl(url);
 
-    // @todo - why is this needed?
-    if (this.config.parentNodeId !== null) {
-      var iframe_elm = document.getElementById(this.config.clientId);
-      var parent = document.getElementById(clone.config.parentNodeId);
+    clone.initialize();
 
-      if (parent) {
-        parent.removeChild(iframe_elm);
-      }
+    // When the tab is not in focus, chrome doesn't handle things the same
+    // way as when the tab is in focus, and it seems that the result of that
+    // is that the "firstFrameShown" event never fires.  Having the IOV be
+    // updated on a delay in case the "firstFrameShown" takes too long will
+    // ensure that the old IOVs are destroyed, ensuring that unnecessary
+    // socket connections, etc. are not being used, as this can cause the
+    // browser to crash.
+    // Note that if there is a better way to do this, it would likely reduce
+    // the number of try/catch blocks and null checks in the IOVPlayer and
+    // MSEWrapper, but I don't think that is likely to happen until the MSE
+    // is standardized, and even then, we may be subject to non-intuitive
+    // behavior based on tab switching, etc.
+    setTimeout(() => {
+      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+    }, clone.config.changeSourceMaxWait);
 
-      // remove code from iframe.
-      iframe_elm.srcdoc = '';
-    }
-
-    clone.player.on('firstChunk', () => {
-      this.playerInstance.tech(true).mqtt.updateIOV(clone);
+    // Under normal circumstances, meaning when the tab is in focus, we want
+    // to respond by switching the IOV when the new IOV Player has something
+    // to display
+    clone.player.on('firstFrameShown', () => {
+      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
     });
   }
 
@@ -249,7 +251,7 @@ export default class IOV {
 
     this.onReadyAlreadyCalled = true;
 
-    this.player.on('firstChunk', () => {
+    this.player.on('firstFrameShown', () => {
       this.playerInstance.loadingSpinner.hide();
     });
 
@@ -292,6 +294,7 @@ export default class IOV {
 
     this.debug('network error', event.data.reason);
     this.playerInstance.trigger('network-error', event.data.reason);
+    // this.player.restart();
   }
 
   onData (event) {
@@ -349,18 +352,5 @@ export default class IOV {
     const iframe = document.getElementById(this.config.clientId);
     iframe.parentNode.removeChild(iframe);
     iframe.srcdoc = '';
-
-    // if (this.config.parentNodeId !== null) {
-    //   console.log('parent stuff')
-    //   var iframe_elm = document.getElementById(this.config.clientId);
-    //   var parent = document.getElementById(clone.config.parentNodeId);
-    //   if (parent) {
-    //     parent.removeChild(iframe_elm);
-    //   }
-    //   // remove code from iframe.
-    //   iframe_elm.srcdoc = '';
-    // }
-
-    // @todo
   }
 };
