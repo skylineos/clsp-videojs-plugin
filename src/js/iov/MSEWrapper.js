@@ -48,12 +48,20 @@ export default class MSEWrapper {
     return (window.MediaSource && window.MediaSource.isTypeSupported(mimeCodec));
   }
 
-  static factory (options = {}) {
-    return new MSEWrapper(options);
+  static factory (videoElement, options = {}) {
+    return new MSEWrapper(videoElement, options);
   }
 
-  constructor (options = {}) {
+  constructor (videoElement, options = {}) {
     debug('Constructing...');
+
+    if (!videoElement) {
+      throw new Error('videoElement is required to construct an MSEWrapper.');
+    }
+
+    this.destroyed = false;
+
+    this.videoElement = videoElement;
 
     this.options = defaults({}, options, {
       // These default buffer value provide the best results in my testing.
@@ -207,7 +215,7 @@ export default class MSEWrapper {
       this.objectURL = window.URL.createObjectURL(this.mediaSource);
     }
 
-    return this.objectURL;
+    this.videoElement.src = this.objectURL;
   }
 
   destroyVideoElementSrc () {
@@ -232,7 +240,7 @@ export default class MSEWrapper {
     }
 
     // free the resource
-    return window.URL.revokeObjectURL(this.mediaSource);
+    return window.URL.revokeObjectURL(this.videoElement.src);
   }
 
   reinitializeVideoElementSrc () {
@@ -256,7 +264,7 @@ export default class MSEWrapper {
     return this.sourceBuffer && this.sourceBuffer.updating === false;
   }
 
-  initializeSourceBuffer (mimeCodec, options = {}) {
+  async initializeSourceBuffer (mimeCodec, options = {}) {
     debug('initializeSourceBuffer...');
 
     options = defaults({}, options, {
@@ -275,7 +283,7 @@ export default class MSEWrapper {
     }
 
     // Kill the existing source buffer
-    this.destroySourceBuffer();
+    await this.destroySourceBuffer();
 
     this.metric('sourceBuffer.created', 1);
 
@@ -505,34 +513,32 @@ export default class MSEWrapper {
   }
 
   destroySourceBuffer () {
-    debug('destroySourceBuffer...');
+    return new Promise((resolve, reject) => {
+      if (!this.sourceBuffer) {
+        return resolve();
+      }
 
-    if (!this.sourceBuffer) {
-      return;
-    }
+      this.sourceBufferAbort();
 
-    this.sourceBufferAbort();
+      this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
+      this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
 
-    this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
-    this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
+      this.sourceBuffer.addEventListener('updateend', () => {
+        resolve();
+      });
 
-    try {
-      this.trimBuffer(undefined, true);
-    }
-    catch (e) {
-      console.error(e);
-    }
-
-    this.sourceBuffer = null;
-
-    this.timeBuffered = null;
-    this.previousTimeEnd = null;
-    this.segmentQueue = null;
-
-    this.metric('sourceBuffer.destroyed', 1);
+      try {
+        this.trimBuffer(undefined, true);
+      }
+      catch (e) {
+        console.error(e);
+      }
+    });
   }
 
   destroyMediaSource () {
+    this.metric('sourceBuffer.destroyed', 1);
+
     debug('Destroying mediaSource...');
 
     if (!this.mediaSource) {
@@ -543,29 +549,50 @@ export default class MSEWrapper {
     this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
     this.mediaSource.removeEventListener('error', this.eventListeners.mediaSource.error);
 
-    let sourceBuffers = this.mediaSource.sourceBuffers;
+    // let sourceBuffers = this.mediaSource.sourceBuffers;
 
-    if (sourceBuffers.SourceBuffers) {
-      // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
-      sourceBuffers = sourceBuffers.SourceBuffers();
-    }
+    // if (sourceBuffers.SourceBuffers) {
+    //   // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
+    //   sourceBuffers = sourceBuffers.SourceBuffers();
+    // }
 
-    for (let i = 0; i < sourceBuffers.length; i++) {
-      this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
-    }
+    // for (let i = 0; i < sourceBuffers.length; i++) {
+    // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
+    // }
+
+    this.mediaSource.endOfStream();
+    this.mediaSource.removeSourceBuffer(this.sourceBuffer);
 
     // @todo - is this happening at the right time, or should it happen
     // prior to removing the source buffers?
     this.destroyVideoElementSrc();
 
-    this.mediaSource = null;
-
     this.metric('mediaSource.destroyed', 1);
   }
 
-  destroy () {
-    this.destroySourceBuffer();
+  async destroy () {
+    debug('destroySourceBuffer...');
+
+    if (this.destroyed) {
+      return;
+    }
+
+    if (!this.videoElement) {
+      throw new Error('In order to destroy this MSEWrapper, you must pass the videoElement that this wrapper was associated with.');
+    }
+
+    this.destroyed = true;
+
     this.destroyMediaSource();
+    await this.destroySourceBuffer();
+
+    this.mediaSource = null;
+    this.sourceBuffer = null;
+    this.videoElement = null;
+
+    this.timeBuffered = null;
+    this.previousTimeEnd = null;
+    this.segmentQueue = null;
 
     this.options = null;
     this.metrics = null;

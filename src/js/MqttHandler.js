@@ -31,6 +31,8 @@ export default class MqttHandler extends Component {
       this.mqttConduitCollection,
       player
     ));
+
+    this.iov.initialize();
   }
 
   updateIOV (iov) {
@@ -46,7 +48,5 @@ export default class MqttHandler extends Component {
     }
 
     this.iov = iov;
-
-    this.iov.initialize();
   }
 };

@@ -5,6 +5,7 @@ import '../styles/demo.scss';
 import $ from 'jquery';
 import videojs from 'video.js';
 import moment from 'moment';
+import 'babel-polyfill';
 
 import packageJson from '../../../package.json';
 

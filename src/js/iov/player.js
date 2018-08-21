@@ -183,19 +183,29 @@ export default class IOVPlayer {
   }
 
   initializeVideoElement () {
-    this.originalVideoElement = document.getElementById(this.eid);
+    this.videoJsVideoElement = document.getElementById(this.eid);
 
-    if (!this.originalVideoElement) {
+    if (!this.videoJsVideoElement) {
       throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
     }
+
+    const videoId = `clsp-video-${this._id}`;
 
     // when videojs initializes the video element (or something like that),
     // it creates events and listeners on that element that it uses, however
     // these events interfere with our ability to play clsp streams.  Cloning
     // the element like this and reinserting it is a blunt instrument to remove
     // all of the videojs events so that we are in control of the player.
-    this.videoElement = this.originalVideoElement.cloneNode();
-    this.videoElementParent = this.originalVideoElement.parentNode;
+    // this.videoElement = this.videoJsVideoElement.cloneNode();
+    this.videoElement = document.createElement('video');
+    this.videoElement.setAttribute('id', videoId);
+    this.videoElement.setAttribute('autoplay', this.videoJsVideoElement.getAttribute('autoplay'));
+    this.videoElement.setAttribute('muted', this.videoJsVideoElement.getAttribute('muted'));
+    this.videoElement.setAttribute('tabindex', this.videoJsVideoElement.getAttribute('tabindex'));
+    this.videoElement.setAttribute('class', this.videoJsVideoElement.getAttribute('class'));
+    this.videoElement.classList.add('clsp-video');
+
+    this.videoElementParent = this.videoJsVideoElement.parentNode;
 
     this.on('firstFrameShown', () => {
       // @todo - this may be overkill given the IOV changeSourceMaxWait...
@@ -203,22 +213,33 @@ export default class IOVPlayer {
       // the source has changed.  This is what allows tours to switch to the next
       if (this.videoElementParent !== null) {
         try {
-          this.videoElementParent.replaceChild(this.videoElement, this.originalVideoElement);
+          this.videoElementParent.append(this.videoElement);
+
+          let videos = this.videoElementParent.getElementsByTagName('video');
+
+          for (let i = 0; i < videos.length; i++) {
+            let video = videos[i];
+            const id = video.getAttribute('id');
+
+            if (id !== this.eid && id !== videoId) {
+              // video.pause();
+              // video.removeAttribute('src');
+              // video.load();
+              // video.style.display = 'none';
+              this.videoElementParent.removeChild(video);
+              video.remove();
+              video = null;
+              videos = null;
+              break;
+            }
+          }
+
+          // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
+          // is there still a reference to this element?
+          // this.videoJsVideoElement = null;
         }
         catch (e) {
           console.error(e);
-          try {
-            this.originalVideoElement.parentNode.removeChild(this.originalVideoElement);
-          }
-          catch (e) {
-            console.error(e);
-            try {
-              this.originalVideoElement.outerHTML = '';
-            }
-            catch (e) {
-              this.iov.destroy();
-            }
-          }
         }
       }
     });
@@ -229,17 +250,17 @@ export default class IOVPlayer {
       this.mseWrapper.destroy();
     }
 
-    this.mseWrapper = MSEWrapper.factory();
+    this.mseWrapper = MSEWrapper.factory(this.videoElement);
 
     this.mseWrapper.on('metric', ({ type, value }) => {
       this.trigger('metric', { type, value });
     });
 
     this.mseWrapper.initializeMediaSource({
-      onSourceOpen: () => {
+      onSourceOpen: async () => {
         debug('on mediaSource sourceopen');
 
-        this.mseWrapper.initializeSourceBuffer(mimeCodec, {
+        await this.mseWrapper.initializeSourceBuffer(mimeCodec, {
           onAppendStart: (byteArray) => {
             silly('On Append Start...');
 
@@ -354,9 +375,11 @@ export default class IOVPlayer {
       },
     });
 
-    if (this.mseWrapper.mediaSource && this.videoElement) {
-      this.videoElement.src = this.mseWrapper.reinitializeVideoElementSrc();
+    if (!this.mseWrapper.mediaSource || !this.videoElement) {
+      throw new Error('The video element or mediaSource is not ready!');
     }
+
+    this.mseWrapper.reinitializeVideoElementSrc();
   }
 
   resyncStream (mimeCodec) {
@@ -493,6 +516,8 @@ export default class IOVPlayer {
 
     this.playerInstance = null;
     this.videoElement = null;
+    this.videoJsVideoElement = null;
+    this.videoElementParent = null;
 
     this.events = null;
     this.metrics = null;
@@ -509,11 +534,7 @@ export default class IOVPlayer {
     this.moovBox = null;
     this.mimeCodec = null;
 
-    // For some reason, this can be undefined when destroying.  Seems to be
-    // related to mqtt "fail" events, but I'm not sure
-    if (this.mseWrapper) {
-      this.mseWrapper.destroy();
-      this.mseWrapper = null;
-    }
+    this.mseWrapper.destroy();
+    this.mseWrapper = null;
   }
 };

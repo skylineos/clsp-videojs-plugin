@@ -253,6 +253,8 @@ export default class IOV {
 
     this.player.on('firstFrameShown', () => {
       this.playerInstance.loadingSpinner.hide();
+
+      videoTag.style.display = 'none';
     });
 
     this.player.on('videoReceived', () => {
