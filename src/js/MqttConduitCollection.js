@@ -27,7 +27,7 @@ export default class MqttConduitCollection {
 
       if (!this.exists(clientId)) {
         // When the mqtt connection is interupted due to a listener being removed,
-        // a fail even is always sent.  It is not necessary to log this as an error
+        // a fail event is always sent.  It is not necessary to log this as an error
         // in the console, because it is not an error.
         if (!event.data.event === 'fail') {
           console.error(`No conduit with id "${clientId}" exists!`);

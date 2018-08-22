@@ -296,7 +296,6 @@ export default class IOV {
 
     this.debug('network error', event.data.reason);
     this.playerInstance.trigger('network-error', event.data.reason);
-    // this.player.restart();
   }
 
   onData (event) {

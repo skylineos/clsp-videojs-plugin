@@ -8,8 +8,6 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
 const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
 
-window.tryna = false;
-
 /**
  * Responsible for receiving stream input and routing it to the media source
  * buffer for rendering on the video tag. There is some 'light' reworking of
