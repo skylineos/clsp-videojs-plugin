@@ -48,12 +48,20 @@ export default class MSEWrapper {
     return (window.MediaSource && window.MediaSource.isTypeSupported(mimeCodec));
   }
 
-  static factory (options = {}) {
-    return new MSEWrapper(options);
+  static factory (videoElement, options = {}) {
+    return new MSEWrapper(videoElement, options);
   }
 
-  constructor (options = {}) {
+  constructor (videoElement, options = {}) {
     debug('Constructing...');
+
+    if (!videoElement) {
+      throw new Error('videoElement is required to construct an MSEWrapper.');
+    }
+
+    this.destroyed = false;
+
+    this.videoElement = videoElement;
 
     this.options = defaults({}, options, {
       // These default buffer value provide the best results in my testing.
@@ -106,7 +114,12 @@ export default class MSEWrapper {
   }
 
   trigger (name, value) {
-    debug(`Triggering ${name} event...`);
+    if (name === 'metric') {
+      silly(`Triggering ${name} event...`);
+    }
+    else {
+      debug(`Triggering ${name} event...`);
+    }
 
     if (!MSEWrapper.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
@@ -202,7 +215,7 @@ export default class MSEWrapper {
       this.objectURL = window.URL.createObjectURL(this.mediaSource);
     }
 
-    return this.objectURL;
+    this.videoElement.src = this.objectURL;
   }
 
   destroyVideoElementSrc () {
@@ -227,7 +240,7 @@ export default class MSEWrapper {
     }
 
     // free the resource
-    return window.URL.revokeObjectURL(this.mediaSource);
+    return window.URL.revokeObjectURL(this.videoElement.src);
   }
 
   reinitializeVideoElementSrc () {
@@ -251,7 +264,7 @@ export default class MSEWrapper {
     return this.sourceBuffer && this.sourceBuffer.updating === false;
   }
 
-  initializeSourceBuffer (mimeCodec, options = {}) {
+  async initializeSourceBuffer (mimeCodec, options = {}) {
     debug('initializeSourceBuffer...');
 
     options = defaults({}, options, {
@@ -270,7 +283,7 @@ export default class MSEWrapper {
     }
 
     // Kill the existing source buffer
-    this.destroySourceBuffer();
+    await this.destroySourceBuffer();
 
     this.metric('sourceBuffer.created', 1);
 
@@ -313,7 +326,10 @@ export default class MSEWrapper {
     catch (error) {
       this.metric('error.sourceBuffer.abort', 1);
 
-      this.eventListeners.sourceBuffer.onAbortError(error);
+      // Somehow, this can be become undefined...
+      if (this.eventListeners.sourceBuffer.onAbortError) {
+        this.eventListeners.sourceBuffer.onAbortError(error);
+      }
     }
   }
 
@@ -409,23 +425,27 @@ export default class MSEWrapper {
     return info;
   }
 
-  trimBuffer (info = this.getBufferTimes(), force = false) {
+  trimBuffer (info, force = false) {
     this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
-    if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
-      debug('Removing old stuff from sourceBuffer...');
+    try {
+      if (!info) {
+        info = this.getBufferTimes();
+      }
 
-      try {
+      if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
+        debug('Removing old stuff from sourceBuffer...');
+
         // @todo - this is the biggest performance problem we have with this player.
         // Can you figure out how to manage the memory usage without causing the streams
         // to stutter?
         this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
         this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
       }
-      catch (error) {
-        this.metric('sourceBuffer.trim.error', 1);
-        this.eventListeners.sourceBuffer.onRemoveError(error);
-      }
+    }
+    catch (error) {
+      this.metric('sourceBuffer.trim.error', 1);
+      this.eventListeners.sourceBuffer.onRemoveError(error);
     }
   }
 
@@ -492,29 +512,27 @@ export default class MSEWrapper {
   }
 
   destroySourceBuffer () {
-    debug('destroySourceBuffer...');
+    return new Promise((resolve, reject) => {
+      if (!this.sourceBuffer) {
+        return resolve();
+      }
 
-    if (!this.sourceBuffer) {
-      return;
-    }
+      this.sourceBufferAbort();
 
-    this.sourceBufferAbort();
+      this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
+      this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
 
-    this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
-    this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
+      this.sourceBuffer.addEventListener('updateend', () => {
+        resolve();
+      });
 
-    this.trimBuffer(undefined, true);
-
-    this.sourceBuffer = null;
-
-    this.timeBuffered = null;
-    this.previousTimeEnd = null;
-    this.segmentQueue = null;
-
-    this.metric('sourceBuffer.destroyed', 1);
+      this.trimBuffer(undefined, true);
+    });
   }
 
   destroyMediaSource () {
+    this.metric('sourceBuffer.destroyed', 1);
+
     debug('Destroying mediaSource...');
 
     if (!this.mediaSource) {
@@ -525,29 +543,49 @@ export default class MSEWrapper {
     this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
     this.mediaSource.removeEventListener('error', this.eventListeners.mediaSource.error);
 
-    let sourceBuffers = this.mediaSource.sourceBuffers;
+    // let sourceBuffers = this.mediaSource.sourceBuffers;
 
-    if (sourceBuffers.SourceBuffers) {
-      // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
-      sourceBuffers = sourceBuffers.SourceBuffers();
+    // if (sourceBuffers.SourceBuffers) {
+    //   // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
+    //   sourceBuffers = sourceBuffers.SourceBuffers();
+    // }
+
+    // for (let i = 0; i < sourceBuffers.length; i++) {
+    // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
+    // }
+
+    if (this.isMediaSourceReady()) {
+      this.mediaSource.endOfStream();
     }
 
-    for (let i = 0; i < sourceBuffers.length; i++) {
-      this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
-    }
+    this.mediaSource.removeSourceBuffer(this.sourceBuffer);
 
     // @todo - is this happening at the right time, or should it happen
     // prior to removing the source buffers?
     this.destroyVideoElementSrc();
 
-    this.mediaSource = null;
-
     this.metric('mediaSource.destroyed', 1);
   }
 
-  destroy () {
-    this.destroySourceBuffer();
+  async destroy () {
+    debug('destroySourceBuffer...');
+
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
     this.destroyMediaSource();
+    await this.destroySourceBuffer();
+
+    this.mediaSource = null;
+    this.sourceBuffer = null;
+    this.videoElement = null;
+
+    this.timeBuffered = null;
+    this.previousTimeEnd = null;
+    this.segmentQueue = null;
 
     this.options = null;
     this.metrics = null;

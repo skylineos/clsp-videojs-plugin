@@ -26,7 +26,13 @@ export default class MqttConduitCollection {
       const clientId = event.data.clientId;
 
       if (!this.exists(clientId)) {
-        console.error(`No conduit with id "${clientId}" exists!`);
+        // When the mqtt connection is interupted due to a listener being removed,
+        // a fail event is always sent.  It is not necessary to log this as an error
+        // in the console, because it is not an error.
+        if (!event.data.event === 'fail') {
+          console.error(`No conduit with id "${clientId}" exists!`);
+        }
+
         return;
       }
 
@@ -43,6 +49,10 @@ export default class MqttConduitCollection {
     this._conduits[id] = conduit;
 
     return conduit;
+  }
+
+  remove (id) {
+    delete this._conduits[id];
   }
 
   addFromIov (iov) {

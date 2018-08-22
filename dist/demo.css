@@ -1423,6 +1423,19 @@ video::-webkit-media-text-track-display {
   border: none;
   visibility: hidden; }
 
+section {
+  border: solid 3px black;
+  padding: 5px;
+  margin: 5px; }
+  section h2 {
+    width: 100%;
+    background: black;
+    color: white;
+    padding: 5px;
+    margin-left: -5px;
+    margin-top: -5px;
+    text-align: center; }
+
 .video-js {
   width: 356px;
   height: 244px; }
@@ -1440,5 +1453,9 @@ video::-webkit-media-text-track-display {
       flex-grow: 1;
       flex-shrink: 0;
       text-align: right; }
+
+.wall-controls,
+.tour-controls {
+  display: flex; }
 
 /*# sourceMappingURL=demo.css.map*/

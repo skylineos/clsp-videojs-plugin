@@ -31,12 +31,19 @@ export default class MqttHandler extends Component {
       this.mqttConduitCollection,
       player
     ));
+
+    this.iov.initialize();
   }
 
   updateIOV (iov) {
     this.debug('updateIOV');
 
     if (this.iov) {
+      // If the IOV is the same, do nothing
+      if (this.iov.id === iov.id) {
+        return;
+      }
+
       this.iov.destroy();
     }
 

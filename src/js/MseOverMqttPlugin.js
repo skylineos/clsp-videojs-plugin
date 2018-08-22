@@ -21,6 +21,7 @@ export default function (defaults = {}) {
 
       // @todo - there is likely some way for videojs to tell us that the plugin has already
       // been registered, or perhaps videojs itself will not let you register a plugin twice
+      // `videojs.getPlugin('clsp')`
       registered = true;
 
       videojs.getTech('Html5').registerSourceHandler(MqttSourceHandler()('html5', MqttConduitCollection.factory()), 0);
@@ -63,9 +64,7 @@ export default function (defaults = {}) {
       // Needed to make videojs-errors think that the video is progressing
       // If we do not do this, videojs-errors will give us a timeout error
       player._currentTime = 0;
-      player.currentTime = () => {
-        return player._currentTime++;
-      };
+      player.currentTime = () => player._currentTime++;
 
       player.on('firstplay', (event) => {
         this.debug('on firstplay');
