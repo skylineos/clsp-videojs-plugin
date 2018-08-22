@@ -3283,7 +3283,7 @@ var MqttConduitCollection = function () {
 
       if (!_this.exists(clientId)) {
         // When the mqtt connection is interupted due to a listener being removed,
-        // a fail even is always sent.  It is not necessary to log this as an error
+        // a fail event is always sent.  It is not necessary to log this as an error
         // in the console, because it is not an error.
         if (!event.data.event === 'fail') {
           console.error('No conduit with id "' + clientId + '" exists!');
@@ -4129,7 +4129,6 @@ var IOV = function () {
 
       this.debug('network error', event.data.reason);
       this.playerInstance.trigger('network-error', event.data.reason);
-      // this.player.restart();
     }
   }, {
     key: 'onData',
@@ -5033,8 +5032,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var DEBUG_PREFIX = 'skyline:clsp:iov';
 var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':IOVPlayer');
 var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX + ':IOVPlayer');
-
-window.tryna = false;
 
 /**
  * Responsible for receiving stream input and routing it to the media source
