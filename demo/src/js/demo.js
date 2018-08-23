@@ -259,6 +259,8 @@ $(() => {
   document.title = pageTitle;
   $('#page-title').html(pageTitle);
 
+  window.HELP_IMPROVE_VIDEOJS = false;
+
   initializeWall();
   initializeTours();
   initializeHeadless();

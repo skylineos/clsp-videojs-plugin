@@ -1,5 +1,12 @@
 import Debug from 'debug';
 import videojs from 'video.js';
+import 'videojs-errors';
+import 'srcdoc-polyfill';
+
+import '../styles/videojs-mse-over-clsp.scss';
+
+import './conduit/clspConduit.generated.js';
+// import './conduit/clspConduit.generated.min.js';
 
 import { version as VERSION } from '../../package.json';
 import MqttSourceHandler from './MqttSourceHandler';

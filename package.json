@@ -18,13 +18,12 @@
     "videojs",
     "videojs-plugin"
   ],
-  "author": "dschere@skylinenet.net",
-  "license": "MIT",
+  "author": "https://www.skylinenet.net",
+  "license": "Apache-2.0",
   "dependencies": {
     "debug": "^3.1.0",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
-    "node-sass": "^4.9.1",
     "paho-mqtt": "^1.0.4",
     "videojs-errors": "^4.1.1"
   },
@@ -44,6 +43,7 @@
     "gulp-rm": "^1.0.5",
     "jquery": "^3.3.1",
     "js-string-escape": "^1.0.1",
+    "node-sass": "^4.9.1",
     "pre-commit": "^1.2.2",
     "run-sequence": "^2.2.0",
     "sass-loader": "^7.0.3",

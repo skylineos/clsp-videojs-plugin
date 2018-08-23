@@ -215,6 +215,8 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
+* Ensure tagged releases show the correct version number!
+* do we need to use videojs-errors?  it seems that should be left to the caller
 * create dispose methods for all classes
 * make iov initialize execute once, and by default
 * create demo for failover

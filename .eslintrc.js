@@ -1,8 +1,10 @@
-{
+'use strict';
+
+module.exports = {
   "extends": "standard",
   "parser": "babel-eslint",
   "ecmaFeatures": {
-    "classes": true
+    "classes": true,
   },
   "rules": {
     "comma-dangle": [2, "always-multiline"],
@@ -10,11 +12,9 @@
     "key-spacing": 0,
     "camelcase": 0,
     "brace-style": [2, "stroustrup"],
-    // @todo - enforce this rule
-    // see - http://eslint.org/docs/rules/prefer-promise-reject-errors
-    "prefer-promise-reject-errors": 1
+    "prefer-promise-reject-errors": 1,
   },
   "globals": {
-    "Log": false
-  }
-}
+    "Log": false,
+  },
+};

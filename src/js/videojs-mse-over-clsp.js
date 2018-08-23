@@ -1,15 +1,13 @@
-import 'videojs-errors';
-
-import 'srcdoc-polyfill';
-import './conduit/clspConduit.generated.js';
-// import './conduit/clspConduit.generated.min.js';
+/**
+ * This file is the target of the distributable js file.  It registers the
+ * CLSP plugin with videojs for you.
+ *
+ * If you would like to use the videojs plugin without having it registered
+ * for you, you can include the `MseOverMqttPlugin` file directly (ES6 only).
+ */
 
 import MseOverMqttPlugin from './MseOverMqttPlugin';
-import '../styles/videojs-mse-over-clsp.scss';
 
-// @todo - do not initialize the plugin by default, since that is a side
-// effect.  make the caller call the initialize function.  also, is it
-// possible to unregister the plugin?
 const clspPlugin = MseOverMqttPlugin();
 
 clspPlugin.register();
