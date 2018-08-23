@@ -21,8 +21,6 @@ import MqttConduitCollection from './MqttConduitCollection';
 
 const Plugin = videojs.getPlugin('plugin');
 
-const DEBUG_PREFIX = 'skyline:clsp';
-
 export default (defaults = {}) => class MseOverMqttPlugin extends Plugin {
   static VERSION = utils.version;
 
@@ -35,7 +33,9 @@ export default (defaults = {}) => class MseOverMqttPlugin extends Plugin {
       throw new Error('You can only register the clsp plugin once, and it has already been registered.');
     }
 
-    videojs.getTech('Html5').registerSourceHandler(MqttSourceHandler.factory('html5', MseOverMqttPlugin.conduits), 0);
+    const sourceHandler = MqttSourceHandler.factory('html5', MseOverMqttPlugin.conduits);
+
+    videojs.getTech('Html5').registerSourceHandler(sourceHandler, 0);
     videojs.registerPlugin(utils.name, MseOverMqttPlugin);
 
     return MseOverMqttPlugin;
@@ -44,8 +44,8 @@ export default (defaults = {}) => class MseOverMqttPlugin extends Plugin {
   constructor (player, options) {
     super(player, options);
 
-    this.debug = Debug(`${DEBUG_PREFIX}:MseOverMqttPlugin`);
-    this.debug('constructor');
+    this.debug = Debug('skyline:clsp:plugin:MseOverMqttPlugin');
+    this.debug('constructing...');
 
     options = videojs.mergeOptions(defaults, options);
 
@@ -83,7 +83,7 @@ export default (defaults = {}) => class MseOverMqttPlugin extends Plugin {
     // without automatically playing AND without automatically listening via
     // a conduit
     player.on('firstplay', (event) => {
-      this.debug('on firstplay');
+      this.debug('on player firstplay');
 
       const mqttHandler = player.tech(true).mqtt;
 
@@ -104,6 +104,8 @@ export default (defaults = {}) => class MseOverMqttPlugin extends Plugin {
   }
 
   destroy () {
+    this.debug('destroying...');
+
     this.debug = null;
   }
 };

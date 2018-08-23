@@ -12,7 +12,9 @@ export default class MqttConduitCollection {
   }
 
   constructor () {
-    this.debug = Debug('skyline:clsp:MqttConduitCollection');
+    this.debug = Debug('skyline:clsp:plugin:MqttConduitCollection');
+    this.silly = Debug('skyline:silly:clsp:plugin:MqttConduitCollection');
+
     this.debug('constructing...');
 
     this._conduits = {};
@@ -21,7 +23,7 @@ export default class MqttConduitCollection {
   }
 
   onMessage = (event) => {
-    this.debug('window on message');
+    this.silly('window on message');
 
     const clientId = event.data.clientId;
 
@@ -48,13 +50,13 @@ export default class MqttConduitCollection {
   }
 
   getById (id) {
-    this.debug('getting...', id);
+    this.silly('getting...', id);
 
     return this._conduits[id];
   }
 
   exists (id) {
-    this.debug('exists?', id);
+    this.silly('exists?', id);
 
     return this._conduits.hasOwnProperty(id);
   }
@@ -74,6 +76,8 @@ export default class MqttConduitCollection {
   }
 
   destroy () {
+    this.debug('destroying...');
+
     this._conduits = null;
 
     window.removeEventListener('message', this.onMessage);

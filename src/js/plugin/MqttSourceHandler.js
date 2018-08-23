@@ -21,7 +21,7 @@ export default class MqttSourceHandler {
   }
 
   constructor (mode, conduits) {
-    this.debug = Debug('skyline:clsp:MqttSourceHandler');
+    this.debug = Debug('skyline:clsp:plugin:MqttSourceHandler');
     this.debug('constructor');
 
     this.name = utils.name;
@@ -83,6 +83,8 @@ export default class MqttSourceHandler {
   }
 
   destroy () {
+    this.debug('destroying...');
+
     this.debug = null;
     this.name = null;
     this.VERSION = null;

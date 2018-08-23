@@ -9,7 +9,7 @@ export default class MqttHandler extends Component {
   constructor (source, tech, conduits, options) {
     super(tech, options.mqtt);
 
-    this.debug = Debug('skyline:clsp:MqttHandler');
+    this.debug = Debug('skyline:clsp:plugin:MqttHandler');
     this.debug('constructor');
 
     this.tech_ = tech;
@@ -49,6 +49,8 @@ export default class MqttHandler extends Component {
   }
 
   destroy () {
+    this.debug('destroying...');
+
     this.debug = null;
     this.tech_ = null;
     this.source_ = null;
