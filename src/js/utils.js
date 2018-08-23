@@ -1,4 +1,8 @@
+import { version } from '../../package.json';
+
+const PLUGIN_NAME = 'clsp';
 const MINIMUM_CHROME_VERSION = 52;
+const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
 function browserIsCompatable () {
   // Chrome 1+
@@ -16,6 +20,13 @@ function browserIsCompatable () {
   }
 }
 
+function isSupportedMimeType (mimeType) {
+  return mimeType === SUPPORTED_MIME_TYPE;
+}
+
 export default {
+  version,
+  name: PLUGIN_NAME,
   supported: browserIsCompatable,
+  isSupportedMimeType,
 };

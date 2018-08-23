@@ -1,26 +1,24 @@
 import Debug from 'debug';
 import videojs from 'video.js';
 
-import IOV from './iov/IOV';
+import IOV from '../iov/IOV';
 
 const Component = videojs.getComponent('Component');
 
-const DEBUG_PREFIX = 'skyline:clsp';
-
 export default class MqttHandler extends Component {
-  constructor (source, tech, mqttConduitCollection, options) {
+  constructor (source, tech, conduits, options) {
     super(tech, options.mqtt);
 
-    this.debug = Debug(`${DEBUG_PREFIX}:MqttHandler`);
+    this.debug = Debug('skyline:clsp:MqttHandler');
     this.debug('constructor');
 
     this.tech_ = tech;
     this.source_ = source;
 
     // @todo - is there a better way to do this where we don't pollute the
-    // top level namespace?
+    // top level namespace?  does it matter?
     this.iov = null;
-    this.mqttConduitCollection = mqttConduitCollection;
+    this.conduits = conduits;
   }
 
   createIOV (player) {
@@ -28,7 +26,7 @@ export default class MqttHandler extends Component {
 
     this.updateIOV(IOV.fromUrl(
       this.source_.src,
-      this.mqttConduitCollection,
+      this.conduits,
       player
     ));
 
@@ -48,5 +46,13 @@ export default class MqttHandler extends Component {
     }
 
     this.iov = iov;
+  }
+
+  destroy () {
+    this.debug = null;
+    this.tech_ = null;
+    this.source_ = null;
+    this.iov = null;
+    this.conduits = null;
   }
 };

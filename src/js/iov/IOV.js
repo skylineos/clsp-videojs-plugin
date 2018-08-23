@@ -1,6 +1,9 @@
 import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 
+// Needed for crossbrowser iframe support
+import 'srcdoc-polyfill';
+
 import MqttTopicHandlers from './MqttTopicHandlers';
 import IOVPlayer from './player';
 

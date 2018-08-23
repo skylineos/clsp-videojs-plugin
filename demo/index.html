@@ -58,8 +58,20 @@
     <div id="videowall"></div>
     <template id="cell">
       <div class="video-container">
-        <video id="video-$cellId" width="352" height="240" class="video-js vjs-default-skin" controls autoplay muted>
-          <source id="src-$cellId" src="$src" type="video/mp4; codecs='avc1.42E01E'" />
+        <video
+          id="video-$cellId"
+          width="352"
+          height="240"
+          class="video-js vjs-default-skin"
+          controls
+          autoplay
+          muted
+        >
+          <source
+            id="src-$cellId"
+            src="$src"
+            type="video/mp4; codecs='avc1.42E01E'"
+          />
         </video>
       </div>
       <div class="video-metrics">
