@@ -195,12 +195,8 @@ export default class IOVPlayer {
     // the element like this and reinserting it is a blunt instrument to remove
     // all of the videojs events so that we are in control of the player.
     // this.videoElement = this.videoJsVideoElement.cloneNode();
-    this.videoElement = document.createElement('video');
+    this.videoElement = this.videoJsVideoElement.cloneNode();
     this.videoElement.setAttribute('id', videoId);
-    this.videoElement.setAttribute('autoplay', this.videoJsVideoElement.getAttribute('autoplay'));
-    this.videoElement.setAttribute('muted', this.videoJsVideoElement.getAttribute('muted'));
-    this.videoElement.setAttribute('tabindex', this.videoJsVideoElement.getAttribute('tabindex'));
-    this.videoElement.setAttribute('class', this.videoJsVideoElement.getAttribute('class'));
     this.videoElement.classList.add('clsp-video');
 
     this.videoElementParent = this.videoJsVideoElement.parentNode;
