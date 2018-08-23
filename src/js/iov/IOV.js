@@ -16,7 +16,7 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 //  @todo - should this be the videojs component?  it seems like the
 // mqttHandler does nothing, and that this could replace it
 export default class IOV {
-  static CHANGE_SOURCE_MAX_WAIT = 5000;
+  static CHANGE_SOURCE_MAX_WAIT = 9750;
 
   static generateConfigFromUrl (url) {
     if (!url) {
@@ -158,6 +158,8 @@ export default class IOV {
 
     const clone = this.cloneFromUrl(url).initialize();
 
+    clone.player.videoElement.style.display = 'none';
+
     // When the tab is not in focus, chrome doesn't handle things the same
     // way as when the tab is in focus, and it seems that the result of that
     // is that the "firstFrameShown" event never fires.  Having the IOV be
@@ -173,17 +175,18 @@ export default class IOV {
     setTimeout(() => {
       if (!iovUpdated) {
         clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+        clone.player.videoElement.style.display = 'initial';
       }
     }, clone.config.changeSourceMaxWait);
 
     // Under normal circumstances, meaning when the tab is in focus, we want
     // to respond by switching the IOV when the new IOV Player has something
     // to display
-    clone.player.on('firstFrameShown', () => {
-      if (!iovUpdated) {
-        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-      }
-    });
+    // clone.player.on('firstFrameShown', () => {
+    //   if (!iovUpdated) {
+    //     clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+    //   }
+    // });
   }
 
   onChangeSource = (event, data) => {
@@ -200,9 +203,9 @@ export default class IOV {
 
     const videoTag = this.playerInstance.children()[0];
 
-    this.playerInstance.on('play', () => {
-      console.log('playing....', this.player.id)
-    });
+    // this.playerInstance.on('play', () => {
+    //   console.log('playing....', this.player.id)
+    // });
 
     // @todo - there must be a better way to determine autoplay...
     if (videoTag.getAttribute('autoplay') !== null) {

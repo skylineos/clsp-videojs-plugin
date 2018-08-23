@@ -42,6 +42,7 @@ export default class MSEWrapper {
     'sourceBuffer.updateEnd.bufferFrozen',
     'sourceBuffer.abort',
     'error.sourceBuffer.abort',
+    'lastMoofSize',
   ];
 
   static isMimeCodecSupported (mimeCodec) {
@@ -141,7 +142,8 @@ export default class MSEWrapper {
     }
 
     switch (type) {
-      case 'sourceBuffer.lastKnownBufferSize': {
+      case 'sourceBuffer.lastKnownBufferSize':
+      case 'lastMoofSize': {
         this.metrics[type] = value;
         break;
       }
@@ -395,6 +397,8 @@ export default class MSEWrapper {
 
   append (byteArray) {
     silly('Append');
+
+    this.metric('lastMoofSize', byteArray.length);
 
     // Sometimes this can get hit after destroy is called
     if (!this.eventListeners.sourceBuffer.onAppendStart) {
