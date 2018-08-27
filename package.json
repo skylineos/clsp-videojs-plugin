@@ -8,12 +8,12 @@
   },
   "scripts": {
     "build": "gulp build",
-    "build-dev": "npm run build && npm run start-dev",
     "lint": "eslint ./ --cache --quiet --ext .jsx --ext .js",
     "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
     "version": "./scripts/version.sh",
     "postversion": "git push && git push --tags",
-    "start-dev": "gulp start-dev"
+    "serve": "./scripts/serve.js",
+    "serve-watch": "npm run build && npm run serve"
   },
   "keywords": [
     "videojs",
