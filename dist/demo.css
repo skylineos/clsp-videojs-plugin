@@ -1458,4 +1458,10 @@ section {
 .tour-controls {
   display: flex; }
 
+.wall-controls-container > div {
+  margin: 20px; }
+
+button {
+  padding: 20px; }
+
 /*# sourceMappingURL=demo.css.map*/
