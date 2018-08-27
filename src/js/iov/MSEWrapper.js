@@ -3,6 +3,7 @@
 import Debug from 'debug';
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
+import { mp4toJSON } from './mp4-inspect';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 
@@ -42,6 +43,7 @@ export default class MSEWrapper {
     'sourceBuffer.updateEnd.bufferFrozen',
     'sourceBuffer.abort',
     'error.sourceBuffer.abort',
+    'sourceBuffer.lastMoofSize',
   ];
 
   static isMimeCodecSupported (mimeCodec) {
@@ -141,7 +143,8 @@ export default class MSEWrapper {
     }
 
     switch (type) {
-      case 'sourceBuffer.lastKnownBufferSize': {
+      case 'sourceBuffer.lastKnownBufferSize':
+      case 'sourceBuffer.lastMoofSize': {
         this.metrics[type] = value;
         break;
       }
@@ -395,6 +398,10 @@ export default class MSEWrapper {
 
   append (byteArray) {
     silly('Append');
+
+    this.metric('sourceBuffer.lastMoofSize', byteArray.length);
+
+    // console.log(mp4toJSON(byteArray));
 
     // Sometimes this can get hit after destroy is called
     if (!this.eventListeners.sourceBuffer.onAppendStart) {

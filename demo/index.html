@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>CLSP Demo</title>
-  <link href="/dist/demo.css" rel="stylesheet">
-  <script src="/dist/demo.js"></script>
+  <link href="../dist/demo.css" rel="stylesheet">
+  <script src="../dist/demo.js"></script>
 </head>
 <body>
   <h1 id="page-title">CLSP Demo</h1>
@@ -12,7 +12,7 @@
   <section class="wall">
     <h2>Wall</h2>
     <div class="wall-controls">
-      <div>
+      <div class="wall-urls-container">
         <span>Urls:</span>
         <br />
         <textarea
@@ -21,7 +21,7 @@
           cols="80"
         ></textarea>
       </div>
-      <div>
+      <div class="wall-controls-container">
         <div>
           <span>Times to Replicate</span>
           <br />
@@ -195,6 +195,10 @@
           <span class="value"></span>
           <span class="type">video.segmentIntervalAverage</span>
         </div>
+        <div class="metric sourceBuffer-lastMoofSize">
+          <span class="value"></span>
+          <span class="type">sourceBuffer.lastMoofSize</span>
+        </div>
       </div>
     </template>
   </section>
@@ -249,6 +253,6 @@
     </div>
   </section>
 
-  <script src="/dist/videojs-mse-over-clsp.js"></script>
+  <script src="../dist/videojs-mse-over-clsp.js"></script>
 </body>
 </html>
