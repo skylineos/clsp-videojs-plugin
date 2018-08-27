@@ -10,6 +10,7 @@
     "build": "gulp build",
     "lint": "eslint ./ --cache --quiet --ext .jsx --ext .js",
     "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
+    "version": "./scripts/version.sh",
     "postversion": "git push && git push --tags",
     "start-dev": "gulp start-dev"
   },
