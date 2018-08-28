@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import videojs from 'video.js';
 
-import IOV from '../iov/IOV';
+import IOV from '~/iov/IOV';
 
 const Component = videojs.getComponent('Component');
 

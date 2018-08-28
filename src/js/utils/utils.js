@@ -1,4 +1,4 @@
-import { version } from '../../package.json';
+import { version } from '~root/package.json';
 
 const PLUGIN_NAME = 'clsp';
 const MINIMUM_CHROME_VERSION = 52;

@@ -13,7 +13,7 @@ import Debug from 'debug';
 import videojs from 'video.js';
 
 import MqttHandler from './MqttHandler';
-import utils from '../utils';
+import utils from '~/utils/utils';
 
 export default class MqttSourceHandler {
   static factory (mode, conduits) {

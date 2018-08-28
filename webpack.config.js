@@ -52,6 +52,13 @@ module.exports = [
         },
       ],
     },
+    resolve: {
+      alias: {
+        '~': path.resolve(__dirname, 'src', 'js'),
+        '~styles': path.resolve(__dirname, 'src', 'styles'),
+        '~root': __dirname,
+      },
+    },
     externals: {
       'video.js': 'videojs',
     },
@@ -84,6 +91,13 @@ module.exports = [
           },
         },
       ],
+    },
+    resolve: {
+      alias: {
+        '~': path.resolve(__dirname, 'src', 'js'),
+        '~styles': path.resolve(__dirname, 'src', 'styles'),
+        '~root': __dirname,
+      },
     },
   },
   {
@@ -127,6 +141,13 @@ module.exports = [
           }),
         },
       ],
+    },
+    resolve: {
+      alias: {
+        '~': path.resolve(__dirname, 'src', 'js'),
+        '~styles': path.resolve(__dirname, 'src', 'styles'),
+        '~root': __dirname,
+      },
     },
     plugins: [
       extractSass,

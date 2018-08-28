@@ -6,7 +6,7 @@
  * for you, you can include the `MseOverMqttPlugin` file directly (ES6 only).
  */
 
-import MseOverMqttPlugin from './plugin/MseOverMqttPlugin';
+import MseOverMqttPlugin from '~/plugin/MseOverMqttPlugin';
 
 const clspPlugin = MseOverMqttPlugin();
 

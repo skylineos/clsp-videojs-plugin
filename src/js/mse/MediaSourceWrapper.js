@@ -1,16 +1,13 @@
 'use strict';
 
-import Debug from 'debug';
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
-// import { mp4toJSON } from './mp4-inspect';
+import ListenerBaseClass from '~/utils/ListenerBaseClass';
+// import { mp4toJSON } from '~/utils/mp4-inspect';
 
-const DEBUG_PREFIX = 'skyline:clsp:iov';
+export default class MediaSourceWrapper extends ListenerBaseClass {
+  static DEBUG_NAME = 'skyline:clsp:mse:MediaSourceWrapper';
 
-const debug = Debug(`${DEBUG_PREFIX}:MSEWrapper`);
-const silly = Debug(`silly:${DEBUG_PREFIX}:MSEWrapper`);
-
-export default class MSEWrapper {
   static EVENT_NAMES = [
     'metric',
   ];
@@ -44,6 +41,7 @@ export default class MSEWrapper {
     'sourceBuffer.abort',
     'error.sourceBuffer.abort',
     'sourceBuffer.lastMoofSize',
+    'error.mediaSource.endOfStream',
   ];
 
   static isMimeCodecSupported (mimeCodec) {
@@ -51,14 +49,16 @@ export default class MSEWrapper {
   }
 
   static factory (videoElement, options = {}) {
-    return new MSEWrapper(videoElement, options);
+    return new MediaSourceWrapper(videoElement, options);
   }
 
   constructor (videoElement, options = {}) {
-    debug('Constructing...');
+    super(MediaSourceWrapper.DEBUG_NAME);
+
+    this.debug('Constructing...');
 
     if (!videoElement) {
-      throw new Error('videoElement is required to construct an MSEWrapper.');
+      throw new Error('videoElement is required to construct an MediaSourceWrapper.');
     }
 
     this.destroyed = false;
@@ -89,15 +89,6 @@ export default class MSEWrapper {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
     }
 
-    this.metrics = {};
-
-    // @todo - there must be a more proper way to do events than this...
-    this.events = {};
-
-    for (let i = 0; i < MSEWrapper.EVENT_NAMES.length; i++) {
-      this.events[MSEWrapper.EVENT_NAMES[i]] = [];
-    }
-
     this.eventListeners = {
       mediaSource: {},
       sourceBuffer: {},
@@ -106,66 +97,8 @@ export default class MSEWrapper {
     this.onSourceBufferUpdateEnd = this.onSourceBufferUpdateEnd.bind(this);
   }
 
-  on (name, action) {
-    debug(`Registering Listener for ${name} event...`);
-
-    if (!MSEWrapper.EVENT_NAMES.includes(name)) {
-      throw new Error(`"${name}" is not a valid event."`);
-    }
-
-    this.events[name].push(action);
-  }
-
-  trigger (name, value) {
-    if (name === 'metric') {
-      silly(`Triggering ${name} event...`);
-    }
-    else {
-      debug(`Triggering ${name} event...`);
-    }
-
-    if (!MSEWrapper.EVENT_NAMES.includes(name)) {
-      throw new Error(`"${name}" is not a valid event."`);
-    }
-
-    for (let i = 0; i < this.events[name].length; i++) {
-      this.events[name][i](value, this);
-    }
-  }
-
-  metric (type, value) {
-    if (!this.options || !this.options.enableMetrics) {
-      return;
-    }
-
-    if (!MSEWrapper.METRIC_TYPES.includes(type)) {
-      // @todo - should this throw?
-      return;
-    }
-
-    switch (type) {
-      case 'sourceBuffer.lastKnownBufferSize':
-      case 'sourceBuffer.lastMoofSize': {
-        this.metrics[type] = value;
-        break;
-      }
-      default: {
-        if (!this.metrics.hasOwnProperty(type)) {
-          this.metrics[type] = 0;
-        }
-
-        this.metrics[type] += value;
-      }
-    }
-
-    this.trigger('metric', {
-      type,
-      value: this.metrics[type],
-    });
-  }
-
   initializeMediaSource (options = {}) {
-    debug('Initializing mediaSource...');
+    this.debug('Initializing mediaSource...');
 
     options = defaults({}, options, {
       onSourceOpen: noop,
@@ -198,7 +131,7 @@ export default class MSEWrapper {
   }
 
   getVideoElementSrc () {
-    debug('getVideoElementSrc...');
+    this.debug('getVideoElementSrc...');
 
     if (!this.mediaSource) {
       // @todo - should this throw?
@@ -223,7 +156,7 @@ export default class MSEWrapper {
   }
 
   destroyVideoElementSrc () {
-    debug('destroyVideoElementSrc...');
+    this.debug('destroyVideoElementSrc...');
 
     if (!this.mediaSource) {
       // @todo - should this throw?
@@ -269,7 +202,7 @@ export default class MSEWrapper {
   }
 
   async initializeSourceBuffer (mimeCodec, options = {}) {
-    debug('initializeSourceBuffer...');
+    this.debug('initializeSourceBuffer...');
 
     options = defaults({}, options, {
       onAppendStart: noop,
@@ -309,18 +242,18 @@ export default class MSEWrapper {
   }
 
   queueSegment (segment) {
-    debug(`Queueing segment.  The queue now has ${this.segmentQueue.length} segments.`);
+    this.debug(`Queueing segment.  The queue now has ${this.segmentQueue.length} segments.`);
 
     this.metric('queue.added', 1);
 
     this.segmentQueue.push({
       timestamp: Date.now(),
-      byteArray: segment,
+      moof: segment,
     });
   }
 
   sourceBufferAbort () {
-    debug('Aborting current sourceBuffer operation');
+    this.debug('Aborting current sourceBuffer operation');
 
     try {
       this.metric('sourceBuffer.abort', 1);
@@ -337,14 +270,14 @@ export default class MSEWrapper {
     }
   }
 
-  _append ({ timestamp, byteArray }) {
-    silly('Appending to the sourceBuffer...');
+  _append ({ timestamp, moof }) {
+    this.silly('Appending to the sourceBuffer...');
 
     try {
       const estimatedDrift = Date.now() - timestamp;
 
       if (estimatedDrift > this.options.driftThreshold) {
-        debug(`Estimated drift of ${estimatedDrift} is above the ${this.options.driftThreshold} threshold.  Flushing queue...`);
+        this.debug(`Estimated drift of ${estimatedDrift} is above the ${this.options.driftThreshold} threshold.  Flushing queue...`);
         // @todo - perhaps we should re-add the last segment to the queue with a fresh
         // timestamp?  I think one cause of stream freezing is the sourceBuffer getting
         // starved, but I don't know if that's correct
@@ -353,38 +286,38 @@ export default class MSEWrapper {
         return;
       }
 
-      debug(`Appending to the buffer with an estimated drift of ${estimatedDrift}`);
+      this.debug(`Appending to the buffer with an estimated drift of ${estimatedDrift}`);
 
       this.metric('sourceBuffer.append', 1);
 
-      this.sourceBuffer.appendBuffer(byteArray);
+      this.sourceBuffer.appendBuffer(moof);
     }
     catch (error) {
       this.metric('error.sourceBuffer.append', 1);
 
-      this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
+      this.eventListeners.sourceBuffer.onAppendError(error, moof);
     }
   }
 
   processNextInQueue () {
-    silly('processNextInQueue');
+    this.silly('processNextInQueue');
 
     if (document.visibilityState === 'hidden') {
-      debug('Tab not in focus - dropping frame...');
+      this.debug('Tab not in focus - dropping frame...');
       this.metric('frameDrop.hiddenTab', 1);
       this.metric('queue.cannotProcessNext', 1);
       return;
     }
 
     if (!this.isMediaSourceReady()) {
-      debug('The mediaSource is not ready');
+      this.debug('The mediaSource is not ready');
       this.metric('queue.mediaSourceNotReady', 1);
       this.metric('queue.cannotProcessNext', 1);
       return;
     }
 
     if (!this.isSourceBufferReady()) {
-      debug('The sourceBuffer is busy');
+      this.debug('The sourceBuffer is busy');
       this.metric('queue.sourceBufferNotReady', 1);
       this.metric('queue.cannotProcessNext', 1);
       return;
@@ -413,7 +346,7 @@ export default class MSEWrapper {
   }
 
   appendMoov (moov) {
-    debug('appendMoov');
+    this.debug('appendMoov');
 
     this.metric('sourceBuffer.lastMoovSize', moov.length);
 
@@ -422,29 +355,29 @@ export default class MSEWrapper {
       return;
     }
 
-    debug('appending moov...');
+    this.debug('appending moov...');
     this.queueSegment(moov);
 
     this.processNextInQueue();
   }
 
-  append (byteArray) {
-    silly('Append');
+  append (moof) {
+    this.silly('Append');
 
-    this.metric('sourceBuffer.lastMoofSize', byteArray.length);
+    this.metric('sourceBuffer.lastMoofSize', moof.length);
 
-    // console.log(mp4toJSON(byteArray));
+    // console.log(mp4toJSON(moof));
 
     // Sometimes this can get hit after destroy is called
     if (!this.eventListeners.sourceBuffer.onAppendStart) {
       return;
     }
 
-    this.eventListeners.sourceBuffer.onAppendStart(byteArray);
+    this.eventListeners.sourceBuffer.onAppendStart(moof);
 
     this.metric('queue.append', 1);
 
-    this.queueSegment(this.formatMoof(byteArray));
+    this.queueSegment(this.formatMoof(moof));
     this.sequenceNumber++;
 
     this.processNextInQueue();
@@ -475,7 +408,7 @@ export default class MSEWrapper {
       }
 
       if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
-        debug('Removing old stuff from sourceBuffer...');
+        this.debug('Removing old stuff from sourceBuffer...');
 
         // @todo - this is the biggest performance problem we have with this player.
         // Can you figure out how to manage the memory usage without causing the streams
@@ -491,14 +424,14 @@ export default class MSEWrapper {
   }
 
   onRemoveFinish (info = this.getBufferTimes()) {
-    debug('On remove finish...');
+    this.debug('On remove finish...');
 
     this.metric('sourceBuffer.updateEnd.removeEvent', 1);
     this.eventListeners.sourceBuffer.onRemoveFinish(info);
   }
 
   onAppendFinish (info = this.getBufferTimes()) {
-    silly('On append finish...');
+    this.silly('On append finish...');
 
     this.metric('sourceBuffer.updateEnd.appendEvent', 1);
 
@@ -517,7 +450,7 @@ export default class MSEWrapper {
   }
 
   onSourceBufferUpdateEnd () {
-    silly('onUpdateEnd');
+    this.silly('onUpdateEnd');
 
     this.metric('sourceBuffer.updateEnd', 1);
 
@@ -527,14 +460,14 @@ export default class MSEWrapper {
       // "buffered" property.
       if (this.sourceBuffer.buffered.length <= 0) {
         this.metric('sourceBuffer.updateEnd.bufferLength.empty', 1);
-        debug('After updating, the sourceBuffer has no length!');
+        this.debug('After updating, the sourceBuffer has no length!');
         return;
       }
     }
     catch (error) {
       // @todo - do we need to handle this?
       this.metric('sourceBuffer.updateEnd.bufferLength.error', 1);
-      debug('The mediaSource was removed while an update operation was occurring.');
+      this.debug('The mediaSource was removed while an update operation was occurring.');
       return;
     }
 
@@ -574,7 +507,7 @@ export default class MSEWrapper {
   destroyMediaSource () {
     this.metric('sourceBuffer.destroyed', 1);
 
-    debug('Destroying mediaSource...');
+    this.debug('Destroying mediaSource...');
 
     if (!this.mediaSource) {
       return;
@@ -595,8 +528,18 @@ export default class MSEWrapper {
     // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
     // }
 
-    if (this.isMediaSourceReady()) {
-      this.mediaSource.endOfStream();
+    // @todo - if either the media source or the source buffer isn't ready
+    // at this point, does it matter?  is endOfStream necessary?  if so, we
+    // need to be able to guarantee that it can be called.  This will likely
+    // require tracking whether or not this has been called
+    if (this.isMediaSourceReady() && this.isSourceBufferReady()) {
+      try {
+        this.mediaSource.endOfStream();
+      }
+      catch (error) {
+        this.debug(error);
+        this.metric('error.mediaSource.endOfStream', 1);
+      }
     }
 
     this.mediaSource.removeSourceBuffer(this.sourceBuffer);
@@ -609,7 +552,7 @@ export default class MSEWrapper {
   }
 
   async destroy () {
-    debug('destroySourceBuffer...');
+    this.debug('destroySourceBuffer...');
 
     if (this.destroyed) {
       return;

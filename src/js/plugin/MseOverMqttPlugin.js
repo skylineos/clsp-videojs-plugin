@@ -9,13 +9,13 @@ import 'videojs-errors';
 
 // @todo - can webpack be configured to process this without having
 // include it like this?
-import '../../styles/videojs-mse-over-clsp.scss';
+import '~styles/videojs-mse-over-clsp.scss';
 
 // @todo - can webpack be configured to process this without having
 // include it like this?
-import '../conduit/clspConduit.generated.js';
+import '~/conduit/clspConduit.generated.js';
 
-import utils from '../utils';
+import utils from '~/utils/utils';
 import MqttSourceHandler from './MqttSourceHandler';
 import MqttConduitCollection from './MqttConduitCollection';
 

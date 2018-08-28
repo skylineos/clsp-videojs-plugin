@@ -2,7 +2,7 @@ import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
 
-import MSEWrapper from './MSEWrapper';
+import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
@@ -84,7 +84,7 @@ export default class IOVPlayer {
     this.segmentInterval = null;
     this.segmentIntervals = [];
 
-    this.mseWrapper = null;
+    this.mediaSourceWrapper = null;
     this.moovBox = null;
     this.guid = null;
     this.mimeCodec = null;
@@ -162,7 +162,7 @@ export default class IOVPlayer {
   }
 
   assertMimeCodecSupported (mimeCodec) {
-    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+    if (!MediaSourceWrapper.isMimeCodecSupported(mimeCodec)) {
       this.state = 'unsupported-mime-codec';
 
       const message = `Unsupported mime codec: ${mimeCodec}`;
@@ -240,21 +240,21 @@ export default class IOVPlayer {
   }
 
   reinitializeMseWrapper (mimeCodec) {
-    if (this.mseWrapper) {
-      this.mseWrapper.destroy();
+    if (this.mediaSourceWrapper) {
+      this.mediaSourceWrapper.destroy();
     }
 
-    this.mseWrapper = MSEWrapper.factory(this.videoElement);
+    this.mediaSourceWrapper = MediaSourceWrapper.factory(this.videoElement);
 
-    this.mseWrapper.on('metric', ({ type, value }) => {
+    this.mediaSourceWrapper.on('metric', ({ type, value }) => {
       this.trigger('metric', { type, value });
     });
 
-    this.mseWrapper.initializeMediaSource({
+    this.mediaSourceWrapper.initializeMediaSource({
       onSourceOpen: async () => {
         debug('on mediaSource sourceopen');
 
-        await this.mseWrapper.initializeSourceBuffer(mimeCodec, {
+        await this.mediaSourceWrapper.initializeSourceBuffer(mimeCodec, {
           onAppendStart: (byteArray) => {
             silly('On Append Start...');
 
@@ -330,7 +330,7 @@ export default class IOVPlayer {
           },
           onRemoveError: (error) => {
             if (error.constructor.name === 'DOMException') {
-              // @todo - every time the mseWrapper is destroyed, there is a
+              // @todo - every time the mediaSourceWrapper is destroyed, there is a
               // sourceBuffer error.  No need to log that, but you should fix it
               return;
             }
@@ -358,7 +358,7 @@ export default class IOVPlayer {
         });
 
         this.trigger('videoInfoReceived');
-        this.mseWrapper.appendMoov(this.moovBox);
+        this.mediaSourceWrapper.appendMoov(this.moovBox);
       },
       onSourceEnded: () => {
         debug('on mediaSource sourceended');
@@ -375,11 +375,11 @@ export default class IOVPlayer {
       },
     });
 
-    if (!this.mseWrapper.mediaSource || !this.videoElement) {
+    if (!this.mediaSourceWrapper.mediaSource || !this.videoElement) {
       throw new Error('The video element or mediaSource is not ready!');
     }
 
-    this.mseWrapper.reinitializeVideoElementSrc();
+    this.mediaSourceWrapper.reinitializeVideoElementSrc();
   }
 
   resyncStream (mimeCodec) {
@@ -479,7 +479,7 @@ export default class IOVPlayer {
       this.iov.conduit.subscribe(newTopic, (mqtt_msg) => {
         this.trigger('videoReceived');
         this.getSegmentIntervalMetrics();
-        this.mseWrapper.append(mqtt_msg.payloadBytes);
+        this.mediaSourceWrapper.append(mqtt_msg.payloadBytes);
       });
 
       this.guid = guid;
@@ -533,8 +533,8 @@ export default class IOVPlayer {
     this.moovBox = null;
     this.mimeCodec = null;
 
-    this.mseWrapper.destroy();
-    this.mseWrapper = null;
+    this.mediaSourceWrapper.destroy();
+    this.mediaSourceWrapper = null;
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,
