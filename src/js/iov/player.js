@@ -358,7 +358,7 @@ export default class IOVPlayer {
         });
 
         this.trigger('videoInfoReceived');
-        this.mseWrapper.append(this.moovBox);
+        this.mseWrapper.appendMoov(this.moovBox);
       },
       onSourceEnded: () => {
         debug('on mediaSource sourceended');

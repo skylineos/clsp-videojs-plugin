@@ -2809,11 +2809,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! global/document */ "./node_modules/global/document.js");
 /* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(global_document__WEBPACK_IMPORTED_MODULE_1__);
-/*! @name videojs-errors @version 4.1.2 @license Apache-2.0 */
+/*! @name videojs-errors @version 4.1.3 @license Apache-2.0 */
 
 
 
-var version = "4.1.2";
+var version = "4.1.3";
 
 var FlashObj = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getComponent('Flash');
 var defaultDismiss = !video_js__WEBPACK_IMPORTED_MODULE_0___default.a.browser.IS_IPHONE;
@@ -3228,7 +3228,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","build-dev":"npm run build && npm run start-dev","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","jquery":"^3.3.1","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.4","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags","serve":"./scripts/serve.js","serve-watch":"npm run build && npm run serve"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","jquery":"^3.3.1","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2"}};
 
 /***/ }),
 
@@ -4231,6 +4231,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 
 
+// import { mp4toJSON } from './mp4-inspect';
 
 var DEBUG_PREFIX = 'skyline:clsp:iov';
 
@@ -4280,6 +4281,7 @@ var MSEWrapper = function () {
     });
 
     this.segmentQueue = [];
+    this.sequenceNumber = 0;
 
     this.mediaSource = null;
     this.sourceBuffer = null;
@@ -4349,6 +4351,7 @@ var MSEWrapper = function () {
 
       switch (type) {
         case 'sourceBuffer.lastKnownBufferSize':
+        case 'sourceBuffer.lastMoofSize':
           {
             this.metrics[type] = value;
             break;
@@ -4644,9 +4647,46 @@ var MSEWrapper = function () {
       }
     }
   }, {
+    key: 'formatMoof',
+    value: function formatMoof(moof) {
+      // We must overwrite the sequence number locally, because it
+      // the sequence that comes from the server will not necessarily
+      // start at zero.  It should start from zero locally.  This
+      // requirement may have changed with more recent versions of the
+      // browser, but it appears to make the video play a little more
+      // smoothly
+      moof[20] = (this.sequenceNumber & 0xFF000000) >> 24;
+      moof[21] = (this.sequenceNumber & 0x00FF0000) >> 16;
+      moof[22] = (this.sequenceNumber & 0x0000FF00) >> 8;
+      moof[23] = this.sequenceNumber & 0xFF;
+
+      return moof;
+    }
+  }, {
+    key: 'appendMoov',
+    value: function appendMoov(moov) {
+      debug('appendMoov');
+
+      this.metric('sourceBuffer.lastMoovSize', moov.length);
+
+      // Sometimes this can get hit after destroy is called
+      if (!this.eventListeners.sourceBuffer.onAppendStart) {
+        return;
+      }
+
+      debug('appending moov...');
+      this.queueSegment(moov);
+
+      this.processNextInQueue();
+    }
+  }, {
     key: 'append',
     value: function append(byteArray) {
       silly('Append');
+
+      this.metric('sourceBuffer.lastMoofSize', byteArray.length);
+
+      // console.log(mp4toJSON(byteArray));
 
       // Sometimes this can get hit after destroy is called
       if (!this.eventListeners.sourceBuffer.onAppendStart) {
@@ -4656,7 +4696,9 @@ var MSEWrapper = function () {
       this.eventListeners.sourceBuffer.onAppendStart(byteArray);
 
       this.metric('queue.append', 1);
-      this.queueSegment(byteArray);
+
+      this.queueSegment(this.formatMoof(byteArray));
+      this.sequenceNumber++;
 
       this.processNextInQueue();
     }
@@ -4891,7 +4933,7 @@ var MSEWrapper = function () {
 }();
 
 MSEWrapper.EVENT_NAMES = ['metric'];
-MSEWrapper.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen', 'sourceBuffer.abort', 'error.sourceBuffer.abort'];
+MSEWrapper.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen', 'sourceBuffer.abort', 'error.sourceBuffer.abort', 'sourceBuffer.lastMoofSize'];
 /* harmony default export */ __webpack_exports__["default"] = (MSEWrapper);
 
 /***/ }),
@@ -5374,7 +5416,7 @@ var IOVPlayer = function () {
                   case 3:
 
                     _this2.trigger('videoInfoReceived');
-                    _this2.mseWrapper.append(_this2.moovBox);
+                    _this2.mseWrapper.appendMoov(_this2.moovBox);
 
                   case 5:
                   case 'end':

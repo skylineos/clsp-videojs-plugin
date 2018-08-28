@@ -3,6 +3,7 @@
 import Debug from 'debug';
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
+// import { mp4toJSON } from './mp4-inspect';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 
@@ -42,7 +43,7 @@ export default class MSEWrapper {
     'sourceBuffer.updateEnd.bufferFrozen',
     'sourceBuffer.abort',
     'error.sourceBuffer.abort',
-    'lastMoofSize',
+    'sourceBuffer.lastMoofSize',
   ];
 
   static isMimeCodecSupported (mimeCodec) {
@@ -77,6 +78,7 @@ export default class MSEWrapper {
     });
 
     this.segmentQueue = [];
+    this.sequenceNumber = 0;
 
     this.mediaSource = null;
     this.sourceBuffer = null;
@@ -143,7 +145,7 @@ export default class MSEWrapper {
 
     switch (type) {
       case 'sourceBuffer.lastKnownBufferSize':
-      case 'lastMoofSize': {
+      case 'sourceBuffer.lastMoofSize': {
         this.metrics[type] = value;
         break;
       }
@@ -395,10 +397,43 @@ export default class MSEWrapper {
     }
   }
 
+  formatMoof (moof) {
+    // We must overwrite the sequence number locally, because it
+    // the sequence that comes from the server will not necessarily
+    // start at zero.  It should start from zero locally.  This
+    // requirement may have changed with more recent versions of the
+    // browser, but it appears to make the video play a little more
+    // smoothly
+    moof[20] = (this.sequenceNumber & 0xFF000000) >> 24;
+    moof[21] = (this.sequenceNumber & 0x00FF0000) >> 16;
+    moof[22] = (this.sequenceNumber & 0x0000FF00) >> 8;
+    moof[23] = this.sequenceNumber & 0xFF;
+
+    return moof;
+  }
+
+  appendMoov (moov) {
+    debug('appendMoov');
+
+    this.metric('sourceBuffer.lastMoovSize', moov.length);
+
+    // Sometimes this can get hit after destroy is called
+    if (!this.eventListeners.sourceBuffer.onAppendStart) {
+      return;
+    }
+
+    debug('appending moov...');
+    this.queueSegment(moov);
+
+    this.processNextInQueue();
+  }
+
   append (byteArray) {
     silly('Append');
 
-    this.metric('lastMoofSize', byteArray.length);
+    this.metric('sourceBuffer.lastMoofSize', byteArray.length);
+
+    // console.log(mp4toJSON(byteArray));
 
     // Sometimes this can get hit after destroy is called
     if (!this.eventListeners.sourceBuffer.onAppendStart) {
@@ -408,7 +443,9 @@ export default class MSEWrapper {
     this.eventListeners.sourceBuffer.onAppendStart(byteArray);
 
     this.metric('queue.append', 1);
-    this.queueSegment(byteArray);
+
+    this.queueSegment(this.formatMoof(byteArray));
+    this.sequenceNumber++;
 
     this.processNextInQueue();
   }

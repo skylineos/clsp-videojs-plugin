@@ -1,6 +1,6 @@
 {
   "name": "videojs-mse-over-clsp",
-  "version": "0.13.1",
+  "version": "0.13.4",
   "description": "Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ",
   "main": "dist/videojs-mse-over-clsp.js",
   "generator-videojs-plugin": {
@@ -8,11 +8,12 @@
   },
   "scripts": {
     "build": "gulp build",
-    "build-dev": "npm run build && npm run start-dev",
     "lint": "eslint ./ --cache --quiet --ext .jsx --ext .js",
     "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
+    "version": "./scripts/version.sh",
     "postversion": "git push && git push --tags",
-    "start-dev": "gulp start-dev"
+    "serve": "./scripts/serve.js",
+    "serve-watch": "npm run build && npm run serve"
   },
   "keywords": [
     "videojs",
