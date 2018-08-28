@@ -8,7 +8,11 @@ import moment from 'moment';
 import compact from 'lodash/compact';
 import 'babel-polyfill';
 
-import packageJson from '../../../package.json';
+import packageJson from '~root/package.json';
+
+import IOVPlayer from '~/iov/player';
+import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
+import SourceBufferWrapper from '~/mse/SourceBufferWrapper';
 
 window.videojs = videojs;
 window.CLSP_DEMO_VERSION = packageJson.version;
@@ -44,6 +48,32 @@ function initializeWall () {
 
     $container.html(html);
 
+    const $videoMetrics = $container.find('.video-metrics');
+
+    const metricTypes = [
+      IOVPlayer,
+      MediaSourceWrapper,
+      SourceBufferWrapper,
+    ];
+
+    for (let i = 0; i < metricTypes.length; i++) {
+      const metricType = metricTypes[i];
+
+      for (let j = 0; j < metricType.METRIC_TYPES.length; j++) {
+        const text = metricType.METRIC_TYPES[j];
+        const name = text.replace(new RegExp(/\./, 'g'), '-');
+        const $metric = $('<div/>', { class: `metric ${name}` });
+
+        $metric.append($('<span/>', { class: 'value' }));
+        $metric.append($('<span/>', {
+          class: 'type',
+          text,
+        }));
+
+        $videoMetrics.append($metric);
+      }
+    }
+
     const cell = document.getElementById(`video-${cellId}`);
 
     if (!cell) {
@@ -56,7 +86,7 @@ function initializeWall () {
     const $videoMetricContainer = $container.find('.video-metrics');
 
     tech.on('metric', (event, { metric }) => {
-      $videoMetricContainer.find(`.${metric.type.replace(/\./g, '-')} .value`).html(metric.value);
+      $videoMetricContainer.find(`.${metric.type.replace(new RegExp(/\./, 'g'), '-')} .value`).html(metric.value);
     });
   }
 

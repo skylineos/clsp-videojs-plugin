@@ -58,7 +58,13 @@ export default class ListenerBaseClass {
       return;
     }
 
+    // @todo - decouple these metric types
     switch (type) {
+      case 'iovPlayer.sourceBuffer.bufferTimeEnd':
+      case 'iovPlayer.video.currentTime':
+      case 'iovPlayer.video.drift':
+      case 'iovPlayer.video.segmentInterval':
+      case 'iovPlayer.video.segmentIntervalAverage':
       case 'sourceBuffer.lastKnownBufferSize':
       case 'sourceBuffer.lastMoofSize': {
         this.metrics[type] = value;
@@ -77,5 +83,12 @@ export default class ListenerBaseClass {
       type,
       value: this.metrics[type],
     });
+  }
+
+  destroy () {
+    this.metrics = null;
+    this.events = null;
+    this.debug = null;
+    this.silly = null;
   }
 }

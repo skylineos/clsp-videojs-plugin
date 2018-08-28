@@ -1,12 +1,8 @@
-import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
 
+import ListenerBaseClass from '~/utils/ListenerBaseClass';
 import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
-
-const DEBUG_PREFIX = 'skyline:clsp:iov';
-const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
-const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -21,7 +17,9 @@ const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
  * var player = IOVPlayer.factory(iov);
  * player.play( video_element_id, stream_name );
 */
-export default class IOVPlayer {
+export default class IOVPlayer extends ListenerBaseClass {
+  static DEBUG_NAME = 'skyline:clsp:iov:player';
+
   static EVENT_NAMES = [
     'metric',
     'firstFrameShown',
@@ -30,12 +28,12 @@ export default class IOVPlayer {
   ];
 
   static METRIC_TYPES = [
-    'sourceBuffer.bufferTimeEnd',
-    'video.currentTime',
-    'video.drift',
-    'video.driftCorrection',
-    'video.segmentInterval',
-    'video.segmentIntervalAverage',
+    'iovPlayer.sourceBuffer.bufferTimeEnd',
+    'iovPlayer.video.currentTime',
+    'iovPlayer.video.drift',
+    'iovPlayer.video.driftCorrection',
+    'iovPlayer.video.segmentInterval',
+    'iovPlayer.video.segmentIntervalAverage',
   ];
 
   static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
@@ -46,7 +44,9 @@ export default class IOVPlayer {
   }
 
   constructor (iov, playerInstance, options) {
-    debug('constructor');
+    super(IOVPlayer.DEBUG_NAME);
+
+    this.debug('constructor');
 
     this.metrics = {};
 
@@ -87,97 +87,11 @@ export default class IOVPlayer {
     this.mediaSourceWrapper = null;
     this.moovBox = null;
     this.guid = null;
-    this.mimeCodec = null;
-  }
-
-  on (name, action) {
-    debug(`Registering Listener for ${name} event...`);
-
-    if (!IOVPlayer.EVENT_NAMES.includes(name)) {
-      throw new Error(`"${name}" is not a valid event."`);
-    }
-
-    if (this.destroyed) {
-      return;
-    }
-
-    this.events[name].push(action);
-  }
-
-  trigger (name, value) {
-    if (name === 'metric') {
-      silly(`Triggering ${name} event...`);
-    }
-    else {
-      debug(`Triggering ${name} event...`);
-    }
-
-    if (this.destroyed) {
-      return;
-    }
-
-    if (!IOVPlayer.EVENT_NAMES.includes(name)) {
-      throw new Error(`"${name}" is not a valid event."`);
-    }
-
-    for (let i = 0; i < this.events[name].length; i++) {
-      this.events[name][i](value, this);
-    }
-  }
-
-  metric (type, value) {
-    // if (!this.options.enableMetrics) {
-    //   return;
-    // }
-
-    if (!IOVPlayer.METRIC_TYPES.includes(type)) {
-      // @todo - should this throw?
-      return;
-    }
-
-    switch (type) {
-      case 'video.driftCorrection': {
-        if (!this.metrics[type]) {
-          this.metrics[type] = 0;
-        }
-
-        this.metrics[type] += value;
-
-        break;
-      }
-      default: {
-        this.metrics[type] = value;
-      }
-    }
-
-    this.trigger('metric', {
-      type,
-      value: this.metrics[type],
-    });
   }
 
   _onError (type, message, error) {
     console.error(message);
     console.error(error);
-  }
-
-  assertMimeCodecSupported (mimeCodec) {
-    if (!MediaSourceWrapper.isMimeCodecSupported(mimeCodec)) {
-      this.state = 'unsupported-mime-codec';
-
-      const message = `Unsupported mime codec: ${mimeCodec}`;
-
-      this.videoPlayer.errors.extend({
-        PLAYER_ERR_IOV: {
-          headline: 'Error Playing Stream',
-          message,
-        },
-      });
-
-      this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
-
-      throw new Error(message);
-    }
   }
 
   initializeVideoElement () {
@@ -239,7 +153,7 @@ export default class IOVPlayer {
     });
   }
 
-  reinitializeMseWrapper (mimeCodec) {
+  async reinitializeMseWrapper () {
     if (this.mediaSourceWrapper) {
       this.mediaSourceWrapper.destroy();
     }
@@ -250,130 +164,142 @@ export default class IOVPlayer {
       this.trigger('metric', { type, value });
     });
 
-    this.mediaSourceWrapper.initializeMediaSource({
-      onSourceOpen: async () => {
-        debug('on mediaSource sourceopen');
+    this.mediaSourceWrapper.on('sourceOpen', async () => {
+      this.debug('on mediaSource sourceopen');
 
-        await this.mediaSourceWrapper.initializeSourceBuffer(mimeCodec, {
-          onAppendStart: (byteArray) => {
-            silly('On Append Start...');
+      await this.mediaSourceWrapper.initializeSourceBuffer();
 
-            if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
-              debug(`Recording ${parseInt(byteArray.length)} bytes of data.`);
+      this.mediaSourceWrapper.sourceBuffer.on('metric', ({ type, value }) => {
+        this.trigger('metric', { type, value });
+      });
 
-              const mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-              mqtt_msg.destinationName = this.LogSourceBufferTopic;
-              window.MQTTClient.send(mqtt_msg);
-            }
+      this.mediaSourceWrapper.sourceBuffer.on('appendStart', (moof) => {
+        this.silly('On Append Start...');
 
-            this.iov.statsMsg.byteCount += byteArray.length;
-          },
-          onAppendFinish: (info) => {
-            silly('On Append Finish...');
+        if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
+          this.debug(`Recording ${parseInt(moof.length)} bytes of data.`);
 
-            if (!this.firstFrameShown) {
-              this.firstFrameShown = true;
-              this.trigger('firstFrameShown');
-            }
+          const mqtt_msg = new window.Paho.MQTT.Message(moof);
+          mqtt_msg.destinationName = this.LogSourceBufferTopic;
+          window.MQTTClient.send(mqtt_msg);
+        }
 
-            this.drift = info.bufferTimeEnd - this.videoElement.currentTime;
+        this.iov.statsMsg.byteCount += moof.length;
+      });
 
-            this.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
-            this.metric('video.currentTime', this.videoElement.currentTime);
-            this.metric('video.drift', this.drift);
+      this.mediaSourceWrapper.sourceBuffer.on('appendFinish', (info) => {
+        this.silly('On Append Finish...');
 
-            if (this.drift > ((this.segmentIntervalAverage / 1000) + this.options.driftCorrectionConstant)) {
-              this.metric('video.driftCorrection', 1);
-              this.videoElement.currentTime = info.bufferTimeEnd;
-            }
+        if (!this.firstFrameShown) {
+          this.firstFrameShown = true;
+          this.trigger('firstFrameShown');
+        }
 
-            if (this.videoElement.paused === true) {
-              debug('Video is paused!');
+        this.drift = info.bufferTimeEnd - this.videoElement.currentTime;
 
-              try {
-                const promise = this.videoElement.play();
+        this.metric('iovPlayer.sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+        this.metric('iovPlayer.video.currentTime', this.videoElement.currentTime);
+        this.metric('iovPlayer.video.drift', this.drift);
 
-                if (typeof promise !== 'undefined') {
-                  promise.catch((error) => {
-                    this._onError(
-                      'videojs.play.promise',
-                      'Error while trying to play videojs player',
-                      error
-                    );
-                  });
-                }
-              }
-              catch (error) {
+        if (this.drift > ((this.segmentIntervalAverage / 1000) + this.options.driftCorrectionConstant)) {
+          this.metric('iovPlayer.video.driftCorrection', 1);
+          this.videoElement.currentTime = info.bufferTimeEnd;
+        }
+
+        if (this.videoElement.paused === true) {
+          this.debug('Video is paused!');
+
+          try {
+            const promise = this.videoElement.play();
+
+            if (typeof promise !== 'undefined') {
+              promise.catch((error) => {
                 this._onError(
-                  'videojs.play.notPromise',
+                  'videojs.play.promise',
                   'Error while trying to play videojs player',
                   error
                 );
-              }
+              });
             }
-          },
-          onRemoveFinish: (info) => {
-            debug('onRemoveFinish');
-          },
-          onAppendError: (error) => {
-            // internal error, this has been observed to happen the tab
-            // in the browser where this video player lives is hidden
-            // then reselected. 'ex' is undefined the error is bug
-            // within the MSE C++ implementation in the browser.
+          }
+          catch (error) {
             this._onError(
-              'sourceBuffer.append',
-              'Error while appending to sourceBuffer',
+              'videojs.play.notPromise',
+              'Error while trying to play videojs player',
               error
             );
-            // this.videoPlayer.error({ code: 3 });
-            this.reinitializeMseWrapper(mimeCodec);
-          },
-          onRemoveError: (error) => {
-            if (error.constructor.name === 'DOMException') {
-              // @todo - every time the mediaSourceWrapper is destroyed, there is a
-              // sourceBuffer error.  No need to log that, but you should fix it
-              return;
-            }
+          }
+        }
+      });
 
-            // observed this fail during a memry snapshot in chrome
-            // otherwise no observed failure, so ignore exception.
-            this._onError(
-              'sourceBuffer.remove',
-              'Error while removing segments from sourceBuffer',
-              error
-            );
-          },
-          onStreamFrozen: () => {
-            debug('stream appears to be frozen - reinitializing...');
-
-            this.reinitializeMseWrapper(mimeCodec);
-          },
-          onError: (error) => {
-            this._onError(
-              'mediaSource.sourceBuffer.generic',
-              'mediaSource sourceBuffer error',
-              error
-            );
-          },
-        });
-
-        this.trigger('videoInfoReceived');
-        this.mediaSourceWrapper.appendMoov(this.moovBox);
-      },
-      onSourceEnded: () => {
-        debug('on mediaSource sourceended');
-
-        // @todo - do we need to clear the buffer manually?
-        this.stop();
-      },
-      onError: (error) => {
+      this.mediaSourceWrapper.sourceBuffer.on('appendError', async (error) => {
+        // internal error, this has been observed to happen the tab
+        // in the browser where this video player lives is hidden
+        // then reselected. 'ex' is undefined the error is bug
+        // within the MSE C++ implementation in the browser.
         this._onError(
-          'mediaSource.generic',
-          'mediaSource error',
+          'sourceBuffer.append',
+          'Error while appending to sourceBuffer',
           error
         );
-      },
+        // this.videoPlayer.error({ code: 3 });
+        await this.reinitializeMseWrapper();
+      });
+
+      this.mediaSourceWrapper.sourceBuffer.on('removeFinish', (info) => {
+        this.debug('onRemoveFinish');
+      });
+
+      this.mediaSourceWrapper.sourceBuffer.on('removeError', (error) => {
+        if (error.constructor.name === 'DOMException') {
+          // @todo - every time the mediaSourceWrapper is destroyed, there is a
+          // sourceBuffer error.  No need to log that, but you should fix it
+          return;
+        }
+
+        // observed this fail during a memry snapshot in chrome
+        // otherwise no observed failure, so ignore exception.
+        this._onError(
+          'sourceBuffer.remove',
+          'Error while removing segments from sourceBuffer',
+          error
+        );
+      });
+
+      this.mediaSourceWrapper.sourceBuffer.on('streamFrozen', async () => {
+        this.debug('stream appears to be frozen - reinitializing...');
+
+        await this.reinitializeMseWrapper();
+      });
+
+      this.mediaSourceWrapper.sourceBuffer.on('error', (error) => {
+        this._onError(
+          'mediaSource.sourceBuffer.generic',
+          'mediaSource sourceBuffer error',
+          error
+        );
+      });
+
+      this.trigger('videoInfoReceived');
+      this.mediaSourceWrapper.sourceBuffer.appendMoov(this.moovBox);
     });
+
+    this.mediaSourceWrapper.on('sourceEnded', () => {
+      this.debug('on mediaSource sourceended');
+
+      // @todo - do we need to clear the buffer manually?
+      this.stop();
+    });
+
+    this.mediaSourceWrapper.on('error', (error) => {
+      this._onError(
+        'mediaSource.generic',
+        'mediaSource error',
+        error
+      );
+    });
+
+    await this.mediaSourceWrapper.initializeMediaSource();
 
     if (!this.mediaSourceWrapper.mediaSource || !this.videoElement) {
       throw new Error('The video element or mediaSource is not ready!');
@@ -382,26 +308,26 @@ export default class IOVPlayer {
     this.mediaSourceWrapper.reinitializeVideoElementSrc();
   }
 
-  resyncStream (mimeCodec) {
+  resyncStream () {
     // subscribe to a sync topic that will be called if the stream that is feeding
     // the mse service dies and has to be restarted that this player should restart the stream
-    debug('Trying to resync stream...');
+    this.debug('Trying to resync stream...');
 
-    this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, () => {
-      debug('sync received re-initialize media source buffer');
-      this.reinitializeMseWrapper(mimeCodec);
+    this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, async () => {
+      this.debug('sync received re-initialize media source buffer');
+      await this.reinitializeMseWrapper();
     });
   }
 
   restart () {
-    debug('restart');
+    this.debug('restart');
 
     this.stop();
     this.play();
   }
 
   play (streamName) {
-    debug('play');
+    this.debug('play');
 
     this.iov.conduit.transaction(
       `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
@@ -411,7 +337,7 @@ export default class IOVPlayer {
   }
 
   stop () {
-    debug('stop');
+    this.debug('stop');
 
     this.moovBox = null;
 
@@ -448,24 +374,37 @@ export default class IOVPlayer {
 
       this.segmentIntervalAverage = segmentIntervalSum / this.segmentIntervals.length;
 
-      this.metric('video.segmentInterval', this.segmentInterval);
-      this.metric('video.segmentIntervalAverage', this.segmentIntervalAverage);
+      this.metric('iovPlayer.video.segmentInterval', this.segmentInterval);
+      this.metric('iovPlayer.video.segmentIntervalAverage', this.segmentIntervalAverage);
     }
   }
 
-  // @todo - there is much shared between this and onChangeSourceTransaction
+  /**
+   * Before we can set up a listener for the moofs, we must first set up a few
+   * initialization listeners, one for the stream request, and one for the moov.
+   *
+   * This method is what is executed when we first request a stream.  This should only
+   * ever be executed once per stream.  Once this is executed, it unregisters
+   * itself as a listener, and registers an init-segment listener, which also
+   * only runs once, then unregisters itself.  The init-segment payload is the
+   * moov.  Once we receive the moov, we can start listening for moofs.  The
+   * listener for moofs runs indefinitely, until it is commanded to stop.
+   *
+   * @param {Object}
+   *   The payload returned by the server.  This object contains the following properties:
+   *   mimeCodec - the mime type for the stream
+   *   guid - the unique id for this iov conduit connection
+   */
   onIovPlayTransaction ({ mimeCodec, guid }) {
-    debug('onIovPlayTransaction');
-
-    this.assertMimeCodecSupported(mimeCodec);
+    this.debug('onIovPlayTransaction');
 
     const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
 
     this.state = 'waiting-for-first-moov';
 
-    this.iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
-      debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
-      debug(`received moov of type "${typeof payloadBytes}" from server`);
+    this.iov.conduit.subscribe(initSegmentTopic, async ({ payloadBytes }) => {
+      this.debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
+      this.debug(`received moov of type "${typeof payloadBytes}" from server`);
 
       const moov = payloadBytes;
 
@@ -479,17 +418,37 @@ export default class IOVPlayer {
       this.iov.conduit.subscribe(newTopic, (mqtt_msg) => {
         this.trigger('videoReceived');
         this.getSegmentIntervalMetrics();
-        this.mediaSourceWrapper.append(mqtt_msg.payloadBytes);
+        this.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
       });
 
       this.guid = guid;
       this.moovBox = moov;
-      this.mimeCodec = mimeCodec;
 
       // this.trigger('firstChunk');
 
-      this.reinitializeMseWrapper(mimeCodec);
-      this.resyncStream(mimeCodec);
+      await this.reinitializeMseWrapper();
+
+      try {
+        this.mediaSourceWrapper.registerMimeCodec(mimeCodec);
+      }
+      catch (error) {
+        this.state = 'unsupported-mime-codec';
+
+        const message = `Unsupported mime codec: ${mimeCodec}`;
+
+        this.videoPlayer.errors.extend({
+          PLAYER_ERR_IOV: {
+            headline: 'Error Playing Stream',
+            message,
+          },
+        });
+
+        this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
+
+        throw new Error(message);
+      }
+
+      this.resyncStream();
     });
 
     this.iov.conduit.publish(`iov/video/${guid}/play`, {
@@ -502,6 +461,8 @@ export default class IOVPlayer {
     if (this.destroyed) {
       return;
     }
+
+    super.destroy();
 
     this.destroyed = true;
 
@@ -531,7 +492,6 @@ export default class IOVPlayer {
 
     this.guid = null;
     this.moovBox = null;
-    this.mimeCodec = null;
 
     this.mediaSourceWrapper.destroy();
     this.mediaSourceWrapper = null;

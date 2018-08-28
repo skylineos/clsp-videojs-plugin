@@ -3,6 +3,7 @@
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
+import SourceBufferWrapper from './SourceBufferWrapper';
 // import { mp4toJSON } from '~/utils/mp4-inspect';
 
 export default class MediaSourceWrapper extends ListenerBaseClass {
@@ -10,38 +11,18 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
 
   static EVENT_NAMES = [
     'metric',
+    'sourceOpen',
+    'sourceEnded',
+    'error',
   ];
 
   static METRIC_TYPES = [
     'mediaSource.created',
     'mediaSource.destroyed',
-    'objectURL.created',
-    'objectURL.revoked',
     'mediaSource.reinitialized',
-    'sourceBuffer.created',
-    'sourceBuffer.destroyed',
-    'queue.added',
-    'queue.removed',
-    'sourceBuffer.append',
-    'error.sourceBuffer.append',
-    'frameDrop.hiddenTab',
-    'queue.mediaSourceNotReady',
-    'queue.sourceBufferNotReady',
-    'queue.shift',
-    'queue.append',
-    'sourceBuffer.lastKnownBufferSize',
-    'sourceBuffer.trim',
-    'sourceBuffer.trim.error',
-    'sourceBuffer.updateEnd',
-    'sourceBuffer.updateEnd.bufferLength.empty',
-    'sourceBuffer.updateEnd.bufferLength.error',
-    'sourceBuffer.updateEnd.removeEvent',
-    'sourceBuffer.updateEnd.appendEvent',
-    'sourceBuffer.updateEnd.bufferFrozen',
-    'sourceBuffer.abort',
-    'error.sourceBuffer.abort',
-    'sourceBuffer.lastMoofSize',
-    'error.mediaSource.endOfStream',
+    'mediaSource.objectURL.created',
+    'mediaSource.objectURL.revoked',
+    'mediaSource.endOfStream.error',
   ];
 
   static isMimeCodecSupported (mimeCodec) {
@@ -61,43 +42,38 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
       throw new Error('videoElement is required to construct an MediaSourceWrapper.');
     }
 
-    this.destroyed = false;
-
     this.videoElement = videoElement;
 
     this.options = defaults({}, options, {
-      // These default buffer value provide the best results in my testing.
-      // It keeps the memory usage as low as is practical, and rarely causes
-      // the video to stutter
-      bufferSizeLimit: 90 + Math.floor(Math.random() * (200)),
-      bufferTruncateFactor: 2,
-      bufferTruncateValue: null,
-      driftThreshold: 2000,
       duration: 10,
       enableMetrics: true,
     });
 
-    this.segmentQueue = [];
-    this.sequenceNumber = 0;
+    this.eventListeners = {
+      sourceopen: () => {
+        // This can only be set when the media source is open.
+        // @todo - does this do memory management for us so we don't have
+        // to call remove on the buffer, which is expensive?  It seems
+        // like it...
+        this.mediaSource.duration = this.options.duration;
 
+        this.trigger('sourceOpen');
+      },
+      sourceended: () => {
+        this.trigger('sourceEnded');
+      },
+      error: (error) => {
+        this.trigger('error', error);
+      },
+    };
+
+    this.destroyed = false;
     this.mediaSource = null;
     this.sourceBuffer = null;
     this.objectURL = null;
-    this.timeBuffered = null;
-
-    if (!this.options.bufferTruncateValue) {
-      this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
-    }
-
-    this.eventListeners = {
-      mediaSource: {},
-      sourceBuffer: {},
-    };
-
-    this.onSourceBufferUpdateEnd = this.onSourceBufferUpdateEnd.bind(this);
   }
 
-  initializeMediaSource (options = {}) {
+  async initializeMediaSource (options = {}) {
     this.debug('Initializing mediaSource...');
 
     options = defaults({}, options, {
@@ -109,25 +85,21 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     this.metric('mediaSource.created', 1);
 
     // Kill the existing media source
-    this.destroyMediaSource();
+    await this.destroyMediaSource();
 
     this.mediaSource = new window.MediaSource();
 
-    this.eventListeners.mediaSource.sourceopen = () => {
-      // This can only be set when the media source is open.
-      // @todo - does this do memory management for us so we don't have
-      // to call remove on the buffer, which is expensive?  It seems
-      // like it...
-      this.mediaSource.duration = this.options.duration;
+    this.mediaSource.addEventListener('sourceopen', this.eventListeners.sourceopen);
+    this.mediaSource.addEventListener('sourceended', this.eventListeners.sourceended);
+    this.mediaSource.addEventListener('error', this.eventListeners.error);
+  }
 
-      options.onSourceOpen();
-    };
-    this.eventListeners.mediaSource.sourceended = options.onSourceEnded;
-    this.eventListeners.mediaSource.error = options.onError;
+  registerMimeCodec (mimeCodec) {
+    if (!MediaSourceWrapper.isMimeCodecSupported(mimeCodec)) {
+      throw new Error(`Mime codec of "${mimeCodec}" is not supported.`);
+    }
 
-    this.mediaSource.addEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
-    this.mediaSource.addEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
-    this.mediaSource.addEventListener('error', this.eventListeners.mediaSource.error);
+    this.mimeCodec = mimeCodec;
   }
 
   getVideoElementSrc () {
@@ -147,7 +119,7 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
 
     // Ensure only a single objectURL exists at one time
     if (!this.objectURL) {
-      this.metric('objectURL.created', 1);
+      this.metric('mediaSource.objectURL.created', 1);
 
       this.objectURL = window.URL.createObjectURL(this.mediaSource);
     }
@@ -168,12 +140,12 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
       return;
     }
 
-    // this.metric('objectURL.revoked', 1);
+    this.metric('mediaSource.objectURL.revoked', 1);
 
     this.objectURL = null;
 
     if (this.sourceBuffer) {
-      this.sourceBufferAbort();
+      this.sourceBuffer.abort();
     }
 
     // free the resource
@@ -190,332 +162,39 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     return this.getVideoElementSrc();
   }
 
-  isMediaSourceReady () {
+  isReady () {
     // found when stress testing many videos, it is possible for the
     // media source ready state not to be open even though
     // source open callback is being called.
     return this.mediaSource && this.mediaSource.readyState === 'open';
   }
 
-  isSourceBufferReady () {
-    return this.sourceBuffer && this.sourceBuffer.updating === false;
-  }
+  async initializeSourceBuffer (options) {
+    if (!this.mimeCodec) {
+      throw new Error('You must register a valid mime codec first.');
+    }
 
-  async initializeSourceBuffer (mimeCodec, options = {}) {
-    this.debug('initializeSourceBuffer...');
-
-    options = defaults({}, options, {
-      onAppendStart: noop,
-      onAppendFinish: noop,
-      onRemoveFinish: noop,
-      onAppendError: noop,
-      onRemoveError: noop,
-      onStreamFrozen: noop,
-      onError: noop,
-      retry: true,
-    });
-
-    if (!this.isMediaSourceReady()) {
+    // @todo - should we try again after 1 second or something?
+    if (!this.isReady()) {
       throw new Error('Cannot create the sourceBuffer if the mediaSource is not ready.');
     }
 
-    // Kill the existing source buffer
-    await this.destroySourceBuffer();
+    if (this.sourceBuffer) {
+      // Kill the existing source buffer
+      await this.sourceBuffer.destroy();
+    }
 
-    this.metric('sourceBuffer.created', 1);
-
-    this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
-    this.sourceBuffer.mode = 'sequence';
-
-    // Custom Events
-    this.eventListeners.sourceBuffer.onAppendStart = options.onAppendStart;
-    this.eventListeners.sourceBuffer.onAppendError = options.onAppendError;
-    this.eventListeners.sourceBuffer.onRemoveFinish = options.onRemoveFinish;
-    this.eventListeners.sourceBuffer.onAppendFinish = options.onAppendFinish;
-    this.eventListeners.sourceBuffer.onRemoveError = options.onRemoveError;
-    this.eventListeners.sourceBuffer.onStreamFrozen = options.onStreamFrozen;
-    this.eventListeners.sourceBuffer.onError = options.onError;
-
-    // Supported Events
-    this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
-    this.sourceBuffer.addEventListener('error', this.eventListeners.sourceBuffer.onError);
+    this.sourceBuffer = SourceBufferWrapper.factory(this, options);
   }
 
-  queueSegment (segment) {
-    this.debug(`Queueing segment.  The queue now has ${this.segmentQueue.length} segments.`);
-
-    this.metric('queue.added', 1);
-
-    this.segmentQueue.push({
-      timestamp: Date.now(),
-      moof: segment,
-    });
-  }
-
-  sourceBufferAbort () {
-    this.debug('Aborting current sourceBuffer operation');
-
-    try {
-      this.metric('sourceBuffer.abort', 1);
-
-      this.sourceBuffer.abort();
-    }
-    catch (error) {
-      this.metric('error.sourceBuffer.abort', 1);
-
-      // Somehow, this can be become undefined...
-      if (this.eventListeners.sourceBuffer.onAbortError) {
-        this.eventListeners.sourceBuffer.onAbortError(error);
-      }
-    }
-  }
-
-  _append ({ timestamp, moof }) {
-    this.silly('Appending to the sourceBuffer...');
-
-    try {
-      const estimatedDrift = Date.now() - timestamp;
-
-      if (estimatedDrift > this.options.driftThreshold) {
-        this.debug(`Estimated drift of ${estimatedDrift} is above the ${this.options.driftThreshold} threshold.  Flushing queue...`);
-        // @todo - perhaps we should re-add the last segment to the queue with a fresh
-        // timestamp?  I think one cause of stream freezing is the sourceBuffer getting
-        // starved, but I don't know if that's correct
-        this.metric('queue.removed', this.segmentQueue.length + 1);
-        this.segmentQueue = [];
-        return;
-      }
-
-      this.debug(`Appending to the buffer with an estimated drift of ${estimatedDrift}`);
-
-      this.metric('sourceBuffer.append', 1);
-
-      this.sourceBuffer.appendBuffer(moof);
-    }
-    catch (error) {
-      this.metric('error.sourceBuffer.append', 1);
-
-      this.eventListeners.sourceBuffer.onAppendError(error, moof);
-    }
-  }
-
-  processNextInQueue () {
-    this.silly('processNextInQueue');
-
-    if (document.visibilityState === 'hidden') {
-      this.debug('Tab not in focus - dropping frame...');
-      this.metric('frameDrop.hiddenTab', 1);
-      this.metric('queue.cannotProcessNext', 1);
-      return;
-    }
-
-    if (!this.isMediaSourceReady()) {
-      this.debug('The mediaSource is not ready');
-      this.metric('queue.mediaSourceNotReady', 1);
-      this.metric('queue.cannotProcessNext', 1);
-      return;
-    }
-
-    if (!this.isSourceBufferReady()) {
-      this.debug('The sourceBuffer is busy');
-      this.metric('queue.sourceBufferNotReady', 1);
-      this.metric('queue.cannotProcessNext', 1);
-      return;
-    }
-
-    if (this.segmentQueue.length > 0) {
-      this.metric('queue.shift', 1);
-      this.metric('queue.canProcessNext', 1);
-      this._append(this.segmentQueue.shift());
-    }
-  }
-
-  formatMoof (moof) {
-    // We must overwrite the sequence number locally, because it
-    // the sequence that comes from the server will not necessarily
-    // start at zero.  It should start from zero locally.  This
-    // requirement may have changed with more recent versions of the
-    // browser, but it appears to make the video play a little more
-    // smoothly
-    moof[20] = (this.sequenceNumber & 0xFF000000) >> 24;
-    moof[21] = (this.sequenceNumber & 0x00FF0000) >> 16;
-    moof[22] = (this.sequenceNumber & 0x0000FF00) >> 8;
-    moof[23] = this.sequenceNumber & 0xFF;
-
-    return moof;
-  }
-
-  appendMoov (moov) {
-    this.debug('appendMoov');
-
-    this.metric('sourceBuffer.lastMoovSize', moov.length);
-
-    // Sometimes this can get hit after destroy is called
-    if (!this.eventListeners.sourceBuffer.onAppendStart) {
-      return;
-    }
-
-    this.debug('appending moov...');
-    this.queueSegment(moov);
-
-    this.processNextInQueue();
-  }
-
-  append (moof) {
-    this.silly('Append');
-
-    this.metric('sourceBuffer.lastMoofSize', moof.length);
-
-    // console.log(mp4toJSON(moof));
-
-    // Sometimes this can get hit after destroy is called
-    if (!this.eventListeners.sourceBuffer.onAppendStart) {
-      return;
-    }
-
-    this.eventListeners.sourceBuffer.onAppendStart(moof);
-
-    this.metric('queue.append', 1);
-
-    this.queueSegment(this.formatMoof(moof));
-    this.sequenceNumber++;
-
-    this.processNextInQueue();
-  }
-
-  getBufferTimes () {
-    const previousBufferSize = this.timeBuffered;
-    const bufferTimeStart = this.sourceBuffer.buffered.start(0);
-    const bufferTimeEnd = this.sourceBuffer.buffered.end(0);
-    const currentBufferSize = bufferTimeEnd - bufferTimeStart;
-
-    const info = {
-      previousBufferSize,
-      currentBufferSize,
-      bufferTimeStart,
-      bufferTimeEnd,
-    };
-
-    return info;
-  }
-
-  trimBuffer (info, force = false) {
-    this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
-
-    try {
-      if (!info) {
-        info = this.getBufferTimes();
-      }
-
-      if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
-        this.debug('Removing old stuff from sourceBuffer...');
-
-        // @todo - this is the biggest performance problem we have with this player.
-        // Can you figure out how to manage the memory usage without causing the streams
-        // to stutter?
-        this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
-        this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
-      }
-    }
-    catch (error) {
-      this.metric('sourceBuffer.trim.error', 1);
-      this.eventListeners.sourceBuffer.onRemoveError(error);
-    }
-  }
-
-  onRemoveFinish (info = this.getBufferTimes()) {
-    this.debug('On remove finish...');
-
-    this.metric('sourceBuffer.updateEnd.removeEvent', 1);
-    this.eventListeners.sourceBuffer.onRemoveFinish(info);
-  }
-
-  onAppendFinish (info = this.getBufferTimes()) {
-    this.silly('On append finish...');
-
-    this.metric('sourceBuffer.updateEnd.appendEvent', 1);
-
-    // The current buffer size should always be bigger.If it isn't, there is a problem,
-    // and we need to reinitialize or something.
-    if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
-      this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
-      this.eventListeners.sourceBuffer.onStreamFrozen();
-      return;
-    }
-
-    this.previousTimeEnd = info.bufferTimeEnd;
-
-    this.eventListeners.sourceBuffer.onAppendFinish(info);
-    this.trimBuffer(info);
-  }
-
-  onSourceBufferUpdateEnd () {
-    this.silly('onUpdateEnd');
-
-    this.metric('sourceBuffer.updateEnd', 1);
-
-    try {
-      // Sometimes the mediaSource is removed while an update is being
-      // processed, resulting in an error when trying to read the
-      // "buffered" property.
-      if (this.sourceBuffer.buffered.length <= 0) {
-        this.metric('sourceBuffer.updateEnd.bufferLength.empty', 1);
-        this.debug('After updating, the sourceBuffer has no length!');
-        return;
-      }
-    }
-    catch (error) {
-      // @todo - do we need to handle this?
-      this.metric('sourceBuffer.updateEnd.bufferLength.error', 1);
-      this.debug('The mediaSource was removed while an update operation was occurring.');
-      return;
-    }
-
-    const info = this.getBufferTimes();
-
-    this.timeBuffered = info.currentBufferSize;
-
-    if (info.previousBufferSize !== null && info.previousBufferSize > this.timeBuffered) {
-      this.onRemoveFinish(info);
-    }
-    else {
-      this.onAppendFinish(info);
-    }
-
-    this.processNextInQueue();
-  }
-
-  destroySourceBuffer () {
-    return new Promise((resolve, reject) => {
-      if (!this.sourceBuffer) {
-        return resolve();
-      }
-
-      this.sourceBufferAbort();
-
-      this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
-      this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
-
-      this.sourceBuffer.addEventListener('updateend', () => {
-        resolve();
-      });
-
-      this.trimBuffer(undefined, true);
-    });
-  }
-
-  destroyMediaSource () {
-    this.metric('sourceBuffer.destroyed', 1);
-
-    this.debug('Destroying mediaSource...');
-
+  async destroyMediaSource () {
     if (!this.mediaSource) {
       return;
     }
 
-    this.mediaSource.removeEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
-    this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
-    this.mediaSource.removeEventListener('error', this.eventListeners.mediaSource.error);
+    this.mediaSource.removeEventListener('sourceopen', this.eventListeners.sourceopen);
+    this.mediaSource.removeEventListener('sourceended', this.eventListeners.sourceended);
+    this.mediaSource.removeEventListener('error', this.eventListeners.error);
 
     // let sourceBuffers = this.mediaSource.sourceBuffers;
 
@@ -532,13 +211,13 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     // at this point, does it matter?  is endOfStream necessary?  if so, we
     // need to be able to guarantee that it can be called.  This will likely
     // require tracking whether or not this has been called
-    if (this.isMediaSourceReady() && this.isSourceBufferReady()) {
+    if (this.isReady() && this.sourceBuffer.isReady()) {
       try {
         this.mediaSource.endOfStream();
       }
       catch (error) {
         this.debug(error);
-        this.metric('error.mediaSource.endOfStream', 1);
+        this.metric('mediaSource.endOfStream.error', 1);
       }
     }
 
@@ -549,6 +228,10 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     this.destroyVideoElementSrc();
 
     this.metric('mediaSource.destroyed', 1);
+
+    await this.sourceBuffer.destroy();
+
+    this.sourceBuffer = null;
   }
 
   async destroy () {
@@ -560,21 +243,16 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
 
     this.destroyed = true;
 
-    this.destroyMediaSource();
-    await this.destroySourceBuffer();
+    this.debug('Destroying mediaSource...');
+
+    await this.destroyMediaSource();
 
     this.mediaSource = null;
-    this.sourceBuffer = null;
     this.videoElement = null;
 
-    this.timeBuffered = null;
-    this.previousTimeEnd = null;
-    this.segmentQueue = null;
-
     this.options = null;
-    this.metrics = null;
-    this.events = null;
     this.eventListeners = null;
-    this.onSourceBufferUpdateEnd = null;
+
+    super.destroy();
   }
 }
