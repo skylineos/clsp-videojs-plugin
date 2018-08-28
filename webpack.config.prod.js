@@ -33,7 +33,10 @@ function minifyConfig (config) {
   config.plugins.push(uglifyPlugin);
 }
 
-minifyConfig(config[0]);
-minifyConfig(config[1]);
+for (let i = 0; i < config.length; i++) {
+  if (config[i].name !== 'clspRouter.generated') {
+    minifyConfig(config[i]);
+  }
+}
 
 module.exports = config;

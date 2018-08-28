@@ -11,9 +11,11 @@ import 'videojs-errors';
 // include it like this?
 import '~styles/videojs-mse-over-clsp.scss';
 
+import Paho from 'paho-client';
+
 // @todo - can webpack be configured to process this without having
 // include it like this?
-import '~/conduit/clspConduit.generated.js';
+import '~/conduit/clspConduit';
 
 import utils from '~/utils/utils';
 import MqttSourceHandler from './MqttSourceHandler';
@@ -32,6 +34,8 @@ export default (defaults = {}) => class MseOverMqttPlugin extends Plugin {
     if (videojs.getPlugin(utils.name)) {
       throw new Error('You can only register the clsp plugin once, and it has already been registered.');
     }
+
+    window.Paho = Paho;
 
     const sourceHandler = MqttSourceHandler.factory('html5', MseOverMqttPlugin.conduits);
 

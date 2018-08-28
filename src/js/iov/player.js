@@ -332,7 +332,10 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.iov.conduit.transaction(
       `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
       (...args) => this.onIovPlayTransaction(...args),
-      { clientId: this.iov.config.clientId }
+      {
+        clientId: this.iov.config.clientId,
+        resp_topic: `${this.iov.config.clientId}'/response/'${parseInt(Math.random() * 1000000)}`,
+      },
     );
   }
 

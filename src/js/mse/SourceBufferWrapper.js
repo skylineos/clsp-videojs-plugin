@@ -42,6 +42,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
     'sourceBuffer.abort',
     'sourceBuffer.abort.error',
     'sourceBuffer.lastMoofSize',
+    'sourceBuffer.insufficientBufferAppends',
   ];
 
   static factory (mediaSource, options = {}) {

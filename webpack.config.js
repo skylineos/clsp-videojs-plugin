@@ -6,8 +6,6 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const packageJson = require('./package.json');
 
 const pluginName = packageJson.name;
-const conduitName = 'clspConduit.generated';
-const demoName = 'demo';
 
 const extractSass = new ExtractTextPlugin({
   filename: '[name].css',
@@ -16,12 +14,28 @@ const extractSass = new ExtractTextPlugin({
 
 module.exports = [
   {
+    mode: 'production',
+    // mode: 'development',
+    name: 'clspRouter.generated',
+    devtool: false,
+    entry: {
+      // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
+      'clspRouter.generated': [path.resolve(__dirname, 'src', 'js', 'conduit', 'clspRouter.js')],
+    },
+    output: {
+      filename: '[name].js',
+      path: path.resolve(__dirname, 'dist'),
+      // Needed to make it importable in clspConduit
+      libraryTarget: 'umd',
+    },
+  },
+  {
     mode: 'development',
     devtool: 'source-map',
     name: pluginName,
     entry: {
       // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
-      [pluginName]: [`./src/js/${pluginName}.js`],
+      [pluginName]: [path.resolve(__dirname, 'src', 'js', `${pluginName}.js`)],
     },
     output: {
       filename: '[name].js',
@@ -68,45 +82,11 @@ module.exports = [
   },
   {
     mode: 'development',
-    name: conduitName,
-    entry: {
-      // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
-      [conduitName]: [`./src/js/conduit/${conduitName}.js`],
-    },
-    output: {
-      filename: '[name].min.js',
-      path: path.resolve(__dirname, 'src/js/conduit'),
-    },
-    module: {
-      rules: [
-        {
-          test: /\.js$/,
-          loader: 'babel-loader?cacheDirectory=true',
-          options: {
-            plugins: [
-              'transform-object-rest-spread',
-              'transform-class-properties',
-            ],
-            presets: [['env', { modules: false }]],
-          },
-        },
-      ],
-    },
-    resolve: {
-      alias: {
-        '~': path.resolve(__dirname, 'src', 'js'),
-        '~styles': path.resolve(__dirname, 'src', 'styles'),
-        '~root': __dirname,
-      },
-    },
-  },
-  {
-    mode: 'development',
     devtool: 'source-map',
-    name: demoName,
+    name: 'demo',
     entry: {
       // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
-      [demoName]: [`./demo/src/js/${demoName}.js`],
+      demo: [path.resolve(__dirname, 'demo', 'src', 'js', 'demo.js')],
     },
     output: {
       filename: '[name].js',
