@@ -1,0 +1,57 @@
+<html>
+  <head>
+    <script src="client/jquery.min.js"></script>
+    <script src="client/mqttws31.js"></script>
+    <script src="client/webcam.js"></script>
+    <script src="client/iov.js"></script>
+  </head>
+  <body>
+    <h1 id="page-title">CLSP 0.1.4 Prototype Demo</h1>
+    <span>Address:</span>
+    <input id="address">
+    <br />
+    <span>Name:</span>
+    <input id="name">
+    <br />
+    <video id="player"
+      controls
+      autoplay
+      width="240"
+      height="352"
+    ></video>
+    <br />
+    <button id="play">Play</button>
+    <br />
+    <button id="stop">Stop</button>
+
+    <script type="text/javascript">
+      $(function () {
+        var player = null;
+        var address = null;
+        var port = null;
+
+        $('#play').click(function(){
+            address = $('#address').val();
+            name = $('#name').val();
+            IOV({
+                address: address,
+                port: 9001,
+                useSSL: false,
+                appStart: function(iov) {
+                    player = iov.player();
+                    player.play('player',name,function(){
+                        console.log(name + " is now playing");
+                    });
+                }
+            });
+        });
+
+        $('#stop').click(function(){
+            if (player !== null) {
+                player.stop();
+            }
+        });
+      });
+    </script>
+  </body>
+</html>

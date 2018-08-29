@@ -1,98 +1,68 @@
 <html>
-  <head>
-    <script src="jquery.min.js"></script>
-    <script src="mqttws31.js"></script>
-    <script src="webcam.js"></script>
-    <script>
-      //polyfill
-      if (typeof Object.assign != 'function') {
-        Object.assign = function(target, varArgs) { // .length of function is 2
-          'use strict';
-          if (target == null) { // TypeError if undefined or null
-            throw new TypeError('Cannot convert undefined or null to object');
+   
+   <script src="jquery.min.js"></script>
+   <script src="mqttws31.js"></script>
+   <script src="webcam.js"></script>
+
+<script>
+//polyfill
+if (typeof Object.assign != 'function') {
+  Object.assign = function(target, varArgs) { // .length of function is 2
+    'use strict';
+    if (target == null) { // TypeError if undefined or null
+      throw new TypeError('Cannot convert undefined or null to object');
+    }
+
+    var to = Object(target);
+
+    for (var index = 1; index < arguments.length; index++) {
+      var nextSource = arguments[index];
+
+      if (nextSource != null) { // Skip over if undefined or null
+        for (var nextKey in nextSource) {
+          // Avoid bugs when hasOwnProperty is shadowed
+          if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+            to[nextKey] = nextSource[nextKey];
           }
-
-          var to = Object(target);
-
-          for (var index = 1; index < arguments.length; index++) {
-            var nextSource = arguments[index];
-
-            if (nextSource != null) { // Skip over if undefined or null
-              for (var nextKey in nextSource) {
-                // Avoid bugs when hasOwnProperty is shadowed
-                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-                  to[nextKey] = nextSource[nextKey];
-                }
-              }
-            }
-          }
-          return to;
-        };
+        }
       }
-    </script>
-    <script src="iov.js"></script>
+    }
+    return to;
+  };
+}
+</script>
 
-   </head>
-
-
+   <script src="iov.js"></script>
   <script>
 
 // create module, all default dettings
-
-function getUrlParams() {
-    var urlParams = {
-        address: 'localhost',
-        port: 9001,
-        name: null
-    };
-    var path = document.location.href.split('?')[1] || "";
-    var plist = path.split('&');
-    var i;
-
-    for(i = 0; i < plist.length; i++) {
-        var item = plist[i];
-        var t = item.split('=');
-        urlParams[t[0]] = t[1];
-    }
-
-
-    return urlParams;
-} // end getUrlParams
-
 
 
 function main(){
    var self = this;
    IOV({
-      // address: 'te-sfs1.skyline.local',
-      // address: 'localhost',
-       address: '104.236.9.198',
-       port: 9001,
-       useSSL: false,
+       address: "davidschere.online",
        appStart: function(iov) {
-           console.log("connected to host");
            // create a player for video.
            self.p = iov.player();
            iov.getAvailableStreams(function(resp){
                var streamNames = resp.names;
                var html = "";
-               console.log("available streams ", resp);
                streamNames.forEach(function(n){
-                   html += '<option value="'+n+'">';
+                   html += '<option value="'+n+'">';   
                });
-               $('#streamNames').html(html);
-               $('#streamNames2').html(html);
+               $('#streamNames').html(html); 
+               $('#streamNames2').html(html); 
            });
-
            $('#play').click(function(){
                var elm = $('#names');
                var selected = elm.val();
                if ((typeof selected != 'undefined') && (selected.length > 0)) {
-
+                   
                    self.p.play("v1",selected,function(){
                        console.log("v1 first chunk");
                    });
-               }
+               }           
            });
            $('#stop').click(function(){
                self.p.stop();
@@ -118,17 +88,27 @@ function main(){
                    self.p2.play("v2",selected,function(){
                        console.log("v2 first chunk");
                    });
-               }
+               }           
            });
            $('#stop2').click(function(){
                self.p2.stop();
            });
+
+           
+
        }
    });//end IOV
 
+
+
+
+
+
+
+
    self.timer = null;
 
-   $('stop-live-stream').click(function(){
+   $('stop-live-stream').click(function(){		
        if (self.timer) {
            clearTimeout( self.timer );
 	   self.timer = null;
@@ -137,7 +117,7 @@ function main(){
 
    $('#start-live-stream').click(function(){
        if (self.timer)
-           return;
+           return; 
 
        Webcam.set({
            width: 320,
@@ -147,7 +127,7 @@ function main(){
        });
        Webcam.attach( '#broadcast_camera' );
        var n = $('#webcam-stream-name').val();
-       var webcam_topic = "webcam/"+fake_guid();
+       var webcam_topic = "webcam/"+fake_guid(); 
        var msg = {
            resp_topic:"iov/webcam/response/"+fake_guid(),
            name: n,
@@ -156,7 +136,7 @@ function main(){
        };
 
        // send publish message
-       var topic = "iov/video/publish";
+       var topic = "iov/video/publish";          
        var mqtt_msg = new Paho.MQTT.Message(JSON.stringify(msg));
        mqtt_msg.destinationName = topic;
        self.p.transport.subscribe(msg.resp_topic,function(x){
@@ -180,19 +160,19 @@ function main(){
 
        Webcam.on("live",function(){
            // set timer to periodically take snap shots.
-           take_snapshot();
+           take_snapshot(); 
            self.timer = setInterval( take_snapshot, 1000 );
-       });
+       }); 
 
+       
+       
 
+   });  
 
+   
 
-   });
-
-
-
-}//end main
-  </script>
+}//end main 
+  </script>       
 
 
 <body onload="main()">
@@ -234,7 +214,7 @@ function main(){
 
 <p>
   MQTT Log video topic: <input type="text" value="" id="logvideo_topic"><br>
-  <input type="checkbox" id="logvideo">
+  <input type="checkbox" id="logvideo"> 
 </p>
 
 
@@ -244,10 +224,10 @@ function main(){
    <h1>WebCam feed</h1><br>
    <div id="broadcast_camera"></div>
    <hr>
-   <input type="text" id="webcam-stream-name">
-   <button id="start-live-stream">Start</button>
-   <button id="stop-live-stream">Stop</button>
-</p>
+   <input type="text" id="webcam-stream-name">  
+   <button id="start-live-stream">Start</button>	
+   <button id="stop-live-stream">Stop</button>	
+</p>	
 
 
 </body>

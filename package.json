@@ -4,7 +4,8 @@
   "description": "Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ",
   "main": "client/iov.js",
   "scripts": {
-    "postversion": "git push && git push --tags"
+    "postversion": "git push && git push --tags",
+    "serve": "./scripts/one-line-http.sh"
   },
   "keywords": [
     "videojs",

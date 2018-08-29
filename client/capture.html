@@ -1,0 +1,42 @@
+<html>
+ <head>
+  <script src="jquery.min.js"></script>
+  <script src="bower_components/webrtc-adapter/release/adapter.js"></script>
+  <script>
+function main()
+{
+    navigator.getUserMedia = navigator.getUserMedia ||
+                         navigator.webkitGetUserMedia ||
+                         navigator.mozGetUserMedia;
+
+    if (navigator.getUserMedia) {
+        navigator.getUserMedia({ 
+            audio: true, 
+            video: { width: 1280, height: 720 } },
+            function(stream) {
+                var video = document.querySelector('video');
+                
+                video.srcObject = stream;
+                video.onloadedmetadata = function(e) {
+                    $('#message').html('onloadedmetadata " + e.toString());
+                    video.play();
+                };
+            },
+            function(err) {
+                msg = "The following error occurred: " + err.name;
+                $('#message').html(msg);
+            }
+       );
+    } else {
+        $('#message').html("getUserMedia not supported");
+    }
+}
+
+  </script>
+ </head>
+ <body onload="main()">
+  <h3 id="message" style="color:red;"></h3>
+
+  <video></video>
+ </body>
+</html>

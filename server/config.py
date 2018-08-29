@@ -6,6 +6,7 @@ import os
 
 USE_VLC_TEST_FEEDS=False
 USE_SKYLINE_FEEDS=True
+USE_DEMO_FEEDS=False
 
 FFMPEG_PATH=os.popen('which ffmpeg').read()[:-1]
 
@@ -35,13 +36,48 @@ streamTable = {
     }, 
     "color-bars-and-counter" : {
         "url": "testsrc" ,
-        "guid": uuid.uuid1().hex,
+        "guid": "test",
         "scale": [352,240],
         "keyint": 30,
         "bitrate": 192,
-        "onDemand": False # these are test feeds be courteous   
+        "onDemand": True # these are test feeds be courteous   
     }       
 }
+
+if USE_DEMO_FEEDS:
+    streamTable["vwall1"] ={
+        "url": "http://115.84.245.76:9000/mjpg/video.mjpg?COUNTER", 
+        "scale": [352,240],
+        "keyint": 1,
+        "bitrate": 192,
+        "guid": "wall1",
+        "onDemand": False
+    }
+    streamTable["vwall2"] = {
+        "url": "http://122.52.148.206:50001/cgi-bin/camera?resolution=640&amp;amp;quality=1&amp;amp;Language=0&amp;amp;1508788247",
+        "scale": [352,240],
+        "keyint": 1,
+        "bitrate": 192,
+        "guid": "wvall2",
+        "onDemand": False
+    }
+    streamTable["pennDot1"] = {
+        "url": "http://pa511wmedia101.ilchost.com/live/CAM-08-033.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9MTAvMjMvMjAxNyAxMTozMjozNSBQTSZoYXNoX3ZhbHVlPUdVaVJ4Y1htekVNSW4wZTIyTkJlZmc9PSZ2YWxpZG1pbnV0ZXM9MjAmaWQ9OTYuMjQ0LjI1MC42MQ==",
+        "scale": [352,240],
+        "keyint": 1,
+        "bitrate": 192,
+        "guid": "pennDot1",
+        "onDemand": False
+    }
+    streamTable["vwall3"] = {
+        "url": "http://112.199.71.168:80/cgi-bin/viewer/video.jpg?r=1508788417",
+        "scale": [352,240],
+        "keyint": 1,
+        "bitrate": 192,
+        "guid": "wvall3",
+        "onDemand": False
+    }
+
 
 
 #
@@ -51,7 +87,7 @@ if USE_VLC_TEST_FEEDS:
     page = "http://www.vlc.eu.pn/"
     working_url_delim='<strong><span style=" font-size:10px; color:#06C">'
     resp = requests.get(page)
-
+    
     if resp.status_code == 200:
       
         count = 0
@@ -71,7 +107,8 @@ if USE_VLC_TEST_FEEDS:
                     "bitrate": 192,
                     "onDemand": True # these are test feeds be courteous   
                 }
-
+    else:
+        print "status code ", resp.status_code
 
 
 if USE_SKYLINE_FEEDS:
@@ -95,7 +132,7 @@ Aviation Hallway
 Aviation Cubes
 Aviation Hallway
 Aviation Lab Test
-Expansion Great Room
+ExpansionGreatRoom
 Chesapeake Reception Entrance (PTZ)
 Parking Lot - Rear of Building (Panoramic)
 Aviation Parking Lot

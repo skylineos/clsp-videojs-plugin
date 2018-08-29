@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+
+var mimes = [
+  "video/invalid",
+  "video/mpeg4",
+  "video/webm;codecs=daala",
+  'video/mp4; codecs="avc1.42E01E"',
+  "video/webm",
+  "video/webm;codecs=vp8",
+  "video/webm;codecs=vp9",
+  "video/webm;codecs=vp8.0",
+  "video/webm;codecs=vp9.0",
+  "video/webm;codecs=h264",
+  "video/webm;codecs=H264",
+  "video/webm;codecs=avc1",
+  "video/webm;codecs=vp8,opus",
+  "video/webm;codecs=vp8,pcm",
+  "video/WEBM;codecs=VP8,OPUS",
+  "video/webm;codecs=vp9,opus",
+  "video/webm;codecs=vp8,vp9,opus",
+  "video/webm;codecs=h264,opus",
+  "video/webm;codecs=h264,vp9,opus",
+  "video/x-matroska;codecs=avc1",
+  "audio/invalid",
+  "audio/ogg",
+  "audio/webm;codecs=vorbis",
+  "audio/webm",
+  "audio/webm;codecs=opus",
+  "audio/webm;codecs=pcm"
+];
+
+function main() {
+    var markup =  "<table>";
+        markup += " <tr><th>Mime</th><th>MediaRecorder</th><th>MediaSource</th></tr> ";
+    var i;
+
+    for (i = 0; i < mimes.length; i+=1) {
+        var mime = mimes[i];
+        var canRecord = (MediaRecorder.isTypeSupported(mime)) ? true: false;
+        var canPlay = (MediaSource.isTypeSupported(mime)) ? true: false;
+        var row = "<tr>";
+        var yes = '<td style="color:green;">YES</td>';
+        var no = '<td style="color:red;">NO</td>';
+        
+
+        row += "<td>"+mime+"</td>";
+        row += (canRecord === true) ? yes: no;
+        row += (canPlay === true) ? yes: no;
+
+        row += "</tr>"; 
+        markup += row;
+    }     
+
+    markup += "</table>";
+    document.getElementById('content').innerHTML = markup;
+}
+
+</script>
+</head>
+<body onload="main()">
+
+<div id="content"></div>
+ 
+</body>
+</html>
+
+
+
+
+
+                                                                                                    
+
