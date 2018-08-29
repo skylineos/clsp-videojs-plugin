@@ -54,6 +54,7 @@
     "url-loader": "^1.0.1",
     "video.js": "6.7.1",
     "webpack": "^4.15.1",
-    "webpack-serve": "^2.0.2"
+    "webpack-serve": "^2.0.2",
+    "write-file-webpack-plugin": "^4.3.2"
   }
 }

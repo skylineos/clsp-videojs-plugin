@@ -2,6 +2,7 @@
 
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const WriteFilePlugin = require('write-file-webpack-plugin');
 
 const packageJson = require('./package.json');
 
@@ -28,6 +29,9 @@ module.exports = [
       // Needed to make it importable in clspConduit
       libraryTarget: 'umd',
     },
+    plugins: [
+      new WriteFilePlugin(),
+    ],
   },
   {
     mode: 'development',
@@ -78,6 +82,7 @@ module.exports = [
     },
     plugins: [
       extractSass,
+      new WriteFilePlugin(),
     ],
   },
   {
@@ -131,6 +136,7 @@ module.exports = [
     },
     plugins: [
       extractSass,
+      new WriteFilePlugin(),
     ],
   },
 ];

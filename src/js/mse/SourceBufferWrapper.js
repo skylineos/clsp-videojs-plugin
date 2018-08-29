@@ -84,7 +84,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
 
     this.eventListeners = {
       onUpdateEnd: () => {
-        this.onSourceBufferUpdateEnd();
+        this.onUpdateEnd();
       },
       onAppendStart: (moof) => {
         this.trigger('appendStart', moof);
@@ -332,7 +332,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
     this.trimBuffer(info);
   }
 
-  onSourceBufferUpdateEnd () {
+  onUpdateEnd () {
     this.silly('onUpdateEnd');
 
     this.metric('sourceBuffer.updateEnd', 1);
@@ -376,7 +376,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
 
       this.destroyed = true;
 
-      this.sourceBufferAbort();
+      this.abort();
 
       this.sourceBuffer.removeEventListener('updateend', this.eventListeners.onUpdateEnd);
       this.sourceBuffer.removeEventListener('error', this.eventListeners.onError);

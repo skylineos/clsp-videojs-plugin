@@ -87,6 +87,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.mediaSourceWrapper = null;
     this.moovBox = null;
     this.guid = null;
+    this.mimeCodec = null;
   }
 
   _onError (type, message, error) {
@@ -159,6 +160,26 @@ export default class IOVPlayer extends ListenerBaseClass {
     }
 
     this.mediaSourceWrapper = MediaSourceWrapper.factory(this.videoElement);
+
+    try {
+      this.mediaSourceWrapper.registerMimeCodec(this.mimeCodec);
+    }
+    catch (error) {
+      this.state = 'unsupported-mime-codec';
+
+      const message = `Unsupported mime codec: ${this.mimeCodec}`;
+
+      this.videoPlayer.errors.extend({
+        PLAYER_ERR_IOV: {
+          headline: 'Error Playing Stream',
+          message,
+        },
+      });
+
+      this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
+
+      throw new Error(message);
+    }
 
     this.mediaSourceWrapper.on('metric', ({ type, value }) => {
       this.trigger('metric', { type, value });
@@ -421,35 +442,22 @@ export default class IOVPlayer extends ListenerBaseClass {
       this.iov.conduit.subscribe(newTopic, (mqtt_msg) => {
         this.trigger('videoReceived');
         this.getSegmentIntervalMetrics();
+
+        // if (!this.mediaSourceWrapper || !this.mediaSourceWrapper.sourceBuffer) {
+        //   //
+        //   return this.reinitializeMseWrapper();
+        // }
+
         this.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
       });
 
       this.guid = guid;
       this.moovBox = moov;
+      this.mimeCodec = mimeCodec;
 
       // this.trigger('firstChunk');
 
       await this.reinitializeMseWrapper();
-
-      try {
-        this.mediaSourceWrapper.registerMimeCodec(mimeCodec);
-      }
-      catch (error) {
-        this.state = 'unsupported-mime-codec';
-
-        const message = `Unsupported mime codec: ${mimeCodec}`;
-
-        this.videoPlayer.errors.extend({
-          PLAYER_ERR_IOV: {
-            headline: 'Error Playing Stream',
-            message,
-          },
-        });
-
-        this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
-
-        throw new Error(message);
-      }
 
       this.resyncStream();
     });
@@ -493,8 +501,9 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.segmentInterval = null;
     this.segmentIntervals = null;
 
-    this.guid = null;
     this.moovBox = null;
+    this.guid = null;
+    this.mimeCodec = null;
 
     this.mediaSourceWrapper.destroy();
     this.mediaSourceWrapper = null;

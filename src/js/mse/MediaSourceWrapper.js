@@ -221,17 +221,19 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
       }
     }
 
-    this.mediaSource.removeSourceBuffer(this.sourceBuffer);
+    // @todo - should the sourceBuffer do this?
+    this.mediaSource.removeSourceBuffer(this.sourceBuffer.sourceBuffer);
 
     // @todo - is this happening at the right time, or should it happen
     // prior to removing the source buffers?
     this.destroyVideoElementSrc();
 
-    this.metric('mediaSource.destroyed', 1);
-
     await this.sourceBuffer.destroy();
 
+    this.metric('mediaSource.destroyed', 1);
+
     this.sourceBuffer = null;
+    this.mediaSource = null;
   }
 
   async destroy () {
@@ -247,7 +249,6 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
 
     await this.destroyMediaSource();
 
-    this.mediaSource = null;
     this.videoElement = null;
 
     this.options = null;
