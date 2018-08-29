@@ -1,109 +1,87 @@
 <html>
-   <script src="jquery.min.js"></script>
-   <script src="mqttws31.js"></script>
-
-<script>
-if (typeof Object.assign != 'function') {
-  Object.assign = function(target, varArgs) { // .length of function is 2
-    'use strict';
-    if (target == null) { // TypeError if undefined or null
-      throw new TypeError('Cannot convert undefined or null to object');
-    }
-
-    var to = Object(target);
-
-    for (var index = 1; index < arguments.length; index++) {
-      var nextSource = arguments[index];
-
-      if (nextSource != null) { // Skip over if undefined or null
-        for (var nextKey in nextSource) {
-          // Avoid bugs when hasOwnProperty is shadowed
-          if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-            to[nextKey] = nextSource[nextKey];
+  <head>
+    <script src="jquery.min.js" type="text/javascript"></script>
+    <script src="mqttws31.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      if (typeof Object.assign != 'function') {
+        Object.assign = function(target, varArgs) { // .length of function is 2
+          'use strict';
+          if (target == null) { // TypeError if undefined or null
+            throw new TypeError('Cannot convert undefined or null to object');
           }
-        }
+
+          var to = Object(target);
+
+          for (var index = 1; index < arguments.length; index++) {
+            var nextSource = arguments[index];
+
+            if (nextSource != null) { // Skip over if undefined or null
+              for (var nextKey in nextSource) {
+                // Avoid bugs when hasOwnProperty is shadowed
+                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                  to[nextKey] = nextSource[nextKey];
+                }
+              }
+            }
+          }
+          return to;
+        };
       }
-    }
-    return to;
-  };
-}
-</script>
+    </script>
+    <script src="iov.js" type="text/javascript"></script>
+  </head>
+  <body>
+    <video id="v1"
+      controls
+      autoplay
+      width="1024"
+      height="740"
+    >
+    </video>
+    <div>
+      <input name="streamName" id="names" value="clsp://172.28.120.5/grand_cam_001">
+      <button id="play">Play</button>
+      <button id="stop">Stop</button>
+    </div>
+    <p>
+      MQTT Log video topic: <input type="text" value="" id="logvideo_topic"><br>
+      <input type="checkbox" id="logvideo">
+    </p>
+    <h3 id="latency"></h3>
+    <script type="text/javascript">
+      $(function () {
+        var self = this;
 
-   <script src="iov.js"></script>
-  <script>
+        IOV({
+          appStart: function (iov) {
+            console.log('app started')
+            self.p = iov.player();
 
-// create module, all default dettings
+            $('#play').on('click', function () {
+              console.log('play')
+              var selected = $('#names').val();
 
-function main(){
-   var self = this;
-   IOV({
-       appStart: function(iov) {
-           // create a player for video.
-           self.p = iov.player();
-           iov.getAvailableStreams(function(resp){
-               var streamNames = resp.names;
-               var html = "";
-               streamNames.forEach(function(n){
-                   html += '<option value="'+n+'">';   
-               });
-               $('#streamNames').html(html); 
-           });
-           $('#play').click(function(){
-               var elm = $('#names');
-               var selected = elm.val();
-               if ((typeof selected != 'undefined') && (selected.length > 0)) {
-                   self.p.play("v1",selected);
-               }           
-           });
-           $('#stop').click(function(){
-               self.p.stop();
-           });
+              if ((typeof selected != 'undefined') && (selected.length > 0)) {
+                console.log(selected)
+                self.p.play("v1", selected);
+              }
+            });
 
+            $('#stop').click(function () {
+              self.p.stop();
+            });
 
-           $('#logvideo').change(function () {
-               if ($(this).is(':checked')) {
-                    self.p.LogSourceBuffer = true;
-                    self.p.LogSourceBufferTopic = $('#logvideo_topic').val();
-               } else {
-                    self.p.LogSourceBuffer = false;
-               }
-           });
-
-
-       }
-   });
-} 
-  </script>       
-
-
-<body onload="main()">
- <video id="v1"
-   controls
-   autoplay
-   width="1024"
-   height="740"
- >
-</video>
-
-
-<div>
-  <input list="streamNames" name="streamName" id="names">
-  <datalist id="streamNames">
-  </datalist>
-  <button id="play">Play</button>
-  <button id="stop">Stop</button>
-</div>
-
-
-
-<p>
-  MQTT Log video topic: <input type="text" value="" id="logvideo_topic"><br>
-  <input type="checkbox" id="logvideo"> 
-</p>
-
-
-<h3 id="latency"></h3>
-
-
-</body>
+            $('#logvideo').change(function () {
+              if ($(this).is(':checked')) {
+                self.p.LogSourceBuffer = true;
+                self.p.LogSourceBufferTopic = $('#logvideo_topic').val();
+              } else {
+                self.p.LogSourceBuffer = false;
+              }
+            });
+          }
+        });
+      });
+    </script>
+  </body>
 </html>
