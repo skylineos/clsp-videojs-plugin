@@ -2,7 +2,7 @@
 
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
-const config = require('./webpack.config');
+const config = require('./webpack.config')();
 
 const uglifyPlugin = new UglifyJsPlugin({
   uglifyOptions: {

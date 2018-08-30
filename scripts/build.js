@@ -2,7 +2,7 @@
 
 const webpack = require('webpack');
 
-const devConfig = require('../webpack.config');
+const devConfig = require('../webpack.config')();
 const prodConfig = require('../webpack.config.prod');
 
 // @see - https://webpack.js.org/api/node/

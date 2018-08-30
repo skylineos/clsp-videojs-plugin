@@ -13,7 +13,7 @@ const extractSass = new ExtractTextPlugin({
   disable: process.env.NODE_ENV === 'development',
 });
 
-module.exports = [
+module.exports = () => [
   {
     mode: 'production',
     // mode: 'development',
