@@ -31,6 +31,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
     'sourceBuffer.queue.shift',
     'sourceBuffer.queue.append',
     'sourceBuffer.lastKnownBufferSize',
+    'sourceBuffer.insufficientBufferAppends',
     'sourceBuffer.trim',
     'sourceBuffer.trim.error',
     'sourceBuffer.updateEnd',
@@ -42,7 +43,6 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
     'sourceBuffer.abort',
     'sourceBuffer.abort.error',
     'sourceBuffer.lastMoofSize',
-    'sourceBuffer.insufficientBufferAppends',
   ];
 
   static factory (mediaSource, options = {}) {
@@ -68,6 +68,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
       bufferTruncateValue: null,
       driftThreshold: 2000,
       enableMetrics: true,
+      minimumBufferIncrementSize: 0.5,
     });
 
     if (!this.options.bufferTruncateValue) {
@@ -324,6 +325,10 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
       this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
       this.eventListeners.onStreamFrozen();
       return;
+    }
+
+    if (info.previousBufferSize && (info.currentBufferSize - info.previousBufferSize < this.options.minimumBufferIncrementSize)) {
+      this.metric('sourceBuffer.insufficientBufferAppends', 1);
     }
 
     this.previousTimeEnd = info.bufferTimeEnd;

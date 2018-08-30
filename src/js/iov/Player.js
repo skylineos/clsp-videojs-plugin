@@ -48,15 +48,6 @@ export default class IOVPlayer extends ListenerBaseClass {
 
     this.debug('constructor');
 
-    this.metrics = {};
-
-    // @todo - there must be a more proper way to do events than this...
-    this.events = {};
-
-    for (let i = 0; i < IOVPlayer.EVENT_NAMES.length; i++) {
-      this.events[IOVPlayer.EVENT_NAMES[i]] = [];
-    }
-
     this._id = uuidv4();
     this.iov = iov;
     this.playerInstance = playerInstance;
@@ -68,6 +59,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.options = defaults({}, options, {
       segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
       driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
+      enableMetrics: true,
     });
 
     this.state = 'initializing';

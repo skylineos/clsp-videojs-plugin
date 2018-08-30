@@ -51,16 +51,17 @@ function initializeWall () {
     const $videoMetrics = $container.find('.video-metrics');
 
     const metricTypes = [
-      IOVPlayer,
-      MediaSourceWrapper,
-      SourceBufferWrapper,
+      IOVPlayer.METRIC_TYPES,
+      MediaSourceWrapper.METRIC_TYPES,
+      SourceBufferWrapper.METRIC_TYPES,
     ];
 
     for (let i = 0; i < metricTypes.length; i++) {
       const metricType = metricTypes[i];
 
-      for (let j = 0; j < metricType.METRIC_TYPES.length; j++) {
-        const text = metricType.METRIC_TYPES[j];
+
+      for (let j = 0; j < metricType.length; j++) {
+        const text = metricType[j];
         const name = text.replace(new RegExp(/\./, 'g'), '-');
         const $metric = $('<div/>', { class: `metric ${name}` });
 
