@@ -1,5 +1,7 @@
 import Debug from 'debug';
 
+import Conduit from '~/iov/Conduit';
+
 let singleton;
 
 export default class MqttConduitCollection {
@@ -70,7 +72,7 @@ export default class MqttConduitCollection {
 
     const conduit = this.exists(iov.config.clientId)
       ? this.getById(iov.config.clientId)
-      : window.mqttConduit(iov);
+      : Conduit.factory(iov);
 
     return this.set(iov.config.clientId, conduit);
   }

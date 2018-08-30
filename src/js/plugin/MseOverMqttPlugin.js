@@ -13,10 +13,6 @@ import '~styles/videojs-mse-over-clsp.scss';
 
 import Paho from 'paho-client';
 
-// @todo - can webpack be configured to process this without having
-// include it like this?
-import '~/conduit/clspConduit';
-
 import utils from '~/utils/utils';
 import MqttSourceHandler from './MqttSourceHandler';
 import MqttConduitCollection from './MqttConduitCollection';

@@ -10,7 +10,7 @@ import 'babel-polyfill';
 
 import packageJson from '~root/package.json';
 
-import IOVPlayer from '~/iov/player';
+import IOVPlayer from '~/iov/Player';
 import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
 import SourceBufferWrapper from '~/mse/SourceBufferWrapper';
 

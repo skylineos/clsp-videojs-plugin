@@ -4,7 +4,7 @@ import uuidv4 from 'uuid/v4';
 // Needed for crossbrowser iframe support
 import 'srcdoc-polyfill';
 
-import IOVPlayer from './player';
+import IOVPlayer from './Player';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 

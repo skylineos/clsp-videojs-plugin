@@ -17,11 +17,11 @@ module.exports = [
   {
     mode: 'production',
     // mode: 'development',
-    name: 'clspRouter.generated',
+    name: 'Router',
     devtool: false,
     entry: {
       // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
-      'clspRouter.generated': [path.resolve(__dirname, 'src', 'js', 'conduit', 'clspRouter.js')],
+      'Router': [path.resolve(__dirname, 'src', 'js', 'iov', 'Router.js')],
     },
     output: {
       filename: '[name].js',
