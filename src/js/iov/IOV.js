@@ -244,16 +244,19 @@ export default class IOV {
       this.player.restart();
     }, false);
 
+    const statsInterval = 30000.0;
+
     // the mse service will stop streaming to us if we don't send
     // a message to iov/stats within 1 minute.
     this._statsTimer = setInterval(() => {
-      this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / 30000.0;
+      this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / statsInterval;
       this.statsMsg.byteCount = 0;
 
+      // @todo - can we disable this?
       this.conduit.publish('iov/stats', this.statsMsg);
 
       this.debug('iov status', this.statsMsg);
-    }, 5000);
+    }, statsInterval);
   }
 
   onFail (event) {
