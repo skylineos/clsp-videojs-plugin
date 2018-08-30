@@ -7,13 +7,13 @@
     "version": "5.0.0"
   },
   "scripts": {
-    "build": "gulp build",
+    "build": "./scripts/build.sh",
     "lint": "eslint ./ --cache --quiet --ext .jsx --ext .js",
     "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
     "version": "./scripts/version.sh",
     "postversion": "git push && git push --tags",
     "serve": "./scripts/serve.js",
-    "serve-watch": "npm run build && npm run serve"
+    "serve-watch": "./scripts/serve.sh"
   },
   "keywords": [
     "videojs",
@@ -39,13 +39,9 @@
     "css-loader": "^0.28.11",
     "eslint": "^5.0.1",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
-    "gulp": "^3.9.1",
-    "gulp-load-plugins": "^1.5.0",
-    "gulp-rm": "^1.0.5",
     "jquery": "^3.3.1",
     "node-sass": "^4.9.1",
     "pre-commit": "^1.2.2",
-    "run-sequence": "^2.2.0",
     "sass-loader": "^7.0.3",
     "srcdoc-polyfill": "^1.0.0",
     "standard": "^11.0.1",

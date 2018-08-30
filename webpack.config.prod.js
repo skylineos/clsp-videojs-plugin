@@ -34,9 +34,7 @@ function minifyConfig (config) {
 }
 
 for (let i = 0; i < config.length; i++) {
-  if (config[i].name !== 'clspRouter.generated') {
-    minifyConfig(config[i]);
-  }
+  minifyConfig(config[i]);
 }
 
 module.exports = config;
