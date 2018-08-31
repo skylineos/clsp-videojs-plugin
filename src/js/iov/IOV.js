@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
+import defaults from 'lodash/defaults';
 
 // Needed for crossbrowser iframe support
 import 'srcdoc-polyfill';
@@ -16,8 +17,6 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 //  @todo - should this be the videojs component?  it seems like the
 // mqttHandler does nothing, and that this could replace it
 export default class IOV {
-  static CHANGE_SOURCE_MAX_WAIT = 9750;
-
   static generateConfigFromUrl (url) {
     if (!url) {
       throw new Error('No source was given to be parsed!');
@@ -72,18 +71,28 @@ export default class IOV {
     };
   }
 
-  static factory (mqttConduitCollection, player, config = {}) {
-    return new IOV(mqttConduitCollection, player, config);
+  static factory (mqttConduitCollection, player, config = {}, options = {}) {
+    return new IOV(
+      mqttConduitCollection,
+      player,
+      config,
+      options
+    );
   }
 
-  static fromUrl (url, mqttConduitCollection, player, config = {}) {
-    return IOV.factory(mqttConduitCollection, player, {
-      ...config,
-      ...IOV.generateConfigFromUrl(url),
-    });
+  static fromUrl (url, mqttConduitCollection, player, config = {}, options = {}) {
+    return IOV.factory(
+      mqttConduitCollection,
+      player,
+      {
+        ...config,
+        ...IOV.generateConfigFromUrl(url),
+      },
+      options
+    );
   }
 
-  constructor (mqttConduitCollection, player, config) {
+  constructor (mqttConduitCollection, player, config, options) {
     this.id = uuidv4();
 
     this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
@@ -94,15 +103,19 @@ export default class IOV {
     this.playerInstance = player;
     this.videoElement = this.playerInstance.el();
 
+    this.options = defaults({}, options, {
+      changeSourceMaxWait: 9750,
+      statsInterval: 30000,
+      enableMetrics: true,
+    });
+
     this.config = {
       clientId: this.id,
       wsbroker: config.wsbroker,
       wsport: config.wsport,
       useSSL: config.useSSL,
       streamName: config.streamName,
-      appStart: config.appStart,
       videoElementParent: config.videoElementParent || null,
-      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
     };
 
     this.statsMsg = {
@@ -123,7 +136,7 @@ export default class IOV {
     return this;
   }
 
-  clone (config) {
+  clone (config, options) {
     this.debug('clone');
 
     const cloneConfig = {
@@ -134,17 +147,9 @@ export default class IOV {
     return IOV.factory(
       this.mqttConduitCollection,
       this.playerInstance,
-      cloneConfig
+      cloneConfig,
+      options
     );
-  }
-
-  cloneFromUrl (url, config = {}) {
-    this.debug('cloneFromUrl');
-
-    return this.clone({
-      ...IOV.generateConfigFromUrl(url),
-      ...config,
-    });
   }
 
   changeSource (url) {
@@ -156,7 +161,9 @@ export default class IOV {
 
     let iovUpdated = false;
 
-    const clone = this.cloneFromUrl(url).initialize();
+    const clone = this.clone(IOV.generateConfigFromUrl(url), this.options);
+
+    clone.initialize();
 
     clone.player.videoElement.style.display = 'none';
 
@@ -177,7 +184,7 @@ export default class IOV {
         clone.playerInstance.tech(true).mqtt.updateIOV(clone);
         clone.player.videoElement.style.display = 'initial';
       }
-    }, clone.config.changeSourceMaxWait);
+    }, clone.options.changeSourceMaxWait);
 
     // Under normal circumstances, meaning when the tab is in focus, we want
     // to respond by switching the IOV when the new IOV Player has something
@@ -244,19 +251,17 @@ export default class IOV {
       this.player.restart();
     }, false);
 
-    const statsInterval = 30000.0;
-
     // the mse service will stop streaming to us if we don't send
     // a message to iov/stats within 1 minute.
     this._statsTimer = setInterval(() => {
-      this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / statsInterval;
+      this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / this.options.statsInterval;
       this.statsMsg.byteCount = 0;
 
       // @todo - can we disable this?
       this.conduit.publish('iov/stats', this.statsMsg);
 
       this.debug('iov status', this.statsMsg);
-    }, statsInterval);
+    }, this.options.statsInterval);
   }
 
   onFail (event) {

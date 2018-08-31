@@ -9,7 +9,7 @@ import 'videojs-errors';
 
 // @todo - can webpack be configured to process this without having
 // include it like this?
-import '~styles/videojs-mse-over-clsp.scss';
+import '~styles/clsp-videojs-plugin.scss';
 
 import Paho from 'paho-client';
 
@@ -49,7 +49,7 @@ export default (defaults = {}) => class MseOverMqttPlugin extends Plugin {
 
     options = videojs.mergeOptions(defaults, options);
 
-    player.addClass('vjs-mse-over-mqtt');
+    player.addClass('vjs-clsp');
 
     if (options.customClass) {
       player.addClass(options.customClass);

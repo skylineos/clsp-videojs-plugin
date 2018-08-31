@@ -36,9 +36,6 @@ export default class IOVPlayer extends ListenerBaseClass {
     'iovPlayer.video.segmentIntervalAverage',
   ];
 
-  static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
-  static DRIFT_CORRECTION_CONSTANT = 2;
-
   static factory (iov, playerInstance, options = {}) {
     return new IOVPlayer(iov, playerInstance, options);
   }
@@ -57,8 +54,8 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.initializeVideoElement();
 
     this.options = defaults({}, options, {
-      segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
-      driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
+      segmentIntervalSampleSize: 5,
+      driftCorrectionConstant: 2,
       enableMetrics: true,
     });
 

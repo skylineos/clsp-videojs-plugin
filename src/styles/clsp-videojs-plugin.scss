@@ -1,9 +1,6 @@
-// Sass for videojs-mse-over-mqtt
-
 .video-js {
-
   // This class is added to the video.js element by the plugin by default.
-  &.vjs-mse-over-mqtt {
+  &.vjs-clsp {
     display: block;
   }
 }

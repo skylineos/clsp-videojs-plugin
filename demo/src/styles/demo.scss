@@ -1,7 +1,7 @@
 $icon-font-path: '~videojs-font/fonts';
 @import 'node_modules/video.js/src/css/video-js.scss';
 
-@import '~/dist/videojs-mse-over-clsp.css';
+@import '~/dist/clsp-videojs-plugin.css';
 
 section {
   border: solid 3px black;
@@ -24,25 +24,36 @@ section {
   height: 244px;
 }
 
-.video-metrics {
-  display: flex;
-  flex-direction: column;
+.wall-video-container {
+  border: 2px solid black;
 
-  .metric {
+  .video-stream {
+    padding: 10px;
+    text-align: center;
+    background-color: black;
+    color: white;
+  }
+
+  .video-metrics {
     display: flex;
+    flex-direction: column;
 
-    &:nth-of-type(2n) {
-      background: lightgrey;
-    }
+    .metric {
+      display: flex;
 
-    .value {
-      max-width: 1rem;
-    }
+      &:nth-of-type(2n) {
+        background: lightgrey;
+      }
 
-    .type {
-      flex-grow: 1;
-      flex-shrink: 0;
-      text-align: right;
+      .value {
+        max-width: 1rem;
+      }
+
+      .type {
+        flex-grow: 1;
+        flex-shrink: 0;
+        text-align: right;
+      }
     }
   }
 }
@@ -60,4 +71,9 @@ section {
 
 button {
   padding: 20px;
+}
+
+.tour,
+.headless {
+  display: none;
 }

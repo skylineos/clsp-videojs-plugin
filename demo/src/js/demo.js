@@ -48,6 +48,8 @@ function initializeWall () {
 
     $container.html(html);
 
+    $container.find('.url').text(src);
+
     const $videoMetrics = $container.find('.video-metrics');
 
     const metricTypes = [

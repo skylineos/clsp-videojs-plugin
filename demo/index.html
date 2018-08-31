@@ -57,24 +57,29 @@
     <br />
     <div id="videowall"></div>
     <template id="cell">
-      <div class="video-container">
-        <video
-          id="video-$cellId"
-          width="352"
-          height="240"
-          class="video-js vjs-default-skin"
-          controls
-          autoplay
-          muted
-        >
-          <source
-            id="src-$cellId"
-            src="$src"
-            type="video/mp4; codecs='avc1.42E01E'"
-          />
-        </video>
+      <div class="wall-video-container">
+        <div class="video-stream">
+          <span class="url"></span>
+        </div>
+        <div class="video-container">
+          <video
+            id="video-$cellId"
+            width="352"
+            height="240"
+            class="video-js vjs-default-skin"
+            controls
+            autoplay
+            muted
+          >
+            <source
+              id="src-$cellId"
+              src="$src"
+              type="video/mp4; codecs='avc1.42E01E'"
+            />
+          </video>
+        </div>
+        <div class="video-metrics"></div>
       </div>
-      <div class="video-metrics"></div>
     </template>
   </section>
 
@@ -128,6 +133,6 @@
     </div>
   </section>
 
-  <script src="../dist/videojs-mse-over-clsp.js"></script>
+  <script src="../dist/clsp-videojs-plugin.js"></script>
 </body>
 </html>
