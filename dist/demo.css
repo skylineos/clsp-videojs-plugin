@@ -1,4 +1,4 @@
-@import url(/dist/videojs-mse-over-clsp.css);.video-js .vjs-big-play-button .vjs-icon-placeholder:before, .vjs-button > .vjs-icon-placeholder:before, .video-js .vjs-modal-dialog, .vjs-modal-dialog .vjs-modal-dialog-content {
+@import url(/dist/clsp-videojs-plugin.css);.video-js .vjs-big-play-button .vjs-icon-placeholder:before, .vjs-button > .vjs-icon-placeholder:before, .video-js .vjs-modal-dialog, .vjs-modal-dialog .vjs-modal-dialog-content {
   position: absolute;
   top: 0;
   left: 0;
@@ -1440,19 +1440,26 @@ section {
   width: 356px;
   height: 244px; }
 
-.video-metrics {
-  display: flex;
-  flex-direction: column; }
-  .video-metrics .metric {
-    display: flex; }
-    .video-metrics .metric:nth-of-type(2n) {
-      background: lightgrey; }
-    .video-metrics .metric .value {
-      max-width: 1rem; }
-    .video-metrics .metric .type {
-      flex-grow: 1;
-      flex-shrink: 0;
-      text-align: right; }
+.wall-video-container {
+  border: 2px solid black; }
+  .wall-video-container .video-stream {
+    padding: 10px;
+    text-align: center;
+    background-color: black;
+    color: white; }
+  .wall-video-container .video-metrics {
+    display: flex;
+    flex-direction: column; }
+    .wall-video-container .video-metrics .metric {
+      display: flex; }
+      .wall-video-container .video-metrics .metric:nth-of-type(2n) {
+        background: lightgrey; }
+      .wall-video-container .video-metrics .metric .value {
+        max-width: 1rem; }
+      .wall-video-container .video-metrics .metric .type {
+        flex-grow: 1;
+        flex-shrink: 0;
+        text-align: right; }
 
 .wall-controls,
 .tour-controls {
@@ -1463,5 +1470,9 @@ section {
 
 button {
   padding: 20px; }
+
+.tour,
+.headless {
+  display: none; }
 
 /*# sourceMappingURL=demo.css.map*/

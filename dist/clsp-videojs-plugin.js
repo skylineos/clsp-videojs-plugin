@@ -5645,7 +5645,35 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.14.0-3","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags","serve":"./scripts/serve.js","serve-watch":"./scripts/serve.sh"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-3","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+
+/***/ }),
+
+/***/ "./src/js/clsp-videojs-plugin.js":
+/*!***************************************!*\
+  !*** ./src/js/clsp-videojs-plugin.js ***!
+  \***************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _plugin_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~/plugin/MseOverMqttPlugin */ "./src/js/plugin/MseOverMqttPlugin.js");
+/**
+ * This file is the target of the distributable js file.  It registers the
+ * CLSP plugin with videojs for you.
+ *
+ * If you would like to use the videojs plugin without having it registered
+ * for you, you can include the `MseOverMqttPlugin` file directly (ES6 only).
+ */
+
+
+
+var clspPlugin = Object(_plugin_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_0__["default"])();
+
+clspPlugin.register();
+
+/* harmony default export */ __webpack_exports__["default"] = (clspPlugin);
 
 /***/ }),
 
@@ -5866,14 +5894,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
 /* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _Player__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Player */ "./src/js/iov/Player.js");
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _Player__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Player */ "./src/js/iov/Player.js");
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 
 
 
@@ -5951,19 +5982,21 @@ var IOV = function () {
     key: 'factory',
     value: function factory(mqttConduitCollection, player) {
       var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-      return new IOV(mqttConduitCollection, player, config);
+      return new IOV(mqttConduitCollection, player, config, options);
     }
   }, {
     key: 'fromUrl',
     value: function fromUrl(url, mqttConduitCollection, player) {
       var config = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+      var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
 
-      return IOV.factory(mqttConduitCollection, player, _extends({}, config, IOV.generateConfigFromUrl(url)));
+      return IOV.factory(mqttConduitCollection, player, _extends({}, config, IOV.generateConfigFromUrl(url)), options);
     }
   }]);
 
-  function IOV(mqttConduitCollection, player, config) {
+  function IOV(mqttConduitCollection, player, config, options) {
     var _this = this;
 
     _classCallCheck(this, IOV);
@@ -5982,15 +6015,19 @@ var IOV = function () {
     this.playerInstance = player;
     this.videoElement = this.playerInstance.el();
 
+    this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_2___default()({}, options, {
+      changeSourceMaxWait: 9750,
+      statsInterval: 30000,
+      enableMetrics: true
+    });
+
     this.config = {
       clientId: this.id,
       wsbroker: config.wsbroker,
       wsport: config.wsport,
       useSSL: config.useSSL,
       streamName: config.streamName,
-      appStart: config.appStart,
-      videoElementParent: config.videoElementParent || null,
-      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT
+      videoElementParent: config.videoElementParent || null
     };
 
     this.statsMsg = {
@@ -6008,29 +6045,20 @@ var IOV = function () {
     key: 'initialize',
     value: function initialize() {
       this.conduit = this.mqttConduitCollection.addFromIov(this);
-      this.player = _Player__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this, this.playerInstance);
+      this.player = _Player__WEBPACK_IMPORTED_MODULE_4__["default"].factory(this, this.playerInstance);
 
       return this;
     }
   }, {
     key: 'clone',
-    value: function clone(config) {
+    value: function clone(config, options) {
       this.debug('clone');
 
       var cloneConfig = _extends({}, config, {
         videoElementParent: this.config.videoElementParent
       });
 
-      return IOV.factory(this.mqttConduitCollection, this.playerInstance, cloneConfig);
-    }
-  }, {
-    key: 'cloneFromUrl',
-    value: function cloneFromUrl(url) {
-      var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-      this.debug('cloneFromUrl');
-
-      return this.clone(_extends({}, IOV.generateConfigFromUrl(url), config));
+      return IOV.factory(this.mqttConduitCollection, this.playerInstance, cloneConfig, options);
     }
   }, {
     key: 'changeSource',
@@ -6043,7 +6071,9 @@ var IOV = function () {
 
       var iovUpdated = false;
 
-      var clone = this.cloneFromUrl(url).initialize();
+      var clone = this.clone(IOV.generateConfigFromUrl(url), this.options);
+
+      clone.initialize();
 
       clone.player.videoElement.style.display = 'none';
 
@@ -6064,7 +6094,7 @@ var IOV = function () {
           clone.playerInstance.tech(true).mqtt.updateIOV(clone);
           clone.player.videoElement.style.display = 'initial';
         }
-      }, clone.config.changeSourceMaxWait);
+      }, clone.options.changeSourceMaxWait);
 
       // Under normal circumstances, meaning when the tab is in focus, we want
       // to respond by switching the IOV when the new IOV Player has something
@@ -6130,19 +6160,17 @@ var IOV = function () {
         _this2.player.restart();
       }, false);
 
-      var statsInterval = 30000.0;
-
       // the mse service will stop streaming to us if we don't send
       // a message to iov/stats within 1 minute.
       this._statsTimer = setInterval(function () {
-        _this2.statsMsg.inkbps = _this2.statsMsg.byteCount * 8 / statsInterval;
+        _this2.statsMsg.inkbps = _this2.statsMsg.byteCount * 8 / _this2.options.statsInterval;
         _this2.statsMsg.byteCount = 0;
 
         // @todo - can we disable this?
         _this2.conduit.publish('iov/stats', _this2.statsMsg);
 
         _this2.debug('iov status', _this2.statsMsg);
-      }, statsInterval);
+      }, this.options.statsInterval);
     }
   }, {
     key: 'onFail',
@@ -6221,7 +6249,6 @@ var IOV = function () {
   return IOV;
 }();
 
-IOV.CHANGE_SOURCE_MAX_WAIT = 9750;
 /* harmony default export */ __webpack_exports__["default"] = (IOV);
 ;
 
@@ -6304,8 +6331,8 @@ var IOVPlayer = function (_ListenerBaseClass) {
     _this.initializeVideoElement();
 
     _this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
-      segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
-      driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
+      segmentIntervalSampleSize: 5,
+      driftCorrectionConstant: 2,
       enableMetrics: true
     });
 
@@ -6879,8 +6906,6 @@ var IOVPlayer = function (_ListenerBaseClass) {
 IOVPlayer.DEBUG_NAME = 'skyline:clsp:iov:player';
 IOVPlayer.EVENT_NAMES = ['metric', 'firstFrameShown', 'videoReceived', 'videoInfoReceived'];
 IOVPlayer.METRIC_TYPES = ['iovPlayer.sourceBuffer.bufferTimeEnd', 'iovPlayer.video.currentTime', 'iovPlayer.video.drift', 'iovPlayer.video.driftCorrection', 'iovPlayer.video.segmentInterval', 'iovPlayer.video.segmentIntervalAverage'];
-IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
-IOVPlayer.DRIFT_CORRECTION_CONSTANT = 2;
 /* harmony default export */ __webpack_exports__["default"] = (IOVPlayer);
 ;
 
@@ -8092,8 +8117,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var videojs_errors__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! videojs-errors */ "./node_modules/videojs-errors/dist/videojs-errors.es.js");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ~styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ~styles/clsp-videojs-plugin.scss */ "./src/styles/clsp-videojs-plugin.scss");
+/* harmony import */ var _styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_3__);
 /* harmony import */ var paho_client__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! paho-client */ "./node_modules/paho-client/src/paho-mqtt.js");
 /* harmony import */ var paho_client__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(paho_client__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var _utils_utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ~/utils/utils */ "./src/js/utils/utils.js");
@@ -8163,7 +8188,7 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
 
       options = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(defaults, options);
 
-      player.addClass('vjs-mse-over-mqtt');
+      player.addClass('vjs-clsp');
 
       if (options.customClass) {
         player.addClass(options.customClass);
@@ -8414,38 +8439,10 @@ function isSupportedMimeType(mimeType) {
 
 /***/ }),
 
-/***/ "./src/js/videojs-mse-over-clsp.js":
-/*!*****************************************!*\
-  !*** ./src/js/videojs-mse-over-clsp.js ***!
-  \*****************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _plugin_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~/plugin/MseOverMqttPlugin */ "./src/js/plugin/MseOverMqttPlugin.js");
-/**
- * This file is the target of the distributable js file.  It registers the
- * CLSP plugin with videojs for you.
- *
- * If you would like to use the videojs plugin without having it registered
- * for you, you can include the `MseOverMqttPlugin` file directly (ES6 only).
- */
-
-
-
-var clspPlugin = Object(_plugin_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_0__["default"])();
-
-clspPlugin.register();
-
-/* harmony default export */ __webpack_exports__["default"] = (clspPlugin);
-
-/***/ }),
-
-/***/ "./src/styles/videojs-mse-over-clsp.scss":
-/*!***********************************************!*\
-  !*** ./src/styles/videojs-mse-over-clsp.scss ***!
-  \***********************************************/
+/***/ "./src/styles/clsp-videojs-plugin.scss":
+/*!*********************************************!*\
+  !*** ./src/styles/clsp-videojs-plugin.scss ***!
+  \*********************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
@@ -8454,13 +8451,13 @@ clspPlugin.register();
 /***/ }),
 
 /***/ 0:
-/*!***********************************************!*\
-  !*** multi ./src/js/videojs-mse-over-clsp.js ***!
-  \***********************************************/
+/*!*********************************************!*\
+  !*** multi ./src/js/clsp-videojs-plugin.js ***!
+  \*********************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! /home/user/vagrant/github/clsp-videojs-plugin/src/js/videojs-mse-over-clsp.js */"./src/js/videojs-mse-over-clsp.js");
+module.exports = __webpack_require__(/*! /home/user/vagrant/github/clsp-videojs-plugin/src/js/clsp-videojs-plugin.js */"./src/js/clsp-videojs-plugin.js");
 
 
 /***/ }),
@@ -8488,4 +8485,4 @@ module.exports = videojs;
 /***/ })
 
 /******/ });
-//# sourceMappingURL=videojs-mse-over-clsp.js.map
+//# sourceMappingURL=clsp-videojs-plugin.js.map
