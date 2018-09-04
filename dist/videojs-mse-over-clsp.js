@@ -3654,6 +3654,118 @@ var registered = false;
 
 /***/ }),
 
+/***/ "./src/js/clspWebcam.js":
+/*!******************************!*\
+  !*** ./src/js/clspWebcam.js ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+Use the MediaRecorder object to publish h264 video to the SFS so that it can be
+broadcasted out to wowza and thus any customer using the SFS.
+
+Given: The user has an apiKey that allows them to publish, right now
+       this parameter is not checked
+
+*/
+
+var ClspWebcam = function () {
+    function ClspWebcam(conf) {
+        _classCallCheck(this, ClspWebcam);
+
+        this.video = document.getElementById(conf.video_eid);
+        this.apiKey = conf.apiKey;
+        this.streamName = conf.streamName;
+        this.sfsIp = conf.sfsIpAddr;
+        this.isSupported = false;
+        this.streaming = false;
+        this.mime = "video/webm;codecs=h264"; // most common supported codec
+
+
+        // browser check 
+        try {
+            navigator.getMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || null;
+        } catch (e) {
+            navigator.getMedia = null;
+        }
+
+        if (navigator.getMedia === null) {
+            console.log("getMedia not supported");
+        } else if (typeof window.MediaRecorder === 'undefined') {
+            console.log("MediaRecorder not supported");
+        } else if (!MediaRecorder.isTypeSupported(this.mime)) {
+            console.log("Mime type " + this.mime + " not supported");
+        } else {
+            this.isSupported = true;
+        }
+
+        this._on_getMedia_success = this._on_getMedia_success.bind(this);
+        this.play = this.play.bind(this);
+    }
+
+    _createClass(ClspWebcam, [{
+        key: "_on_getMedia_success",
+        value: function _on_getMedia_success(mediaStream) {
+
+            if (typeof this.video.srcObject !== 'undefined') {
+                this.video.srcObject = mediaStream;
+            } else {
+                // depricated as of July 2018
+                this.video.src = window.URL.createObjectURL(mediaStream);
+            }
+
+            this.mediaRecorder = new MediaRecorder(mediaStream, { mimeType: this.mime });
+
+            var fileReader = new FileReader();
+            var utf8Enc = new TextEncoder('utf-8');
+            var streaming = false;
+
+            fileReader.onload = function (x) {
+                var packet = this.result;
+                console.log(packet);
+            };
+
+            this.mediaRecorder.ondataavailable = function (e) {
+                console.log("ondataavailable");
+                // route to mqtt 
+                if (fileReader.readyState !== fileReader.LOADING) {
+                    fileReader.readAsArrayBuffer(e.data);
+                }
+            };
+
+            this.mediaRecorder.start(500);
+            this.video.play();
+        }
+    }, {
+        key: "play",
+        value: function play() {
+            if (this.isSupported === false) {
+                throw new "Media Recorder not supported!"();
+            }
+
+            navigator.getMedia(
+            // constraints
+            { video: true, audio: true },
+
+            // success callback
+            this._on_getMedia_success, function (err) {
+                console.log(err);
+            });
+        }
+    }]);
+
+    return ClspWebcam;
+}();
+
+window.videojs.clspWebcam = ClspWebcam;
+
+/***/ }),
+
 /***/ "./src/js/conduit/clspConduit.generated.js":
 /*!*************************************************!*\
   !*** ./src/js/conduit/clspConduit.generated.js ***!
@@ -5687,13 +5799,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./conduit/clspConduit.generated.js */ "./src/js/conduit/clspConduit.generated.js");
 /* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var _MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MseOverMqttPlugin */ "./src/js/MseOverMqttPlugin.js");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _clspWebcam__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./clspWebcam */ "./src/js/clspWebcam.js");
+/* harmony import */ var _clspWebcam__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_clspWebcam__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_5__);
 
 
 
 
 // import './conduit/clspConduit.generated.min.js';
+
 
 
 

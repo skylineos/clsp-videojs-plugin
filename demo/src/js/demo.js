@@ -254,6 +254,30 @@ function initializeHeadless () {
   });
 }
 
+
+function initializeWebcam() {
+   var webcam = null;
+
+   $('#webcam-play').click(function(){
+       webcam = new videojs.clspWebcam({
+           video_eid: "webcam-preview",
+           apiKey: $('#webcam-apiKey').val(),
+           sfsIpAddr: $('#webcam-sfsip').val(),
+           streamName: $('#webcam-name').val(),
+       });
+
+       if (webcam.isSupported === true) {
+           webcam.play();
+       } 
+   });
+
+   $('#webcam-stop').click(function(){
+       if (webcam !== null) {
+           webcam.stop();
+       }   
+   });
+}
+
 $(() => {
   const pageTitle = `CLSP ${window.CLSP_DEMO_VERSION} Demo Page`;
   document.title = pageTitle;
@@ -262,4 +286,5 @@ $(() => {
   initializeWall();
   initializeTours();
   initializeHeadless();
+  initializeWebcam(); 
 });

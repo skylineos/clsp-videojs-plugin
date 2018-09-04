@@ -351,6 +351,29 @@ function initializeHeadless() {
   });
 }
 
+function initializeWebcam() {
+  var webcam = null;
+
+  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#webcam-play').click(function () {
+    webcam = new video_js__WEBPACK_IMPORTED_MODULE_2___default.a.clspWebcam({
+      video_eid: "webcam-preview",
+      apiKey: jquery__WEBPACK_IMPORTED_MODULE_1___default()('#webcam-apiKey').val(),
+      sfsIpAddr: jquery__WEBPACK_IMPORTED_MODULE_1___default()('#webcam-sfsip').val(),
+      streamName: jquery__WEBPACK_IMPORTED_MODULE_1___default()('#webcam-name').val()
+    });
+
+    if (webcam.isSupported === true) {
+      webcam.play();
+    }
+  });
+
+  jquery__WEBPACK_IMPORTED_MODULE_1___default()('#webcam-stop').click(function () {
+    if (webcam !== null) {
+      webcam.stop();
+    }
+  });
+}
+
 jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
   var pageTitle = 'CLSP ' + window.CLSP_DEMO_VERSION + ' Demo Page';
   document.title = pageTitle;
@@ -359,6 +382,7 @@ jquery__WEBPACK_IMPORTED_MODULE_1___default()(function () {
   initializeWall();
   initializeTours();
   initializeHeadless();
+  initializeWebcam();
 });
 
 /***/ }),

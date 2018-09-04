@@ -246,11 +246,39 @@
     <hr>
 
     <div>Url for headless player:
-      <input id="headless_url" tyle="text" />
+      <input id="headless_url" style="text" />
     </div>
     <div>
       <button id="headless_play">Headless Player</button>
     </div>
+  </section>
+
+
+  <section class="webcam">
+    <h2>CLSP Webcam</h2>
+    <video id="webcam-preview" width="352" height="240" controls muted></video>
+    <hr>
+
+    <div>ApiKey:
+        <input id="webcam-apiKey" style="text" value="public" />  
+    </div>
+
+    <div>Name as it would appear on the SFS:
+        <input id="webcam-name" style="text" value="webcam" />  
+    </div>
+
+    <div>SFS IP Addr:
+        <input id="webcam-sfsip" style="text" value="172.28.12.247" />  
+    </div>
+
+    <div>
+     <button id="webcam-play">Play</button>
+    </div>
+
+    <div>
+     <button id="webcam-stop">Stop</button>
+    </div>
+
   </section>
 
   <script src="../dist/videojs-mse-over-clsp.js"></script>
