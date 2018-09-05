@@ -2,7 +2,7 @@
 
 A [video.js](https://github.com/videojs/video.js) plugin to support real-time video streams served over Skyline's `clsp` protocol.
 
-The CLSP protocol was designed from the ground up by Skyline's appliance and web engineers to serve as a "closer-to-real-time" replacement for the more commonly used RTMP streams.  With Google's decision to deprecate Flash in Chrome over the next few years, we needed a live streaming solution that was a worthy successor to RTMP.  @TODO
+The CLSP protocol was designed from the ground up by Skyline's appliance and web engineers to serve as a "closer-to-real-time" replacement for the more commonly used RTMP streams.  With Google's decision to deprecate Flash in Chrome over the next few years, we needed a live streaming solution that was a worthy successor to RTMP.
 
 To contact Skyline about utilizing this protocol to serve your live-streaming needs, please visit our website at [https://www.skylinenet.net/](https://www.skylinenet.net/).
 
