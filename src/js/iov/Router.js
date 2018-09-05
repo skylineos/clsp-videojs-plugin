@@ -1,3 +1,6 @@
+// Note that this is the code that gets duplicated in each iframe.
+// Keep it light and ES5 only
+
 export default function () {
   return {
     clspRouter: function clspRouter () {
