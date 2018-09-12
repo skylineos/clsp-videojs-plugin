@@ -99,8 +99,6 @@ function initializeWall () {
     for (let i = 0; i < players.length; i++) {
       const player = players[0];
 
-      console.log('disposing', player)
-
       player.dispose();
     }
   }

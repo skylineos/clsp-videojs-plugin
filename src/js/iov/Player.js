@@ -524,9 +524,6 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.videoJsVideoElement = null;
     this.videoElementParent = null;
 
-    this.events = null;
-    this.metrics = null;
-
     this.LogSourceBuffer = null;
     this.LogSourceBufferTopic = null;
 
