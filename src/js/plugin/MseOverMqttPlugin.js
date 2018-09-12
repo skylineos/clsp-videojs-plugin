@@ -1,4 +1,11 @@
+'use strict';
+
+// @todo - can webpack be configured to process this without having
+// include it like this?
+import '~styles/clsp-videojs-plugin.scss';
+
 import Debug from 'debug';
+import Paho from 'paho-client';
 
 // This is configured as an external library by webpack, so the caller must
 // provide videojs on `window`
@@ -6,12 +13,6 @@ import videojs from 'video.js';
 
 // @todo - can this be up to the caller?
 import 'videojs-errors';
-
-// @todo - can webpack be configured to process this without having
-// include it like this?
-import '~styles/clsp-videojs-plugin.scss';
-
-import Paho from 'paho-client';
 
 import utils from '~/utils/utils';
 import MqttSourceHandler from './MqttSourceHandler';
@@ -100,6 +101,16 @@ export default (defaults = {}) => class MseOverMqttPlugin extends Plugin {
         // rather than the tech, but that causes the video not to play...
         this.trigger('metric', { metric });
       });
+    });
+
+    player.on('dispose', () => {
+      const mqttHandler = player.tech(true).mqtt;
+
+      if (!mqttHandler) {
+        throw new Error(`VideoJS Player ${player.id()} does not have mqtt tech!`);
+      }
+
+      mqttHandler.destroy();
     });
   }
 

@@ -60,11 +60,12 @@ export default class ListenerBaseClass {
 
     // @todo - decouple these metric types
     switch (type) {
-      case 'iovPlayer.sourceBuffer.bufferTimeEnd':
       case 'iovPlayer.video.currentTime':
       case 'iovPlayer.video.drift':
       case 'iovPlayer.video.segmentInterval':
       case 'iovPlayer.video.segmentIntervalAverage':
+      case 'iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd':
+      case 'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount':
       case 'sourceBuffer.lastKnownBufferSize':
       case 'sourceBuffer.lastMoofSize': {
         this.metrics[type] = value;

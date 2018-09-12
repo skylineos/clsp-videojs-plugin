@@ -1,3 +1,5 @@
+'use strict';
+
 import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
 
@@ -28,12 +30,13 @@ export default class IOVPlayer extends ListenerBaseClass {
   ];
 
   static METRIC_TYPES = [
-    'iovPlayer.sourceBuffer.bufferTimeEnd',
     'iovPlayer.video.currentTime',
     'iovPlayer.video.drift',
     'iovPlayer.video.driftCorrection',
     'iovPlayer.video.segmentInterval',
     'iovPlayer.video.segmentIntervalAverage',
+    'iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd',
+    'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount',
   ];
 
   static factory (iov, playerInstance, options = {}) {
@@ -56,6 +59,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.options = defaults({}, options, {
       segmentIntervalSampleSize: 5,
       driftCorrectionConstant: 2,
+      maxMediaSourceWrapperGenericErrorRestartCount: 50,
       enableMetrics: true,
     });
 
@@ -74,13 +78,13 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.segmentIntervals = [];
 
     this.mediaSourceWrapper = null;
-    this.moovBox = null;
+    this.moov = null;
     this.guid = null;
     this.mimeCodec = null;
   }
 
   _onError (type, message, error) {
-    console.error(message);
+    console.error(type, message);
     console.error(error);
   }
 
@@ -148,7 +152,9 @@ export default class IOVPlayer extends ListenerBaseClass {
       this.mediaSourceWrapper.destroy();
     }
 
+    this.mediaSourceWrapperGenericErrorRestartCount = 0;
     this.mediaSourceWrapper = MediaSourceWrapper.factory(this.videoElement);
+    this.mediaSourceWrapper.moov = this.moov;
 
     try {
       this.mediaSourceWrapper.registerMimeCodec(this.mimeCodec);
@@ -179,6 +185,8 @@ export default class IOVPlayer extends ListenerBaseClass {
 
       await this.mediaSourceWrapper.initializeSourceBuffer();
 
+      // @todo - shouldn't sourceBuffer metrics come from the "parent"
+      // mediaSourceWrapper?
       this.mediaSourceWrapper.sourceBuffer.on('metric', ({ type, value }) => {
         this.trigger('metric', { type, value });
       });
@@ -207,7 +215,7 @@ export default class IOVPlayer extends ListenerBaseClass {
 
         this.drift = info.bufferTimeEnd - this.videoElement.currentTime;
 
-        this.metric('iovPlayer.sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+        this.metric('iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
         this.metric('iovPlayer.video.currentTime', this.videoElement.currentTime);
         this.metric('iovPlayer.video.drift', this.drift);
 
@@ -252,7 +260,8 @@ export default class IOVPlayer extends ListenerBaseClass {
           'Error while appending to sourceBuffer',
           error
         );
-        // this.videoPlayer.error({ code: 3 });
+
+        // @todo - can we just restart here instead of creating a new wrapper?
         await this.reinitializeMseWrapper();
       });
 
@@ -279,10 +288,22 @@ export default class IOVPlayer extends ListenerBaseClass {
       this.mediaSourceWrapper.sourceBuffer.on('streamFrozen', async () => {
         this.debug('stream appears to be frozen - reinitializing...');
 
+        // @todo - can we just restart here instead of creating a new wrapper?
         await this.reinitializeMseWrapper();
       });
 
       this.mediaSourceWrapper.sourceBuffer.on('error', (error) => {
+        this.mediaSourceWrapperGenericErrorRestartCount++;
+
+        // Sometimes, when we receive this error, it is due to a bad segment
+        // at or near the beginning of the stream.  In those instances, restarting
+        // the stream may fix the issue, so try it a few times.
+        if (this.mediaSourceWrapperGenericErrorRestartCount <= this.options.maxMediaSourceWrapperGenericErrorRestartCount) {
+          this.metric('iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount', this.mediaSourceWrapperGenericErrorRestartCount);
+
+          this.restart();
+        }
+
         this._onError(
           'mediaSource.sourceBuffer.generic',
           'mediaSource sourceBuffer error',
@@ -291,7 +312,6 @@ export default class IOVPlayer extends ListenerBaseClass {
       });
 
       this.trigger('videoInfoReceived');
-      this.mediaSourceWrapper.sourceBuffer.appendMoov(this.moovBox);
     });
 
     this.mediaSourceWrapper.on('sourceEnded', () => {
@@ -318,17 +338,9 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.mediaSourceWrapper.reinitializeVideoElementSrc();
   }
 
-  resyncStream () {
-    // subscribe to a sync topic that will be called if the stream that is feeding
-    // the mse service dies and has to be restarted that this player should restart the stream
-    this.debug('Trying to resync stream...');
-
-    this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, async () => {
-      this.debug('sync received re-initialize media source buffer');
-      await this.reinitializeMseWrapper();
-    });
-  }
-
+  /**
+   * Restart the video without destroying the mediaSourceWrapper.
+   */
   restart () {
     this.debug('restart');
 
@@ -339,6 +351,7 @@ export default class IOVPlayer extends ListenerBaseClass {
   play (streamName) {
     this.debug('play');
 
+    // Tell the server we want to initialize this stream
     this.iov.conduit.transaction(
       `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
       (...args) => this.onIovPlayTransaction(...args),
@@ -352,44 +365,74 @@ export default class IOVPlayer extends ListenerBaseClass {
   stop () {
     this.debug('stop');
 
-    this.moovBox = null;
+    const guid = this.guid;
 
-    if (this.guid !== undefined) {
-      this.iov.conduit.unsubscribe(`iov/video/${this.guid}/live`);
+    // When stopping the player, we will always need to re-request the stream's moov
+    // if we want to start playing the stream again.  Discarding it here forces us to
+    // re-request it later.
+    this.moov = null;
+    this.guid = null;
+    this.mimeCodec = null;
+
+    if (!guid) {
+      return;
     }
 
+    // Stop listening for moofs
+    this.iov.conduit.unsubscribe(`iov/video/${guid}/live`);
+
+    // Stop listening for resync events
+    this.iov.conduit.unsubscribe(`iov/video/${guid}/resync`);
+
+    // Tell the server we've stopped
     this.iov.conduit.publish(
-      `iov/video/${this.guid}/stop`,
+      `iov/video/${guid}/stop`,
       { clientId: this.iov.config.clientId }
     );
   }
 
-  getSegmentIntervalMetrics () {
+  /**
+   * To be run every time a moof is received.
+   *
+   * This method captures metrics on segments intervals - the amount of time
+   * between moofs.  This metric has been helpful in allowing us to identify
+   * certain stream behavior, and is needed when calculating the thresholds
+   * that allow us to determine when a stream is "frozen".  It has also helped
+   * us identify what guarantees we can make about how close to real-time any
+   * given stream can be.
+   */
+  calculateSegmentIntervalMetrics () {
     const previousSegmentReceived = this.latestSegmentReceived;
+
     this.latestSegmentReceived = Date.now();
 
-    if (previousSegmentReceived) {
-      this.segmentInterval = this.latestSegmentReceived - previousSegmentReceived;
+    if (!previousSegmentReceived) {
+      return;
     }
 
-    if (this.segmentInterval) {
-      if (this.segmentIntervals.length >= this.options.segmentIntervalSampleSize) {
-        this.segmentIntervals.shift();
-      }
+    this.segmentInterval = this.latestSegmentReceived - previousSegmentReceived;
 
-      this.segmentIntervals.push(this.segmentInterval);
-
-      let segmentIntervalSum = 0;
-
-      for (let i = 0; i < this.segmentIntervals.length; i++) {
-        segmentIntervalSum += this.segmentIntervals[i];
-      }
-
-      this.segmentIntervalAverage = segmentIntervalSum / this.segmentIntervals.length;
-
-      this.metric('iovPlayer.video.segmentInterval', this.segmentInterval);
-      this.metric('iovPlayer.video.segmentIntervalAverage', this.segmentIntervalAverage);
+    if (!this.segmentInterval) {
+      return;
     }
+
+    // Ensure we only ever keep a limited number of segment intervals.
+    if (this.segmentIntervals.length >= this.options.segmentIntervalSampleSize) {
+      this.segmentIntervals.shift();
+    }
+
+    this.segmentIntervals.push(this.segmentInterval);
+
+    let segmentIntervalSum = 0;
+
+    for (let i = 0; i < this.segmentIntervals.length; i++) {
+      segmentIntervalSum += this.segmentIntervals[i];
+    }
+
+    this.segmentIntervalAverage = segmentIntervalSum / this.segmentIntervals.length;
+
+    this.metric('iovPlayer.video.segmentInterval', this.segmentInterval);
+    this.metric('iovPlayer.video.segmentIntervalAverage', this.segmentIntervalAverage);
   }
 
   /**
@@ -397,7 +440,7 @@ export default class IOVPlayer extends ListenerBaseClass {
    * initialization listeners, one for the stream request, and one for the moov.
    *
    * This method is what is executed when we first request a stream.  This should only
-   * ever be executed once per stream.  Once this is executed, it unregisters
+   * ever be executed once per stream request.  Once this is executed, it unregisters
    * itself as a listener, and registers an init-segment listener, which also
    * only runs once, then unregisters itself.  The init-segment payload is the
    * moov.  Once we receive the moov, we can start listening for moofs.  The
@@ -405,64 +448,66 @@ export default class IOVPlayer extends ListenerBaseClass {
    *
    * @param {Object}
    *   The payload returned by the server.  This object contains the following properties:
-   *   mimeCodec - the mime type for the stream
-   *   guid - the unique id for this iov conduit connection
+   *   `mimeCodec` - the mime type for the stream
+   *   `guid` - the unique id for this iov conduit connection
    */
   onIovPlayTransaction ({ mimeCodec, guid }) {
     this.debug('onIovPlayTransaction');
+
+    this.guid = guid;
+    this.mimeCodec = mimeCodec;
 
     const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
 
     this.state = 'waiting-for-first-moov';
 
+    // Ask the server for the moov
     this.iov.conduit.subscribe(initSegmentTopic, async ({ payloadBytes }) => {
       this.debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
       this.debug(`received moov of type "${typeof payloadBytes}" from server`);
 
-      const moov = payloadBytes;
-
+      this.moov = payloadBytes;
       this.state = 'waiting-for-first-moof';
 
+      // Now that we have the moov, we no longer need to listen for it
       this.iov.conduit.unsubscribe(initSegmentTopic);
 
-      const newTopic = `iov/video/${guid}/live`;
-
-      // subscribe to the live video topic.
-      this.iov.conduit.subscribe(newTopic, (mqtt_msg) => {
+      // Listen for moofs
+      this.iov.conduit.subscribe(`iov/video/${this.guid}/live`, (mqtt_msg) => {
         this.trigger('videoReceived');
-        this.getSegmentIntervalMetrics();
-
-        // if (!this.mediaSourceWrapper || !this.mediaSourceWrapper.sourceBuffer) {
-        //   //
-        //   return this.reinitializeMseWrapper();
-        // }
+        this.calculateSegmentIntervalMetrics();
 
         this.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
       });
 
-      this.guid = guid;
-      this.moovBox = moov;
-      this.mimeCodec = mimeCodec;
+      // When the server says we need to resync...
+      this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, async () => {
+        this.debug('sync event received');
+
+        await this.reinitializeMseWrapper();
+      });
 
       // this.trigger('firstChunk');
 
       await this.reinitializeMseWrapper();
-
-      this.resyncStream();
     });
 
-    this.iov.conduit.publish(`iov/video/${guid}/play`, {
-      initSegmentTopic,
-      clientId: this.iov.config.clientId,
-    });
+    // Tell the server we're ready to play
+    this.iov.conduit.publish(
+      `iov/video/${this.guid}/play`,
+      {
+        initSegmentTopic,
+        clientId: this.iov.config.clientId,
+      }
+    );
   }
 
   destroy () {
+    this.debug('destroying');
+
     if (this.destroyed) {
       return;
     }
-
-    super.destroy();
 
     this.destroyed = true;
 
@@ -490,12 +535,9 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.segmentInterval = null;
     this.segmentIntervals = null;
 
-    this.moovBox = null;
-    this.guid = null;
-    this.mimeCodec = null;
-
     this.mediaSourceWrapper.destroy();
     this.mediaSourceWrapper = null;
+    this.mediaSourceWrapperGenericErrorRestartCount = null;
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,
@@ -503,5 +545,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     // to avoid memory leaks
     this.videoElement.src = '';
     this.videoElement = null;
+
+    super.destroy();
   }
 };

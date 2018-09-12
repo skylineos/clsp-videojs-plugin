@@ -1,3 +1,5 @@
+'use strict';
+
 import Debug from 'debug';
 import videojs from 'video.js';
 
@@ -11,6 +13,8 @@ export default class MqttHandler extends Component {
 
     this.debug = Debug('skyline:clsp:plugin:MqttHandler');
     this.debug('constructor');
+
+    this.destroyed = false;
 
     this.tech_ = tech;
     this.source_ = source;
@@ -50,6 +54,17 @@ export default class MqttHandler extends Component {
 
   destroy () {
     this.debug('destroying...');
+
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    this.iov.destroy();
+    // @todo - do we need to destroy conduits?
+
+    this.dispose();
 
     this.debug = null;
     this.tech_ = null;

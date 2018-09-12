@@ -2,9 +2,9 @@
 
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
+
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
 import SourceBufferWrapper from './SourceBufferWrapper';
-// import { mp4toJSON } from '~/utils/mp4-inspect';
 
 export default class MediaSourceWrapper extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:mse:MediaSourceWrapper';
@@ -58,6 +58,15 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
         this.mediaSource.duration = this.options.duration;
 
         this.trigger('sourceOpen');
+
+        // We originally were having the moov appended by the iov player,
+        // but I think it is more proper to do it here, however, can we
+        // mandate that the moov exist prior to the sourceopen event? If
+        // so, then we should be strict about the moov needing to exist
+        // here, rather than checking for its existence.
+        if (this.moov) {
+          this.sourceBuffer.appendMoov(this.moov);
+        }
       },
       sourceended: () => {
         this.trigger('sourceEnded');
