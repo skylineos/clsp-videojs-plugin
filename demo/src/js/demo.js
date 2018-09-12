@@ -93,7 +93,21 @@ function initializeWall () {
     });
   }
 
+  function destroyAllPlayers () {
+    const players = videojs.getAllPlayers();
+
+    for (let i = 0; i < players.length; i++) {
+      const player = players[0];
+
+      console.log('disposing', player)
+
+      player.dispose();
+    }
+  }
+
   function onclick () {
+    destroyAllPlayers();
+
     const urlList = window.localStorage.getItem('skyline.clspPlugin.wallUrls').split('\n');
     const timesToReplicate = $('#wallReplicate').val();
 
