@@ -192,7 +192,19 @@ function initializeWall() {
     });
   }
 
+  function destroyAllPlayers() {
+    var players = video_js__WEBPACK_IMPORTED_MODULE_2___default.a.getAllPlayers();
+
+    for (var i = 0; i < players.length; i++) {
+      var player = players[0];
+
+      player.dispose();
+    }
+  }
+
   function onclick() {
+    destroyAllPlayers();
+
     var urlList = window.localStorage.getItem('skyline.clspPlugin.wallUrls').split('\n');
     var timesToReplicate = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#wallReplicate').val();
 
@@ -10809,28 +10821,39 @@ module.exports = __webpack_require__(/*! ./modules/_core */ "./node_modules/core
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+
+var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _typeof(obj) {
+  if (typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol") {
+    _typeof = function _typeof(obj) {
+      return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+    };
+  } else {
+    _typeof = function _typeof(obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+    };
+  }return _typeof(obj);
+}
+
+/* eslint-env browser */
 
 /**
  * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
  */
-
-exports = module.exports = __webpack_require__(/*! ./debug */ "./node_modules/debug/src/debug.js");
 exports.log = log;
 exports.formatArgs = formatArgs;
 exports.save = save;
 exports.load = load;
 exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome && 'undefined' != typeof chrome.storage ? chrome.storage.local : localstorage();
-
+exports.storage = localstorage();
 /**
  * Colors.
  */
 
 exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066FF', '#0099CC', '#0099FF', '#00CC00', '#00CC33', '#00CC66', '#00CC99', '#00CCCC', '#00CCFF', '#3300CC', '#3300FF', '#3333CC', '#3333FF', '#3366CC', '#3366FF', '#3399CC', '#3399FF', '#33CC00', '#33CC33', '#33CC66', '#33CC99', '#33CCCC', '#33CCFF', '#6600CC', '#6600FF', '#6633CC', '#6633FF', '#66CC00', '#66CC33', '#9900CC', '#9900FF', '#9933CC', '#9933FF', '#99CC00', '#99CC33', '#CC0000', '#CC0033', '#CC0066', '#CC0099', '#CC00CC', '#CC00FF', '#CC3300', '#CC3333', '#CC3366', '#CC3399', '#CC33CC', '#CC33FF', '#CC6600', '#CC6633', '#CC9900', '#CC9933', '#CCCC00', '#CCCC33', '#FF0000', '#FF0033', '#FF0066', '#FF0099', '#FF00CC', '#FF00FF', '#FF3300', '#FF3333', '#FF3366', '#FF3399', '#FF33CC', '#FF33FF', '#FF6600', '#FF6633', '#FF9900', '#FF9933', '#FFCC00', '#FFCC33'];
-
 /**
  * Currently only WebKit-based Web Inspectors, Firefox >= v31,
  * and the Firebug extension (any Firefox version) are known
@@ -10838,44 +10861,29 @@ exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066F
  *
  * TODO: add a `localStorage` variable to explicitly enable/disable colors
  */
+// eslint-disable-next-line complexity
 
 function useColors() {
   // NB: In an Electron preload script, document will be defined but not fully
   // initialized. Since we know we're in Chrome, we'll just detect this case
   // explicitly
-  if (typeof window !== 'undefined' && window.process && window.process.type === 'renderer') {
+  if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
     return true;
-  }
+  } // Internet Explorer and Edge do not support colors.
 
-  // Internet Explorer and Edge do not support colors.
+
   if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
     return false;
-  }
-
-  // is webkit? http://stackoverflow.com/a/16459606/376773
+  } // Is webkit? http://stackoverflow.com/a/16459606/376773
   // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance ||
-  // is firebug? http://stackoverflow.com/a/398120/376773
-  typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) ||
-  // is firefox >= v31?
+
+
+  return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance || // Is firebug? http://stackoverflow.com/a/398120/376773
+  typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) || // Is firefox >= v31?
   // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 ||
-  // double check webkit in userAgent just in case we are in a worker
+  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 || // Double check webkit in userAgent just in case we are in a worker
   typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
 }
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function (v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
 /**
  * Colorize log arguments if enabled.
  *
@@ -10883,33 +10891,34 @@ exports.formatters.j = function (v) {
  */
 
 function formatArgs(args) {
-  var useColors = this.useColors;
+  args[0] = (this.useColors ? '%c' : '') + this.namespace + (this.useColors ? ' %c' : ' ') + args[0] + (this.useColors ? '%c ' : ' ') + '+' + module.exports.humanize(this.diff);
 
-  args[0] = (useColors ? '%c' : '') + this.namespace + (useColors ? ' %c' : ' ') + args[0] + (useColors ? '%c ' : ' ') + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return;
+  if (!this.useColors) {
+    return;
+  }
 
   var c = 'color: ' + this.color;
-  args.splice(1, 0, c, 'color: inherit');
-
-  // the final "%c" is somewhat tricky, because there could be other
+  args.splice(1, 0, c, 'color: inherit'); // The final "%c" is somewhat tricky, because there could be other
   // arguments passed either before or after the %c, so we need to
   // figure out the correct index to insert the CSS into
+
   var index = 0;
   var lastC = 0;
   args[0].replace(/%[a-zA-Z%]/g, function (match) {
-    if ('%%' === match) return;
+    if (match === '%%') {
+      return;
+    }
+
     index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
+
+    if (match === '%c') {
+      // We only are interested in the *last* %c
       // (the user may have provided their own)
       lastC = index;
     }
   });
-
   args.splice(lastC, 0, c);
 }
-
 /**
  * Invokes `console.log()` when available.
  * No-op when `console.log` is not a "function".
@@ -10918,11 +10927,12 @@ function formatArgs(args) {
  */
 
 function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === (typeof console === 'undefined' ? 'undefined' : _typeof(console)) && console.log && Function.prototype.apply.call(console.log, console, arguments);
-}
+  var _console;
 
+  // This hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return (typeof console === "undefined" ? "undefined" : _typeof(console)) === 'object' && console.log && (_console = console).log.apply(_console, arguments);
+}
 /**
  * Save `namespaces`.
  *
@@ -10932,14 +10942,15 @@ function log() {
 
 function save(namespaces) {
   try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
+    if (namespaces) {
+      exports.storage.setItem('debug', namespaces);
     } else {
-      exports.storage.debug = namespaces;
+      exports.storage.removeItem('debug');
     }
-  } catch (e) {}
+  } catch (error) {// Swallow
+    // XXX (@Qix-) should we be logging these?
+  }
 }
-
 /**
  * Load `namespaces`.
  *
@@ -10949,24 +10960,20 @@ function save(namespaces) {
 
 function load() {
   var r;
-  try {
-    r = exports.storage.debug;
-  } catch (e) {}
 
+  try {
+    r = exports.storage.getItem('debug');
+  } catch (error) {} // Swallow
+  // XXX (@Qix-) should we be logging these?
   // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+
+
   if (!r && typeof process !== 'undefined' && 'env' in process) {
     r = process.env.DEBUG;
   }
 
   return r;
 }
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
 /**
  * Localstorage attempts to return the localstorage.
  *
@@ -10980,246 +10987,284 @@ exports.enable(load());
 
 function localstorage() {
   try {
-    return window.localStorage;
-  } catch (e) {}
+    // TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+    // The Browser also has localStorage in the global context.
+    return localStorage;
+  } catch (error) {// Swallow
+    // XXX (@Qix-) should we be logging these?
+  }
 }
+
+module.exports = __webpack_require__(/*! ./common */ "./node_modules/debug/src/common.js")(exports);
+var formatters = module.exports.formatters;
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+formatters.j = function (v) {
+  try {
+    return JSON.stringify(v);
+  } catch (error) {
+    return '[UnexpectedJSONParseError]: ' + error.message;
+  }
+};
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../node-libs-browser/node_modules/process/browser.js */ "./node_modules/node-libs-browser/node_modules/process/browser.js")))
 
 /***/ }),
 
-/***/ "./node_modules/debug/src/debug.js":
-/*!*****************************************!*\
-  !*** ./node_modules/debug/src/debug.js ***!
-  \*****************************************/
+/***/ "./node_modules/debug/src/common.js":
+/*!******************************************!*\
+  !*** ./node_modules/debug/src/common.js ***!
+  \******************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 
 
 /**
  * This is the common logic for both the Node.js and web browser
  * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
  */
 
-exports = module.exports = createDebug.debug = createDebug['default'] = createDebug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
+function setup(env) {
+  createDebug.debug = createDebug;
+  createDebug.default = createDebug;
+  createDebug.coerce = coerce;
+  createDebug.disable = disable;
+  createDebug.enable = enable;
+  createDebug.enabled = enabled;
+  createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
+  Object.keys(env).forEach(function (key) {
+    createDebug[key] = env[key];
+  });
+  /**
+  * Active `debug` instances.
+  */
 
-/**
- * Active `debug` instances.
- */
-exports.instances = [];
+  createDebug.instances = [];
+  /**
+  * The currently active debug mode names, and names to skip.
+  */
 
-/**
- * The currently active debug mode names, and names to skip.
- */
+  createDebug.names = [];
+  createDebug.skips = [];
+  /**
+  * Map of special "%n" handling functions, for the debug "format" argument.
+  *
+  * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+  */
 
-exports.names = [];
-exports.skips = [];
+  createDebug.formatters = {};
+  /**
+  * Selects a color for a debug namespace
+  * @param {String} namespace The namespace string for the for the debug instance to be colored
+  * @return {Number|String} An ANSI color code for the given namespace
+  * @api private
+  */
 
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
- */
+  function selectColor(namespace) {
+    var hash = 0;
 
-exports.formatters = {};
+    for (var i = 0; i < namespace.length; i++) {
+      hash = (hash << 5) - hash + namespace.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
+    }
 
-/**
- * Select a color.
- * @param {String} namespace
- * @return {Number}
- * @api private
- */
-
-function selectColor(namespace) {
-  var hash = 0,
-      i;
-
-  for (i in namespace) {
-    hash = (hash << 5) - hash + namespace.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
+    return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
   }
 
-  return exports.colors[Math.abs(hash) % exports.colors.length];
-}
+  createDebug.selectColor = selectColor;
+  /**
+  * Create a debugger with the given `namespace`.
+  *
+  * @param {String} namespace
+  * @return {Function}
+  * @api public
+  */
 
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
+  function createDebug(namespace) {
+    var prevTime;
 
-function createDebug(namespace) {
-
-  var prevTime;
-
-  function debug() {
-    // disabled?
-    if (!debug.enabled) return;
-
-    var self = debug;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // turn the `arguments` into a proper Array
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %O
-      args.unshift('%O');
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
+    function debug() {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
       }
-      return match;
-    });
 
-    // apply env-specific formatting (colors, etc.)
-    exports.formatArgs.call(self, args);
+      // Disabled?
+      if (!debug.enabled) {
+        return;
+      }
 
-    var logFn = debug.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
+      var self = debug; // Set `diff` timestamp
 
-  debug.namespace = namespace;
-  debug.enabled = exports.enabled(namespace);
-  debug.useColors = exports.useColors();
-  debug.color = selectColor(namespace);
-  debug.destroy = destroy;
+      var curr = Number(new Date());
+      var ms = curr - (prevTime || curr);
+      self.diff = ms;
+      self.prev = prevTime;
+      self.curr = curr;
+      prevTime = curr;
+      args[0] = createDebug.coerce(args[0]);
 
-  // env-specific initialization logic for debug instances
-  if ('function' === typeof exports.init) {
-    exports.init(debug);
-  }
+      if (typeof args[0] !== 'string') {
+        // Anything else let's inspect with %O
+        args.unshift('%O');
+      } // Apply any `formatters` transformations
 
-  exports.instances.push(debug);
 
-  return debug;
-}
+      var index = 0;
+      args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
+        // If we encounter an escaped % then don't increase the array index
+        if (match === '%%') {
+          return match;
+        }
 
-function destroy() {
-  var index = exports.instances.indexOf(this);
-  if (index !== -1) {
-    exports.instances.splice(index, 1);
-    return true;
-  } else {
-    return false;
-  }
-}
+        index++;
+        var formatter = createDebug.formatters[format];
 
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
+        if (typeof formatter === 'function') {
+          var val = args[index];
+          match = formatter.call(self, val); // Now we need to remove `args[index]` since it's inlined in the `format`
 
-function enable(namespaces) {
-  exports.save(namespaces);
+          args.splice(index, 1);
+          index--;
+        }
 
-  exports.names = [];
-  exports.skips = [];
+        return match;
+      }); // Apply env-specific formatting (colors, etc.)
 
-  var i;
-  var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
+      createDebug.formatArgs.call(self, args);
+      var logFn = self.log || createDebug.log;
+      logFn.apply(self, args);
     }
-  }
 
-  for (i = 0; i < exports.instances.length; i++) {
-    var instance = exports.instances[i];
-    instance.enabled = exports.enabled(instance.namespace);
-  }
-}
+    debug.namespace = namespace;
+    debug.enabled = createDebug.enabled(namespace);
+    debug.useColors = createDebug.useColors();
+    debug.color = selectColor(namespace);
+    debug.destroy = destroy;
+    debug.extend = extend; // Debug.formatArgs = formatArgs;
+    // debug.rawLog = rawLog;
+    // env-specific initialization logic for debug instances
 
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  if (name[name.length - 1] === '*') {
-    return true;
-  }
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
+    if (typeof createDebug.init === 'function') {
+      createDebug.init(debug);
     }
+
+    createDebug.instances.push(debug);
+    return debug;
   }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
+
+  function destroy() {
+    var index = createDebug.instances.indexOf(this);
+
+    if (index !== -1) {
+      createDebug.instances.splice(index, 1);
       return true;
     }
+
+    return false;
   }
-  return false;
+
+  function extend(namespace, delimiter) {
+    return createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+  }
+  /**
+  * Enables a debug mode by namespaces. This can include modes
+  * separated by a colon and wildcards.
+  *
+  * @param {String} namespaces
+  * @api public
+  */
+
+  function enable(namespaces) {
+    createDebug.save(namespaces);
+    createDebug.names = [];
+    createDebug.skips = [];
+    var i;
+    var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+    var len = split.length;
+
+    for (i = 0; i < len; i++) {
+      if (!split[i]) {
+        // ignore empty strings
+        continue;
+      }
+
+      namespaces = split[i].replace(/\*/g, '.*?');
+
+      if (namespaces[0] === '-') {
+        createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+      } else {
+        createDebug.names.push(new RegExp('^' + namespaces + '$'));
+      }
+    }
+
+    for (i = 0; i < createDebug.instances.length; i++) {
+      var instance = createDebug.instances[i];
+      instance.enabled = createDebug.enabled(instance.namespace);
+    }
+  }
+  /**
+  * Disable debug output.
+  *
+  * @api public
+  */
+
+  function disable() {
+    createDebug.enable('');
+  }
+  /**
+  * Returns true if the given mode name is enabled, false otherwise.
+  *
+  * @param {String} name
+  * @return {Boolean}
+  * @api public
+  */
+
+  function enabled(name) {
+    if (name[name.length - 1] === '*') {
+      return true;
+    }
+
+    var i;
+    var len;
+
+    for (i = 0, len = createDebug.skips.length; i < len; i++) {
+      if (createDebug.skips[i].test(name)) {
+        return false;
+      }
+    }
+
+    for (i = 0, len = createDebug.names.length; i < len; i++) {
+      if (createDebug.names[i].test(name)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+  /**
+  * Coerce `val`.
+  *
+  * @param {Mixed} val
+  * @return {Mixed}
+  * @api private
+  */
+
+  function coerce(val) {
+    if (val instanceof Error) {
+      return val.stack || val.message;
+    }
+
+    return val;
+  }
+
+  createDebug.enable(createDebug.load());
+  return createDebug;
 }
 
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
+module.exports = setup;
 
 /***/ }),
 
@@ -40262,6 +40307,7 @@ var s = 1000;
 var m = s * 60;
 var h = m * 60;
 var d = h * 24;
+var w = d * 7;
 var y = d * 365.25;
 
 /**
@@ -40302,7 +40348,7 @@ function parse(str) {
   if (str.length > 100) {
     return;
   }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
+  var match = /^((?:\d+)?\-?\d?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(str);
   if (!match) {
     return;
   }
@@ -40315,6 +40361,10 @@ function parse(str) {
     case 'yr':
     case 'y':
       return n * y;
+    case 'weeks':
+    case 'week':
+    case 'w':
+      return n * w;
     case 'days':
     case 'day':
     case 'd':
@@ -40357,16 +40407,17 @@ function parse(str) {
  */
 
 function fmtShort(ms) {
-  if (ms >= d) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
     return Math.round(ms / d) + 'd';
   }
-  if (ms >= h) {
+  if (msAbs >= h) {
     return Math.round(ms / h) + 'h';
   }
-  if (ms >= m) {
+  if (msAbs >= m) {
     return Math.round(ms / m) + 'm';
   }
-  if (ms >= s) {
+  if (msAbs >= s) {
     return Math.round(ms / s) + 's';
   }
   return ms + 'ms';
@@ -40381,21 +40432,29 @@ function fmtShort(ms) {
  */
 
 function fmtLong(ms) {
-  return plural(ms, d, 'day') || plural(ms, h, 'hour') || plural(ms, m, 'minute') || plural(ms, s, 'second') || ms + ' ms';
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return plural(ms, msAbs, d, 'day');
+  }
+  if (msAbs >= h) {
+    return plural(ms, msAbs, h, 'hour');
+  }
+  if (msAbs >= m) {
+    return plural(ms, msAbs, m, 'minute');
+  }
+  if (msAbs >= s) {
+    return plural(ms, msAbs, s, 'second');
+  }
+  return ms + ' ms';
 }
 
 /**
  * Pluralization helper.
  */
 
-function plural(ms, n, name) {
-  if (ms < n) {
-    return;
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name;
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's';
+function plural(ms, msAbs, n, name) {
+  var isPlural = msAbs >= n * 1.5;
+  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
 /***/ }),
@@ -52643,7 +52702,7 @@ function extend() {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-4","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-5","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -52662,6 +52721,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
 /* harmony import */ var _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ~/mse/MediaSourceWrapper */ "./src/js/mse/MediaSourceWrapper.js");
+
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
@@ -52726,6 +52787,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
     _this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
       segmentIntervalSampleSize: 5,
       driftCorrectionConstant: 2,
+      maxMediaSourceWrapperGenericErrorRestartCount: 50,
       enableMetrics: true
     });
 
@@ -52744,7 +52806,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
     _this.segmentIntervals = [];
 
     _this.mediaSourceWrapper = null;
-    _this.moovBox = null;
+    _this.moov = null;
     _this.guid = null;
     _this.mimeCodec = null;
     return _this;
@@ -52753,7 +52815,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
   _createClass(IOVPlayer, [{
     key: '_onError',
     value: function _onError(type, message, error) {
-      console.error(message);
+      console.error(type, message);
       console.error(error);
     }
   }, {
@@ -52832,17 +52894,19 @@ var IOVPlayer = function (_ListenerBaseClass) {
                   this.mediaSourceWrapper.destroy();
                 }
 
+                this.mediaSourceWrapperGenericErrorRestartCount = 0;
                 this.mediaSourceWrapper = _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this.videoElement);
+                this.mediaSourceWrapper.moov = this.moov;
 
-                _context4.prev = 2;
+                _context4.prev = 4;
 
                 this.mediaSourceWrapper.registerMimeCodec(this.mimeCodec);
-                _context4.next = 13;
+                _context4.next = 15;
                 break;
 
-              case 6:
-                _context4.prev = 6;
-                _context4.t0 = _context4['catch'](2);
+              case 8:
+                _context4.prev = 8;
+                _context4.t0 = _context4['catch'](4);
 
                 this.state = 'unsupported-mime-codec';
 
@@ -52860,7 +52924,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
                 throw new Error(message);
 
-              case 13:
+              case 15:
 
                 this.mediaSourceWrapper.on('metric', function (_ref2) {
                   var type = _ref2.type,
@@ -52881,6 +52945,8 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
                         case 3:
 
+                          // @todo - shouldn't sourceBuffer metrics come from the "parent"
+                          // mediaSourceWrapper?
                           _this3.mediaSourceWrapper.sourceBuffer.on('metric', function (_ref4) {
                             var type = _ref4.type,
                                 value = _ref4.value;
@@ -52912,7 +52978,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
                             _this3.drift = info.bufferTimeEnd - _this3.videoElement.currentTime;
 
-                            _this3.metric('iovPlayer.sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+                            _this3.metric('iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
                             _this3.metric('iovPlayer.video.currentTime', _this3.videoElement.currentTime);
                             _this3.metric('iovPlayer.video.drift', _this3.drift);
 
@@ -52949,7 +53015,8 @@ var IOVPlayer = function (_ListenerBaseClass) {
                                       // then reselected. 'ex' is undefined the error is bug
                                       // within the MSE C++ implementation in the browser.
                                       _this3._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
-                                      // this.videoPlayer.error({ code: 3 });
+
+                                      // @todo - can we just restart here instead of creating a new wrapper?
                                       _context.next = 3;
                                       return _this3.reinitializeMseWrapper();
 
@@ -52989,6 +53056,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
                                   case 0:
                                     _this3.debug('stream appears to be frozen - reinitializing...');
 
+                                    // @todo - can we just restart here instead of creating a new wrapper?
                                     _context2.next = 3;
                                     return _this3.reinitializeMseWrapper();
 
@@ -53001,13 +53069,23 @@ var IOVPlayer = function (_ListenerBaseClass) {
                           })));
 
                           _this3.mediaSourceWrapper.sourceBuffer.on('error', function (error) {
+                            _this3.mediaSourceWrapperGenericErrorRestartCount++;
+
+                            // Sometimes, when we receive this error, it is due to a bad segment
+                            // at or near the beginning of the stream.  In those instances, restarting
+                            // the stream may fix the issue, so try it a few times.
+                            if (_this3.mediaSourceWrapperGenericErrorRestartCount <= _this3.options.maxMediaSourceWrapperGenericErrorRestartCount) {
+                              _this3.metric('iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount', _this3.mediaSourceWrapperGenericErrorRestartCount);
+
+                              _this3.restart();
+                            }
+
                             _this3._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
                           });
 
                           _this3.trigger('videoInfoReceived');
-                          _this3.mediaSourceWrapper.sourceBuffer.appendMoov(_this3.moovBox);
 
-                        case 13:
+                        case 12:
                         case 'end':
                           return _context3.stop();
                       }
@@ -53026,27 +53104,27 @@ var IOVPlayer = function (_ListenerBaseClass) {
                   _this3._onError('mediaSource.generic', 'mediaSource error', error);
                 });
 
-                _context4.next = 19;
+                _context4.next = 21;
                 return this.mediaSourceWrapper.initializeMediaSource();
 
-              case 19:
+              case 21:
                 if (!(!this.mediaSourceWrapper.mediaSource || !this.videoElement)) {
-                  _context4.next = 21;
+                  _context4.next = 23;
                   break;
                 }
 
                 throw new Error('The video element or mediaSource is not ready!');
 
-              case 21:
+              case 23:
 
                 this.mediaSourceWrapper.reinitializeVideoElementSrc();
 
-              case 22:
+              case 24:
               case 'end':
                 return _context4.stop();
             }
           }
-        }, _callee4, this, [[2, 6]]);
+        }, _callee4, this, [[4, 8]]);
       }));
 
       function reinitializeMseWrapper() {
@@ -53055,32 +53133,11 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
       return reinitializeMseWrapper;
     }()
-  }, {
-    key: 'resyncStream',
-    value: function resyncStream() {
-      var _this4 = this;
 
-      // subscribe to a sync topic that will be called if the stream that is feeding
-      // the mse service dies and has to be restarted that this player should restart the stream
-      this.debug('Trying to resync stream...');
+    /**
+     * Restart the video without destroying the mediaSourceWrapper.
+     */
 
-      this.iov.conduit.subscribe('iov/video/' + this.guid + '/resync', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-          while (1) {
-            switch (_context5.prev = _context5.next) {
-              case 0:
-                _this4.debug('sync received re-initialize media source buffer');
-                _context5.next = 3;
-                return _this4.reinitializeMseWrapper();
-
-              case 3:
-              case 'end':
-                return _context5.stop();
-            }
-          }
-        }, _callee5, _this4);
-      })));
-    }
   }, {
     key: 'restart',
     value: function restart() {
@@ -53092,12 +53149,13 @@ var IOVPlayer = function (_ListenerBaseClass) {
   }, {
     key: 'play',
     value: function play(streamName) {
-      var _this5 = this;
+      var _this4 = this;
 
       this.debug('play');
 
+      // Tell the server we want to initialize this stream
       this.iov.conduit.transaction('iov/video/' + window.btoa(this.iov.config.streamName) + '/request', function () {
-        return _this5.onIovPlayTransaction.apply(_this5, arguments);
+        return _this4.onIovPlayTransaction.apply(_this4, arguments);
       }, {
         clientId: this.iov.config.clientId,
         resp_topic: this.iov.config.clientId + '\'/response/\'' + parseInt(Math.random() * 1000000)
@@ -53108,42 +53166,74 @@ var IOVPlayer = function (_ListenerBaseClass) {
     value: function stop() {
       this.debug('stop');
 
-      this.moovBox = null;
+      var guid = this.guid;
 
-      if (this.guid !== undefined) {
-        this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/live');
+      // When stopping the player, we will always need to re-request the stream's moov
+      // if we want to start playing the stream again.  Discarding it here forces us to
+      // re-request it later.
+      this.moov = null;
+      this.guid = null;
+      this.mimeCodec = null;
+
+      if (!guid) {
+        return;
       }
 
-      this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
+      // Stop listening for moofs
+      this.iov.conduit.unsubscribe('iov/video/' + guid + '/live');
+
+      // Stop listening for resync events
+      this.iov.conduit.unsubscribe('iov/video/' + guid + '/resync');
+
+      // Tell the server we've stopped
+      this.iov.conduit.publish('iov/video/' + guid + '/stop', { clientId: this.iov.config.clientId });
     }
+
+    /**
+     * To be run every time a moof is received.
+     *
+     * This method captures metrics on segments intervals - the amount of time
+     * between moofs.  This metric has been helpful in allowing us to identify
+     * certain stream behavior, and is needed when calculating the thresholds
+     * that allow us to determine when a stream is "frozen".  It has also helped
+     * us identify what guarantees we can make about how close to real-time any
+     * given stream can be.
+     */
+
   }, {
-    key: 'getSegmentIntervalMetrics',
-    value: function getSegmentIntervalMetrics() {
+    key: 'calculateSegmentIntervalMetrics',
+    value: function calculateSegmentIntervalMetrics() {
       var previousSegmentReceived = this.latestSegmentReceived;
+
       this.latestSegmentReceived = Date.now();
 
-      if (previousSegmentReceived) {
-        this.segmentInterval = this.latestSegmentReceived - previousSegmentReceived;
+      if (!previousSegmentReceived) {
+        return;
       }
 
-      if (this.segmentInterval) {
-        if (this.segmentIntervals.length >= this.options.segmentIntervalSampleSize) {
-          this.segmentIntervals.shift();
-        }
+      this.segmentInterval = this.latestSegmentReceived - previousSegmentReceived;
 
-        this.segmentIntervals.push(this.segmentInterval);
-
-        var segmentIntervalSum = 0;
-
-        for (var i = 0; i < this.segmentIntervals.length; i++) {
-          segmentIntervalSum += this.segmentIntervals[i];
-        }
-
-        this.segmentIntervalAverage = segmentIntervalSum / this.segmentIntervals.length;
-
-        this.metric('iovPlayer.video.segmentInterval', this.segmentInterval);
-        this.metric('iovPlayer.video.segmentIntervalAverage', this.segmentIntervalAverage);
+      if (!this.segmentInterval) {
+        return;
       }
+
+      // Ensure we only ever keep a limited number of segment intervals.
+      if (this.segmentIntervals.length >= this.options.segmentIntervalSampleSize) {
+        this.segmentIntervals.shift();
+      }
+
+      this.segmentIntervals.push(this.segmentInterval);
+
+      var segmentIntervalSum = 0;
+
+      for (var i = 0; i < this.segmentIntervals.length; i++) {
+        segmentIntervalSum += this.segmentIntervals[i];
+      }
+
+      this.segmentIntervalAverage = segmentIntervalSum / this.segmentIntervals.length;
+
+      this.metric('iovPlayer.video.segmentInterval', this.segmentInterval);
+      this.metric('iovPlayer.video.segmentIntervalAverage', this.segmentIntervalAverage);
     }
 
     /**
@@ -53151,7 +53241,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
      * initialization listeners, one for the stream request, and one for the moov.
      *
      * This method is what is executed when we first request a stream.  This should only
-     * ever be executed once per stream.  Once this is executed, it unregisters
+     * ever be executed once per stream request.  Once this is executed, it unregisters
      * itself as a listener, and registers an init-segment listener, which also
      * only runs once, then unregisters itself.  The init-segment payload is the
      * moov.  Once we receive the moov, we can start listening for moofs.  The
@@ -53159,85 +53249,91 @@ var IOVPlayer = function (_ListenerBaseClass) {
      *
      * @param {Object}
      *   The payload returned by the server.  This object contains the following properties:
-     *   mimeCodec - the mime type for the stream
-     *   guid - the unique id for this iov conduit connection
+     *   `mimeCodec` - the mime type for the stream
+     *   `guid` - the unique id for this iov conduit connection
      */
 
   }, {
     key: 'onIovPlayTransaction',
-    value: function onIovPlayTransaction(_ref8) {
-      var _this6 = this;
+    value: function onIovPlayTransaction(_ref7) {
+      var _this5 = this;
 
-      var mimeCodec = _ref8.mimeCodec,
-          guid = _ref8.guid;
+      var mimeCodec = _ref7.mimeCodec,
+          guid = _ref7.guid;
 
       this.debug('onIovPlayTransaction');
+
+      this.guid = guid;
+      this.mimeCodec = mimeCodec;
 
       var initSegmentTopic = this.iov.config.clientId + '/init-segment/' + parseInt(Math.random() * 1000000);
 
       this.state = 'waiting-for-first-moov';
 
+      // Ask the server for the moov
       this.iov.conduit.subscribe(initSegmentTopic, function () {
-        var _ref10 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(_ref9) {
-          var payloadBytes = _ref9.payloadBytes;
-          var moov, newTopic;
+        var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(_ref8) {
+          var payloadBytes = _ref8.payloadBytes;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
               switch (_context6.prev = _context6.next) {
                 case 0:
-                  _this6.debug('onIovPlayTransaction ' + initSegmentTopic + ' listener fired');
-                  _this6.debug('received moov of type "' + (typeof payloadBytes === 'undefined' ? 'undefined' : _typeof(payloadBytes)) + '" from server');
+                  _this5.debug('onIovPlayTransaction ' + initSegmentTopic + ' listener fired');
+                  _this5.debug('received moov of type "' + (typeof payloadBytes === 'undefined' ? 'undefined' : _typeof(payloadBytes)) + '" from server');
 
-                  moov = payloadBytes;
+                  _this5.moov = payloadBytes;
+                  _this5.state = 'waiting-for-first-moof';
 
+                  // Now that we have the moov, we no longer need to listen for it
+                  _this5.iov.conduit.unsubscribe(initSegmentTopic);
 
-                  _this6.state = 'waiting-for-first-moof';
+                  // Listen for moofs
+                  _this5.iov.conduit.subscribe('iov/video/' + _this5.guid + '/live', function (mqtt_msg) {
+                    _this5.trigger('videoReceived');
+                    _this5.calculateSegmentIntervalMetrics();
 
-                  _this6.iov.conduit.unsubscribe(initSegmentTopic);
-
-                  newTopic = 'iov/video/' + guid + '/live';
-
-                  // subscribe to the live video topic.
-
-                  _this6.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
-                    _this6.trigger('videoReceived');
-                    _this6.getSegmentIntervalMetrics();
-
-                    // if (!this.mediaSourceWrapper || !this.mediaSourceWrapper.sourceBuffer) {
-                    //   //
-                    //   return this.reinitializeMseWrapper();
-                    // }
-
-                    _this6.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
+                    _this5.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
                   });
 
-                  _this6.guid = guid;
-                  _this6.moovBox = moov;
-                  _this6.mimeCodec = mimeCodec;
+                  // When the server says we need to resync...
+                  _this5.iov.conduit.subscribe('iov/video/' + _this5.guid + '/resync', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+                    return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                      while (1) {
+                        switch (_context5.prev = _context5.next) {
+                          case 0:
+                            _this5.debug('sync event received');
+
+                            _context5.next = 3;
+                            return _this5.reinitializeMseWrapper();
+
+                          case 3:
+                          case 'end':
+                            return _context5.stop();
+                        }
+                      }
+                    }, _callee5, _this5);
+                  })));
 
                   // this.trigger('firstChunk');
 
-                  _context6.next = 12;
-                  return _this6.reinitializeMseWrapper();
+                  _context6.next = 9;
+                  return _this5.reinitializeMseWrapper();
 
-                case 12:
-
-                  _this6.resyncStream();
-
-                case 13:
+                case 9:
                 case 'end':
                   return _context6.stop();
               }
             }
-          }, _callee6, _this6);
+          }, _callee6, _this5);
         }));
 
         return function (_x3) {
-          return _ref10.apply(this, arguments);
+          return _ref9.apply(this, arguments);
         };
       }());
 
-      this.iov.conduit.publish('iov/video/' + guid + '/play', {
+      // Tell the server we're ready to play
+      this.iov.conduit.publish('iov/video/' + this.guid + '/play', {
         initSegmentTopic: initSegmentTopic,
         clientId: this.iov.config.clientId
       });
@@ -53245,11 +53341,11 @@ var IOVPlayer = function (_ListenerBaseClass) {
   }, {
     key: 'destroy',
     value: function destroy() {
+      this.debug('destroying');
+
       if (this.destroyed) {
         return;
       }
-
-      _get(IOVPlayer.prototype.__proto__ || Object.getPrototypeOf(IOVPlayer.prototype), 'destroy', this).call(this);
 
       this.destroyed = true;
 
@@ -53266,9 +53362,6 @@ var IOVPlayer = function (_ListenerBaseClass) {
       this.videoJsVideoElement = null;
       this.videoElementParent = null;
 
-      this.events = null;
-      this.metrics = null;
-
       this.LogSourceBuffer = null;
       this.LogSourceBufferTopic = null;
 
@@ -53277,12 +53370,9 @@ var IOVPlayer = function (_ListenerBaseClass) {
       this.segmentInterval = null;
       this.segmentIntervals = null;
 
-      this.moovBox = null;
-      this.guid = null;
-      this.mimeCodec = null;
-
       this.mediaSourceWrapper.destroy();
       this.mediaSourceWrapper = null;
+      this.mediaSourceWrapperGenericErrorRestartCount = null;
 
       // Setting the src of the video element to an empty string is
       // the only reliable way we have found to ensure that MediaSource,
@@ -53290,6 +53380,8 @@ var IOVPlayer = function (_ListenerBaseClass) {
       // to avoid memory leaks
       this.videoElement.src = '';
       this.videoElement = null;
+
+      _get(IOVPlayer.prototype.__proto__ || Object.getPrototypeOf(IOVPlayer.prototype), 'destroy', this).call(this);
     }
   }]);
 
@@ -53298,7 +53390,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
 IOVPlayer.DEBUG_NAME = 'skyline:clsp:iov:player';
 IOVPlayer.EVENT_NAMES = ['metric', 'firstFrameShown', 'videoReceived', 'videoInfoReceived'];
-IOVPlayer.METRIC_TYPES = ['iovPlayer.sourceBuffer.bufferTimeEnd', 'iovPlayer.video.currentTime', 'iovPlayer.video.drift', 'iovPlayer.video.driftCorrection', 'iovPlayer.video.segmentInterval', 'iovPlayer.video.segmentIntervalAverage'];
+IOVPlayer.METRIC_TYPES = ['iovPlayer.video.currentTime', 'iovPlayer.video.drift', 'iovPlayer.video.driftCorrection', 'iovPlayer.video.segmentInterval', 'iovPlayer.video.segmentIntervalAverage', 'iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd', 'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount'];
 /* harmony default export */ __webpack_exports__["default"] = (IOVPlayer);
 ;
 
@@ -53337,7 +53429,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 
 
-// import { mp4toJSON } from '~/utils/mp4-inspect';
+
 
 var MediaSourceWrapper = function (_ListenerBaseClass) {
   _inherits(MediaSourceWrapper, _ListenerBaseClass);
@@ -53385,6 +53477,15 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
         _this.mediaSource.duration = _this.options.duration;
 
         _this.trigger('sourceOpen');
+
+        // We originally were having the moov appended by the iov player,
+        // but I think it is more proper to do it here, however, can we
+        // mandate that the moov exist prior to the sourceopen event? If
+        // so, then we should be strict about the moov needing to exist
+        // here, rather than checking for its existence.
+        if (_this.moov) {
+          _this.sourceBuffer.appendMoov(_this.moov);
+        }
       },
       sourceended: function sourceended() {
         _this.trigger('sourceEnded');
@@ -54221,11 +54322,12 @@ var ListenerBaseClass = function () {
 
       // @todo - decouple these metric types
       switch (type) {
-        case 'iovPlayer.sourceBuffer.bufferTimeEnd':
         case 'iovPlayer.video.currentTime':
         case 'iovPlayer.video.drift':
         case 'iovPlayer.video.segmentInterval':
         case 'iovPlayer.video.segmentIntervalAverage':
+        case 'iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd':
+        case 'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount':
         case 'sourceBuffer.lastKnownBufferSize':
         case 'sourceBuffer.lastMoofSize':
           {
