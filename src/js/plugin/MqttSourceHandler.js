@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * @see https://github.com/videojs/videojs-contrib-hls/blob/master/src/videojs-contrib-hls.js
  * @see https://github.com/videojs/http-streaming/blob/master/src/videojs-http-streaming.js

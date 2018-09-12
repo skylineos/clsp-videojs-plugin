@@ -1,3 +1,5 @@
+'use strict';
+
 import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';

@@ -1,3 +1,5 @@
+'use strict';
+
 import Debug from 'debug';
 
 import Conduit from '~/iov/Conduit';

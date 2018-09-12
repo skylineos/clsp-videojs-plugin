@@ -2,11 +2,11 @@
 
 /**
  * Creates a hidden iframe that is used to establish a dedicated mqtt websocket
- * for a single video. This is basically an in browser micro service which
- * uses cross document communication to route data to and from the iframe.
+ * for a single video. This is basically an in-browser micro service which
+ * uses cross-document communication to route data to and from the iframe.
  */
 
-// We want the minified file to minimize the size of each iframe
+// We want the minified file so that we minimize the size of each iframe
 import iframeCode from '~root/dist/Router.min';
 
 export default class Conduit {

@@ -1,5 +1,7 @@
+'use strict';
+
 // Note that this is the code that gets duplicated in each iframe.
-// Keep it light and ES5 only
+// Keep the contents of the exported function light and ES5 only.
 
 export default function () {
   return {

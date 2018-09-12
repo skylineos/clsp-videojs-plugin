@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * This file is the target of the distributable js file.  It registers the
  * CLSP plugin with videojs for you.

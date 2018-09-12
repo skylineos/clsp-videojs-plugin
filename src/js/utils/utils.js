@@ -1,3 +1,5 @@
+'use strict';
+
 import { version } from '~root/package.json';
 
 const PLUGIN_NAME = 'clsp';
