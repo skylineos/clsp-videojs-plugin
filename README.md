@@ -55,7 +55,11 @@ npm i
 
 #### `npm run serve`
 
-As you make changes, the project will re-transpile, and will be ready upon page reload.
+As you make changes, the project will re-transpile, and will be ready upon page reload. You will need to run `npm run build` before running this command, or use `npm run serve-watch`.
+
+#### `npm run serve-watch`
+
+Similiar to `npm run serve`, but runs the necessary `npm run build` before serving.
 
 #### `npm run build`
 
