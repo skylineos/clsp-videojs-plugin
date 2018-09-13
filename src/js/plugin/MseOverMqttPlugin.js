@@ -78,6 +78,19 @@ export default (defaults = {}) => class MseOverMqttPlugin extends Plugin {
     player._currentTime = 0;
     player.currentTime = () => player._currentTime++;
 
+    // @todo - are we not using videojs properly?
+    // @see - https://github.com/videojs/video.js/issues/5233
+    // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
+    // This is currently needed for autoplay.
+    player.on('ready', () => {
+      if (options.autoplay || player.getAttribute('autoplay') === 'true') {
+        // Even though the "ready" event has fired, it's not actually ready...
+        setTimeout(() => {
+          player.play();
+        });
+      }
+    });
+
     // @todo - we are currently creating the IOV for this player on `firstplay`
     // but we could do it on the `ready` event.  However, in order to support
     // this, we need to make the IOV and its player able to be instantiated

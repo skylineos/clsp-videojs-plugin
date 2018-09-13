@@ -97,7 +97,7 @@ function initializeWall () {
     const players = videojs.getAllPlayers();
 
     for (let i = 0; i < players.length; i++) {
-      const player = players[0];
+      const player = players[i];
 
       player.dispose();
     }
