@@ -31,6 +31,48 @@ button {
   display: none;
 }
 
+.page-header {
+  display: flex;
+  flex-shrink: 0;
+  flex-grow: 0;
+  align-items: center;
+  padding: 10px;
+  background: black;
+  color: white;
+
+  & > * {
+    margin-right: 50px;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+
+    & > * {
+      margin: 5px 0;
+    }
+  }
+
+  #wallSummary {
+    display: flex;
+
+    & > div {
+      display: flex;
+      flex-direction: column;
+      padding: 5px 10px;
+
+      &.labels {
+        font-weight: bold;
+        text-align: right;
+      }
+
+      span {
+        margin: 5px;
+      }
+    }
+  }
+}
+
 section {
   border: solid 3px black;
   padding: 5px;
@@ -52,10 +94,6 @@ section {
           margin: 20px;
         }
       }
-    }
-
-    #wallSummary {
-
     }
 
     #videowall {
@@ -124,15 +162,6 @@ section {
 
   & > .controls {
     display: flex;
-  }
-
-  h2 {
-    width: 100%;
-    background: black;
-    color: white;
-    padding: 5px;
-    margin: 0;
-    text-align: center;
   }
 }
 

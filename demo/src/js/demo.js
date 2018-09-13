@@ -61,7 +61,6 @@ function initializeWall () {
     for (let i = 0; i < metricTypes.length; i++) {
       const metricType = metricTypes[i];
 
-
       for (let j = 0; j < metricType.length; j++) {
         const text = metricType[j];
         const name = text.replace(new RegExp(/\./, 'g'), '-');
@@ -100,6 +99,39 @@ function initializeWall () {
       const player = players[i];
 
       player.dispose();
+    }
+  }
+
+  function toggleControls () {
+    $('#controls-toggle').attr('data-state') === 'hidden'
+      ? showControls()
+      : hideControls();
+  }
+
+  function showControls () {
+    const $controls = $('.wall .controls');
+    const $controlsToggle = $('#controls-toggle');
+
+    $controls.show();
+    $controlsToggle.attr('data-state', 'shown');
+    $controlsToggle.text('Hide Controls');
+  }
+
+  function hideControls () {
+    const $controls = $('.wall .controls');
+    const $controlsToggle = $('#controls-toggle');
+
+    $controls.hide();
+    $controlsToggle.attr('data-state', 'hidden');
+    $controlsToggle.text('Show Controls');
+  }
+
+  function setMetricsVisibility () {
+    if ($('#showMetrics').prop('checked')) {
+      $('.video-metrics').show();
+    }
+    else {
+      $('.video-metrics').hide();
     }
   }
 
@@ -144,20 +176,25 @@ function initializeWall () {
 
     const now = Date.now();
 
-    $('#wallTotalVideos').html(`Total videos playing: ${cellIndex}`);
-    $('#wallStartTime').html(`Time Started: ${moment(now).format('MMMM Do YYYY, h:mm:ss a')}`);
+    $('#wallTotalVideos').text(cellIndex);
+    $('#wallStartTime').text(moment(now).format('MMMM Do YYYY, h:mm:ss a'));
 
     if (wallInterval) {
       window.clearInterval(wallInterval);
     }
+
+    $('#wallDuration').text('0 hours 0 minutes 0 seconds');
 
     wallInterval = setInterval(() => {
       const hoursFromStart = Math.floor(moment.duration(Date.now() - now).asHours());
       const minutesFromStart = Math.floor(moment.duration(Date.now() - now).asMinutes()) - (hoursFromStart * 60);
       const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
 
-      $('#wallDuration').html(`This Video Wall has been running for ${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+      $('#wallDuration').text(`${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
     }, 1000);
+
+    hideControls();
+    setMetricsVisibility();
   }
 
   if (!window.localStorage.getItem('skyline.clspPlugin.wallUrls')) {
@@ -165,18 +202,10 @@ function initializeWall () {
   }
 
   $('#walltest').click(onclick);
+  $('#controls-toggle').click(toggleControls);
+  $('#showMetrics').on('change', setMetricsVisibility);
 
-  const $showMetrics = $('#showMetrics');
   const $wallUrls = $('#wallUrls');
-
-  $showMetrics.on('change', () => {
-    if ($showMetrics.prop('checked')) {
-      $('.video-metrics').show();
-    }
-    else {
-      $('.video-metrics').hide();
-    }
-  });
 
   $wallUrls.val(window.localStorage.getItem('skyline.clspPlugin.wallUrls'));
 

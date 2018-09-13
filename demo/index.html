@@ -7,10 +7,36 @@
   <script src="../dist/demo.js"></script>
 </head>
 <body>
-  <h1 id="page-title">CLSP Demo</h1>
+  <div class="page-header">
+    <h1 id="page-title">CLSP Demo</h1>
+    <div class="controls">
+      <button
+        id="controls-toggle"
+        data-state="shown"
+      >Hide Controls</button>
+      <label for="showMetrics">
+        <input
+          id="showMetrics"
+          type="checkbox"
+        />
+        <span>Show Metrics</span>
+      </label>
+    </div>
+    <div id="wallSummary">
+      <div class="labels">
+        <span>Total videos playing:</span>
+        <span>Time Started:</span>
+        <span>Time Elapsed:</span>
+      </div>
+      <div class="values">
+        <span id="wallTotalVideos">N/A</span>
+        <span id="wallStartTime">N/A</span>
+        <span id="wallDuration">N/A</span>
+      </div>
+    </div>
+  </div>
 
   <section class="wall">
-    <h2>Wall</h2>
     <div class="controls">
       <div class="wall-urls-container">
         <span>Urls:</span>
@@ -32,30 +58,15 @@
           />
         </div>
         <div>
-          <label for="showMetrics">
-            <input
-              id="showMetrics"
-              checked="true"
-              type="checkbox"
-            />
-            <span>Show Metrics</span>
-          </label>
-        </div>
-        <div>
           <button id="walltest">Create Video Wall</button>
         </div>
       </div>
     </div>
+
     <br />
-    <div id="wallSummary">
-      <span id="wallTotalVideos"></span>
-      <br />
-      <span id="wallStartTime"></span>
-      <br />
-      <span id="wallDuration"></span>
-    </div>
-    <br />
+
     <div id="videowall"></div>
+
     <template id="cell">
       <div class="wall-video-container">
         <div class="video-stream">
