@@ -67,7 +67,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
       bufferTruncateFactor: 2,
       bufferTruncateValue: null,
       driftThreshold: 2000,
-      enableMetrics: true,
+      enableMetrics: false,
       minimumBufferIncrementSize: 0.5,
     });
 

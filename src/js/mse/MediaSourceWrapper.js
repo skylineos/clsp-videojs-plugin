@@ -46,7 +46,7 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
 
     this.options = defaults({}, options, {
       duration: 10,
-      enableMetrics: true,
+      enableMetrics: false,
     });
 
     this.eventListeners = {

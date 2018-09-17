@@ -25,13 +25,15 @@ export default class MqttHandler extends Component {
     this.conduits = conduits;
   }
 
-  createIOV (player) {
+  createIOV (player, options) {
     this.debug('createIOV');
 
     this.updateIOV(IOV.fromUrl(
       this.source_.src,
       this.conduits,
-      player
+      player,
+      {},
+      options,
     ));
 
     this.iov.initialize();

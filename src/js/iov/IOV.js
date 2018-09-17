@@ -108,7 +108,7 @@ export default class IOV {
     this.options = defaults({}, options, {
       changeSourceMaxWait: 9750,
       statsInterval: 30000,
-      enableMetrics: true,
+      enableMetrics: false,
     });
 
     this.config = {
@@ -133,7 +133,13 @@ export default class IOV {
 
   initialize () {
     this.conduit = this.mqttConduitCollection.addFromIov(this);
-    this.player = IOVPlayer.factory(this, this.playerInstance);
+    this.player = IOVPlayer.factory(
+      this,
+      this.playerInstance,
+      {
+        enableMetrics: this.options.enableMetrics,
+      }
+    );
 
     return this;
   }

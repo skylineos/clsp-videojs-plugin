@@ -22,10 +22,6 @@ html, body {
   width: 100%;
 }
 
-button {
-  padding: 20px;
-}
-
 .tour,
 .headless {
   display: none;
@@ -50,6 +46,10 @@ button {
 
     & > * {
       margin: 5px 0;
+    }
+
+    #controls-toggle {
+      padding: 20px;
     }
   }
 
@@ -93,6 +93,10 @@ section {
         & > div {
           margin: 20px;
         }
+
+        #walltest {
+          padding: 20px;
+        }
       }
     }
 
@@ -123,10 +127,25 @@ section {
       width: 100%;
 
       .video-stream {
+        display: flex;
+        align-items: center;
         padding: 10px;
         text-align: center;
         background-color: black;
         color: white;
+
+        .url {
+          padding: 0 0.5rem;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+
+        .close {
+          background-color: red;
+          border-color: red;
+          font-size: 1rem;
+          font-weight: bold;
+        }
       }
 
       .video-metrics {

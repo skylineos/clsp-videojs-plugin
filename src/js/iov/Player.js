@@ -60,7 +60,7 @@ export default class IOVPlayer extends ListenerBaseClass {
       segmentIntervalSampleSize: 5,
       driftCorrectionConstant: 2,
       maxMediaSourceWrapperGenericErrorRestartCount: 50,
-      enableMetrics: true,
+      enableMetrics: false,
     });
 
     this.state = 'initializing';
@@ -153,7 +153,9 @@ export default class IOVPlayer extends ListenerBaseClass {
     }
 
     this.mediaSourceWrapperGenericErrorRestartCount = 0;
-    this.mediaSourceWrapper = MediaSourceWrapper.factory(this.videoElement);
+    this.mediaSourceWrapper = MediaSourceWrapper.factory(this.videoElement, {
+      enableMetrics: this.options.enableMetrics,
+    });
     this.mediaSourceWrapper.moov = this.moov;
 
     try {
@@ -183,7 +185,10 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.mediaSourceWrapper.on('sourceOpen', async () => {
       this.debug('on mediaSource sourceopen');
 
-      await this.mediaSourceWrapper.initializeSourceBuffer();
+      // @todo - shouldn't the mediaSource pass this option?
+      await this.mediaSourceWrapper.initializeSourceBuffer({
+        enableMetrics: this.options.enableMetrics,
+      });
 
       // @todo - shouldn't sourceBuffer metrics come from the "parent"
       // mediaSourceWrapper?

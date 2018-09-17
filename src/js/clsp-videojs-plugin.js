@@ -5,12 +5,12 @@
  * CLSP plugin with videojs for you.
  *
  * If you would like to use the videojs plugin without having it registered
- * for you, you can include the `MseOverMqttPlugin` file directly (ES6 only).
+ * for you, you can include the `ClspPlugin` file directly (ES6 only).
  */
 
-import MseOverMqttPlugin from '~/plugin/MseOverMqttPlugin';
+import ClspPlugin from '~/plugin/ClspPlugin';
 
-const clspPlugin = MseOverMqttPlugin();
+const clspPlugin = ClspPlugin();
 
 clspPlugin.register();
 
