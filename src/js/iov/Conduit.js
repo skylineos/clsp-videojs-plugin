@@ -29,7 +29,13 @@ export default class Conduit {
   generateIframe () {
     const iframe = document.createElement('iframe');
 
-    const markup = `
+    iframe.setAttribute('style', 'display:none;');
+    iframe.setAttribute('id', this.clientId);
+
+    iframe.width = 0;
+    iframe.height = 0;
+
+    iframe.srcdoc = `
       <html>
         <head>
           <script type="text/javascript">
@@ -42,13 +48,6 @@ export default class Conduit {
         </body>
       </html>
     `;
-
-    iframe.srcdoc = markup;
-
-    iframe.width = 0;
-    iframe.height = 0;
-    iframe.setAttribute('style', 'display:none;');
-    iframe.setAttribute('id', this.clientId);
 
     return iframe;
   }

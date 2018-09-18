@@ -153,11 +153,13 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
 
     this.objectURL = null;
 
+    // @todo - need to check the updating property of the source buffer
     if (this.sourceBuffer) {
       this.sourceBuffer.abort();
     }
 
     // free the resource
+    // @todo - should we also set this.videoElement.src equal to an empty string here?
     return window.URL.revokeObjectURL(this.videoElement.src);
   }
 

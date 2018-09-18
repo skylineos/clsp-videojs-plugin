@@ -482,6 +482,10 @@ export default class IOVPlayer extends ListenerBaseClass {
         this.trigger('videoReceived');
         this.calculateSegmentIntervalMetrics();
 
+        if (document.hidden) {
+          return;
+        }
+
         this.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
       });
 
