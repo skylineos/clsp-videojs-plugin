@@ -641,33 +641,6 @@ module.exports = setup;
 
 /***/ }),
 
-/***/ "./node_modules/global/document.js":
-/*!*****************************************!*\
-  !*** ./node_modules/global/document.js ***!
-  \*****************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {var topLevel = typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : {};
-var minDoc = __webpack_require__(/*! min-document */ 1);
-
-var doccy;
-
-if (typeof document !== 'undefined') {
-    doccy = document;
-} else {
-    doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'];
-
-    if (!doccy) {
-        doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'] = minDoc;
-    }
-}
-
-module.exports = doccy;
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
-
-/***/ }),
-
 /***/ "./node_modules/lodash/_Symbol.js":
 /*!****************************************!*\
   !*** ./node_modules/lodash/_Symbol.js ***!
@@ -5260,367 +5233,6 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ "./node_modules/videojs-errors/dist/videojs-errors.es.js":
-/*!***************************************************************!*\
-  !*** ./node_modules/videojs-errors/dist/videojs-errors.es.js ***!
-  \***************************************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! global/document */ "./node_modules/global/document.js");
-/* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(global_document__WEBPACK_IMPORTED_MODULE_1__);
-/*! @name videojs-errors @version 4.1.3 @license Apache-2.0 */
-
-
-
-var version = "4.1.3";
-
-var FlashObj = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getComponent('Flash');
-var defaultDismiss = !video_js__WEBPACK_IMPORTED_MODULE_0___default.a.browser.IS_IPHONE;
-
-// Video.js 5/6 cross-compatibility.
-var registerPlugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.registerPlugin || video_js__WEBPACK_IMPORTED_MODULE_0___default.a.plugin;
-
-// Default options for the plugin.
-var defaults = {
-  header: '',
-  code: '',
-  message: '',
-  timeout: 45 * 1000,
-  dismiss: defaultDismiss,
-  progressDisabled: false,
-  errors: {
-    '1': {
-      type: 'MEDIA_ERR_ABORTED',
-      headline: 'The video download was cancelled'
-    },
-    '2': {
-      type: 'MEDIA_ERR_NETWORK',
-      headline: 'The video connection was lost, please confirm you are ' + 'connected to the internet'
-    },
-    '3': {
-      type: 'MEDIA_ERR_DECODE',
-      headline: 'The video is bad or in a format that cannot be played on your browser'
-    },
-    '4': {
-      type: 'MEDIA_ERR_SRC_NOT_SUPPORTED',
-      headline: 'This video is either unavailable or not supported in this browser'
-    },
-    '5': {
-      type: 'MEDIA_ERR_ENCRYPTED',
-      headline: 'The video you are trying to watch is encrypted and we do not know how ' + 'to decrypt it'
-    },
-    'unknown': {
-      type: 'MEDIA_ERR_UNKNOWN',
-      headline: 'An unanticipated problem was encountered, check back soon and try again'
-    },
-    '-1': {
-      type: 'PLAYER_ERR_NO_SRC',
-      headline: 'No video has been loaded'
-    },
-    '-2': {
-      type: 'PLAYER_ERR_TIMEOUT',
-      headline: 'Could not download the video'
-    },
-    'PLAYER_ERR_DOMAIN_RESTRICTED': {
-      headline: 'This video is restricted from playing on your current domain'
-    },
-    'PLAYER_ERR_IP_RESTRICTED': {
-      headline: 'This video is restricted at your current IP address'
-    },
-    'PLAYER_ERR_GEO_RESTRICTED': {
-      headline: 'This video is restricted from playing in your current geographic region'
-    },
-    'FLASHLS_ERR_CROSS_DOMAIN': {
-      headline: 'The video could not be loaded: crossdomain access denied.'
-    }
-  }
-};
-
-var initPlugin = function initPlugin(player, options) {
-  var monitor = void 0;
-  var waiting = void 0;
-  var isStalling = void 0;
-  var listeners = [];
-
-  var updateErrors = function updateErrors(updates) {
-    options.errors = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(options.errors, updates);
-
-    // Create `code`s from errors which don't have them (based on their keys).
-    Object.keys(options.errors).forEach(function (k) {
-      var err = options.errors[k];
-
-      if (!err.type) {
-        err.type = k;
-      }
-    });
-  };
-
-  // Make sure we flesh out initially-provided errors.
-  updateErrors();
-
-  // clears the previous monitor timeout and sets up a new one
-  var resetMonitor = function resetMonitor() {
-    // at this point the player has recovered
-    player.clearTimeout(waiting);
-    if (isStalling) {
-      isStalling = false;
-      player.removeClass('vjs-waiting');
-    }
-
-    // start the loading spinner if player has stalled
-    waiting = player.setTimeout(function () {
-      // player already has an error
-      // or is not playing under normal conditions
-      if (player.error() || player.paused() || player.ended()) {
-        return;
-      }
-
-      isStalling = true;
-      player.addClass('vjs-waiting');
-    }, 1000);
-
-    player.clearTimeout(monitor);
-    monitor = player.setTimeout(function () {
-      // player already has an error
-      // or is not playing under normal conditions
-      if (player.error() || player.paused() || player.ended()) {
-        return;
-      }
-
-      player.error({
-        code: -2,
-        type: 'PLAYER_ERR_TIMEOUT'
-      });
-    }, options.timeout);
-
-    // clear out any existing player timeout
-    // playback has recovered
-    if (player.error() && player.error().code === -2) {
-      player.error(null);
-    }
-  };
-
-  // clear any previously registered listeners
-  var cleanup = function cleanup() {
-    var listener = void 0;
-
-    while (listeners.length) {
-      listener = listeners.shift();
-      player.off(listener[0], listener[1]);
-    }
-    player.clearTimeout(monitor);
-    player.clearTimeout(waiting);
-  };
-
-  // creates and tracks a player listener if the player looks alive
-  var healthcheck = function healthcheck(type, fn) {
-    var check = function check() {
-      // if there's an error do not reset the monitor and
-      // clear the error unless time is progressing
-      if (!player.error()) {
-        // error if using Flash and its API is unavailable
-        var tech = player.$('.vjs-tech');
-
-        if (tech && tech.type === 'application/x-shockwave-flash' && !tech.vjs_getProperty) {
-          player.error({
-            code: -2,
-            type: 'PLAYER_ERR_TIMEOUT'
-          });
-          return;
-        }
-
-        // playback isn't expected if the player is paused
-        if (player.paused()) {
-          return resetMonitor();
-        }
-        // playback isn't expected once the video has ended
-        if (player.ended()) {
-          return resetMonitor();
-        }
-      }
-
-      fn.call(this);
-    };
-
-    player.on(type, check);
-    listeners.push([type, check]);
-  };
-
-  var onPlayStartMonitor = function onPlayStartMonitor() {
-    var lastTime = 0;
-
-    cleanup();
-
-    // if no playback is detected for long enough, trigger a timeout error
-    resetMonitor();
-    healthcheck(['timeupdate', 'adtimeupdate'], function () {
-      var currentTime = player.currentTime();
-
-      // playback is operating normally or has recovered
-      if (currentTime !== lastTime) {
-        lastTime = currentTime;
-        resetMonitor();
-      }
-    });
-
-    if (!options.progressDisabled) {
-      healthcheck('progress', resetMonitor);
-    }
-  };
-
-  var onPlayNoSource = function onPlayNoSource() {
-    if (!player.currentSrc()) {
-      player.error({
-        code: -1,
-        type: 'PLAYER_ERR_NO_SRC'
-      });
-    }
-  };
-
-  var onErrorHandler = function onErrorHandler() {
-    var details = '';
-    var error = player.error();
-    var content = global_document__WEBPACK_IMPORTED_MODULE_1___default.a.createElement('div');
-    var dialogContent = '';
-
-    // In the rare case when `error()` does not return an error object,
-    // defensively escape the handler function.
-    if (!error) {
-      return;
-    }
-
-    error = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(error, options.errors[error.code || error.type || 0]);
-
-    if (error.message) {
-      details = '<div class="vjs-errors-details">' + player.localize('Technical details') + '\n        : <div class="vjs-errors-message">' + player.localize(error.message) + '</div>\n        </div>';
-    }
-
-    if (error.code === 4 && FlashObj && !FlashObj.isSupported()) {
-      var flashMessage = player.localize('If you are using an older browser please try upgrading or installing Flash.');
-
-      details += '<span class="vjs-errors-flashmessage">' + flashMessage + '</span>';
-    }
-
-    var display = player.getChild('errorDisplay');
-
-    content.className = 'vjs-errors-dialog';
-    content.id = 'vjs-errors-dialog';
-    dialogContent = '<div class="vjs-errors-content-container">\n      <h2 class="vjs-errors-headline">' + this.localize(error.headline) + '</h2>\n        <div><b>' + this.localize('Error Code') + '</b>: ' + (error.type || error.code) + '</div>\n        ' + details + '\n      </div>';
-
-    var closeable = display.closeable(!('dismiss' in error) || error.dismiss);
-
-    // We should get a close button
-    if (closeable) {
-      dialogContent += '<div class="vjs-errors-ok-button-container">\n          <button class="vjs-errors-ok-button">' + this.localize('OK') + '</button>\n        </div>';
-      content.innerHTML = dialogContent;
-      display.fillWith(content);
-      // Get the close button inside the error display
-      display.contentEl().firstChild.appendChild(display.getChild('closeButton').el());
-
-      var okButton = display.el().querySelector('.vjs-errors-ok-button');
-
-      player.on(okButton, 'click', function () {
-        display.close();
-      });
-    } else {
-      content.innerHTML = dialogContent;
-      display.fillWith(content);
-    }
-
-    if (player.currentWidth() <= 600 || player.currentHeight() <= 250) {
-      display.addClass('vjs-xs');
-    }
-
-    display.one('modalclose', function () {
-      return player.error(null);
-    });
-  };
-
-  var onDisposeHandler = function onDisposeHandler() {
-    cleanup();
-
-    player.removeClass('vjs-errors');
-    player.off('play', onPlayStartMonitor);
-    player.off('play', onPlayNoSource);
-    player.off('dispose', onDisposeHandler);
-    player.off(['aderror', 'error'], onErrorHandler);
-  };
-
-  var reInitPlugin = function reInitPlugin(newOptions) {
-    onDisposeHandler();
-    initPlugin(player, video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, newOptions));
-  };
-
-  reInitPlugin.extend = function (errors) {
-    return updateErrors(errors);
-  };
-  reInitPlugin.getAll = function () {
-    return video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(options.errors);
-  };
-
-  // Get / set timeout value. Restart monitor if changed.
-  reInitPlugin.timeout = function (timeout) {
-    if (typeof timeout === 'undefined') {
-      return options.timeout;
-    }
-    if (timeout !== options.timeout) {
-      options.timeout = timeout;
-      if (!player.paused()) {
-        onPlayStartMonitor();
-      }
-    }
-  };
-
-  reInitPlugin.disableProgress = function (disabled) {
-    options.progressDisabled = disabled;
-    onPlayStartMonitor();
-  };
-
-  player.on('play', onPlayStartMonitor);
-  player.on('play', onPlayNoSource);
-  player.on('dispose', onDisposeHandler);
-  player.on(['aderror', 'error'], onErrorHandler);
-
-  player.ready(function () {
-    player.addClass('vjs-errors');
-  });
-
-  // if the plugin is re-initialised during playback, start the timeout handler.
-  if (!player.paused()) {
-    onPlayStartMonitor();
-  }
-
-  // Include the version number.
-  reInitPlugin.VERSION = version;
-
-  player.errors = reInitPlugin;
-};
-
-var errors = function errors(options) {
-  initPlugin(this, video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, options));
-};
-
-['extend', 'getAll', 'disableProgress'].forEach(function (k) {
-  errors[k] = function () {
-    video_js__WEBPACK_IMPORTED_MODULE_0___default.a.log.warn('The errors.' + k + '() method is not available until the plugin has been initialized!');
-  };
-});
-
-// Include the version number.
-errors.VERSION = version;
-
-// Register the plugin with video.js.
-registerPlugin('errors', errors);
-
-/* harmony default export */ __webpack_exports__["default"] = (errors);
-
-/***/ }),
-
 /***/ "./node_modules/webpack/buildin/global.js":
 /*!***********************************!*\
   !*** (webpack)/buildin/global.js ***!
@@ -5692,7 +5304,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-6","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0","videojs-errors":"^4.1.3"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-7","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -5705,7 +5317,7 @@ module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-6","description
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _plugin_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~/plugin/MseOverMqttPlugin */ "./src/js/plugin/MseOverMqttPlugin.js");
+/* harmony import */ var _plugin_ClspPlugin__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~/plugin/ClspPlugin */ "./src/js/plugin/ClspPlugin.js");
 
 
 /**
@@ -5713,12 +5325,12 @@ __webpack_require__.r(__webpack_exports__);
  * CLSP plugin with videojs for you.
  *
  * If you would like to use the videojs plugin without having it registered
- * for you, you can include the `MseOverMqttPlugin` file directly (ES6 only).
+ * for you, you can include the `ClspPlugin` file directly (ES6 only).
  */
 
 
 
-var clspPlugin = Object(_plugin_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_0__["default"])();
+var clspPlugin = Object(_plugin_ClspPlugin__WEBPACK_IMPORTED_MODULE_0__["default"])();
 
 clspPlugin.register();
 
@@ -5780,14 +5392,13 @@ var Conduit = function () {
     value: function generateIframe() {
       var iframe = document.createElement('iframe');
 
-      var markup = '\n      <html>\n        <head>\n          <script type="text/javascript">\n            window.MqttClientId = "' + this.clientId + '";\n            window.iframeCode = ' + _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_0___default.a.toString() + '();\n          </script>\n        </head>\n        <body onload="window.iframeCode.clspRouter();" onunload="window.iframeCode.onunload();">\n          <div id="message"></div>\n        </body>\n      </html>\n    ';
-
-      iframe.srcdoc = markup;
+      iframe.setAttribute('style', 'display:none;');
+      iframe.setAttribute('id', this.clientId);
 
       iframe.width = 0;
       iframe.height = 0;
-      iframe.setAttribute('style', 'display:none;');
-      iframe.setAttribute('id', this.clientId);
+
+      iframe.srcdoc = '\n      <html>\n        <head>\n          <script type="text/javascript">\n            window.MqttClientId = "' + this.clientId + '";\n            window.iframeCode = ' + _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_0___default.a.toString() + '();\n          </script>\n        </head>\n        <body onload="window.iframeCode.clspRouter();" onunload="window.iframeCode.onunload();">\n          <div id="message"></div>\n        </body>\n      </html>\n    ';
 
       return iframe;
     }
@@ -6069,7 +5680,7 @@ var IOV = function () {
     this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_2___default()({}, options, {
       changeSourceMaxWait: 9750,
       statsInterval: 30000,
-      enableMetrics: true
+      enableMetrics: false
     });
 
     this.config = {
@@ -6096,7 +5707,9 @@ var IOV = function () {
     key: 'initialize',
     value: function initialize() {
       this.conduit = this.mqttConduitCollection.addFromIov(this);
-      this.player = _Player__WEBPACK_IMPORTED_MODULE_4__["default"].factory(this, this.playerInstance);
+      this.player = _Player__WEBPACK_IMPORTED_MODULE_4__["default"].factory(this, this.playerInstance, {
+        enableMetrics: this.options.enableMetrics
+      });
 
       return this;
     }
@@ -6387,7 +6000,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
       segmentIntervalSampleSize: 5,
       driftCorrectionConstant: 2,
       maxMediaSourceWrapperGenericErrorRestartCount: 50,
-      enableMetrics: true
+      enableMetrics: false
     });
 
     _this.state = 'initializing';
@@ -6494,7 +6107,9 @@ var IOVPlayer = function (_ListenerBaseClass) {
                 }
 
                 this.mediaSourceWrapperGenericErrorRestartCount = 0;
-                this.mediaSourceWrapper = _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this.videoElement);
+                this.mediaSourceWrapper = _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this.videoElement, {
+                  enableMetrics: this.options.enableMetrics
+                });
                 this.mediaSourceWrapper.moov = this.moov;
 
                 _context4.prev = 4;
@@ -6539,8 +6154,11 @@ var IOVPlayer = function (_ListenerBaseClass) {
                         case 0:
                           _this3.debug('on mediaSource sourceopen');
 
+                          // @todo - shouldn't the mediaSource pass this option?
                           _context3.next = 3;
-                          return _this3.mediaSourceWrapper.initializeSourceBuffer();
+                          return _this3.mediaSourceWrapper.initializeSourceBuffer({
+                            enableMetrics: _this3.options.enableMetrics
+                          });
 
                         case 3:
 
@@ -6891,6 +6509,10 @@ var IOVPlayer = function (_ListenerBaseClass) {
                     _this5.trigger('videoReceived');
                     _this5.calculateSegmentIntervalMetrics();
 
+                    if (document.hidden) {
+                      return;
+                    }
+
                     _this5.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
                   });
 
@@ -7064,7 +6686,7 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
 
     _this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default()({}, options, {
       duration: 10,
-      enableMetrics: true
+      enableMetrics: false
     });
 
     _this.eventListeners = {
@@ -7200,11 +6822,13 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
 
       this.objectURL = null;
 
+      // @todo - need to check the updating property of the source buffer
       if (this.sourceBuffer) {
         this.sourceBuffer.abort();
       }
 
       // free the resource
+      // @todo - should we also set this.videoElement.src equal to an empty string here?
       return window.URL.revokeObjectURL(this.videoElement.src);
     }
   }, {
@@ -7473,7 +7097,7 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
       bufferTruncateFactor: 2,
       bufferTruncateValue: null,
       driftThreshold: 2000,
-      enableMetrics: true,
+      enableMetrics: false,
       minimumBufferIncrementSize: 0.5
     });
 
@@ -7845,6 +7469,266 @@ SourceBufferWrapper.METRIC_TYPES = ['sourceBuffer.created', 'sourceBuffer.destro
 
 /***/ }),
 
+/***/ "./src/js/plugin/ClspPlugin.js":
+/*!*************************************!*\
+  !*** ./src/js/plugin/ClspPlugin.js ***!
+  \*************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~styles/clsp-videojs-plugin.scss */ "./src/styles/clsp-videojs-plugin.scss");
+/* harmony import */ var _styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
+/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var paho_client__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! paho-client */ "./node_modules/paho-client/src/paho-mqtt.js");
+/* harmony import */ var paho_client__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(paho_client__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! video.js */ "video.js");
+/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _utils_utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ~/utils/utils */ "./src/js/utils/utils.js");
+/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/plugin/MqttSourceHandler.js");
+/* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/plugin/MqttConduitCollection.js");
+
+
+// @todo - can webpack be configured to process this without having
+// include it like this?
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+
+// This is configured as an external library by webpack, so the caller must
+// provide videojs on `window`
+
+
+
+
+
+
+var Plugin = video_js__WEBPACK_IMPORTED_MODULE_3___default.a.getPlugin('plugin');
+
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  var _class, _temp;
+
+  var defaults = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  return _temp = _class = function (_Plugin) {
+    _inherits(ClspPlugin, _Plugin);
+
+    _createClass(ClspPlugin, null, [{
+      key: 'register',
+      value: function register() {
+        if (video_js__WEBPACK_IMPORTED_MODULE_3___default.a.getPlugin(_utils_utils__WEBPACK_IMPORTED_MODULE_4__["default"].name)) {
+          throw new Error('You can only register the clsp plugin once, and it has already been registered.');
+        }
+
+        window.Paho = paho_client__WEBPACK_IMPORTED_MODULE_2___default.a;
+
+        var sourceHandler = _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_5__["default"].factory('html5', ClspPlugin.conduits);
+
+        video_js__WEBPACK_IMPORTED_MODULE_3___default.a.getTech('Html5').registerSourceHandler(sourceHandler, 0);
+        video_js__WEBPACK_IMPORTED_MODULE_3___default.a.registerPlugin(_utils_utils__WEBPACK_IMPORTED_MODULE_4__["default"].name, ClspPlugin);
+
+        return ClspPlugin;
+      }
+    }, {
+      key: 'getDefaultOptions',
+      value: function getDefaultOptions() {
+        return {
+          /**
+           * The number of times to retry playing the video when there is an error
+           * that we know we can recover from.
+           *
+           * If a negative number is passed, retry indefinitely
+           * If 0 is passed, never retry
+           * If a positive number is passed, retry that many times
+           */
+          maxRetriesOnError: -1,
+          enableMetrics: false
+        };
+      }
+    }]);
+
+    function ClspPlugin(player, options) {
+      _classCallCheck(this, ClspPlugin);
+
+      var _this = _possibleConstructorReturn(this, (ClspPlugin.__proto__ || Object.getPrototypeOf(ClspPlugin)).call(this, player, options));
+
+      _this.debug = debug__WEBPACK_IMPORTED_MODULE_1___default()('skyline:clsp:plugin:ClspPlugin');
+      _this.debug('constructing...');
+
+      _this.options = video_js__WEBPACK_IMPORTED_MODULE_3___default.a.mergeOptions(_extends({}, _this.constructor.getDefaultOptions(), defaults, player.options().clsp || {}), options);
+
+      player.addClass('vjs-clsp');
+
+      if (_this.options.customClass) {
+        player.addClass(_this.options.customClass);
+      }
+
+      // Support for the videojs-errors library
+      if (player.errors) {
+        player.errors({
+          errors: {
+            PLAYER_ERR_NOT_COMPAT: {
+              type: 'PLAYER_ERR_NOT_COMPAT',
+              headline: 'This browser is unsupported.',
+              message: 'Chrome 52+ is required.'
+            }
+          },
+          timeout: 120 * 1000
+        });
+      }
+
+      // @todo - this error doesn't work or display the way it's intended to
+      if (!_utils_utils__WEBPACK_IMPORTED_MODULE_4__["default"].supported()) {
+        var _ret;
+
+        return _ret = player.error({
+          code: 'PLAYER_ERR_NOT_COMPAT',
+          type: 'PLAYER_ERR_NOT_COMPAT',
+          dismiss: false
+        }), _possibleConstructorReturn(_this, _ret);
+      }
+
+      // for debugging...
+      /*
+      const oldTrigger = player.trigger.bind(player);
+      player.trigger = (eventName, ...args) => {
+        console.log(eventName);
+        console.log(...args);
+        oldTrigger(eventName, ...args);
+      };
+      */
+
+      // Track the number of times we've retried on error
+      player._errorRetriesCount = 0;
+
+      // Needed to make videojs-errors think that the video is progressing
+      // If we do not do this, videojs-errors will give us a timeout error
+      player._currentTime = 0;
+      player.currentTime = function () {
+        return player._currentTime++;
+      };
+
+      // @todo - are we not using videojs properly?
+      // @see - https://github.com/videojs/video.js/issues/5233
+      // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
+      // This is currently needed for autoplay.
+      player.on('ready', function () {
+        if (_this.options.autoplay || player.getAttribute('autoplay') === 'true') {
+          // Even though the "ready" event has fired, it's not actually ready...
+          setTimeout(function () {
+            player.play();
+          });
+        }
+      });
+
+      // @todo - this seems like we aren't using videojs properly
+      player.on('error', function (event) {
+        var error = player.error();
+
+        switch (error.code) {
+          case 4:
+          case 5:
+            {
+              break;
+            }
+          default:
+            {
+              if (_this.options.maxRetriesOnError === 0) {
+                break;
+              }
+
+              if (_this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= _this.options.maxRetriesOnError) {
+                // @todo - when can we reset this to zero?
+                player._errorRetriesCount++;
+
+                _this.metric({
+                  type: 'videojs.errorRetriesCount',
+                  value: player._errorRetriesCount
+                });
+
+                // @see - https://github.com/videojs/video.js/issues/4401
+                player.error(null);
+                player.errorDisplay.close();
+                player.tech(true).mqtt.iov.player.restart();
+              }
+            }
+        }
+      });
+
+      // @todo - we are currently creating the IOV for this player on `firstplay`
+      // but we could do it on the `ready` event.  However, in order to support
+      // this, we need to make the IOV and its player able to be instantiated
+      // without automatically playing AND without automatically listening via
+      // a conduit
+      player.on('firstplay', function (event) {
+        _this.debug('on player firstplay');
+
+        var mqttHandler = player.tech(true).mqtt;
+
+        if (!mqttHandler) {
+          throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
+        }
+
+        mqttHandler.createIOV(player, {
+          enableMetrics: _this.options.enableMetrics
+        });
+
+        // Any time a metric is received, let the caller know
+        mqttHandler.iov.player.on('metric', function (metric) {
+          // @see - https://docs.videojs.com/tutorial-plugins.html#events
+          // Note that I originally tried to trigger this event on the player
+          // rather than the tech, but that causes the video not to play...
+          _this.metric(metric);
+        });
+      });
+
+      player.on('dispose', function () {
+        var mqttHandler = player.tech(true).mqtt;
+
+        if (!mqttHandler) {
+          throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
+        }
+
+        mqttHandler.destroy();
+      });
+      return _this;
+    }
+
+    _createClass(ClspPlugin, [{
+      key: 'metric',
+      value: function metric(_metric) {
+        if (this.options.enableMetrics) {
+          this.trigger('metric', { metric: _metric });
+        }
+      }
+    }, {
+      key: 'destroy',
+      value: function destroy() {
+        this.debug('destroying...');
+
+        this.debug = null;
+      }
+    }]);
+
+    return ClspPlugin;
+  }(Plugin), _class.VERSION = _utils_utils__WEBPACK_IMPORTED_MODULE_4__["default"].version, _class.utils = _utils_utils__WEBPACK_IMPORTED_MODULE_4__["default"], _class.conduits = _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_6__["default"].factory(), _class.METRIC_TYPES = ['videojs.errorRetriesCount'], _temp;
+});
+
+/***/ }),
+
 /***/ "./src/js/plugin/MqttConduitCollection.js":
 /*!************************************************!*\
   !*** ./src/js/plugin/MqttConduitCollection.js ***!
@@ -8026,10 +7910,10 @@ var MqttHandler = function (_Component) {
 
   _createClass(MqttHandler, [{
     key: 'createIOV',
-    value: function createIOV(player) {
+    value: function createIOV(player, options) {
       this.debug('createIOV');
 
-      this.updateIOV(_iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(this.source_.src, this.conduits, player));
+      this.updateIOV(_iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(this.source_.src, this.conduits, player, {}, options));
 
       this.iov.initialize();
     }
@@ -8212,190 +8096,6 @@ var MqttSourceHandler = function () {
 
 /* harmony default export */ __webpack_exports__["default"] = (MqttSourceHandler);
 ;
-
-/***/ }),
-
-/***/ "./src/js/plugin/MseOverMqttPlugin.js":
-/*!********************************************!*\
-  !*** ./src/js/plugin/MseOverMqttPlugin.js ***!
-  \********************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~styles/clsp-videojs-plugin.scss */ "./src/styles/clsp-videojs-plugin.scss");
-/* harmony import */ var _styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
-/* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var paho_client__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! paho-client */ "./node_modules/paho-client/src/paho-mqtt.js");
-/* harmony import */ var paho_client__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(paho_client__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! video.js */ "video.js");
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var videojs_errors__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! videojs-errors */ "./node_modules/videojs-errors/dist/videojs-errors.es.js");
-/* harmony import */ var _utils_utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ~/utils/utils */ "./src/js/utils/utils.js");
-/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/plugin/MqttSourceHandler.js");
-/* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/plugin/MqttConduitCollection.js");
-
-
-// @todo - can webpack be configured to process this without having
-// include it like this?
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
-
-
-
-
-// This is configured as an external library by webpack, so the caller must
-// provide videojs on `window`
-
-
-// @todo - can this be up to the caller?
-
-
-
-
-
-
-var Plugin = video_js__WEBPACK_IMPORTED_MODULE_3___default.a.getPlugin('plugin');
-
-/* harmony default export */ __webpack_exports__["default"] = (function () {
-  var _class, _temp;
-
-  var defaults = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-  return _temp = _class = function (_Plugin) {
-    _inherits(MseOverMqttPlugin, _Plugin);
-
-    _createClass(MseOverMqttPlugin, null, [{
-      key: 'register',
-      value: function register() {
-        if (video_js__WEBPACK_IMPORTED_MODULE_3___default.a.getPlugin(_utils_utils__WEBPACK_IMPORTED_MODULE_5__["default"].name)) {
-          throw new Error('You can only register the clsp plugin once, and it has already been registered.');
-        }
-
-        window.Paho = paho_client__WEBPACK_IMPORTED_MODULE_2___default.a;
-
-        var sourceHandler = _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_6__["default"].factory('html5', MseOverMqttPlugin.conduits);
-
-        video_js__WEBPACK_IMPORTED_MODULE_3___default.a.getTech('Html5').registerSourceHandler(sourceHandler, 0);
-        video_js__WEBPACK_IMPORTED_MODULE_3___default.a.registerPlugin(_utils_utils__WEBPACK_IMPORTED_MODULE_5__["default"].name, MseOverMqttPlugin);
-
-        return MseOverMqttPlugin;
-      }
-    }]);
-
-    function MseOverMqttPlugin(player, options) {
-      _classCallCheck(this, MseOverMqttPlugin);
-
-      var _this = _possibleConstructorReturn(this, (MseOverMqttPlugin.__proto__ || Object.getPrototypeOf(MseOverMqttPlugin)).call(this, player, options));
-
-      _this.debug = debug__WEBPACK_IMPORTED_MODULE_1___default()('skyline:clsp:plugin:MseOverMqttPlugin');
-      _this.debug('constructing...');
-
-      options = video_js__WEBPACK_IMPORTED_MODULE_3___default.a.mergeOptions(defaults, options);
-
-      player.addClass('vjs-clsp');
-
-      if (options.customClass) {
-        player.addClass(options.customClass);
-      }
-
-      player.errors({
-        errors: {
-          PLAYER_ERR_NOT_COMPAT: {
-            headline: 'This browser is unsupported.',
-            message: 'Chrome 52+ is required.'
-          }
-        },
-        timeout: 120 * 1000
-      });
-
-      if (!_utils_utils__WEBPACK_IMPORTED_MODULE_5__["default"].supported()) {
-        var _ret;
-
-        return _ret = player.error({
-          code: 'PLAYER_ERR_NOT_COMPAT',
-          dismiss: false
-        }), _possibleConstructorReturn(_this, _ret);
-      }
-
-      // Needed to make videojs-errors think that the video is progressing
-      // If we do not do this, videojs-errors will give us a timeout error
-      player._currentTime = 0;
-      player.currentTime = function () {
-        return player._currentTime++;
-      };
-
-      // @todo - are we not using videojs properly?
-      // @see - https://github.com/videojs/video.js/issues/5233
-      // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
-      // This is currently needed for autoplay.
-      player.on('ready', function () {
-        if (options.autoplay || player.getAttribute('autoplay') === 'true') {
-          // Even though the "ready" event has fired, it's not actually ready...
-          setTimeout(function () {
-            player.play();
-          });
-        }
-      });
-
-      // @todo - we are currently creating the IOV for this player on `firstplay`
-      // but we could do it on the `ready` event.  However, in order to support
-      // this, we need to make the IOV and its player able to be instantiated
-      // without automatically playing AND without automatically listening via
-      // a conduit
-      player.on('firstplay', function (event) {
-        _this.debug('on player firstplay');
-
-        var mqttHandler = player.tech(true).mqtt;
-
-        if (!mqttHandler) {
-          throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
-        }
-
-        mqttHandler.createIOV(player);
-
-        // Any time a metric is received, let the caller know
-        mqttHandler.iov.player.on('metric', function (metric) {
-          // @see - https://docs.videojs.com/tutorial-plugins.html#events
-          // Note that I originally tried to trigger this event on the player
-          // rather than the tech, but that causes the video not to play...
-          _this.trigger('metric', { metric: metric });
-        });
-      });
-
-      player.on('dispose', function () {
-        var mqttHandler = player.tech(true).mqtt;
-
-        if (!mqttHandler) {
-          throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
-        }
-
-        mqttHandler.destroy();
-      });
-      return _this;
-    }
-
-    _createClass(MseOverMqttPlugin, [{
-      key: 'destroy',
-      value: function destroy() {
-        this.debug('destroying...');
-
-        this.debug = null;
-      }
-    }]);
-
-    return MseOverMqttPlugin;
-  }(Plugin), _class.VERSION = _utils_utils__WEBPACK_IMPORTED_MODULE_5__["default"].version, _class.utils = _utils_utils__WEBPACK_IMPORTED_MODULE_5__["default"], _class.conduits = _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_7__["default"].factory(), _temp;
-});
 
 /***/ }),
 
@@ -8599,17 +8299,6 @@ function isSupportedMimeType(mimeType) {
 
 module.exports = __webpack_require__(/*! /home/user/vagrant/github/clsp-videojs-plugin/src/js/clsp-videojs-plugin.js */"./src/js/clsp-videojs-plugin.js");
 
-
-/***/ }),
-
-/***/ 1:
-/*!******************************!*\
-  !*** min-document (ignored) ***!
-  \******************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-/* (ignored) */
 
 /***/ }),
 
