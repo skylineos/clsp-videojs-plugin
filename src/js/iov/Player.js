@@ -256,10 +256,10 @@ export default class IOVPlayer extends ListenerBaseClass {
       });
 
       this.mediaSourceWrapper.sourceBuffer.on('appendError', async (error) => {
-        // internal error, this has been observed to happen the tab
-        // in the browser where this video player lives is hidden
-        // then reselected. 'ex' is undefined the error is bug
-        // within the MSE C++ implementation in the browser.
+        // Can occur when the tab in the browser where this video player
+        // lives is hidden, then shown after about 10 seconds or more.
+        // Can occur when "The SourceBuffer is full, and cannot free space to append additional buffers."
+        // Can occur when "The HTMLMediaElement.error attribute is not null."
         this._onError(
           'sourceBuffer.append',
           'Error while appending to sourceBuffer',
@@ -482,7 +482,7 @@ export default class IOVPlayer extends ListenerBaseClass {
         this.trigger('videoReceived');
         this.calculateSegmentIntervalMetrics();
 
-        if (document.hidden) {
+        if (document.hidden || this.destroyed) {
           return;
         }
 

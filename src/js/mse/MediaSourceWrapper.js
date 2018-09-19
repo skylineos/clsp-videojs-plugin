@@ -199,6 +199,8 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
   }
 
   async destroyMediaSource () {
+    this.debug('Destroying mediaSource...');
+
     if (!this.mediaSource) {
       return;
     }
@@ -247,24 +249,29 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     this.mediaSource = null;
   }
 
-  async destroy () {
+  destroy () {
     this.debug('destroySourceBuffer...');
 
     if (this.destroyed) {
       return;
     }
 
+    // Note that destroy must be defined as synchronous, even though
+    // it performs asynchronous operations, to ensure that as soon
+    // as destroy is called, the destroy property is set to true.
+    // This is needed and time sensitive because multiple to calls
+    // to destroy are possible, and subsequent calls may occur before
+    // the destroyed property is set here if the destroy method is
+    // defined as asynchronous
     this.destroyed = true;
 
-    this.debug('Destroying mediaSource...');
+    return this.destroyMediaSource().then(() => {
+      this.videoElement = null;
 
-    await this.destroyMediaSource();
+      this.options = null;
+      this.eventListeners = null;
 
-    this.videoElement = null;
-
-    this.options = null;
-    this.eventListeners = null;
-
-    super.destroy();
+      super.destroy();
+    });
   }
 }

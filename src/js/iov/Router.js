@@ -36,6 +36,7 @@ export default function () {
 
       function eventHandler (evt) {
         var m = evt.data;
+        // var clientId = evt.source.MqttClientId;
 
         try {
           if (m.method === 'subscribe') {
