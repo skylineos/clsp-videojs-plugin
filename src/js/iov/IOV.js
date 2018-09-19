@@ -1,8 +1,13 @@
+'use strict';
+
 import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
+import defaults from 'lodash/defaults';
 
-import MqttTopicHandlers from './MqttTopicHandlers';
-import IOVPlayer from './player';
+// Needed for crossbrowser iframe support
+import 'srcdoc-polyfill';
+
+import IOVPlayer from './Player';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 
@@ -14,25 +19,6 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 //  @todo - should this be the videojs component?  it seems like the
 // mqttHandler does nothing, and that this could replace it
 export default class IOV {
-  static CHANGE_SOURCE_MAX_WAIT = 5000;
-
-  static compatibilityCheck () {
-    // @todo - shouldn't this be done in the utils function?
-    // @todo - does this need to throw an error?
-    // For the MAC
-    var NoMediaSourceAlert = false;
-
-    window.MediaSource = window.MediaSource || window.WebKitMediaSource;
-
-    if (!window.MediaSource) {
-      if (NoMediaSourceAlert === false) {
-        window.alert('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
-      }
-
-      NoMediaSourceAlert = true;
-    }
-  }
-
   static generateConfigFromUrl (url) {
     if (!url) {
       throw new Error('No source was given to be parsed!');
@@ -87,20 +73,28 @@ export default class IOV {
     };
   }
 
-  static factory (mqttConduitCollection, player, config = {}) {
-    return new IOV(mqttConduitCollection, player, config);
+  static factory (mqttConduitCollection, player, config = {}, options = {}) {
+    return new IOV(
+      mqttConduitCollection,
+      player,
+      config,
+      options
+    );
   }
 
-  static fromUrl (url, mqttConduitCollection, player, config = {}) {
-    return IOV.factory(mqttConduitCollection, player, {
-      ...config,
-      ...IOV.generateConfigFromUrl(url),
-    });
+  static fromUrl (url, mqttConduitCollection, player, config = {}, options = {}) {
+    return IOV.factory(
+      mqttConduitCollection,
+      player,
+      {
+        ...config,
+        ...IOV.generateConfigFromUrl(url),
+      },
+      options
+    );
   }
 
-  constructor (mqttConduitCollection, player, config) {
-    IOV.compatibilityCheck();
-
+  constructor (mqttConduitCollection, player, config, options) {
     this.id = uuidv4();
 
     this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
@@ -111,15 +105,19 @@ export default class IOV {
     this.playerInstance = player;
     this.videoElement = this.playerInstance.el();
 
+    this.options = defaults({}, options, {
+      changeSourceMaxWait: 9750,
+      statsInterval: 30000,
+      enableMetrics: false,
+    });
+
     this.config = {
       clientId: this.id,
       wsbroker: config.wsbroker,
       wsport: config.wsport,
       useSSL: config.useSSL,
       streamName: config.streamName,
-      appStart: config.appStart,
       videoElementParent: config.videoElementParent || null,
-      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
     };
 
     this.statsMsg = {
@@ -131,37 +129,22 @@ export default class IOV {
 
     // @todo - this needs to be a global service or something
     this.mqttConduitCollection = mqttConduitCollection;
-
-    // handle inbound messages from MQTT, including video
-    // and distributes them to players.
-    this.mqttTopicHandlers = new MqttTopicHandlers(this.id, this);
-
-    this.events = {
-      connection_lost: (responseObject) => {
-        // @todo - close all players and display an error message
-        console.error('MQTT connection lost');
-        console.error(responseObject);
-      },
-
-      // @todo - does this ever get fired?
-      on_message: this.mqttTopicHandlers.msghandler,
-
-      // generic exception handler
-      exception: (text, e) => {
-        console.error(text);
-        if (typeof e !== 'undefined') {
-          console.error(e.stack);
-        }
-      },
-    };
   }
 
   initialize () {
     this.conduit = this.mqttConduitCollection.addFromIov(this);
-    this.player = IOVPlayer.factory(this, this.playerInstance);
+    this.player = IOVPlayer.factory(
+      this,
+      this.playerInstance,
+      {
+        enableMetrics: this.options.enableMetrics,
+      }
+    );
+
+    return this;
   }
 
-  clone (config) {
+  clone (config, options) {
     this.debug('clone');
 
     const cloneConfig = {
@@ -169,40 +152,28 @@ export default class IOV {
       videoElementParent: this.config.videoElementParent,
     };
 
-    // @todo - is it possible to reuse the iov player?
     return IOV.factory(
       this.mqttConduitCollection,
       this.playerInstance,
-      cloneConfig
+      cloneConfig,
+      options
     );
   }
 
-  cloneFromUrl (url, config = {}) {
-    this.debug('cloneFromUrl');
-
-    return this.clone({
-      ...IOV.generateConfigFromUrl(url),
-      ...config,
-    });
-  }
-
-  // query remote server and get a list of all stream names
-  getAvailableStreams (callback) {
-    this.debug('getAvailableStreams');
-
-    this.conduit.transaction('iov/video/list', callback, {});
-  }
-
-  onChangeSource (url) {
+  changeSource (url) {
     this.debug(`changeSource on player "${this.id}""`);
 
     if (!url) {
       throw new Error('Unable to change source because there is no url!');
     }
 
-    const clone = this.cloneFromUrl(url);
+    let iovUpdated = false;
+
+    const clone = this.clone(IOV.generateConfigFromUrl(url), this.options);
 
     clone.initialize();
+
+    clone.player.videoElement.style.display = 'none';
 
     // When the tab is not in focus, chrome doesn't handle things the same
     // way as when the tab is in focus, and it seems that the result of that
@@ -217,15 +188,24 @@ export default class IOV {
     // is standardized, and even then, we may be subject to non-intuitive
     // behavior based on tab switching, etc.
     setTimeout(() => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-    }, clone.config.changeSourceMaxWait);
+      if (!iovUpdated) {
+        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+        clone.player.videoElement.style.display = 'initial';
+      }
+    }, clone.options.changeSourceMaxWait);
 
     // Under normal circumstances, meaning when the tab is in focus, we want
     // to respond by switching the IOV when the new IOV Player has something
     // to display
-    clone.player.on('firstFrameShown', () => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-    });
+    // clone.player.on('firstFrameShown', () => {
+    //   if (!iovUpdated) {
+    //     clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+    //   }
+    // });
+  }
+
+  onChangeSource = (event, data) => {
+    return this.changeSource(data.url);
   }
 
   onReady (event) {
@@ -238,6 +218,10 @@ export default class IOV {
 
     const videoTag = this.playerInstance.children()[0];
 
+    // this.playerInstance.on('play', () => {
+    //   console.log('playing....', this.player.id)
+    // });
+
     // @todo - there must be a better way to determine autoplay...
     if (videoTag.getAttribute('autoplay') !== null) {
       // playButton.trigger('click');
@@ -245,7 +229,7 @@ export default class IOV {
     }
 
     if (this.onReadyAlreadyCalled) {
-      console.warn('tried to use this player more than once...');
+      console.error('tried to use this player more than once...');
       return;
     }
 
@@ -267,11 +251,7 @@ export default class IOV {
       this.playerInstance.trigger('timeupdate');
     });
 
-    this.playerInstanceEventListeners = {
-      changesrc: (event, { url }) => this.onChangeSource(url),
-    };
-
-    this.playerInstance.on('changesrc', this.playerInstanceEventListeners.changesrc);
+    this.playerInstance.on('changesrc', this.onChangeSource);
 
     this.player.play(this.videoElement.firstChild.id, this.config.streamName);
 
@@ -282,13 +262,14 @@ export default class IOV {
     // the mse service will stop streaming to us if we don't send
     // a message to iov/stats within 1 minute.
     this._statsTimer = setInterval(() => {
-      this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / 30000.0;
+      this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / this.options.statsInterval;
       this.statsMsg.byteCount = 0;
 
+      // @todo - can we disable this?
       this.conduit.publish('iov/stats', this.statsMsg);
 
       this.debug('iov status', this.statsMsg);
-    }, 5000);
+    }, this.options.statsInterval);
   }
 
   onFail (event) {
@@ -341,7 +322,7 @@ export default class IOV {
 
     this.conduit.unsubscribe(`iov/video/${this.player.guid}/live`);
 
-    this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
+    this.playerInstance.off('changesrc', this.onChangeSource);
 
     this.player.destroy();
 

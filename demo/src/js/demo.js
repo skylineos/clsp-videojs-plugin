@@ -2,13 +2,20 @@
 
 import '../styles/demo.scss';
 
+import 'babel-polyfill';
+
 import $ from 'jquery';
 import videojs from 'video.js';
 import moment from 'moment';
 import compact from 'lodash/compact';
-import 'babel-polyfill';
+import 'videojs-errors';
 
-import packageJson from '../../../package.json';
+import packageJson from '~root/package.json';
+
+import ClspPlugin from '~/plugin/ClspPlugin';
+import IOVPlayer from '~/iov/Player';
+import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
+import SourceBufferWrapper from '~/mse/SourceBufferWrapper';
 
 window.videojs = videojs;
 window.CLSP_DEMO_VERSION = packageJson.version;
@@ -44,23 +51,108 @@ function initializeWall () {
 
     $container.html(html);
 
+    $container.find('.video-stream .index').text(cellId);
+    $container.find('.video-stream .url').text(src);
+
+    const $videoMetrics = $container.find('.video-metrics');
+
+    const metricTypes = [
+      ClspPlugin().METRIC_TYPES,
+      IOVPlayer.METRIC_TYPES,
+      MediaSourceWrapper.METRIC_TYPES,
+      SourceBufferWrapper.METRIC_TYPES,
+    ];
+
+    for (let i = 0; i < metricTypes.length; i++) {
+      const metricType = metricTypes[i];
+
+      for (let j = 0; j < metricType.length; j++) {
+        const text = metricType[j];
+        const name = text.replace(new RegExp(/\./, 'g'), '-');
+        const $metric = $('<div/>', { class: `metric ${name}` });
+
+        $metric.append($('<span/>', { class: 'value' }));
+        $metric.append($('<span/>', {
+          class: 'type',
+          text,
+        }));
+
+        $videoMetrics.append($metric);
+      }
+    }
+
     const cell = document.getElementById(`video-${cellId}`);
 
     if (!cell) {
       window.alert(`No match for element "video-${parseInt(cellId)}"`);
     }
 
-    const player = window.videojs(cell);
+    const player = window.videojs(cell, {
+      clsp: {
+        enableMetrics: true,
+      },
+    });
+
+    $container.find('.video-stream .close').on('click', () => {
+      $('#wallTotalVideos').text(parseInt($('#wallTotalVideos').text(), 10) - 1);
+      player.dispose();
+    });
+
     const tech = player.clsp();
 
     const $videoMetricContainer = $container.find('.video-metrics');
 
     tech.on('metric', (event, { metric }) => {
-      $videoMetricContainer.find(`.${metric.type.replace(/\./g, '-')} .value`).html(metric.value);
+      $videoMetricContainer.find(`.${metric.type.replace(new RegExp(/\./, 'g'), '-')} .value`).html(metric.value);
     });
   }
 
+  function destroyAllPlayers () {
+    const players = videojs.getAllPlayers();
+
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i];
+
+      player.dispose();
+    }
+  }
+
+  function toggleControls () {
+    $('#controls-toggle').attr('data-state') === 'hidden'
+      ? showControls()
+      : hideControls();
+  }
+
+  function showControls () {
+    const $controls = $('.wall .controls');
+    const $controlsToggle = $('#controls-toggle');
+
+    $controls.show();
+    $controlsToggle.attr('data-state', 'shown');
+    $controlsToggle.text('Hide Controls');
+  }
+
+  function hideControls () {
+    const $controls = $('.wall .controls');
+    const $controlsToggle = $('#controls-toggle');
+
+    $controls.hide();
+    $controlsToggle.attr('data-state', 'hidden');
+    $controlsToggle.text('Show Controls');
+  }
+
+  function setMetricsVisibility () {
+    if ($('#showMetrics').prop('checked')) {
+      $('.video-metrics').show();
+    }
+    else {
+      $('.video-metrics').hide();
+    }
+  }
+
   function onclick () {
+    destroyAllPlayers();
+
     const urlList = window.localStorage.getItem('skyline.clspPlugin.wallUrls').split('\n');
     const timesToReplicate = $('#wallReplicate').val();
 
@@ -99,20 +191,25 @@ function initializeWall () {
 
     const now = Date.now();
 
-    $('#wallTotalVideos').html(`Total videos playing: ${cellIndex}`);
-    $('#wallStartTime').html(`Time Started: ${moment(now).format('MMMM Do YYYY, h:mm:ss a')}`);
+    $('#wallTotalVideos').text(cellIndex);
+    $('#wallStartTime').text(moment(now).format('MMMM Do YYYY, h:mm:ss a'));
 
     if (wallInterval) {
       window.clearInterval(wallInterval);
     }
+
+    $('#wallDuration').text('0 hours 0 minutes 0 seconds');
 
     wallInterval = setInterval(() => {
       const hoursFromStart = Math.floor(moment.duration(Date.now() - now).asHours());
       const minutesFromStart = Math.floor(moment.duration(Date.now() - now).asMinutes()) - (hoursFromStart * 60);
       const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
 
-      $('#wallDuration').html(`This Video Wall has been running for ${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+      $('#wallDuration').text(`${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
     }, 1000);
+
+    hideControls();
+    setMetricsVisibility();
   }
 
   if (!window.localStorage.getItem('skyline.clspPlugin.wallUrls')) {
@@ -120,18 +217,10 @@ function initializeWall () {
   }
 
   $('#walltest').click(onclick);
+  $('#controls-toggle').click(toggleControls);
+  $('#showMetrics').on('change', setMetricsVisibility);
 
-  const $showMetrics = $('#showMetrics');
   const $wallUrls = $('#wallUrls');
-
-  $showMetrics.on('change', () => {
-    if ($showMetrics.prop('checked')) {
-      $('.video-metrics').show();
-    }
-    else {
-      $('.video-metrics').hide();
-    }
-  });
 
   $wallUrls.val(window.localStorage.getItem('skyline.clspPlugin.wallUrls'));
 
@@ -140,126 +229,12 @@ function initializeWall () {
   });
 }
 
-function initializeTours () {
-  if (!window.localStorage.getItem('skyline.clspPlugin.tourUrls')) {
-    window.localStorage.setItem('skyline.clspPlugin.tourUrls', defaultTourUrls.join('\n'));
-  }
-
-  const tour = {
-    player: null,
-    plist: [],
-    interval: 10,
-    counter: 0,
-    timer: null,
-  };
-
-  $('#start-tour').on('click', () => {
-    tour.interval = parseInt($('#tour-switch-interval').val());
-    tour.plist = [];
-
-    const tourUrls = compact(window.localStorage.getItem('skyline.clspPlugin.tourUrls').split('\n'));
-
-    if (tourUrls.length < 2) {
-      window.alert('at least two source needed!');
-      return;
-    }
-
-    $('#tour-first-source').attr('src', tourUrls[0]);
-
-    tour.counter = 1;
-    tour.player = null;
-
-    if (tour.timer !== null) {
-      clearInterval(tour.timer);
-    }
-
-    tour.player = window.videojs('#tour-video');
-    tour.player.clsp(); // start playing first stream
-    $('#now-playing').html(tourUrls[0]);
-
-    tour.player.on('network-error', (evt, message) => {
-      // console.log('!!!!! Handled network-error', evt);
-      // console.log(message);
-    });
-
-    tour.timer = setInterval(() => {
-      const url = tourUrls[tour.counter % tourUrls.length];
-      $('#now-playing').html('switching to ' + tourUrls[tour.counter % tourUrls.length] + ' on next the h264 iframe');
-
-      tour.counter += 1;
-      // console.log('selected url', url, tourUrls);
-
-      tour.player.trigger('changesrc', {
-        eid: 'tour-video',
-        url,
-      });
-
-      $('#tourCount').html(`Number of streams played: ${tour.counter}`);
-    }, tour.interval * 1000);
-
-    const now = Date.now();
-
-    $('#tourTotalVideos').html(`Tour Playlist Length: ${tourUrls.length}`);
-    $('#tourStartTime').html(`Time Started: ${moment(now).format('MMMM Do YYYY, h:mm:ss a')}`);
-    $('#tour_duration').html(`Streams are playing ${tour.interval} seconds apart.`);
-    $('#tourCount').html(`Number of streams played: ${tour.counter}`);
-
-    if (wallInterval) {
-      window.clearInterval(wallInterval);
-    }
-
-    wallInterval = setInterval(() => {
-      const hoursFromStart = Math.floor(moment.duration(Date.now() - now).asHours());
-      const minutesFromStart = Math.floor(moment.duration(Date.now() - now).asMinutes()) - (hoursFromStart * 60);
-      const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
-
-      $('#tourDuration').html(`This Video Wall has been running for ${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
-    }, 1000);
-  });
-
-  const $tourUrls = $('#tourUrls');
-
-  $tourUrls.val(window.localStorage.getItem('skyline.clspPlugin.tourUrls'));
-
-  $tourUrls.on('change', () => {
-    window.localStorage.setItem('skyline.clspPlugin.tourUrls', $tourUrls.val());
-  });
-}
-
-function initializeHeadless () {
-  $('#headless_play').click(function () {
-    ////////////////////////////////////////////////
-    // headless play demo
-    ////////////////////////////////////////////////
-    var src = $('#headless_url').val();
-    var iov_config = parseUrl(src);
-
-    iov_config.videoElement = document.getElementById('headless');
-    iov_config.appStart = function (iov) {
-      iovPlayer = iov.player();
-      iovPlayer.play('headless', iov_config.streamName,
-        function () {
-          console.log("first chunk of video received, remove poster if its playing");
-        },
-        function () {
-          console.log("video received");
-        }
-      );
-    };
-
-    var IOV = videojs.getPlugin('clsp').clsp_IOV;
-    var iov = new IOV(iov_config);
-    iov.initialize();
-    /////////////////////////////////////////////////
-  });
-}
-
 $(() => {
   const pageTitle = `CLSP ${window.CLSP_DEMO_VERSION} Demo Page`;
   document.title = pageTitle;
   $('#page-title').html(pageTitle);
 
+  window.HELP_IMPROVE_VIDEOJS = false;
+
   initializeWall();
-  initializeTours();
-  initializeHeadless();
 });

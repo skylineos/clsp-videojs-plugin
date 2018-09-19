@@ -4,7 +4,7 @@ const path = require('path');
 const serve = require('webpack-serve');
 const webpack = require('webpack');
 
-const webpackConfig = require('../webpack.config');
+const devConfig = require('../webpack.config')();
 
 const host = process.env.hasOwnProperty('HOST')
   ? process.env.HOST
@@ -15,7 +15,7 @@ const port = process.env.hasOwnProperty('PORT')
   : 9999;
 
 serve({}, {
-  compiler: webpack(webpackConfig),
+  compiler: webpack(devConfig),
   port,
   host,
   content: path.join(__dirname, '..'),

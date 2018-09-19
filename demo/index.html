@@ -7,11 +7,37 @@
   <script src="../dist/demo.js"></script>
 </head>
 <body>
-  <h1 id="page-title">CLSP Demo</h1>
+  <div class="page-header">
+    <h1 id="page-title">CLSP Demo</h1>
+    <div class="controls">
+      <button
+        id="controls-toggle"
+        data-state="shown"
+      >Hide Controls</button>
+      <label for="showMetrics">
+        <input
+          id="showMetrics"
+          type="checkbox"
+        />
+        <span>Show Metrics</span>
+      </label>
+    </div>
+    <div id="wallSummary">
+      <div class="labels">
+        <span>Total videos playing:</span>
+        <span>Time Started:</span>
+        <span>Time Elapsed:</span>
+      </div>
+      <div class="values">
+        <span id="wallTotalVideos">N/A</span>
+        <span id="wallStartTime">N/A</span>
+        <span id="wallDuration">N/A</span>
+      </div>
+    </div>
+  </div>
 
   <section class="wall">
-    <h2>Wall</h2>
-    <div class="wall-controls">
+    <div class="controls">
       <div class="wall-urls-container">
         <span>Urls:</span>
         <br />
@@ -32,227 +58,43 @@
           />
         </div>
         <div>
-          <label for="showMetrics">
-            <input
-              id="showMetrics"
-              checked="true"
-              type="checkbox"
-            />
-            <span>Show Metrics</span>
-          </label>
-        </div>
-        <div>
           <button id="walltest">Create Video Wall</button>
         </div>
       </div>
     </div>
+
     <br />
-    <div id="wallSummary">
-      <span id="wallTotalVideos"></span>
-      <br />
-      <span id="wallStartTime"></span>
-      <br />
-      <span id="wallDuration"></span>
-    </div>
-    <br />
+
     <div id="videowall"></div>
+
     <template id="cell">
-      <div class="video-container">
-        <video id="video-$cellId" width="352" height="240" class="video-js vjs-default-skin" controls autoplay muted>
-          <source id="src-$cellId" src="$src" type="video/mp4; codecs='avc1.42E01E'" />
-        </video>
-      </div>
-      <div class="video-metrics">
-        <div class="metric mediaSource-created">
-          <span class="value"></span>
-          <span class="type">mediaSource.created</span>
+      <div class="wall-video-container">
+        <div class="video-stream">
+          <span class="index"></span>
+          <span class="url"></span>
+          <button class="close">&times;</button>
         </div>
-        <div class="metric mediaSource-destroyed">
-          <span class="value"></span>
-          <span class="type">mediaSource.destroyed</span>
+        <div class="video-container">
+          <video
+            id="video-$cellId"
+            height="240px"
+            class="video-js vjs-default-skin"
+            autoplay
+            controls
+            muted
+          >
+            <source
+              id="src-$cellId"
+              src="$src"
+              type="video/mp4; codecs='avc1.42E01E'"
+            />
+          </video>
         </div>
-        <div class="metric objectURL-created">
-          <span class="value"></span>
-          <span class="type">objectURL.created</span>
-        </div>
-        <div class="metric objectURL-revoked">
-          <span class="value"></span>
-          <span class="type">objectURL.revoked</span>
-        </div>
-        <div class="metric mediaSource-reinitialized">
-          <span class="value"></span>
-          <span class="type">mediaSource.reinitialized</span>
-        </div>
-        <div class="metric sourceBuffer-created">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.created</span>
-        </div>
-        <div class="metric sourceBuffer-destroyed">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.destroyed</span>
-        </div>
-        <div class="metric queue-added">
-          <span class="value"></span>
-          <span class="type">queue.added</span>
-        </div>
-        <div class="metric queue-removed">
-          <span class="value"></span>
-          <span class="type">queue.removed</span>
-        </div>
-        <div class="metric sourceBuffer-append">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.append</span>
-        </div>
-        <div class="metric error-sourceBuffer-append">
-          <span class="value"></span>
-          <span class="type">error.sourceBuffer.append</span>
-        </div>
-        <div class="metric frameDrop-hiddenTab">
-          <span class="value"></span>
-          <span class="type">frameDrop.hiddenTab</span>
-        </div>
-        <div class="metric queue-mediaSourceNotReady">
-          <span class="value"></span>
-          <span class="type">queue.mediaSourceNotReady</span>
-        </div>
-        <div class="metric queue-sourceBufferNotReady">
-          <span class="value"></span>
-          <span class="type">queue.sourceBufferNotReady</span>
-        </div>
-        <div class="metric queue-shift">
-          <span class="value"></span>
-          <span class="type">queue.shift</span>
-        </div>
-        <div class="metric queue-append">
-          <span class="value"></span>
-          <span class="type">queue.append</span>
-        </div>
-        <div class="metric sourceBuffer-lastKnownBufferSize">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.lastKnownBufferSize</span>
-        </div>
-        <div class="metric sourceBuffer-trim">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.trim</span>
-        </div>
-        <div class="metric sourceBuffer-trim-error">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.trim.error</span>
-        </div>
-        <div class="metric sourceBuffer-updateEnd">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.updateEnd</span>
-        </div>
-        <div class="metric sourceBuffer-updateEnd-bufferLength-empty">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.updateEnd.bufferLength.empty</span>
-        </div>
-        <div class="metric sourceBuffer-updateEnd-bufferLength-error">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.updateEnd.bufferLength.error</span>
-        </div>
-        <div class="metric sourceBuffer-updateEnd-removeEvent">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.updateEnd.removeEvent</span>
-        </div>
-        <div class="metric sourceBuffer-updateEnd-appendEvent">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.updateEnd.appendEvent</span>
-        </div>
-        <div class="metric sourceBuffer-bufferTimeEnd">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.bufferTimeEnd</span>
-        </div>
-        <div class="metric video-currentTime">
-          <span class="value"></span>
-          <span class="type">video.currentTime</span>
-        </div>
-        <div class="metric video-drift">
-          <span class="value"></span>
-          <span class="type">video.drift</span>
-        </div>
-        <div class="metric video-driftCorrection">
-          <span class="value"></span>
-          <span class="type">video.driftCorrection</span>
-        </div>
-        <div class="metric sourceBuffer-updateEnd-bufferFrozen">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.updateEnd.bufferFrozen</span>
-        </div>
-        <div class="metric sourceBuffer-abort">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.abort</span>
-        </div>
-        <div class="metric error-sourceBuffer-abort">
-          <span class="value"></span>
-          <span class="type">error.sourceBuffer.abort</span>
-        </div>
-        <div class="metric video-segmentInterval">
-          <span class="value"></span>
-          <span class="type">video.segmentInterval</span>
-        </div>
-        <div class="metric video-segmentIntervalAverage">
-          <span class="value"></span>
-          <span class="type">video.segmentIntervalAverage</span>
-        </div>
-        <div class="metric sourceBuffer-lastMoofSize">
-          <span class="value"></span>
-          <span class="type">sourceBuffer.lastMoofSize</span>
-        </div>
+        <div class="video-metrics"></div>
       </div>
     </template>
   </section>
 
-  <section class="tour">
-    <h2>Tour</h2>
-    <div class="tour-controls">
-      <div>
-        <span>Urls:</span>
-        <br />
-        <textarea id="tourUrls" rows="25" cols="80"></textarea>
-      </div>
-      <div>
-        <span>Tour Duration</span>
-        <input id="tour-switch-interval" type="number" value="10" />
-        <br />
-        <br />
-        <button id="start-tour">Start Video Tour</button>
-      </div>
-    </div>
-    <br />
-    <div id="tourSummary">
-      <span id="tourTotalVideos"></span>
-      <br />
-      <span id="tourStartTime"></span>
-      <br />
-      <span id="tourDuration"></span>
-      <br />
-      <span id="tour_duration"></span>
-      <br />
-      <span id="tourCount"></span>
-    </div>
-
-    <h3 id="now-playing"></h3>
-
-    <video id="tour-video" width="352" height="240" autoplay muted>
-      <source id="tour-first-source" src="" type="video/mp4; codecs='avc1.42E01E'" />
-    </video>
-  </section>
-
-  <section class="headless">
-    <h2>Headless CLSP Player</h2>
-    <video id="headless" width="352" height="240" controls autoplay muted></video>
-
-    <hr>
-
-    <div>Url for headless player:
-      <input id="headless_url" tyle="text" />
-    </div>
-    <div>
-      <button id="headless_play">Headless Player</button>
-    </div>
-  </section>
-
-  <script src="../dist/videojs-mse-over-clsp.js"></script>
+  <script src="../dist/clsp-videojs-plugin.js"></script>
 </body>
 </html>
