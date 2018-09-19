@@ -2,6 +2,7 @@
 
 import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
+import debounce from 'lodash/debounce';
 
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
 import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
@@ -30,6 +31,7 @@ export default class IOVPlayer extends ListenerBaseClass {
   ];
 
   static METRIC_TYPES = [
+    'iovPlayer.moofWaitExceeded',
     'iovPlayer.video.currentTime',
     'iovPlayer.video.drift',
     'iovPlayer.video.driftCorrection',
@@ -57,6 +59,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.initializeVideoElement();
 
     this.options = defaults({}, options, {
+      maxMoofWait: 30 * 1000,
       segmentIntervalSampleSize: 5,
       driftCorrectionConstant: 2,
       maxMediaSourceWrapperGenericErrorRestartCount: 50,
@@ -76,6 +79,18 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.segmentIntervalAverage = null;
     this.segmentInterval = null;
     this.segmentIntervals = [];
+    this.moofWaitReset = null;
+
+    if (this.options.maxMoofWait) {
+      this.moofWaitReset = debounce(() => {
+        this.metric('iovPlayer.moofWaitExceeded', 1);
+
+        // When we stop receiving moofs, reinitializing the mediasource will not
+        // be enough - we have to kill the player completely, then re-subscribe
+        // via the conduit
+        this.restart();
+      }, this.options.maxMoofWait);
+    }
 
     this.mediaSourceWrapper = null;
     this.moov = null;
@@ -343,9 +358,6 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.mediaSourceWrapper.reinitializeVideoElementSrc();
   }
 
-  /**
-   * Restart the video without destroying the mediaSourceWrapper.
-   */
   restart () {
     this.debug('restart');
 
@@ -486,6 +498,10 @@ export default class IOVPlayer extends ListenerBaseClass {
           return;
         }
 
+        if (this.options.maxMoofWait) {
+          this.moofWaitReset();
+        }
+
         this.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
       });
 
@@ -551,6 +567,11 @@ export default class IOVPlayer extends ListenerBaseClass {
     // to avoid memory leaks
     this.videoElement.src = '';
     this.videoElement = null;
+
+    if (this.moofWaitReset) {
+      this.moofWaitReset.cancel();
+      this.moofWaitReset = null;
+    }
 
     super.destroy();
   }
