@@ -144,7 +144,7 @@ export default function () {
       }
 
       try {
-        window.window.MQTTClient = new window.parent.Paho.Client(
+        window.MQTTClient = new window.parent.Paho.Client(
           iov.config.wsbroker,
           iov.config.wsport,
           iov.id,
