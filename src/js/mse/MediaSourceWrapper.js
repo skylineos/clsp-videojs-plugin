@@ -153,9 +153,14 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
 
     this.objectURL = null;
 
-    // @todo - need to check the updating property of the source buffer
-    if (this.sourceBuffer) {
-      this.sourceBuffer.abort();
+    try {
+      // @todo - need to check the updating property of the source buffer
+      if (this.sourceBuffer) {
+        this.sourceBuffer.abort();
+      }
+    }
+    catch (error) {
+      // @todo - metric
     }
 
     // free the resource

@@ -136,7 +136,8 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
 
       switch (error.code) {
         case 4:
-        case 5: {
+        case 5:
+        case 'PLAYER_ERR_IOV': {
           break;
         }
         default: {
