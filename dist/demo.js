@@ -422,7 +422,7 @@ jquery__WEBPACK_IMPORTED_MODULE_2___default()(function () {
               console.error("connect failed", e), n({ event: "fail", reason: "connect failed" });
             }
           }try {
-            window.window.MQTTClient = new window.parent.Paho.Client(e.config.wsbroker, e.config.wsport, e.id);var a = -1;window.MQTTClient.onConnectionLost = function (e) {
+            window.MQTTClient = new window.parent.Paho.Client(e.config.wsbroker, e.config.wsport, e.id);var a = -1;window.MQTTClient.onConnectionLost = function (e) {
               n({ event: "fail", reason: "connection lost error code " + parseInt(e.errorCode) }), -1 === a && (a = setInterval(function () {
                 return i();
               }, 2e3));
@@ -23150,6 +23150,203 @@ module.exports = constant;
 
 /***/ }),
 
+/***/ "./node_modules/lodash/debounce.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/debounce.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js"),
+    now = __webpack_require__(/*! ./now */ "./node_modules/lodash/now.js"),
+    toNumber = __webpack_require__(/*! ./toNumber */ "./node_modules/lodash/toNumber.js");
+
+/** Error message constants. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max,
+    nativeMin = Math.min;
+
+/**
+ * Creates a debounced function that delays invoking `func` until after `wait`
+ * milliseconds have elapsed since the last time the debounced function was
+ * invoked. The debounced function comes with a `cancel` method to cancel
+ * delayed `func` invocations and a `flush` method to immediately invoke them.
+ * Provide `options` to indicate whether `func` should be invoked on the
+ * leading and/or trailing edge of the `wait` timeout. The `func` is invoked
+ * with the last arguments provided to the debounced function. Subsequent
+ * calls to the debounced function return the result of the last `func`
+ * invocation.
+ *
+ * **Note:** If `leading` and `trailing` options are `true`, `func` is
+ * invoked on the trailing edge of the timeout only if the debounced function
+ * is invoked more than once during the `wait` timeout.
+ *
+ * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
+ * until to the next tick, similar to `setTimeout` with a timeout of `0`.
+ *
+ * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
+ * for details over the differences between `_.debounce` and `_.throttle`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to debounce.
+ * @param {number} [wait=0] The number of milliseconds to delay.
+ * @param {Object} [options={}] The options object.
+ * @param {boolean} [options.leading=false]
+ *  Specify invoking on the leading edge of the timeout.
+ * @param {number} [options.maxWait]
+ *  The maximum time `func` is allowed to be delayed before it's invoked.
+ * @param {boolean} [options.trailing=true]
+ *  Specify invoking on the trailing edge of the timeout.
+ * @returns {Function} Returns the new debounced function.
+ * @example
+ *
+ * // Avoid costly calculations while the window size is in flux.
+ * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
+ *
+ * // Invoke `sendMail` when clicked, debouncing subsequent calls.
+ * jQuery(element).on('click', _.debounce(sendMail, 300, {
+ *   'leading': true,
+ *   'trailing': false
+ * }));
+ *
+ * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
+ * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
+ * var source = new EventSource('/stream');
+ * jQuery(source).on('message', debounced);
+ *
+ * // Cancel the trailing debounced invocation.
+ * jQuery(window).on('popstate', debounced.cancel);
+ */
+function debounce(func, wait, options) {
+  var lastArgs,
+      lastThis,
+      maxWait,
+      result,
+      timerId,
+      lastCallTime,
+      lastInvokeTime = 0,
+      leading = false,
+      maxing = false,
+      trailing = true;
+
+  if (typeof func != 'function') {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  wait = toNumber(wait) || 0;
+  if (isObject(options)) {
+    leading = !!options.leading;
+    maxing = 'maxWait' in options;
+    maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
+    trailing = 'trailing' in options ? !!options.trailing : trailing;
+  }
+
+  function invokeFunc(time) {
+    var args = lastArgs,
+        thisArg = lastThis;
+
+    lastArgs = lastThis = undefined;
+    lastInvokeTime = time;
+    result = func.apply(thisArg, args);
+    return result;
+  }
+
+  function leadingEdge(time) {
+    // Reset any `maxWait` timer.
+    lastInvokeTime = time;
+    // Start the timer for the trailing edge.
+    timerId = setTimeout(timerExpired, wait);
+    // Invoke the leading edge.
+    return leading ? invokeFunc(time) : result;
+  }
+
+  function remainingWait(time) {
+    var timeSinceLastCall = time - lastCallTime,
+        timeSinceLastInvoke = time - lastInvokeTime,
+        timeWaiting = wait - timeSinceLastCall;
+
+    return maxing ? nativeMin(timeWaiting, maxWait - timeSinceLastInvoke) : timeWaiting;
+  }
+
+  function shouldInvoke(time) {
+    var timeSinceLastCall = time - lastCallTime,
+        timeSinceLastInvoke = time - lastInvokeTime;
+
+    // Either this is the first call, activity has stopped and we're at the
+    // trailing edge, the system time has gone backwards and we're treating
+    // it as the trailing edge, or we've hit the `maxWait` limit.
+    return lastCallTime === undefined || timeSinceLastCall >= wait || timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= maxWait;
+  }
+
+  function timerExpired() {
+    var time = now();
+    if (shouldInvoke(time)) {
+      return trailingEdge(time);
+    }
+    // Restart the timer.
+    timerId = setTimeout(timerExpired, remainingWait(time));
+  }
+
+  function trailingEdge(time) {
+    timerId = undefined;
+
+    // Only invoke if we have `lastArgs` which means `func` has been
+    // debounced at least once.
+    if (trailing && lastArgs) {
+      return invokeFunc(time);
+    }
+    lastArgs = lastThis = undefined;
+    return result;
+  }
+
+  function cancel() {
+    if (timerId !== undefined) {
+      clearTimeout(timerId);
+    }
+    lastInvokeTime = 0;
+    lastArgs = lastCallTime = lastThis = timerId = undefined;
+  }
+
+  function flush() {
+    return timerId === undefined ? result : trailingEdge(now());
+  }
+
+  function debounced() {
+    var time = now(),
+        isInvoking = shouldInvoke(time);
+
+    lastArgs = arguments;
+    lastThis = this;
+    lastCallTime = time;
+
+    if (isInvoking) {
+      if (timerId === undefined) {
+        return leadingEdge(lastCallTime);
+      }
+      if (maxing) {
+        // Handle invocations in a tight loop.
+        timerId = setTimeout(timerExpired, wait);
+        return invokeFunc(lastCallTime);
+      }
+    }
+    if (timerId === undefined) {
+      timerId = setTimeout(timerExpired, wait);
+    }
+    return result;
+  }
+  debounced.cancel = cancel;
+  debounced.flush = flush;
+  return debounced;
+}
+
+module.exports = debounce;
+
+/***/ }),
+
 /***/ "./node_modules/lodash/defaults.js":
 /*!*****************************************!*\
   !*** ./node_modules/lodash/defaults.js ***!
@@ -23653,6 +23850,46 @@ module.exports = isObjectLike;
 
 /***/ }),
 
+/***/ "./node_modules/lodash/isSymbol.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/isSymbol.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var baseGetTag = __webpack_require__(/*! ./_baseGetTag */ "./node_modules/lodash/_baseGetTag.js"),
+    isObjectLike = __webpack_require__(/*! ./isObjectLike */ "./node_modules/lodash/isObjectLike.js");
+
+/** `Object#toString` result references. */
+var symbolTag = '[object Symbol]';
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+    return (typeof value === 'undefined' ? 'undefined' : _typeof(value)) == 'symbol' || isObjectLike(value) && baseGetTag(value) == symbolTag;
+}
+
+module.exports = isSymbol;
+
+/***/ }),
+
 /***/ "./node_modules/lodash/isTypedArray.js":
 /*!*********************************************!*\
   !*** ./node_modules/lodash/isTypedArray.js ***!
@@ -23759,6 +23996,39 @@ module.exports = noop;
 
 /***/ }),
 
+/***/ "./node_modules/lodash/now.js":
+/*!************************************!*\
+  !*** ./node_modules/lodash/now.js ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js");
+
+/**
+ * Gets the timestamp of the number of milliseconds that have elapsed since
+ * the Unix epoch (1 January 1970 00:00:00 UTC).
+ *
+ * @static
+ * @memberOf _
+ * @since 2.4.0
+ * @category Date
+ * @returns {number} Returns the timestamp.
+ * @example
+ *
+ * _.defer(function(stamp) {
+ *   console.log(_.now() - stamp);
+ * }, _.now());
+ * // => Logs the number of milliseconds it took for the deferred invocation.
+ */
+var now = function now() {
+  return root.Date.now();
+};
+
+module.exports = now;
+
+/***/ }),
+
 /***/ "./node_modules/lodash/stubFalse.js":
 /*!******************************************!*\
   !*** ./node_modules/lodash/stubFalse.js ***!
@@ -23784,6 +24054,80 @@ function stubFalse() {
 }
 
 module.exports = stubFalse;
+
+/***/ }),
+
+/***/ "./node_modules/lodash/toNumber.js":
+/*!*****************************************!*\
+  !*** ./node_modules/lodash/toNumber.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(/*! ./isObject */ "./node_modules/lodash/isObject.js"),
+    isSymbol = __webpack_require__(/*! ./isSymbol */ "./node_modules/lodash/isSymbol.js");
+
+/** Used as references for various `Number` constants. */
+var NAN = 0 / 0;
+
+/** Used to match leading and trailing whitespace. */
+var reTrim = /^\s+|\s+$/g;
+
+/** Used to detect bad signed hexadecimal string values. */
+var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+
+/** Used to detect binary string values. */
+var reIsBinary = /^0b[01]+$/i;
+
+/** Used to detect octal string values. */
+var reIsOctal = /^0o[0-7]+$/i;
+
+/** Built-in method references without a dependency on `root`. */
+var freeParseInt = parseInt;
+
+/**
+ * Converts `value` to a number.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {number} Returns the number.
+ * @example
+ *
+ * _.toNumber(3.2);
+ * // => 3.2
+ *
+ * _.toNumber(Number.MIN_VALUE);
+ * // => 5e-324
+ *
+ * _.toNumber(Infinity);
+ * // => Infinity
+ *
+ * _.toNumber('3.2');
+ * // => 3.2
+ */
+function toNumber(value) {
+  if (typeof value == 'number') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return NAN;
+  }
+  if (isObject(value)) {
+    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+    value = isObject(other) ? other + '' : other;
+  }
+  if (typeof value != 'string') {
+    return value === 0 ? value : +value;
+  }
+  value = value.replace(reTrim, '');
+  var isBinary = reIsBinary.test(value);
+  return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
+}
+
+module.exports = toNumber;
 
 /***/ }),
 
@@ -71722,7 +72066,7 @@ function extend() {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-7","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-8","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -72319,8 +72663,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
-/* harmony import */ var _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ~/mse/MediaSourceWrapper */ "./src/js/mse/MediaSourceWrapper.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lodash/debounce */ "./node_modules/lodash/debounce.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
+/* harmony import */ var _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ~/mse/MediaSourceWrapper */ "./src/js/mse/MediaSourceWrapper.js");
 
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -72336,6 +72682,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 
 
 
@@ -72385,6 +72732,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
     _this.initializeVideoElement();
 
     _this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
+      maxMoofWait: 30 * 1000,
       segmentIntervalSampleSize: 5,
       driftCorrectionConstant: 2,
       maxMediaSourceWrapperGenericErrorRestartCount: 50,
@@ -72404,6 +72752,18 @@ var IOVPlayer = function (_ListenerBaseClass) {
     _this.segmentIntervalAverage = null;
     _this.segmentInterval = null;
     _this.segmentIntervals = [];
+    _this.moofWaitReset = null;
+
+    if (_this.options.maxMoofWait) {
+      _this.moofWaitReset = lodash_debounce__WEBPACK_IMPORTED_MODULE_2___default()(function () {
+        _this.metric('iovPlayer.moofWaitExceeded', 1);
+
+        // When we stop receiving moofs, reinitializing the mediasource will not
+        // be enough - we have to kill the player completely, then re-subscribe
+        // via the conduit
+        _this.restart();
+      }, _this.options.maxMoofWait);
+    }
 
     _this.mediaSourceWrapper = null;
     _this.moov = null;
@@ -72495,7 +72855,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
                 }
 
                 this.mediaSourceWrapperGenericErrorRestartCount = 0;
-                this.mediaSourceWrapper = _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this.videoElement, {
+                this.mediaSourceWrapper = _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_4__["default"].factory(this.videoElement, {
                   enableMetrics: this.options.enableMetrics
                 });
                 this.mediaSourceWrapper.moov = this.moov;
@@ -72615,10 +72975,10 @@ var IOVPlayer = function (_ListenerBaseClass) {
                                 while (1) {
                                   switch (_context.prev = _context.next) {
                                     case 0:
-                                      // internal error, this has been observed to happen the tab
-                                      // in the browser where this video player lives is hidden
-                                      // then reselected. 'ex' is undefined the error is bug
-                                      // within the MSE C++ implementation in the browser.
+                                      // Can occur when the tab in the browser where this video player
+                                      // lives is hidden, then shown after about 10 seconds or more.
+                                      // Can occur when "The SourceBuffer is full, and cannot free space to append additional buffers."
+                                      // Can occur when "The HTMLMediaElement.error attribute is not null."
                                       _this3._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
 
                                       // @todo - can we just restart here instead of creating a new wrapper?
@@ -72738,11 +73098,6 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
       return reinitializeMseWrapper;
     }()
-
-    /**
-     * Restart the video without destroying the mediaSourceWrapper.
-     */
-
   }, {
     key: 'restart',
     value: function restart() {
@@ -72897,8 +73252,12 @@ var IOVPlayer = function (_ListenerBaseClass) {
                     _this5.trigger('videoReceived');
                     _this5.calculateSegmentIntervalMetrics();
 
-                    if (document.hidden) {
+                    if (document.hidden || _this5.destroyed) {
                       return;
+                    }
+
+                    if (_this5.options.maxMoofWait) {
+                      _this5.moofWaitReset();
                     }
 
                     _this5.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
@@ -72990,16 +73349,21 @@ var IOVPlayer = function (_ListenerBaseClass) {
       this.videoElement.src = '';
       this.videoElement = null;
 
+      if (this.moofWaitReset) {
+        this.moofWaitReset.cancel();
+        this.moofWaitReset = null;
+      }
+
       _get(IOVPlayer.prototype.__proto__ || Object.getPrototypeOf(IOVPlayer.prototype), 'destroy', this).call(this);
     }
   }]);
 
   return IOVPlayer;
-}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__["default"]);
+}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_3__["default"]);
 
 IOVPlayer.DEBUG_NAME = 'skyline:clsp:iov:player';
 IOVPlayer.EVENT_NAMES = ['metric', 'firstFrameShown', 'videoReceived', 'videoInfoReceived'];
-IOVPlayer.METRIC_TYPES = ['iovPlayer.video.currentTime', 'iovPlayer.video.drift', 'iovPlayer.video.driftCorrection', 'iovPlayer.video.segmentInterval', 'iovPlayer.video.segmentIntervalAverage', 'iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd', 'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount'];
+IOVPlayer.METRIC_TYPES = ['iovPlayer.moofWaitExceeded', 'iovPlayer.video.currentTime', 'iovPlayer.video.drift', 'iovPlayer.video.driftCorrection', 'iovPlayer.video.segmentInterval', 'iovPlayer.video.segmentIntervalAverage', 'iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd', 'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount'];
 /* harmony default export */ __webpack_exports__["default"] = (IOVPlayer);
 ;
 
@@ -73210,10 +73574,14 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
 
       this.objectURL = null;
 
-      // @todo - need to check the updating property of the source buffer
-      if (this.sourceBuffer) {
-        this.sourceBuffer.abort();
-      }
+      try {
+        // @todo - need to check the updating property of the source buffer
+        if (this.sourceBuffer) {
+          this.sourceBuffer.abort();
+        }
+      } catch (error) {}
+      // @todo - metric
+
 
       // free the resource
       // @todo - should we also set this.videoElement.src equal to an empty string here?
@@ -73296,14 +73664,16 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
+                this.debug('Destroying mediaSource...');
+
                 if (this.mediaSource) {
-                  _context3.next = 2;
+                  _context3.next = 3;
                   break;
                 }
 
                 return _context3.abrupt('return');
 
-              case 2:
+              case 3:
 
                 this.mediaSource.removeEventListener('sourceopen', this.eventListeners.sourceopen);
                 this.mediaSource.removeEventListener('sourceended', this.eventListeners.sourceended);
@@ -73340,17 +73710,17 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
                 // prior to removing the source buffers?
                 this.destroyVideoElementSrc();
 
-                _context3.next = 10;
+                _context3.next = 11;
                 return this.sourceBuffer.destroy();
 
-              case 10:
+              case 11:
 
                 this.metric('mediaSource.destroyed', 1);
 
                 this.sourceBuffer = null;
                 this.mediaSource = null;
 
-              case 13:
+              case 14:
               case 'end':
                 return _context3.stop();
             }
@@ -73366,53 +73736,33 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
     }()
   }, {
     key: 'destroy',
-    value: function () {
-      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                this.debug('destroySourceBuffer...');
+    value: function destroy() {
+      var _this2 = this;
 
-                if (!this.destroyed) {
-                  _context4.next = 3;
-                  break;
-                }
+      this.debug('destroySourceBuffer...');
 
-                return _context4.abrupt('return');
-
-              case 3:
-
-                this.destroyed = true;
-
-                this.debug('Destroying mediaSource...');
-
-                _context4.next = 7;
-                return this.destroyMediaSource();
-
-              case 7:
-
-                this.videoElement = null;
-
-                this.options = null;
-                this.eventListeners = null;
-
-                _get(MediaSourceWrapper.prototype.__proto__ || Object.getPrototypeOf(MediaSourceWrapper.prototype), 'destroy', this).call(this);
-
-              case 11:
-              case 'end':
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this);
-      }));
-
-      function destroy() {
-        return _ref4.apply(this, arguments);
+      if (this.destroyed) {
+        return;
       }
 
-      return destroy;
-    }()
+      // Note that destroy must be defined as synchronous, even though
+      // it performs asynchronous operations, to ensure that as soon
+      // as destroy is called, the destroy property is set to true.
+      // This is needed and time sensitive because multiple to calls
+      // to destroy are possible, and subsequent calls may occur before
+      // the destroyed property is set here if the destroy method is
+      // defined as asynchronous
+      this.destroyed = true;
+
+      return this.destroyMediaSource().then(function () {
+        _this2.videoElement = null;
+
+        _this2.options = null;
+        _this2.eventListeners = null;
+
+        _get(MediaSourceWrapper.prototype.__proto__ || Object.getPrototypeOf(MediaSourceWrapper.prototype), 'destroy', _this2).call(_this2);
+      });
+    }
   }]);
 
   return MediaSourceWrapper;
@@ -74028,6 +74378,7 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_3__["default"].getPlugin('plugin'
         switch (error.code) {
           case 4:
           case 5:
+          case 'PLAYER_ERR_IOV':
             {
               break;
             }
