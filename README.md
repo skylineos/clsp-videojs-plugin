@@ -180,3 +180,4 @@ See the LICENSE file at the root of this repository.
 * [https://github.com/videojs/videojs-contrib-hls](https://github.com/videojs/videojs-contrib-hls)
 * [https://github.com/video-dev/hls.js](https://github.com/video-dev/hls.js)
 * [https://developer.mozilla.org/en-US/docs/Web/API/Media_Source_Extensions_API](https://developer.mozilla.org/en-US/docs/Web/API/Media_Source_Extensions_API)
+* [https://developers.google.com/web/updates/2017/07/chrome-61-media-updates](https://developers.google.com/web/updates/2017/07/chrome-61-media-updates)

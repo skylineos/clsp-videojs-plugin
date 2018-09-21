@@ -110,7 +110,9 @@ export default function () {
           reason: 'connection lost error code ' + parseInt(message.errorCode)
         });
         if (Reconnect === -1) {
-          Reconnect = setInterval(() => connect(), 2000);
+          Reconnect = setInterval(() => {
+            connect();
+          }, 2000);
         }
       }
 

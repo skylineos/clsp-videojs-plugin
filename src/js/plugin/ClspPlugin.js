@@ -64,10 +64,12 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     this.debug = Debug('skyline:clsp:plugin:ClspPlugin');
     this.debug('constructing...');
 
+    const playerOptions = player.options();
+
     this.options = videojs.mergeOptions({
       ...this.constructor.getDefaultOptions(),
       ...defaults,
-      ...(player.options().clsp || {})
+      ...(playerOptions.clsp || {}),
     }, options);
 
     player.addClass('vjs-clsp');
@@ -79,6 +81,9 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     // Support for the videojs-errors library
     if (player.errors) {
       player.errors({
+        // @todo - make this configurable
+        // timeout: player.errors.options.timeout || 120 * 1000,
+        timeout: 120 * 1000,
         errors: {
           PLAYER_ERR_NOT_COMPAT: {
             type: 'PLAYER_ERR_NOT_COMPAT',
@@ -86,7 +91,6 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
             message: 'Chrome 52+ is required.',
           },
         },
-        timeout: 120 * 1000,
       });
     }
 
@@ -122,7 +126,7 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
     // This is currently needed for autoplay.
     player.on('ready', () => {
-      if (this.options.autoplay || player.getAttribute('autoplay') === 'true') {
+      if (playerOptions.autoplay || player.getAttribute('autoplay') === 'true') {
         // Even though the "ready" event has fired, it's not actually ready...
         setTimeout(() => {
           player.play();
@@ -179,6 +183,8 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
 
       mqttHandler.createIOV(player, {
         enableMetrics: this.options.enableMetrics,
+        defaultNonSslPort: this.options.defaultNonSslPort,
+        defaultSslPort: this.options.defaultSslPort,
       });
 
       // Any time a metric is received, let the caller know

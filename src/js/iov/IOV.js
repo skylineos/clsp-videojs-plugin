@@ -11,6 +11,9 @@ import IOVPlayer from './Player';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 
+const DEFAULT_NON_SSL_PORT = 9001;
+const DEFAULT_SSL_PORT = 443;
+
 /**
  * Internet of Video client. This module uses the MediaSource API to
  * deliver video content streamed through MQTT from distributed sources.
@@ -19,7 +22,7 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 //  @todo - should this be the videojs component?  it seems like the
 // mqttHandler does nothing, and that this could replace it
 export default class IOV {
-  static generateConfigFromUrl (url) {
+  static generateConfigFromUrl (url, options = {}) {
     if (!url) {
       throw new Error('No source was given to be parsed!');
     }
@@ -38,12 +41,12 @@ export default class IOV {
     if (url.substring(0, 5).toLowerCase() === 'clsps') {
       useSSL = true;
       parser.href = url.replace('clsps', 'https');
-      default_port = 443;
+      default_port = options.defaultSslPort || DEFAULT_SSL_PORT;
     }
     else if (url.substring(0, 4).toLowerCase() === 'clsp') {
       useSSL = false;
       parser.href = url.replace('clsp', 'http');
-      default_port = 9001;
+      default_port = options.defaultNonSslPort || DEFAULT_NON_SSL_PORT;
     }
     else {
       throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
@@ -88,7 +91,7 @@ export default class IOV {
       player,
       {
         ...config,
-        ...IOV.generateConfigFromUrl(url),
+        ...IOV.generateConfigFromUrl(url, options),
       },
       options
     );
@@ -109,6 +112,8 @@ export default class IOV {
       changeSourceMaxWait: 9750,
       statsInterval: 30000,
       enableMetrics: false,
+      defaultNonSslPort: DEFAULT_NON_SSL_PORT,
+      defaultSslPort: DEFAULT_SSL_PORT,
     });
 
     this.config = {
@@ -169,7 +174,7 @@ export default class IOV {
 
     let iovUpdated = false;
 
-    const clone = this.clone(IOV.generateConfigFromUrl(url), this.options);
+    const clone = this.clone(IOV.generateConfigFromUrl(url, this.options), this.options);
 
     clone.initialize();
 
@@ -259,17 +264,17 @@ export default class IOV {
       this.player.restart();
     }, false);
 
-    // the mse service will stop streaming to us if we don't send
-    // a message to iov/stats within 1 minute.
-    this._statsTimer = setInterval(() => {
-      this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / this.options.statsInterval;
-      this.statsMsg.byteCount = 0;
+    // // the mse service will stop streaming to us if we don't send
+    // // a message to iov/stats within 1 minute.
+    // this._statsTimer = setInterval(() => {
+    //   this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / this.options.statsInterval;
+    //   this.statsMsg.byteCount = 0;
 
-      // @todo - can we disable this?
-      this.conduit.publish('iov/stats', this.statsMsg);
+    //   // @todo - can we disable this?
+    //   this.conduit.publish('iov/stats', this.statsMsg);
 
-      this.debug('iov status', this.statsMsg);
-    }, this.options.statsInterval);
+    //   this.debug('iov status', this.statsMsg);
+    // }, this.options.statsInterval);
   }
 
   onFail (event) {

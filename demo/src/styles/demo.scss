@@ -27,6 +27,11 @@ html, body {
   display: none;
 }
 
+.vjs-poster {
+  background-origin: content-box;
+  padding: 2rem;
+}
+
 .page-header {
   display: flex;
   flex-shrink: 0;

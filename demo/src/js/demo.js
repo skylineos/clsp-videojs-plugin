@@ -88,6 +88,10 @@ function initializeWall () {
     }
 
     const player = window.videojs(cell, {
+      // autoplay: true,
+      muted: true,
+      preload: 'auto',
+      poster: 'skyline_logo.png',
       clsp: {
         enableMetrics: true,
       },
