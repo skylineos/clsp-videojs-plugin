@@ -7,6 +7,7 @@ import defaults from 'lodash/defaults';
 // Needed for crossbrowser iframe support
 import 'srcdoc-polyfill';
 
+import ListenerBaseClass from '~/utils/ListenerBaseClass';
 import IOVPlayer from './Player';
 
 const DEFAULT_NON_SSL_PORT = 9001;
@@ -19,8 +20,15 @@ const DEFAULT_SSL_PORT = 443;
 
 //  @todo - should this be the videojs component?  it seems like the
 // mqttHandler does nothing, and that this could replace it
-export default class IOV {
+export default class IOV extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:iov:iov';
+
+  static EVENT_NAMES = [
+    'onReadyCalledMultipleTimes',
+  ];
+
+  // @todo - implement some metrics
+  static METRIC_TYPES = [];
 
   static generateConfigFromUrl (url, options = {}) {
     if (!url) {
@@ -98,17 +106,16 @@ export default class IOV {
   }
 
   constructor (mqttConduitCollection, player, config, options) {
-    this.id = uuidv4();
+    const id = uuidv4();
 
-    const debugName = `${IOV.DEBUG_NAME}:${this.id}:main`;
+    super(`${IOV.DEBUG_NAME}:${id}:main`);
 
-    this.debug = Debug(debugName);
-    this.silly = Debug(`silly:${debugName}`);
+    this.id = id;
 
     this.debug('constructor');
 
     this.destroyed = false;
-    this.onReadyAlreadyCalled = false;
+    this.onReadyCalledMultipleTimes = false;
     this.playerInstance = player;
     this.videoElement = this.playerInstance.el();
 
@@ -235,12 +242,15 @@ export default class IOV {
       this.playerInstance.trigger('play', videoTag);
     }
 
-    if (this.onReadyAlreadyCalled) {
+    if (this.onReadyCalledMultipleTimes) {
       console.error('tried to use this player more than once...');
+
+      this.trigger('onReadyCalledMultipleTimes');
+
       return;
     }
 
-    this.onReadyAlreadyCalled = true;
+    this.onReadyCalledMultipleTimes = true;
 
     this.player.on('firstFrameShown', () => {
       // @todo - it doesn't seem like anything in this listener is necessary

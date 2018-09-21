@@ -40,14 +40,10 @@ export default class MqttHandler extends Component {
     this.debug(`detected tab visibility change.  tab is now ${hidden ? 'hidden' : 'visible'}`);
 
     if (hidden) {
-      this._oldIovPlayerInstance = this.iov.playerInstance;
-      this._oldIovOptions = this.iov.options;
-      this.iov.destroy();
+      this.destroyIOV();
     }
     else {
-      this.createIOV(this._oldIovPlayerInstance, this._oldIovOptions);
-      this._oldIovPlayerInstance = null;
-      this._oldIovOptions = null;
+      this.recreateIOV();
     }
   }
 
@@ -61,6 +57,13 @@ export default class MqttHandler extends Component {
       {},
       iovOptions,
     ));
+
+    // @todo - this is an imprecise fix.  I don't know why the player is
+    // receiving "onReady" multiple times...
+    this.iov.on('onReadyCalledMultipleTimes', () => {
+      this.destroyIOV();
+      this.recreateIOV();
+    });
 
     this.iov.initialize();
   }
@@ -78,6 +81,18 @@ export default class MqttHandler extends Component {
     }
 
     this.iov = iov;
+  }
+
+  destroyIOV () {
+    this._oldIovPlayerInstance = this.iov.playerInstance;
+    this._oldIovOptions = this.iov.options;
+    this.iov.destroy();
+  }
+
+  recreateIOV () {
+    this.createIOV(this._oldIovPlayerInstance, this._oldIovOptions);
+    this._oldIovPlayerInstance = null;
+    this._oldIovOptions = null;
   }
 
   destroy () {

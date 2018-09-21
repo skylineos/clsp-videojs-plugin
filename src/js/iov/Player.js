@@ -373,7 +373,14 @@ export default class IOVPlayer extends ListenerBaseClass {
           this.moofWaitReset();
         }
 
-        this.mediaSourceWrapper.sourceBuffer.append(moof);
+        // @todo - somehow, this can be called when either the
+        // mediaSourceWrapper or the sourceBuffer doesn't exist
+        try {
+          this.mediaSourceWrapper.sourceBuffer.append(moof);
+        }
+        catch (error) {
+          console.error(error);
+        }
       });
 
       this.iov.conduit.onResync(async () => {
