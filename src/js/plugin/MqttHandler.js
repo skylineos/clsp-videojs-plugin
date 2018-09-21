@@ -23,9 +23,35 @@ export default class MqttHandler extends Component {
     // top level namespace?  does it matter?
     this.iov = null;
     this.conduits = conduits;
+
+    // We must detect and then respond to chrome performing "background tab performance
+    // stuff", because it can cause instability with the video players over extended
+    // periods of time, such as 20 minutes.  When we detect that the tab has been put
+    // in the background (or any other performance stuff that chrome does that causes
+    // the video to be paused), we will immediately stop it to help prevent instability.
+    // It is possible that there is a more efficent or proper way to do this, but for
+    // now, this works.
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
-  createIOV (player, options) {
+  onVisibilityChange = () => {
+    const hidden = document.hidden;
+
+    this.debug(`detected tab visibility change.  tab is now ${hidden ? 'hidden' : 'visible'}`);
+
+    if (hidden) {
+      this._oldIovPlayerInstance = this.iov.playerInstance;
+      this._oldIovOptions = this.iov.options;
+      this.iov.destroy();
+    }
+    else {
+      this.createIOV(this._oldIovPlayerInstance, this._oldIovOptions);
+      this._oldIovPlayerInstance = null;
+      this._oldIovOptions = null;
+    }
+  }
+
+  createIOV (player, iovOptions) {
     this.debug('createIOV');
 
     this.updateIOV(IOV.fromUrl(
@@ -33,7 +59,7 @@ export default class MqttHandler extends Component {
       this.conduits,
       player,
       {},
-      options,
+      iovOptions,
     ));
 
     this.iov.initialize();
@@ -63,7 +89,12 @@ export default class MqttHandler extends Component {
 
     this.destroyed = true;
 
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+
+    this._oldIovPlayerInstance = null;
+    this._oldIovOptions = null;
     this.iov.destroy();
+    this.iov = null;
     // @todo - do we need to destroy conduits?
 
     this.dispose();
@@ -71,7 +102,6 @@ export default class MqttHandler extends Component {
     this.debug = null;
     this.tech_ = null;
     this.source_ = null;
-    this.iov = null;
     this.conduits = null;
   }
 };

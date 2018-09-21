@@ -67,7 +67,6 @@ export default class IOVPlayer extends ListenerBaseClass {
       enableMetrics: false,
     });
 
-    this.state = 'initializing';
     this.firstFrameShown = false;
 
     // Used for determining the size of the internal buffer hidden from the MSE
@@ -95,7 +94,6 @@ export default class IOVPlayer extends ListenerBaseClass {
 
     this.mediaSourceWrapper = null;
     this.moov = null;
-    this.guid = null;
     this.mimeCodec = null;
   }
 
@@ -159,28 +157,6 @@ export default class IOVPlayer extends ListenerBaseClass {
         }
       }
     });
-
-    // These events for play and pause are necessary to detect and then respond
-    // to chrome performing "background tab performance stuff", which can cause
-    // instability with the video players over extended periods of time.  When
-    // we detect that the tab has been put in the background (or any other performance
-    // stuff that chrome does that causes the video to be paused), we will immediately
-    // stop it to help prevent instability.  It is possible that there is a more
-    // efficent or proper way to do this, but for now, this works.
-    this.onBrowserPause = (event) => {
-      this._paused = true;
-      this.stop();
-    };
-
-    this.onBrowserPlay = (event) => {
-      if (this._paused) {
-        this._paused = false;
-        this.restart();
-      }
-    };
-
-    this.videoElement.addEventListener('pause', this.onBrowserPause);
-    this.videoElement.addEventListener('play', this.onBrowserPlay);
   }
 
   async reinitializeMseWrapper () {
@@ -198,8 +174,6 @@ export default class IOVPlayer extends ListenerBaseClass {
       this.mediaSourceWrapper.registerMimeCodec(this.mimeCodec);
     }
     catch (error) {
-      this.state = 'unsupported-mime-codec';
-
       const message = `Unsupported mime codec: ${this.mimeCodec}`;
 
       this.videoPlayer.errors.extend({
@@ -379,54 +353,61 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.mediaSourceWrapper.reinitializeVideoElementSrc();
   }
 
-  restart () {
-    this.debug('restart');
-
-    this.stop();
-    this.play();
-  }
-
   play (streamName) {
     this.debug('play');
 
-    // Tell the server we want to initialize this stream
-    this.iov.conduit.transaction(
-      `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
-      (...args) => this.onIovPlayTransaction(...args),
-      {
-        clientId: this.iov.config.clientId,
-        resp_topic: `${this.iov.config.clientId}'/response/'${parseInt(Math.random() * 1000000)}`,
-      },
-    );
+    this.iov.conduit.start(async (mimeCodec, moov) => {
+      // These are needed for reinitializeMseWrapper
+      this.mimeCodec = mimeCodec;
+      this.moov = moov;
+
+      this.iov.conduit.stream((moof) => {
+        this.trigger('videoReceived');
+        this.calculateSegmentIntervalMetrics();
+
+        if (document.hidden || this.destroyed) {
+          return;
+        }
+
+        if (this.options.maxMoofWait) {
+          this.moofWaitReset();
+        }
+
+        this.mediaSourceWrapper.sourceBuffer.append(moof);
+      });
+
+      this.iov.conduit.onResync(async () => {
+        this.debug('sync event received');
+
+        await this.reinitializeMseWrapper();
+      });
+
+      await this.reinitializeMseWrapper();
+    });
   }
 
   stop () {
     this.debug('stop');
 
-    const guid = this.guid;
-
     // When stopping the player, we will always need to re-request the stream's moov
     // if we want to start playing the stream again.  Discarding it here forces us to
     // re-request it later.
     this.moov = null;
-    this.guid = null;
     this.mimeCodec = null;
 
-    if (!guid) {
-      return;
+    try {
+      this.iov.conduit.stop();
     }
+    catch (error) {
+      console.error(error);
+    }
+  }
 
-    // Stop listening for moofs
-    this.iov.conduit.unsubscribe(`iov/video/${guid}/live`);
+  restart () {
+    this.debug('restart');
 
-    // Stop listening for resync events
-    this.iov.conduit.unsubscribe(`iov/video/${guid}/resync`);
-
-    // Tell the server we've stopped
-    this.iov.conduit.publish(
-      `iov/video/${guid}/stop`,
-      { clientId: this.iov.config.clientId }
-    );
+    this.stop();
+    this.play();
   }
 
   /**
@@ -473,81 +454,6 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.metric('iovPlayer.video.segmentIntervalAverage', this.segmentIntervalAverage);
   }
 
-  /**
-   * Before we can set up a listener for the moofs, we must first set up a few
-   * initialization listeners, one for the stream request, and one for the moov.
-   *
-   * This method is what is executed when we first request a stream.  This should only
-   * ever be executed once per stream request.  Once this is executed, it unregisters
-   * itself as a listener, and registers an init-segment listener, which also
-   * only runs once, then unregisters itself.  The init-segment payload is the
-   * moov.  Once we receive the moov, we can start listening for moofs.  The
-   * listener for moofs runs indefinitely, until it is commanded to stop.
-   *
-   * @param {Object}
-   *   The payload returned by the server.  This object contains the following properties:
-   *   `mimeCodec` - the mime type for the stream
-   *   `guid` - the unique id for this iov conduit connection
-   */
-  onIovPlayTransaction ({ mimeCodec, guid }) {
-    this.debug('onIovPlayTransaction');
-
-    this.guid = guid;
-    this.mimeCodec = mimeCodec;
-
-    const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
-
-    this.state = 'waiting-for-first-moov';
-
-    // Ask the server for the moov
-    this.iov.conduit.subscribe(initSegmentTopic, async ({ payloadBytes }) => {
-      this.debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
-      this.debug(`received moov of type "${typeof payloadBytes}" from server`);
-
-      this.moov = payloadBytes;
-      this.state = 'waiting-for-first-moof';
-
-      // Now that we have the moov, we no longer need to listen for it
-      this.iov.conduit.unsubscribe(initSegmentTopic);
-
-      // Listen for moofs
-      this.iov.conduit.subscribe(`iov/video/${this.guid}/live`, (mqtt_msg) => {
-        this.trigger('videoReceived');
-        this.calculateSegmentIntervalMetrics();
-
-        if (document.hidden || this.destroyed) {
-          return;
-        }
-
-        if (this.options.maxMoofWait) {
-          this.moofWaitReset();
-        }
-
-        this.mediaSourceWrapper.sourceBuffer.append(mqtt_msg.payloadBytes);
-      });
-
-      // When the server says we need to resync...
-      this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, async () => {
-        this.debug('sync event received');
-
-        await this.reinitializeMseWrapper();
-      });
-
-      // this.trigger('firstChunk');
-
-      await this.reinitializeMseWrapper();
-    });
-
-    // Tell the server we're ready to play
-    this.iov.conduit.publish(
-      `iov/video/${this.guid}/play`,
-      {
-        initSegmentTopic,
-        clientId: this.iov.config.clientId,
-      }
-    );
-  }
-
   destroy () {
     this.debug('destroying');
 
@@ -563,7 +469,6 @@ export default class IOVPlayer extends ListenerBaseClass {
     // probably not destroy the parent
     this.iov = null;
 
-    this.state = null;
     this.firstFrameShown = null;
 
     this.playerInstance = null;
@@ -578,12 +483,12 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.segmentInterval = null;
     this.segmentIntervals = null;
 
-    this.mediaSourceWrapper.destroy();
+    if (this.mediaSourceWrapper) {
+      this.mediaSourceWrapper.destroy();
+    }
+
     this.mediaSourceWrapper = null;
     this.mediaSourceWrapperGenericErrorRestartCount = null;
-
-    this.videoElement.removeEventListener('pause', this.onBrowserPause);
-    this.videoElement.removeEventListener('play', this.onBrowserPlay);
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,

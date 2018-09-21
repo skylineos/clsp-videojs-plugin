@@ -9,8 +9,6 @@ import 'srcdoc-polyfill';
 
 import IOVPlayer from './Player';
 
-const DEBUG_PREFIX = 'skyline:clsp:iov';
-
 const DEFAULT_NON_SSL_PORT = 9001;
 const DEFAULT_SSL_PORT = 443;
 
@@ -22,6 +20,8 @@ const DEFAULT_SSL_PORT = 443;
 //  @todo - should this be the videojs component?  it seems like the
 // mqttHandler does nothing, and that this could replace it
 export default class IOV {
+  static DEBUG_NAME = 'skyline:clsp:iov:iov';
+
   static generateConfigFromUrl (url, options = {}) {
     if (!url) {
       throw new Error('No source was given to be parsed!');
@@ -100,7 +100,11 @@ export default class IOV {
   constructor (mqttConduitCollection, player, config, options) {
     this.id = uuidv4();
 
-    this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
+    const debugName = `${IOV.DEBUG_NAME}:${this.id}:main`;
+
+    this.debug = Debug(debugName);
+    this.silly = Debug(`silly:${debugName}`);
+
     this.debug('constructor');
 
     this.destroyed = false;
@@ -137,6 +141,8 @@ export default class IOV {
   }
 
   initialize () {
+    this.debug('initializing...');
+
     this.conduit = this.mqttConduitCollection.addFromIov(this);
     this.player = IOVPlayer.factory(
       this,
@@ -150,7 +156,7 @@ export default class IOV {
   }
 
   clone (config, options) {
-    this.debug('clone');
+    this.debug('cloning...');
 
     const cloneConfig = {
       ...config,
@@ -223,10 +229,6 @@ export default class IOV {
 
     const videoTag = this.playerInstance.children()[0];
 
-    // this.playerInstance.on('play', () => {
-    //   console.log('playing....', this.player.id)
-    // });
-
     // @todo - there must be a better way to determine autoplay...
     if (videoTag.getAttribute('autoplay') !== null) {
       // playButton.trigger('click');
@@ -241,6 +243,8 @@ export default class IOV {
     this.onReadyAlreadyCalled = true;
 
     this.player.on('firstFrameShown', () => {
+      // @todo - it doesn't seem like anything in this listener is necessary
+      // @todo - need to figure out when to show it
       this.playerInstance.loadingSpinner.hide();
 
       videoTag.style.display = 'none';
@@ -263,18 +267,6 @@ export default class IOV {
     this.videoElement.addEventListener('mse-error-event', (e) => {
       this.player.restart();
     }, false);
-
-    // // the mse service will stop streaming to us if we don't send
-    // // a message to iov/stats within 1 minute.
-    // this._statsTimer = setInterval(() => {
-    //   this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / this.options.statsInterval;
-    //   this.statsMsg.byteCount = 0;
-
-    //   // @todo - can we disable this?
-    //   this.conduit.publish('iov/stats', this.statsMsg);
-
-    //   this.debug('iov status', this.statsMsg);
-    // }, this.options.statsInterval);
   }
 
   onFail (event) {
@@ -285,15 +277,25 @@ export default class IOV {
   }
 
   onData (event) {
-    this.debug('onData');
+    this.silly('onData');
 
-    this.conduit.inboundHandler(event.data);
+    const message = event.data;
+    const topic = message.destinationName;
+
+    try {
+      const handler = this.conduit.getTopicHandler(topic);
+
+      handler(message);
+    }
+    catch (error) {
+      console.error(error);
+    }
   }
 
   onMessage (event) {
     const eventType = event.data.event;
 
-    this.debug('onMessage', eventType);
+    this.silly('onMessage', eventType);
 
     switch (eventType) {
       case 'ready': {
@@ -314,8 +316,18 @@ export default class IOV {
     }
   }
 
+  destroyIovPlayer () {
+    this.debug('destroying iov player...');
+
+    this.player.destroy();
+    this.player = null;
+
+    this.conduit.destroy();
+    this.mqttConduitCollection.remove(this.id);
+  }
+
   destroy () {
-    this.debug('destroy');
+    this.debug('destroying...');
 
     if (this.destroyed) {
       return;
@@ -323,18 +335,10 @@ export default class IOV {
 
     this.destroyed = true;
 
-    clearInterval(this._statsTimer);
-
-    this.conduit.unsubscribe(`iov/video/${this.player.guid}/live`);
+    this.destroyIovPlayer();
 
     this.playerInstance.off('changesrc', this.onChangeSource);
-
-    this.player.destroy();
-
     this.playerInstance = null;
-    this.player = null;
-
-    this.mqttConduitCollection.remove(this.id);
 
     const iframe = document.getElementById(this.config.clientId);
     iframe.parentNode.removeChild(iframe);
