@@ -316,16 +316,6 @@ export default class IOV {
     }
   }
 
-  destroyIovPlayer () {
-    this.debug('destroying iov player...');
-
-    this.player.destroy();
-    this.player = null;
-
-    this.conduit.destroy();
-    this.mqttConduitCollection.remove(this.id);
-  }
-
   destroy () {
     this.debug('destroying...');
 
@@ -335,7 +325,11 @@ export default class IOV {
 
     this.destroyed = true;
 
-    this.destroyIovPlayer();
+    this.player.destroy();
+    this.player = null;
+
+    this.conduit.destroy();
+    this.mqttConduitCollection.remove(this.id);
 
     this.playerInstance.off('changesrc', this.onChangeSource);
     this.playerInstance = null;
