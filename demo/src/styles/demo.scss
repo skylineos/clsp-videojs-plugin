@@ -10,12 +10,13 @@ $icon-font-path: '~videojs-font/fonts';
 html, body {
   width: 100%;
   height: 100%;
-  border: 1px solid black;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
   overflow: auto;
+  border: 1px solid black;
+  background-color: black;
 }
 
 .video-js {
@@ -94,6 +95,9 @@ section {
 
   &.wall {
     .controls {
+      background-color: lightgray;
+      padding: 1rem;
+
       .wall-controls-container {
         & > div {
           margin: 20px;
@@ -128,8 +132,9 @@ section {
     }
 
     .wall-video-container {
-      border: 2px solid black;
+      border: 2px solid grey;
       width: 100%;
+      padding: 0.5rem;
 
       .video-stream {
         display: flex;

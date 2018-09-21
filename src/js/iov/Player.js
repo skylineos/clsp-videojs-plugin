@@ -55,6 +55,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.playerInstance = playerInstance;
     this.eid = this.playerInstance.el().firstChild.id;
     this.id = this.eid.replace('_html5_api', '');
+    this.videoId = `clsp-video-${this._id}`;
 
     this.initializeVideoElement();
 
@@ -110,8 +111,6 @@ export default class IOVPlayer extends ListenerBaseClass {
       throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
     }
 
-    const videoId = `clsp-video-${this._id}`;
-
     // when videojs initializes the video element (or something like that),
     // it creates events and listeners on that element that it uses, however
     // these events interfere with our ability to play clsp streams.  Cloning
@@ -119,7 +118,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     // all of the videojs events so that we are in control of the player.
     // this.videoElement = this.videoJsVideoElement.cloneNode();
     this.videoElement = this.videoJsVideoElement.cloneNode();
-    this.videoElement.setAttribute('id', videoId);
+    this.videoElement.setAttribute('id', this.videoId);
     this.videoElement.classList.add('clsp-video');
 
     this.videoElementParent = this.videoJsVideoElement.parentNode;
@@ -138,7 +137,7 @@ export default class IOVPlayer extends ListenerBaseClass {
             let video = videos[i];
             const id = video.getAttribute('id');
 
-            if (id !== this.eid && id !== videoId) {
+            if (id !== this.eid && id !== this.videoId) {
               // video.pause();
               // video.removeAttribute('src');
               // video.load();
@@ -160,6 +159,28 @@ export default class IOVPlayer extends ListenerBaseClass {
         }
       }
     });
+
+    // These events for play and pause are necessary to detect and then respond
+    // to chrome performing "background tab performance stuff", which can cause
+    // instability with the video players over extended periods of time.  When
+    // we detect that the tab has been put in the background (or any other performance
+    // stuff that chrome does that causes the video to be paused), we will immediately
+    // stop it to help prevent instability.  It is possible that there is a more
+    // efficent or proper way to do this, but for now, this works.
+    this.onBrowserPause = (event) => {
+      this._paused = true;
+      this.stop();
+    };
+
+    this.onBrowserPlay = (event) => {
+      if (this._paused) {
+        this._paused = false;
+        this.restart();
+      }
+    };
+
+    this.videoElement.addEventListener('pause', this.onBrowserPause);
+    this.videoElement.addEventListener('play', this.onBrowserPlay);
   }
 
   async reinitializeMseWrapper () {
@@ -560,6 +581,9 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.mediaSourceWrapper.destroy();
     this.mediaSourceWrapper = null;
     this.mediaSourceWrapperGenericErrorRestartCount = null;
+
+    this.videoElement.removeEventListener('pause', this.onBrowserPause);
+    this.videoElement.removeEventListener('play', this.onBrowserPlay);
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,
