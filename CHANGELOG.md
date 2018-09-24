@@ -11,6 +11,7 @@
 * implement workaround for videojs 7 autoplay issue
 * update to videojs 7 to improve memory management
 * fix tab visibility memory leaks
+* fix tab visibility browser freezing
 * improve memory management
 * implement destroy method for all classes
 * fix destroy logic
