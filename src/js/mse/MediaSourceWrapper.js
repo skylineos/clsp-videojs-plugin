@@ -10,7 +10,7 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:mse:MediaSourceWrapper';
 
   static EVENT_NAMES = [
-    'metric',
+    ...ListenerBaseClass.EVENT_NAMES,
     'sourceOpen',
     'sourceEnded',
     'error',
@@ -255,8 +255,6 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
   }
 
   destroy () {
-    this.debug('destroySourceBuffer...');
-
     if (this.destroyed) {
       return;
     }
@@ -269,6 +267,8 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     // the destroyed property is set here if the destroy method is
     // defined as asynchronous
     this.destroyed = true;
+
+    this.debug('destroySourceBuffer...');
 
     return this.destroyMediaSource().then(() => {
       this.videoElement = null;

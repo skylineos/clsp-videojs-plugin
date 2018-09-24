@@ -161,7 +161,16 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
             // @see - https://github.com/videojs/video.js/issues/4401
             player.error(null);
             player.errorDisplay.close();
-            player.tech(true).mqtt.iov.player.restart();
+
+            const iov = player.tech(true).mqtt.iov;
+
+            // @todo - investigate how this can be called when the iov has been destroyed
+            if (!iov || iov.destroyed || !iov.player) {
+              this.initializeIOV(player);
+            }
+            else {
+              iov.player.restart();
+            }
           }
         }
       }
@@ -175,25 +184,7 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     player.on('firstplay', (event) => {
       this.debug('on player firstplay');
 
-      const mqttHandler = player.tech(true).mqtt;
-
-      if (!mqttHandler) {
-        throw new Error(`VideoJS Player ${player.id()} does not have mqtt tech!`);
-      }
-
-      mqttHandler.createIOV(player, {
-        enableMetrics: this.options.enableMetrics,
-        defaultNonSslPort: this.options.defaultNonSslPort,
-        defaultSslPort: this.options.defaultSslPort,
-      });
-
-      // Any time a metric is received, let the caller know
-      mqttHandler.iov.player.on('metric', (metric) => {
-        // @see - https://docs.videojs.com/tutorial-plugins.html#events
-        // Note that I originally tried to trigger this event on the player
-        // rather than the tech, but that causes the video not to play...
-        this.metric(metric);
-      });
+      this.initializeIOV(player);
     });
 
     player.on('dispose', () => {
@@ -204,6 +195,28 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
       }
 
       mqttHandler.destroy();
+    });
+  }
+
+  initializeIOV (player) {
+    const mqttHandler = player.tech(true).mqtt;
+
+    if (!mqttHandler) {
+      throw new Error(`VideoJS Player ${player.id()} does not have mqtt tech!`);
+    }
+
+    mqttHandler.createIOV(player, {
+      enableMetrics: this.options.enableMetrics,
+      defaultNonSslPort: this.options.defaultNonSslPort,
+      defaultSslPort: this.options.defaultSslPort,
+    });
+
+    // Any time a metric is received, let the caller know
+    mqttHandler.iov.on('metric', (metric) => {
+      // @see - https://docs.videojs.com/tutorial-plugins.html#events
+      // Note that I originally tried to trigger this event on the player
+      // rather than the tech, but that causes the video not to play...
+      this.metric(metric);
     });
   }
 

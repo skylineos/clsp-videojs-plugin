@@ -24,7 +24,7 @@ export default class IOVPlayer extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:iov:player';
 
   static EVENT_NAMES = [
-    'metric',
+    ...ListenerBaseClass.EVENT_NAMES,
     'firstFrameShown',
     'videoReceived',
     'videoInfoReceived',
@@ -189,7 +189,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     }
 
     this.mediaSourceWrapper.on('metric', ({ type, value }) => {
-      this.trigger('metric', { type, value });
+      this.metric(type, value, true);
     });
 
     this.mediaSourceWrapper.on('sourceOpen', async () => {
@@ -203,21 +203,7 @@ export default class IOVPlayer extends ListenerBaseClass {
       // @todo - shouldn't sourceBuffer metrics come from the "parent"
       // mediaSourceWrapper?
       this.mediaSourceWrapper.sourceBuffer.on('metric', ({ type, value }) => {
-        this.trigger('metric', { type, value });
-      });
-
-      this.mediaSourceWrapper.sourceBuffer.on('appendStart', (moof) => {
-        this.silly('On Append Start...');
-
-        if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
-          this.debug(`Recording ${parseInt(moof.length)} bytes of data.`);
-
-          const mqtt_msg = new window.Paho.MQTT.Message(moof);
-          mqtt_msg.destinationName = this.LogSourceBufferTopic;
-          window.MQTTClient.send(mqtt_msg);
-        }
-
-        this.iov.statsMsg.byteCount += moof.length;
+        this.metric(type, value, true);
       });
 
       this.mediaSourceWrapper.sourceBuffer.on('appendFinish', (info) => {
@@ -462,13 +448,13 @@ export default class IOVPlayer extends ListenerBaseClass {
   }
 
   destroy () {
-    this.debug('destroying');
-
     if (this.destroyed) {
       return;
     }
 
     this.destroyed = true;
+
+    this.debug('destroying');
 
     this.stop();
 

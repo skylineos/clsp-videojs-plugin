@@ -5,7 +5,9 @@ import Debug from 'debug';
 export default class ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:utils:ListenerBaseClass';
 
-  static EVENT_NAMES = [];
+  static EVENT_NAMES = [
+    'metric',
+  ];
 
   static METRIC_TYPES = [];
 
@@ -48,18 +50,22 @@ export default class ListenerBaseClass {
     }
   }
 
-  metric (type, value) {
+  metric (type, value, skipValidTypeCheck = false) {
     if (!this.options || !this.options.enableMetrics) {
       return;
     }
 
-    if (!this.constructor.METRIC_TYPES.includes(type)) {
+    if (!skipValidTypeCheck && !this.constructor.METRIC_TYPES.includes(type)) {
       // @todo - should this throw?
       return;
     }
 
-    // @todo - decouple these metric types
+    // @todo - decouple these metric types - will that be possible with
+    // skipValidTypeCheck, since this base class won't know the originating
+    // metric instance?
     switch (type) {
+      case 'iovConduit.guid':
+      case 'iovConduit.mimeCodec':
       case 'iovPlayer.video.currentTime':
       case 'iovPlayer.video.drift':
       case 'iovPlayer.video.segmentInterval':

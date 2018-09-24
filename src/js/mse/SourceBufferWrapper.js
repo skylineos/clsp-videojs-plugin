@@ -8,7 +8,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:mse:SourceBufferWrapper';
 
   static EVENT_NAMES = [
-    'metric',
+    ...ListenerBaseClass.EVENT_NAMES,
     'appendStart',
     'appendFinish',
     'removeFinish',
@@ -380,6 +380,8 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
       }
 
       this.destroyed = true;
+
+      this.debug('destroying...');
 
       this.abort();
 

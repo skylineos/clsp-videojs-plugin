@@ -164,6 +164,7 @@ section {
       .video-metrics {
         display: flex;
         flex-direction: column;
+        background-color: white;
 
         .metric {
           display: flex;
@@ -173,7 +174,7 @@ section {
           }
 
           .value {
-            width: 5rem;
+            width: 10rem;
             overflow: hidden;
             flex-grow: 0;
             flex-shrink: 0;

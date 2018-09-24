@@ -69,14 +69,14 @@ export default class MqttConduitCollection {
     delete this._conduits[id];
   }
 
-  addFromIov (iov) {
+  addFromIov (iov, options) {
     this.debug('adding from iov...', iov);
 
-    const conduit = this.exists(iov.config.clientId)
-      ? this.getById(iov.config.clientId)
-      : Conduit.factory(iov);
+    const conduit = this.exists(iov.id)
+      ? this.getById(iov.id)
+      : Conduit.factory(iov, options);
 
-    return this.set(iov.config.clientId, conduit);
+    return this.set(iov.id, conduit);
   }
 
   destroy () {

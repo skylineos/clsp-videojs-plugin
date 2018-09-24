@@ -1,6 +1,5 @@
 'use strict';
 
-import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
 
@@ -24,6 +23,7 @@ export default class IOV extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:iov:iov';
 
   static EVENT_NAMES = [
+    ...ListenerBaseClass.EVENT_NAMES,
     'onReadyCalledMultipleTimes',
   ];
 
@@ -110,10 +110,9 @@ export default class IOV extends ListenerBaseClass {
 
     super(`${IOV.DEBUG_NAME}:${id}:main`);
 
-    this.id = id;
-
     this.debug('constructor');
 
+    this.id = id;
     this.destroyed = false;
     this.onReadyCalledMultipleTimes = false;
     this.playerInstance = player;
@@ -136,12 +135,7 @@ export default class IOV extends ListenerBaseClass {
       videoElementParent: config.videoElementParent || null,
     };
 
-    this.statsMsg = {
-      byteCount: 0,
-      inkbps: 0,
-      host: document.location.host,
-      clientId: this.config.clientId,
-    };
+    // console.log(`Creating IOV ${this.id} for ${config.streamName}`);
 
     // @todo - this needs to be a global service or something
     this.mqttConduitCollection = mqttConduitCollection;
@@ -150,14 +144,21 @@ export default class IOV extends ListenerBaseClass {
   initialize () {
     this.debug('initializing...');
 
-    this.conduit = this.mqttConduitCollection.addFromIov(this);
+    this.conduit = this.mqttConduitCollection.addFromIov(this, { enableMetrics: this.options.enableMetrics });
+
+    this.conduit.on('metric', ({ type, value }) => {
+      this.metric(type, value, true);
+    });
+
     this.player = IOVPlayer.factory(
       this,
       this.playerInstance,
-      {
-        enableMetrics: this.options.enableMetrics,
-      }
+      { enableMetrics: this.options.enableMetrics }
     );
+
+    this.player.on('metric', ({ type, value }) => {
+      this.metric(type, value, true);
+    });
 
     return this;
   }
@@ -245,6 +246,7 @@ export default class IOV extends ListenerBaseClass {
     if (this.onReadyCalledMultipleTimes) {
       console.error('tried to use this player more than once...');
 
+      console.log(this)
       this.trigger('onReadyCalledMultipleTimes');
 
       return;
@@ -303,6 +305,10 @@ export default class IOV extends ListenerBaseClass {
   }
 
   onMessage (event) {
+    if (this.destroyed) {
+      return;
+    }
+
     const eventType = event.data.event;
 
     this.silly('onMessage', eventType);
@@ -327,25 +333,24 @@ export default class IOV extends ListenerBaseClass {
   }
 
   destroy () {
-    this.debug('destroying...');
-
     if (this.destroyed) {
       return;
     }
 
     this.destroyed = true;
 
+    this.debug('destroying...');
+
+    // For whatever reason, the things must be destroyed in this order
     this.player.destroy();
     this.player = null;
 
-    this.conduit.destroy();
     this.mqttConduitCollection.remove(this.id);
+    this.conduit.destroy();
 
     this.playerInstance.off('changesrc', this.onChangeSource);
     this.playerInstance = null;
 
-    const iframe = document.getElementById(this.config.clientId);
-    iframe.parentNode.removeChild(iframe);
-    iframe.srcdoc = '';
+    super.destroy();
   }
 };

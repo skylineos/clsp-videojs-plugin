@@ -6,26 +6,37 @@
  * uses cross-document communication to route data to and from the iframe.
  */
 
-import Debug from 'debug';
+import defaults from 'lodash/defaults';
+
+import ListenerBaseClass from '~/utils/ListenerBaseClass';
 
 // We want the minified file so that we minimize the size of each iframe
 import iframeCode from '~root/dist/Router.min';
 
 // @todo - this needs to be an event listener
-export default class Conduit {
+export default class Conduit extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:iov:conduit';
 
-  static factory (iov) {
-    return new Conduit(iov);
+  static METRIC_TYPES = [
+    'iovConduit.guid',
+    'iovConduit.mimeCodec',
+  ];
+
+  static factory (iov, options = {}) {
+    return new Conduit(iov, options);
   }
 
-  constructor (iov) {
-    this.iov = iov;
-    this.clientId = iov.config.clientId;
-
-    this.debug = Debug(`${Conduit.DEBUG_NAME}:${this.clientId}`);
+  constructor (iov, options) {
+    super(`${Conduit.DEBUG_NAME}:${iov.id}`);
 
     this.debug('Constructing...');
+
+    this.iov = iov;
+    this.clientId = iov.id;
+
+    this.options = defaults({}, options, {
+      enableMetrics: false,
+    });
 
     this.destroyed = false;
     this.handlers = {};
@@ -52,7 +63,10 @@ export default class Conduit {
             window.iframeCode = ${iframeCode.toString()}();
           </script>
         </head>
-        <body onload="window.iframeCode.clspRouter();" onunload="window.iframeCode.onunload();">
+        <body
+          onload="window.iframeCode.clspRouter();"
+          onunload="window.iframeCode.onunload();"
+        >
           <div id="message"></div>
         </body>
       </html>
@@ -76,8 +90,14 @@ export default class Conduit {
     else {
       const interval = setInterval(() => {
         if (this.iov.videoElement.parentNode !== null) {
-          this.iov.videoElement.parentNode.appendChild(this.iframe);
-          this.iov.config.videoElementParent = this.iov.videoElement.parentNode;
+          try {
+            this.iov.videoElement.parentNode.appendChild(this.iframe);
+            this.iov.config.videoElementParent = this.iov.videoElement.parentNode;
+          }
+          catch (error) {
+            console.error(error);
+          }
+
           clearInterval(interval);
         }
       }, 1000);
@@ -95,7 +115,13 @@ export default class Conduit {
 
     const interval = setInterval(() => {
       if (this.iframe.contentWindow !== null) {
-        this.iframe.contentWindow.postMessage(message, '*');
+        try {
+          this.iframe.contentWindow.postMessage(message, '*');
+        }
+        catch (error) {
+          console.error(error);
+        }
+
         clearInterval(interval);
       }
     }, 1000);
@@ -170,6 +196,9 @@ export default class Conduit {
       // call user specified callback to handle response from remote process
       const response = JSON.parse(mqtt_resp.payloadString);
 
+      this.metric('iovConduit.guid', response.guid);
+      this.metric('iovConduit.mimeCodec', response.mimeCodec);
+
       this.debug('onIovPlayTransaction');
 
       this.guid = response.guid;
@@ -231,7 +260,8 @@ export default class Conduit {
     this.debug('stopping...');
 
     if (!this.guid) {
-      throw new Error('The Conduit must be started before it can stop.');
+      // throw new Error('The Conduit must be started before it can stop.');
+      return;
     }
 
     // Stop listening for moofs
@@ -271,11 +301,18 @@ export default class Conduit {
 
     this.debug('destroying...');
 
+    this.command({ method: 'destroy' });
+
     this.clearHandlers();
+
+    this.iframe.parentNode.removeChild(this.iframe);
+    this.iframe.srcdoc = '';
+    this.iframe = null;
 
     this.iov = null;
     this.clientId = null;
     this.handlers = null;
-    this.iframe = null;
+
+    super.destroy();
   }
 }

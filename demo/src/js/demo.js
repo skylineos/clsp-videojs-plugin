@@ -13,6 +13,7 @@ import 'videojs-errors';
 import packageJson from '~root/package.json';
 
 import ClspPlugin from '~/plugin/ClspPlugin';
+import Conduit from '~/iov/Conduit';
 import IOVPlayer from '~/iov/Player';
 import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
 import SourceBufferWrapper from '~/mse/SourceBufferWrapper';
@@ -58,6 +59,7 @@ function initializeWall () {
 
     const metricTypes = [
       ClspPlugin().METRIC_TYPES,
+      Conduit.METRIC_TYPES,
       IOVPlayer.METRIC_TYPES,
       MediaSourceWrapper.METRIC_TYPES,
       SourceBufferWrapper.METRIC_TYPES,
@@ -74,6 +76,7 @@ function initializeWall () {
         $metric.append($('<span/>', { class: 'value' }));
         $metric.append($('<span/>', {
           class: 'type',
+          title: text,
           text,
         }));
 
@@ -107,7 +110,9 @@ function initializeWall () {
     const $videoMetricContainer = $container.find('.video-metrics');
 
     tech.on('metric', (event, { metric }) => {
-      $videoMetricContainer.find(`.${metric.type.replace(new RegExp(/\./, 'g'), '-')} .value`).html(metric.value);
+      $videoMetricContainer.find(`.${metric.type.replace(new RegExp(/\./, 'g'), '-')} .value`)
+        .attr('title', metric.value)
+        .html(metric.value);
     });
   }
 

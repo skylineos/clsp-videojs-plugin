@@ -96,13 +96,13 @@ export default class MqttHandler extends Component {
   }
 
   destroy () {
-    this.debug('destroying...');
-
     if (this.destroyed) {
       return;
     }
 
     this.destroyed = true;
+
+    this.debug('destroying...');
 
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
 

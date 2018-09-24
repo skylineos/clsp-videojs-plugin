@@ -1,5 +1,12 @@
 'use strict';
 
+import pako from 'pako';
+
+// @todo - changes here are not applied when the dev server rebuilds!
+// changes you make to this file require you to restart the dev server
+
+// @see - http://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+
 // Note that this is the code that gets duplicated in each iframe.
 // Keep the contents of the exported function light and ES5 only.
 
@@ -7,108 +14,142 @@ export default function () {
   return {
     clspRouter: function clspRouter () {
       var iov = window.parent.videojs.getPlugin('clsp').conduits.getById(window.MqttClientId).iov;
+      var Reconnect = -1;
 
-      function send (m) {
-        // route message to parent which will in turn route to the correct
-        // player based on clientId.
-        m.clientId = iov.id;
+      function logError (message, error) {
+        console.warn('Error for ' + iov.id + ':');
+        console.warn(message);
 
-        window.parent.postMessage(m, '*');
+        if (error) {
+          console.error(error);
+        }
       }
 
-      function routeInbound (message) {
-        var pstring = '';
+      /**
+       * Send a message from this iframe to the main window, which will then delegate
+       * the task back down to this iframe.
+       */
+      function postMessage (message) {
+        try {
+          // route message to parent which will in turn route to the correct
+          // player based on clientId.
+          message.clientId = iov.id;
+
+          window.parent.postMessage(message, '*');
+        }
+        catch (error) {
+          logError('Error while executing "postMessage"...', error);
+        }
+      }
+
+      /**
+       * Send a message via this iframe's MQTTClient instance
+       */
+      function sendMessage (topic, message) {
+        try {
+          var mqtt_msg = new window.parent.Paho.Message(message);
+
+          mqtt_msg.destinationName = topic;
+
+          window.MQTTClient.send(mqtt_msg);
+        }
+        catch (error) {
+          logError('Error while sending mqtt message...', error);
+        }
+      }
+
+      function disconnect () {
+        if (window.MQTTClient) {
+          try {
+            window.MQTTClient.disconnect();
+          }
+          catch (error) {
+            logError('Error while trying to disconnect...', error);
+          }
+        }
+      }
+
+      function onMessageArrived (message) {
+        var payloadString = '';
 
         try {
-          pstring = message.payloadString;
+          // Note that simply accessing this payloadString property can
+          // have unintended consequences (such as causing streams to fail
+          // completely!), so be careful
+          payloadString = message.payloadString;
         }
-        catch (e) {
-          // bogus excepton?
+        catch (error) {
+          // @todo - bogus excepton?
+          // logError('Error while getting payloadString from message...', error);
         }
 
-        send({
+        postMessage({
           event: 'data',
           destinationName: message.destinationName,
-          payloadString: pstring,
+          payloadString: payloadString,
           payloadBytes: message.payloadBytes || null,
         });
       }
 
-      function eventHandler (evt) {
-        var m = evt.data;
-        // var clientId = evt.source.MqttClientId;
+      function onMessage (event) {
+        var message = event.data;
 
         try {
-          if (m.method === 'subscribe') {
-            window.MQTTClient.subscribe(m.topic);
-          }
-          else if (m.method === 'unsubscribe') {
-            window.MQTTClient.unsubscribe(m.topic);
-          }
-          else if (m.method === 'publish') {
-            var mqtt_payload = null;
-
-            try {
-              mqtt_payload = JSON.stringify(m.data);
+          switch (message.method) {
+            case 'destroy': {
+              console.log('destroying...')
+              disconnect();
+              break;
             }
-            catch (json_error) {
-              console.error('json stringify error: ' + m.data);
-              return;
+            case 'subscribe': {
+              window.MQTTClient.subscribe(message.topic);
+              break;
             }
+            case 'unsubscribe': {
+              window.MQTTClient.unsubscribe(message.topic);
+              break;
+            }
+            case 'publish': {
+              try {
+                sendMessage(message.topic, JSON.stringify(message.data));
+              }
+              catch (json_error) {
+                // @todo - this error is never truly handled - can it be handled?
+                // Other errors in this function end up posting a network failure
+                // message.  Should this do something similar?
+                logError('Unable to parse message data...');
+                logError(message.data);
+                return;
+              }
 
-            var mqtt_msg = new window.parent.Paho.Message(mqtt_payload);
-            mqtt_msg.destinationName = m.topic;
-            window.MQTTClient.send(mqtt_msg);
+              break;
+            }
+            default: {
+              logError('Unknown message method "' + message.method + '" received...');
+            }
           }
         }
-        catch (e) {
+        catch (error) {
+          logError('Unknown onMessage error...', error);
+
           // we are dead!
-          send({
+          postMessage({
             event: 'fail',
             reason: 'network failure',
           });
 
-          try {
-            window.MQTTClient.disconnect();
-          }
-          catch (e) {
-            console.error(e);
-          }
+          disconnect();
         }
       }
 
-      function AppReady () {
-        if (window.addEventListener) {
-          window.addEventListener('message', eventHandler, false);
+      function startTryingToReconnect () {
+        try {
+          disconnect();
         }
-        else if (window.attachEvent) {
-          window.attachEvent('onmessage', eventHandler);
-        }
-
-        send({
-          event: 'ready',
-        });
-
-        if (Reconnect !== -1) {
-          clearInterval(Reconnect);
-          Reconnect = -1;
+        catch (error) {
+          // if the connection hasn't been made yet, that's ok
         }
 
-      }
-
-      function AppFail (message) {
-        var e = 'Error code ' + parseInt(message.errorCode) + ': ' + message.errorMessage;
-        send({
-          event: 'fail',
-          reason: e,
-        });
-      }
-
-      function onConnectionLost (message) {
-        send({
-          event: 'fail',
-          reason: 'connection lost error code ' + parseInt(message.errorCode)
-        });
         if (Reconnect === -1) {
           Reconnect = setInterval(() => {
             connect();
@@ -116,19 +157,75 @@ export default function () {
         }
       }
 
+      function stopTryingToReconnect () {
+        if (Reconnect !== -1) {
+          clearInterval(Reconnect);
+          Reconnect = -1;
+        }
+      }
+
+      function onConnectSuccess () {
+        if (window.addEventListener) {
+          window.addEventListener('message', onMessage, false);
+        }
+        else if (window.attachEvent) {
+          window.attachEvent('onmessage', onMessage);
+        }
+
+        postMessage({
+          event: 'ready',
+        });
+
+        stopTryingToReconnect();
+      }
+
+      function onConnectFailure (message) {
+        var failureMessage = 'Failed to connect: Error code ' + parseInt(message.errorCode) + ': ' + message.errorMessage;
+
+        logError(failureMessage);
+
+        postMessage({
+          event: 'fail',
+          reason: failureMessage,
+        });
+
+        // @todo - should we try to reconnect here?
+        startTryingToReconnect();
+      }
+
+      function onConnectionLost (message) {
+        // We disconnected properly
+        if (message.errorCode === 0) {
+          return;
+        }
+
+        var failureMessage = 'Lost connection: Error code ' + parseInt(message.errorCode) + ': ' + message.errorMessage;
+
+        logError(failureMessage);
+
+        postMessage({
+          event: 'fail',
+          reason: failureMessage,
+        });
+
+        startTryingToReconnect();
+      }
+
       function connect () {
+        // last will message sent on disconnect
+        var willMessage = new window.parent.Paho.Message(JSON.stringify({
+          clientId: iov.id,
+        }));
+
+        willMessage.destinationName = 'iov/clientDisconnect';
+
         // setup connection options
         var options = {
           timeout: 120,
-          onSuccess: AppReady,
-          onFailure: AppFail,
+          onSuccess: onConnectSuccess,
+          onFailure: onConnectFailure,
+          willMessage: willMessage,
         };
-        // last will message sent on disconnect
-        var willmsg = new window.parent.Paho.Message(JSON.stringify({
-          clientId: iov.id,
-        }));
-        willmsg.destinationName = 'iov/clientDisconnect';
-        options.willMessage = willmsg;
 
         if (iov.config.useSSL === true) {
           options.useSSL = true;
@@ -136,49 +233,42 @@ export default function () {
 
         try {
           window.MQTTClient.connect(options);
-        } catch (e) {
-          console.error('connect failed', e);
-          send({
+        }
+        catch (error) {
+          logError('Unknown connection failure...', error);
+
+          postMessage({
             event: 'fail',
             reason: 'connect failed',
           });
         }
       }
 
-      try {
-        window.MQTTClient = new window.parent.Paho.Client(
-          iov.config.wsbroker,
-          iov.config.wsport,
-          iov.id,
-        );
+      function main () {
+        try {
+          window.MQTTClient = new window.parent.Paho.Client(
+            iov.config.wsbroker,
+            iov.config.wsport,
+            iov.id,
+          );
 
-        // Hold the id of the reconnect interval task
-        var Reconnect = -1;
+          window.MQTTClient.onConnectionLost = onConnectionLost;
+          window.MQTTClient.onMessageArrived = onMessageArrived;
 
-        window.MQTTClient.onConnectionLost = onConnectionLost;
-
-        // perhaps the busiest function in this module ;)
-        window.MQTTClient.onMessageArrived = function (message) {
-          try {
-            routeInbound(message);
-          }
-          catch (e) {
-            if (e) {
-              console.error(e);
-            }
-          }
-        };
-
-        connect();
+          connect();
+        }
+        catch (error) {
+          console.error('IFRAME error');
+          console.error(error);
+        }
       }
-      catch (error) {
-        console.error('IFRAME error');
-        console.error(error);
-      }
+
+      main();
     },
 
     onunload: function onunload () {
-      if (typeof window.MQTTClient !== 'undefined') {
+      console.log('iframe unloading...')
+      if (window.MQTTClient) {
         window.MQTTClient.disconnect();
       }
     },
