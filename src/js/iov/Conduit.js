@@ -153,14 +153,14 @@ export default class Conduit extends ListenerBaseClass {
   unsubscribe (topic) {
     this.debug(`unsubscribing from ${topic}...`);
 
-    if (topic in this.handlers) {
-      delete this.handlers[topic];
-    }
+    // if (topic in this.handlers) {
+    //   delete this.handlers[topic];
+    // }
 
-    this.command({
-      method: 'unsubscribe',
-      topic,
-    });
+    // this.command({
+    //   method: 'unsubscribe',
+    //   topic,
+    // });
   }
 
   publish (topic, data) {
@@ -286,13 +286,17 @@ export default class Conduit extends ListenerBaseClass {
     this.debug(`clearing ${registeredTopicCount} handlers...`);
 
     for (let i = 0; i < registeredTopicCount; i++) {
-      this.unsubscribe(this.handlers[registeredTopics[i]]);
+      const topic = registeredTopics[i];
+
+      this.unsubscribe(topic);
     }
 
     this.handlers = {};
   }
 
   destroy () {
+    console.log('destroy', this.constructor.name, this.destroyed);
+
     if (this.destroyed) {
       return;
     }
@@ -301,9 +305,15 @@ export default class Conduit extends ListenerBaseClass {
 
     this.debug('destroying...');
 
-    this.command({ method: 'destroy' });
-
     this.clearHandlers();
+
+    try {
+      this.command({ method: 'destroy' });
+    }
+    catch (error) {
+      console.error(error);
+      console.warn('Failed to issue "destroy" command to iframe.');
+    }
 
     this.iframe.parentNode.removeChild(this.iframe);
     this.iframe.srcdoc = '';

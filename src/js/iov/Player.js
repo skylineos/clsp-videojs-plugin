@@ -26,6 +26,9 @@ export default class IOVPlayer extends ListenerBaseClass {
     segmentIntervalSampleSize: 5,
     driftCorrectionConstant: 2,
     maxMediaSourceWrapperGenericErrorRestartCount: 50,
+    maxRetries: 20,
+    maxRetryInterval: 20 * 1000,
+    retryInterval: 0.5 * 1000,
   };
 
   static EVENT_NAMES = [
@@ -33,6 +36,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     'firstFrameShown',
     'videoReceived',
     'videoInfoReceived',
+    'maxRetriesExceeded',
   ];
 
   static METRIC_TYPES = [
@@ -69,6 +73,8 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.segmentInterval = null;
     this.segmentIntervals = [];
     this.moofWaitReset = null;
+    this.retryCount = 0;
+    this.resetRetryCount = null;
 
     if (this.options.maxMoofWait) {
       this.moofWaitReset = debounce(() => {
@@ -155,7 +161,22 @@ export default class IOVPlayer extends ListenerBaseClass {
     });
   }
 
-  async reinitializeMseWrapper () {
+  reinitializeMseWrapper = debounce(() => {
+    if (this.retryCount >= this.options.maxRetries) {
+      this.trigger('maxRetriesExceeded');
+      return;
+    }
+
+    this.retryCount++;
+
+    if (this.resetRetryCount) {
+      clearTimeout(this.resetRetryCount);
+    }
+
+    this.resetRetryCount = setTimeout(() => {
+      this.retryCount = 0;
+    }, this.options.maxRetryInterval);
+
     if (this.mediaSourceWrapper) {
       this.mediaSourceWrapper.destroy();
     }
@@ -286,7 +307,8 @@ export default class IOVPlayer extends ListenerBaseClass {
         this.debug('stream appears to be frozen - reinitializing...');
 
         // @todo - can we just restart here instead of creating a new wrapper?
-        await this.reinitializeMseWrapper();
+        // await this.reinitializeMseWrapper();
+        this.restart();
       });
 
       this.mediaSourceWrapper.sourceBuffer.on('error', (error) => {
@@ -318,6 +340,12 @@ export default class IOVPlayer extends ListenerBaseClass {
       this.stop();
     });
 
+    this.mediaSourceWrapper.on('sourceOpenFailure', () => {
+      this.debug('media source failed to become ready');
+
+      this.restart();
+    });
+
     this.mediaSourceWrapper.on('error', (error) => {
       this._onError(
         'mediaSource.generic',
@@ -326,14 +354,14 @@ export default class IOVPlayer extends ListenerBaseClass {
       );
     });
 
-    await this.mediaSourceWrapper.initializeMediaSource();
+    this.mediaSourceWrapper.initializeMediaSource().then(() => {
+      if (!this.mediaSourceWrapper.mediaSource || !this.videoElement) {
+        throw new Error('The video element or mediaSource is not ready!');
+      }
 
-    if (!this.mediaSourceWrapper.mediaSource || !this.videoElement) {
-      throw new Error('The video element or mediaSource is not ready!');
-    }
-
-    this.mediaSourceWrapper.reinitializeVideoElementSrc();
-  }
+      this.mediaSourceWrapper.reinitializeVideoElementSrc();
+    });
+  }, this.options.retryInterval, { leading: true });
 
   play (streamName) {
     this.debug('play');
@@ -358,6 +386,12 @@ export default class IOVPlayer extends ListenerBaseClass {
         // @todo - somehow, this can be called when either the
         // mediaSourceWrapper or the sourceBuffer doesn't exist
         try {
+          if (!this.mediaSourceWrapper || !this.mediaSourceWrapper.sourceBuffer) {
+            this.restart();
+
+            return;
+          }
+
           this.mediaSourceWrapper.sourceBuffer.append(moof);
         }
         catch (error) {
@@ -444,6 +478,8 @@ export default class IOVPlayer extends ListenerBaseClass {
   }
 
   destroy () {
+    console.log('destroy', this.constructor.name, this.destroyed);
+
     if (this.destroyed) {
       return;
     }
@@ -464,8 +500,11 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.videoJsVideoElement = null;
     this.videoElementParent = null;
 
-    this.LogSourceBuffer = null;
-    this.LogSourceBufferTopic = null;
+    if (this.resetRetryCount) {
+      clearTimeout(this.resetRetryCount);
+    }
+    this.resetRetryCount = null;
+    this.retryCount = null;
 
     this.latestSegmentReceived = null;
     this.segmentIntervalAverage = null;

@@ -139,6 +139,7 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
       const error = player.error();
 
       switch (error.code) {
+        case 0:
         case 4:
         case 5:
         case 'PLAYER_ERR_IOV': {
@@ -205,6 +206,19 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     this.metric(metric);
   };
 
+  onMqttHandlerError = () => {
+    const mqttHandler = this.player.tech(true).mqtt;
+
+    mqttHandler.destroy();
+
+    this.player.error({
+      code: 0,
+      type: 'INSUFFICIENT_RESOURCES',
+      headline: 'Insufficient Resources',
+      message: 'The current hardware cannot support the current number of playing streams.',
+    });
+  };
+
   initializeIOV (player) {
     const mqttHandler = player.tech(true).mqtt;
 
@@ -214,6 +228,9 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
 
     mqttHandler.off('metric', this.onMqttHandlerMetric);
     mqttHandler.on('metric', this.onMqttHandlerMetric);
+
+    mqttHandler.off('error', this.onMqttHandlerError);
+    mqttHandler.on('error', this.onMqttHandlerError);
 
     mqttHandler.createIOV(player, {
       enableMetrics: this.options.enableMetrics,

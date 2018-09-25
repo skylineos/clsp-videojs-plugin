@@ -11,6 +11,8 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
 
   static DEFAULT_OPTIONS = {
     duration: 10,
+    readyRetryInterval: 500,
+    readyRetryMax: 100,
   };
 
   static EVENT_NAMES = [
@@ -18,6 +20,7 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     'sourceOpen',
     'sourceEnded',
     'error',
+    'sourceOpenFailure',
   ];
 
   static METRIC_TYPES = [
@@ -50,27 +53,41 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     this.mediaSource = null;
     this.sourceBuffer = null;
     this.objectURL = null;
+    this.readyRetries = 0;
 
     // @todo - can probably use the on method here rather than having this
     // special property
     this.eventListeners = {
       sourceopen: () => {
-        // This can only be set when the media source is open.
-        // @todo - does this do memory management for us so we don't have
-        // to call remove on the buffer, which is expensive?  It seems
-        // like it...
-        this.mediaSource.duration = this.options.duration;
-
-        this.trigger('sourceOpen');
-
-        // We originally were having the moov appended by the iov player,
-        // but I think it is more proper to do it here, however, can we
-        // mandate that the moov exist prior to the sourceopen event? If
-        // so, then we should be strict about the moov needing to exist
-        // here, rather than checking for its existence.
-        if (this.moov) {
-          this.sourceBuffer.appendMoov(this.moov);
+        if (this.isReady()) {
+          this._onSourceOpen();
+          return;
         }
+
+        const interval = setInterval(() => {
+          if (this.destroyed) {
+            console.warn('Media source was destroyed before it was ready.');
+            clearInterval(interval);
+            // this.trigger('sourceOpenFailure');
+            return;
+          }
+
+          if (this.readyRetries >= this.options.readyRetryMax) {
+            console.warn('Media source failed to become ready.');
+            clearInterval(interval);
+            this.trigger('sourceOpenFailure');
+            return;
+          }
+
+          if (!this.isReady()) {
+            this.readyRetries++;
+            return;
+          }
+
+          this._onSourceOpen();
+
+          clearInterval(interval);
+        }, this.options.readyRetryInterval);
       },
       sourceended: () => {
         this.trigger('sourceEnded');
@@ -85,6 +102,25 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     super.onFirstMetricListenerRegistered();
 
     this.metric('mediaSource.instances', 1);
+  }
+
+  _onSourceOpen () {
+    // This can only be set when the media source is open.
+    // @todo - does this do memory management for us so we don't have
+    // to call remove on the buffer, which is expensive?  It seems
+    // like it...
+    this.mediaSource.duration = this.options.duration;
+
+    this.trigger('sourceOpen');
+
+    // We originally were having the moov appended by the iov player,
+    // but I think it is more proper to do it here, however, can we
+    // mandate that the moov exist prior to the sourceopen event? If
+    // so, then we should be strict about the moov needing to exist
+    // here, rather than checking for its existence.
+    if (this.moov) {
+      this.sourceBuffer.appendMoov(this.moov);
+    }
   }
 
   async initializeMediaSource (options = {}) {
@@ -209,11 +245,11 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
   }
 
   async destroyMediaSource () {
-    this.debug('Destroying mediaSource...');
-
-    if (!this.mediaSource) {
+    if (!this.mediaSource || this.destroyed) {
       return;
     }
+
+    this.debug('Destroying mediaSource...');
 
     this.mediaSource.removeEventListener('sourceopen', this.eventListeners.sourceopen);
     this.mediaSource.removeEventListener('sourceended', this.eventListeners.sourceended);
@@ -245,7 +281,11 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     }
 
     // @todo - should the sourceBuffer do this?
-    this.mediaSource.removeSourceBuffer(this.sourceBuffer.sourceBuffer);
+    // @todo - there should not be a scenario where this.sourceBuffer is
+    // not defined
+    if (this.sourceBuffer) {
+      this.mediaSource.removeSourceBuffer(this.sourceBuffer.sourceBuffer);
+    }
 
     // @todo - is this happening at the right time, or should it happen
     // prior to removing the source buffers?
@@ -260,6 +300,8 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
   }
 
   destroy () {
+    console.error('destroy', this.constructor.name, this.destroyed);
+
     if (this.destroyed) {
       return;
     }

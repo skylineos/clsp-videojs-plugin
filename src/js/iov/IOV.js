@@ -32,6 +32,8 @@ export default class IOV extends ListenerBaseClass {
   static EVENT_NAMES = [
     ...ListenerBaseClass.EVENT_NAMES,
     'onReadyCalledMultipleTimes',
+    'handlerError',
+    'criticalError',
   ];
 
   // @todo - implement some metrics
@@ -163,6 +165,10 @@ export default class IOV extends ListenerBaseClass {
 
     this.player.on('metric', ({ type, value }) => {
       this.metric(type, value, true);
+    });
+
+    this.player.on('maxRetriesExceeded', () => {
+      this.trigger('criticalError');
     });
 
     return this;
@@ -304,7 +310,7 @@ export default class IOV extends ListenerBaseClass {
       handler(message);
     }
     catch (error) {
-      console.error(error);
+      this.trigger('handlerError', error);
     }
   }
 
@@ -337,6 +343,8 @@ export default class IOV extends ListenerBaseClass {
   }
 
   destroy () {
+    console.log('destroy', this.constructor.name, this.destroyed);
+
     if (this.destroyed) {
       return;
     }

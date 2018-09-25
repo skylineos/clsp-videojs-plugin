@@ -85,6 +85,9 @@ export default class MqttConduitCollection {
     // @todo - should all conduits be destroyed?
     this._conduits = null;
 
+    this.debug = null;
+    this.silly = null;
+
     window.removeEventListener('message', this.onMessage);
   }
 }

@@ -103,6 +103,14 @@ export default class MqttHandler extends Component {
         // rather than the tech, but that causes the video not to play...
         this.metric(metric);
       });
+
+      this.iov.on('criticalError', (error) => {
+        console.error(error);
+
+        this.destroyIOV();
+
+        this.trigger('error');
+      });
     }
   }
 
@@ -119,6 +127,8 @@ export default class MqttHandler extends Component {
   }
 
   destroy () {
+    console.log('destroy', this.constructor.name, this.destroyed);
+
     if (this.destroyed) {
       return;
     }

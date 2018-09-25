@@ -57,7 +57,8 @@ export default class ListenerBaseClass {
     this.debug(`Registering Listener for ${name} event...`);
 
     if (!this.constructor.EVENT_NAMES.includes(name)) {
-      throw new Error(`"${name}" is not a valid event."`);
+      console.warn(`"${name}" is not a valid event."`);
+      return;
     }
 
     this.events[name].push(action);
