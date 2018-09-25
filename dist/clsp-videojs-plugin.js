@@ -86,6 +86,126 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./dist/Router.min.js":
+/*!****************************!*\
+  !*** ./dist/Router.min.js ***!
+  \****************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(module) {var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+!function (e, n) {
+  if ("object" == ( false ? undefined : _typeof(exports)) && "object" == ( false ? undefined : _typeof(module))) module.exports = n();else if (true) !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (n),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));else { var o, t; }
+}(window, function () {
+  return function (e) {
+    var n = {};function t(o) {
+      if (n[o]) return n[o].exports;var r = n[o] = { i: o, l: !1, exports: {} };return e[o].call(r.exports, r, r.exports, t), r.l = !0, r.exports;
+    }return t.m = e, t.c = n, t.d = function (e, n, o) {
+      t.o(e, n) || Object.defineProperty(e, n, { enumerable: !0, get: o });
+    }, t.r = function (e) {
+      "undefined" != typeof Symbol && Symbol.toStringTag && Object.defineProperty(e, Symbol.toStringTag, { value: "Module" }), Object.defineProperty(e, "__esModule", { value: !0 });
+    }, t.t = function (e, n) {
+      if (1 & n && (e = t(e)), 8 & n) return e;if (4 & n && "object" == (typeof e === "undefined" ? "undefined" : _typeof(e)) && e && e.__esModule) return e;var o = Object.create(null);if (t.r(o), Object.defineProperty(o, "default", { enumerable: !0, value: e }), 2 & n && "string" != typeof e) for (var r in e) {
+        t.d(o, r, function (n) {
+          return e[n];
+        }.bind(null, r));
+      }return o;
+    }, t.n = function (e) {
+      var n = e && e.__esModule ? function () {
+        return e.default;
+      } : function () {
+        return e;
+      };return t.d(n, "a", n), n;
+    }, t.o = function (e, n) {
+      return Object.prototype.hasOwnProperty.call(e, n);
+    }, t.p = "", t(t.s = 0);
+  }([function (e, n, t) {
+    e.exports = t(1);
+  }, function (e, n, t) {
+    "use strict";
+    t.r(n), n.default = function () {
+      return { clspRouter: function clspRouter() {
+          var e = window.parent.videojs.getPlugin("clsp").conduits.getById(window.MqttClientId).iov,
+              n = -1;function t(n, t) {
+            console.warn("Error for " + e.id + ":"), console.warn(n), t && console.error(t);
+          }function o(n) {
+            try {
+              n.clientId = e.id, window.parent.postMessage(n, "*");
+            } catch (e) {
+              t('Error while executing "postMessage"...', e);
+            }
+          }function r() {
+            if (window.MQTTClient) try {
+              window.MQTTClient.disconnect();
+            } catch (e) {
+              t("Error while trying to disconnect...", e);
+            }
+          }function i(e) {
+            var n = "";try {
+              n = e.payloadString;
+            } catch (e) {}o({ event: "data", destinationName: e.destinationName, payloadString: n, payloadBytes: e.payloadBytes || null });
+          }function a(e) {
+            var n = e.data;try {
+              switch (n.method) {case "destroy":
+                  r();break;case "subscribe":
+                  window.MQTTClient.subscribe(n.topic);break;case "unsubscribe":
+                  window.MQTTClient.unsubscribe(n.topic);break;case "publish":
+                  try {
+                    !function (e, n) {
+                      try {
+                        var o = new window.parent.Paho.Message(n);o.destinationName = e, window.MQTTClient.send(o);
+                      } catch (e) {
+                        t("Error while sending mqtt message...", e);
+                      }
+                    }(n.topic, JSON.stringify(n.data));
+                  } catch (e) {
+                    return t("Unable to parse message data..."), void t(n.data);
+                  }break;default:
+                  t('Unknown message method "' + n.method + '" received...');}
+            } catch (e) {
+              t("Unknown onMessage error...", e), o({ event: "fail", reason: "network failure" }), r();
+            }
+          }function c() {
+            try {
+              r();
+            } catch (e) {}-1 === n && (n = setInterval(function () {
+              l();
+            }, 2e3));
+          }function s() {
+            window.addEventListener ? window.addEventListener("message", a, !1) : window.attachEvent && window.attachEvent("onmessage", a), o({ event: "ready" }), -1 !== n && (clearInterval(n), n = -1);
+          }function d(e) {
+            var n = "Failed to connect: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
+          }function u(e) {
+            if (0 !== e.errorCode) {
+              var n = "Lost connection: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
+            }
+          }function l() {
+            var n = new window.parent.Paho.Message(JSON.stringify({ clientId: e.id }));n.destinationName = "iov/clientDisconnect";var r = { timeout: 120, onSuccess: s, onFailure: d, willMessage: n };!0 === e.config.useSSL && (r.useSSL = !0);try {
+              window.MQTTClient.connect(r);
+            } catch (e) {
+              t("Unknown connection failure...", e), o({ event: "fail", reason: "connect failed" });
+            }
+          }!function () {
+            try {
+              window.MQTTClient = new window.parent.Paho.Client(e.config.wsbroker, e.config.wsport, e.id), window.MQTTClient.onConnectionLost = u, window.MQTTClient.onMessageArrived = i, l();
+            } catch (e) {
+              console.error("IFRAME error"), console.error(e);
+            }
+          }();
+        }, onunload: function onunload() {
+          window.MQTTClient && window.MQTTClient.disconnect();
+        } };
+    };
+  }]);
+});
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/module.js */ "./node_modules/webpack/buildin/module.js")(module)))
+
+/***/ }),
+
 /***/ "./node_modules/debug/src/browser.js":
 /*!*******************************************!*\
   !*** ./node_modules/debug/src/browser.js ***!
@@ -5547,7 +5667,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-10","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-11","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -5593,7 +5713,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
-!(function webpackMissingModule() { var e = new Error("Cannot find module '~root/dist/Router.min'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
+/* harmony import */ var _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ~root/dist/Router.min */ "./dist/Router.min.js");
+/* harmony import */ var _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_root_dist_Router_min__WEBPACK_IMPORTED_MODULE_2__);
 
 
 /**
@@ -5677,7 +5798,7 @@ var Conduit = function (_ListenerBaseClass) {
       iframe.width = 0;
       iframe.height = 0;
 
-      iframe.srcdoc = '\n      <html>\n        <head>\n          <script type="text/javascript">\n            window.MqttClientId = "' + this.clientId + '";\n            window.iframeCode = ' + !(function webpackMissingModule() { var e = new Error("Cannot find module '~root/dist/Router.min'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()).toString() + '();\n          </script>\n        </head>\n        <body\n          onload="window.iframeCode.clspRouter();"\n          onunload="window.iframeCode.onunload();"\n        >\n          <div id="message"></div>\n        </body>\n      </html>\n    ';
+      iframe.srcdoc = '\n      <html>\n        <head>\n          <script type="text/javascript">\n            window.MqttClientId = "' + this.clientId + '";\n            window.iframeCode = ' + _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_2___default.a.toString() + '();\n          </script>\n        </head>\n        <body\n          onload="window.iframeCode.clspRouter();"\n          onunload="window.iframeCode.onunload();"\n        >\n          <div id="message"></div>\n        </body>\n      </html>\n    ';
 
       return iframe;
     }
