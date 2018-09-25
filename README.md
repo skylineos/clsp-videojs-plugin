@@ -32,6 +32,8 @@ Skyline SFS Appliance >= 4.5.4
 
 Currently, the only server application capable of streaming live video over CLSP is Skyline's own SFS Appliance.
 
+Note that by default, CLSP communicates via websockets (`wss` protocol) over ports `9001` for `clsp` and `443` for `clsps`.  Be sure that these protocols and ports are accessible.
+
 
 ## Development
 
