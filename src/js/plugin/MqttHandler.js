@@ -34,6 +34,13 @@ export default class MqttHandler extends Component {
     document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
+  metric (metric) {
+    // @todo
+    // if (this.options.enableMetrics) {
+    this.trigger('metric', { metric });
+    // }
+  }
+
   onVisibilityChange = () => {
     const hidden = document.hidden;
 
@@ -58,18 +65,14 @@ export default class MqttHandler extends Component {
       iovOptions,
     ));
 
-    // @todo - this is an imprecise fix.  I don't know why the player is
-    // receiving "onReady" multiple times...
-    this.iov.on('onReadyCalledMultipleTimes', () => {
-      this.destroyIOV();
-      this.recreateIOV();
-    });
-
     this.iov.initialize();
   }
 
   updateIOV (iov) {
     this.debug('updateIOV');
+
+    const updated = Boolean(this.iov);
+    let destroyed = false;
 
     if (this.iov) {
       // If the IOV is the same, do nothing
@@ -78,9 +81,29 @@ export default class MqttHandler extends Component {
       }
 
       this.iov.destroy();
+
+      destroyed = true;
     }
 
     this.iov = iov;
+
+    // If the existing IOV was destroyed, or if there was not an
+    // existing IOV that was updated, register new listeners
+    if (destroyed || !updated) {
+      // @todo - this is an imprecise fix.  I don't know why the player is
+      // receiving "onReady" multiple times...
+      this.iov.on('onReadyCalledMultipleTimes', () => {
+        this.destroyIOV();
+        this.recreateIOV();
+      });
+
+      this.iov.on('metric', (metric) => {
+        // @see - https://docs.videojs.com/tutorial-plugins.html#events
+        // Note that I originally tried to trigger this event on the player
+        // rather than the tech, but that causes the video not to play...
+        this.metric(metric);
+      });
+    }
   }
 
   destroyIOV () {

@@ -31,6 +31,8 @@ export default class IOVPlayer extends ListenerBaseClass {
   ];
 
   static METRIC_TYPES = [
+    'iovPlayer.instances',
+    'iovPlayer.clientId',
     'iovPlayer.moofWaitExceeded',
     'iovPlayer.video.currentTime',
     'iovPlayer.video.drift',
@@ -50,12 +52,10 @@ export default class IOVPlayer extends ListenerBaseClass {
 
     this.debug('constructor');
 
-    this._id = uuidv4();
     this.iov = iov;
     this.playerInstance = playerInstance;
     this.eid = this.playerInstance.el().firstChild.id;
-    this.id = this.eid.replace('_html5_api', '');
-    this.videoId = `clsp-video-${this._id}`;
+    this.videoId = `clsp-video-${this.iov.config.clientId}`;
 
     this.initializeVideoElement();
 
@@ -66,6 +66,9 @@ export default class IOVPlayer extends ListenerBaseClass {
       maxMediaSourceWrapperGenericErrorRestartCount: 50,
       enableMetrics: false,
     });
+
+    this.metric('iovPlayer.instances', 1);
+    this.metric('iovPlayer.clientId', this.iov.config.clientId);
 
     this.firstFrameShown = false;
 

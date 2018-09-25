@@ -19,6 +19,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
   ];
 
   static METRIC_TYPES = [
+    'sourceBuffer.instances',
     'sourceBuffer.created',
     'sourceBuffer.destroyed',
     'sourceBuffer.queue.added',
@@ -70,6 +71,8 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
       enableMetrics: false,
       minimumBufferIncrementSize: 0.5,
     });
+
+    this.metric('sourceBuffer.instances', 1);
 
     if (!this.options.bufferTruncateValue) {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);

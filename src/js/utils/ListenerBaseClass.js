@@ -21,6 +21,14 @@ export default class ListenerBaseClass {
     for (let i = 0; i < this.constructor.EVENT_NAMES.length; i++) {
       this.events[this.constructor.EVENT_NAMES[i]] = [];
     }
+
+    this.firstMetricListenerRegistered = false;
+  }
+
+  onFirstMetricListenerRegistered () {
+    this.debug('onFirstMetricListenerRegistered...');
+
+    this.firstMetricListenerRegistered = true;
   }
 
   on (name, action) {
@@ -31,6 +39,10 @@ export default class ListenerBaseClass {
     }
 
     this.events[name].push(action);
+
+    if (name === 'metric' && !this.firstMetricListenerRegistered) {
+      this.onFirstMetricListenerRegistered();
+    }
   }
 
   trigger (name, value) {
@@ -64,8 +76,11 @@ export default class ListenerBaseClass {
     // skipValidTypeCheck, since this base class won't know the originating
     // metric instance?
     switch (type) {
+      case 'iov.clientId':
+      case 'iovConduit.clientId':
       case 'iovConduit.guid':
       case 'iovConduit.mimeCodec':
+      case 'iovPlayer.clientId':
       case 'iovPlayer.video.currentTime':
       case 'iovPlayer.video.drift':
       case 'iovPlayer.video.segmentInterval':
@@ -93,9 +108,18 @@ export default class ListenerBaseClass {
   }
 
   destroy () {
-    this.metrics = null;
-    this.events = null;
-    this.debug = null;
-    this.silly = null;
+    this.firstMetricListenerRegistered = null;
+
+    // @todo - since so much of what is going on with this plugin is
+    // asynchronous and pub/sub, wait a full ten seconds before
+    // dereferencing these, in case there are a few outstanding
+    // events or method calls.
+    // There must be a more proper way to do this, but for now it works
+    setTimeout(() => {
+      this.metrics = null;
+      this.events = null;
+      this.debug = null;
+      this.silly = null;
+    }, 10000);
   }
 }

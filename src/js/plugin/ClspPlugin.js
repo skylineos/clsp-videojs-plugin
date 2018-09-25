@@ -198,6 +198,13 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     });
   }
 
+  onMqttHandlerMetric = (event, { metric }) => {
+    // @see - https://docs.videojs.com/tutorial-plugins.html#events
+    // Note that I originally tried to trigger this event on the player
+    // rather than the tech, but that causes the video not to play...
+    this.metric(metric);
+  };
+
   initializeIOV (player) {
     const mqttHandler = player.tech(true).mqtt;
 
@@ -205,18 +212,13 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
       throw new Error(`VideoJS Player ${player.id()} does not have mqtt tech!`);
     }
 
+    mqttHandler.off('metric', this.onMqttHandlerMetric);
+    mqttHandler.on('metric', this.onMqttHandlerMetric);
+
     mqttHandler.createIOV(player, {
       enableMetrics: this.options.enableMetrics,
       defaultNonSslPort: this.options.defaultNonSslPort,
       defaultSslPort: this.options.defaultSslPort,
-    });
-
-    // Any time a metric is received, let the caller know
-    mqttHandler.iov.on('metric', (metric) => {
-      // @see - https://docs.videojs.com/tutorial-plugins.html#events
-      // Note that I originally tried to trigger this event on the player
-      // rather than the tech, but that causes the video not to play...
-      this.metric(metric);
     });
   }
 
@@ -228,6 +230,10 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
 
   destroy () {
     this.debug('destroying...');
+
+    const mqttHandler = this.player.tech(true).mqtt;
+
+    mqttHandler.off('metric', this.onMqttHandlerMetric);
 
     this.debug = null;
   }

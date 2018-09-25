@@ -28,7 +28,10 @@ export default class IOV extends ListenerBaseClass {
   ];
 
   // @todo - implement some metrics
-  static METRIC_TYPES = [];
+  static METRIC_TYPES = [
+    'iov.instances',
+    'iov.clientId',
+  ];
 
   static generateConfigFromUrl (url, options = {}) {
     if (!url) {
@@ -135,10 +138,15 @@ export default class IOV extends ListenerBaseClass {
       videoElementParent: config.videoElementParent || null,
     };
 
-    // console.log(`Creating IOV ${this.id} for ${config.streamName}`);
-
     // @todo - this needs to be a global service or something
     this.mqttConduitCollection = mqttConduitCollection;
+  }
+
+  onFirstMetricListenerRegistered () {
+    super.onFirstMetricListenerRegistered();
+
+    this.metric('iov.instances', 1);
+    this.metric('iov.clientId', this.id);
   }
 
   initialize () {
@@ -246,7 +254,6 @@ export default class IOV extends ListenerBaseClass {
     if (this.onReadyCalledMultipleTimes) {
       console.error('tried to use this player more than once...');
 
-      console.log(this)
       this.trigger('onReadyCalledMultipleTimes');
 
       return;

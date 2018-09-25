@@ -7,12 +7,12 @@ import 'babel-polyfill';
 import $ from 'jquery';
 import videojs from 'video.js';
 import moment from 'moment';
-import compact from 'lodash/compact';
 import 'videojs-errors';
 
 import packageJson from '~root/package.json';
 
 import ClspPlugin from '~/plugin/ClspPlugin';
+import IOV from '~/iov/IOV';
 import Conduit from '~/iov/Conduit';
 import IOVPlayer from '~/iov/Player';
 import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
@@ -59,6 +59,7 @@ function initializeWall () {
 
     const metricTypes = [
       ClspPlugin().METRIC_TYPES,
+      IOV.METRIC_TYPES,
       Conduit.METRIC_TYPES,
       IOVPlayer.METRIC_TYPES,
       MediaSourceWrapper.METRIC_TYPES,

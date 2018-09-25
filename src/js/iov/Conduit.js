@@ -18,6 +18,8 @@ export default class Conduit extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:iov:conduit';
 
   static METRIC_TYPES = [
+    'iovConduit.instances',
+    'iovConduit.clientId',
     'iovConduit.guid',
     'iovConduit.mimeCodec',
   ];
@@ -42,6 +44,13 @@ export default class Conduit extends ListenerBaseClass {
     this.handlers = {};
     this.iframe = this.generateIframe();
     this.attachIframe();
+  }
+
+  onFirstMetricListenerRegistered () {
+    super.onFirstMetricListenerRegistered();
+
+    this.metric('iovConduit.instances', 1);
+    this.metric('iovConduit.clientId', this.clientId);
   }
 
   generateIframe () {

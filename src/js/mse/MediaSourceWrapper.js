@@ -17,6 +17,7 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
   ];
 
   static METRIC_TYPES = [
+    'mediaSource.instances',
     'mediaSource.created',
     'mediaSource.destroyed',
     'mediaSource.reinitialized',
@@ -48,6 +49,8 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
       duration: 10,
       enableMetrics: false,
     });
+
+    this.metric('mediaSource.instances', 1);
 
     this.eventListeners = {
       sourceopen: () => {
