@@ -97,7 +97,6 @@ export default function () {
         try {
           switch (message.method) {
             case 'destroy': {
-              console.log('destroying...')
               disconnect();
               break;
             }
@@ -267,7 +266,6 @@ export default function () {
     },
 
     onunload: function onunload () {
-      console.log('iframe unloading...')
       if (window.MQTTClient) {
         window.MQTTClient.disconnect();
       }
