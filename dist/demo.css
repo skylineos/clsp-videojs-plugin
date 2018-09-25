@@ -1567,12 +1567,13 @@ video::-webkit-media-text-track-display {
 html, body {
   width: 100%;
   height: 100%;
-  border: 1px solid black;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  overflow: auto; }
+  overflow: auto;
+  border: 1px solid black;
+  background-color: black; }
 
 .video-js {
   width: 100%; }
@@ -1580,6 +1581,10 @@ html, body {
 .tour,
 .headless {
   display: none; }
+
+.vjs-poster {
+  background-origin: content-box;
+  padding: 2rem; }
 
 .page-header {
   display: flex;
@@ -1621,10 +1626,13 @@ section {
   section > * {
     flex-shrink: 0;
     width: 100%; }
-  section.wall .controls .wall-controls-container > div {
-    margin: 20px; }
-  section.wall .controls .wall-controls-container #walltest {
-    padding: 20px; }
+  section.wall .controls {
+    background-color: lightgray;
+    padding: 1rem; }
+    section.wall .controls .wall-controls-container > div {
+      margin: 20px; }
+    section.wall .controls .wall-controls-container #walltest {
+      padding: 20px; }
   section.wall #videowall > table {
     width: 100%;
     display: flex; }
@@ -1638,8 +1646,9 @@ section {
           display: flex;
           overflow: hidden; }
   section.wall .wall-video-container {
-    border: 2px solid black;
-    width: 100%; }
+    border: 2px solid grey;
+    width: 100%;
+    padding: 0.5rem; }
     section.wall .wall-video-container .video-stream {
       display: flex;
       align-items: center;
@@ -1661,13 +1670,14 @@ section {
         border-radius: 50%; }
     section.wall .wall-video-container .video-metrics {
       display: flex;
-      flex-direction: column; }
+      flex-direction: column;
+      background-color: white; }
       section.wall .wall-video-container .video-metrics .metric {
         display: flex; }
         section.wall .wall-video-container .video-metrics .metric:nth-of-type(2n) {
           background: lightgrey; }
         section.wall .wall-video-container .video-metrics .metric .value {
-          width: 5rem;
+          width: 10rem;
           overflow: hidden;
           flex-grow: 0;
           flex-shrink: 0;
