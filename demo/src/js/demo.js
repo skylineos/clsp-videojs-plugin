@@ -21,12 +21,6 @@ import SourceBufferWrapper from '~/mse/SourceBufferWrapper';
 window.videojs = videojs;
 window.CLSP_DEMO_VERSION = packageJson.version;
 
-const defaultTourUrls = [
-  'clsp://172.28.12.247/testpattern',
-  'clsp://172.28.12.57:9001/FairfaxVideo0520',
-  'clsp://172.28.12.57:9001/40004',
-];
-
 const defaultWallUrls = [
   'clsp://172.28.12.248/testpattern',
   'clsp://172.28.12.247/testpattern',

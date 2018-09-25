@@ -1,7 +1,5 @@
 'use strict';
 
-import pako from 'pako';
-
 // @todo - changes here are not applied when the dev server rebuilds!
 // changes you make to this file require you to restart the dev server
 
