@@ -295,8 +295,6 @@ export default class Conduit extends ListenerBaseClass {
   }
 
   destroy () {
-    console.log('destroy', this.constructor.name, this.destroyed);
-
     if (this.destroyed) {
       return;
     }

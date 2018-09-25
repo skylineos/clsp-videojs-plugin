@@ -127,8 +127,6 @@ export default class MqttHandler extends Component {
   }
 
   destroy () {
-    console.log('destroy', this.constructor.name, this.destroyed);
-
     if (this.destroyed) {
       return;
     }

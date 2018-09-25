@@ -378,8 +378,6 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
   }
 
   destroy () {
-    console.log('destroy', this.constructor.name, this.destroyed);
-
     return new Promise((resolve, reject) => {
       if (this.destroyed) {
         return resolve();

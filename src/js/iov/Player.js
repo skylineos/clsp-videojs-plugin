@@ -1,5 +1,7 @@
 'use strict';
 
+// @todo - some of the debounces in here can lead to things occurring at
+// unexpected times.  Try to find a more proper solution
 import debounce from 'lodash/debounce';
 
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
@@ -26,9 +28,23 @@ export default class IOVPlayer extends ListenerBaseClass {
     segmentIntervalSampleSize: 5,
     driftCorrectionConstant: 2,
     maxMediaSourceWrapperGenericErrorRestartCount: 50,
-    maxRetries: 20,
-    maxRetryInterval: 20 * 1000,
-    retryInterval: 0.5 * 1000,
+    // The options below control the "insufficient resources"
+    // detection, which has the event name "maxMediaSourceRetriesExceeded".
+    // The relationship of all of them to one another
+    // is important, and using values other than the defaults is
+    // discouraged.  These values seemed to perform the best on
+    // moderate hardware, though individual results will vary.
+    // The intervals and delays reduce the seizure-inducing
+    // effect of the players flashing.  These values and their
+    // uses are great and all, but if they are not used in
+    // conjunction with a "global" event that resets the retry
+    // counters of all of the other video players, it is not
+    // very useful.
+    // These settings were tested against 32 "high quality" streams
+    maxMediaSourceRetries: 15,
+    maxMediaSourceRetryInterval: 15 * 1000,
+    mediaSourceRetryInterval: 0.5 * 1000,
+    restartDelay: 0.5 * 1000,
   };
 
   static EVENT_NAMES = [
@@ -36,7 +52,8 @@ export default class IOVPlayer extends ListenerBaseClass {
     'firstFrameShown',
     'videoReceived',
     'videoInfoReceived',
-    'maxRetriesExceeded',
+    'maxMediaSourceRetriesExceeded',
+    'noMimeCodec',
   ];
 
   static METRIC_TYPES = [
@@ -52,16 +69,15 @@ export default class IOVPlayer extends ListenerBaseClass {
     'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount',
   ];
 
-  static factory (iov, playerInstance, options = {}) {
-    return new IOVPlayer(iov, playerInstance, options);
+  static factory (iov, videoJsElementId, options = {}) {
+    return new IOVPlayer(iov, videoJsElementId, options);
   }
 
-  constructor (iov, playerInstance, options) {
+  constructor (iov, videoJsElementId, options) {
     super(IOVPlayer.DEBUG_NAME, options);
 
     this.iov = iov;
-    this.playerInstance = playerInstance;
-    this.eid = this.playerInstance.el().firstChild.id;
+    this.eid = videoJsElementId;
     this.videoId = `clsp-video-${this.iov.config.clientId}`;
 
     this.initializeVideoElement();
@@ -78,6 +94,10 @@ export default class IOVPlayer extends ListenerBaseClass {
 
     if (this.options.maxMoofWait) {
       this.moofWaitReset = debounce(() => {
+        if (this.destroyed) {
+          return;
+        }
+
         this.metric('iovPlayer.moofWaitExceeded', 1);
 
         // When we stop receiving moofs, reinitializing the mediasource will not
@@ -90,7 +110,16 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.mediaSourceWrapper = null;
     this.moov = null;
     this.mimeCodec = null;
+
+    // @todo - don't use a window event unless you really have to...
+    window.addEventListener('maxMediaSourceRetriesExceeded', this.onMaxMediaSourceRetriesExceeded);
   }
+
+  onMaxMediaSourceRetriesExceeded = () => {
+    // @todo - there is no need to do this for the instance that triggered the event
+    // perhaps send the eid, and compare it to this.eid
+    this.retryCount = 0;
+  };
 
   onFirstMetricListenerRegistered () {
     super.onFirstMetricListenerRegistered();
@@ -162,8 +191,13 @@ export default class IOVPlayer extends ListenerBaseClass {
   }
 
   reinitializeMseWrapper = debounce(() => {
-    if (this.retryCount >= this.options.maxRetries) {
-      this.trigger('maxRetriesExceeded');
+    if (this.destroyed) {
+      return;
+    }
+
+    if (this.retryCount >= this.options.maxMediaSourceRetries) {
+      this.trigger('maxMediaSourceRetriesExceeded');
+      window.dispatchEvent(new window.Event('maxMediaSourceRetriesExceeded'));
       return;
     }
 
@@ -175,35 +209,20 @@ export default class IOVPlayer extends ListenerBaseClass {
 
     this.resetRetryCount = setTimeout(() => {
       this.retryCount = 0;
-    }, this.options.maxRetryInterval);
+    }, this.options.maxMediaSourceRetryInterval);
 
     if (this.mediaSourceWrapper) {
       this.mediaSourceWrapper.destroy();
     }
 
     this.mediaSourceWrapperGenericErrorRestartCount = 0;
+
     this.mediaSourceWrapper = MediaSourceWrapper.factory(this.videoElement, {
       enableMetrics: this.options.enableMetrics,
     });
+
     this.mediaSourceWrapper.moov = this.moov;
-
-    try {
-      this.mediaSourceWrapper.registerMimeCodec(this.mimeCodec);
-    }
-    catch (error) {
-      const message = `Unsupported mime codec: ${this.mimeCodec}`;
-
-      this.videoPlayer.errors.extend({
-        PLAYER_ERR_IOV: {
-          headline: 'Error Playing Stream',
-          message,
-        },
-      });
-
-      this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
-
-      throw new Error(message);
-    }
+    this.mediaSourceWrapper.registerMimeCodec(this.mimeCodec);
 
     this.mediaSourceWrapper.on('metric', ({ type, value }) => {
       this.metric(type, value, true);
@@ -361,7 +380,7 @@ export default class IOVPlayer extends ListenerBaseClass {
 
       this.mediaSourceWrapper.reinitializeVideoElementSrc();
     });
-  }, this.options.retryInterval, { leading: true });
+  }, this.options.mediaSourceRetryInterval, { leading: true });
 
   play (streamName) {
     this.debug('play');
@@ -426,12 +445,16 @@ export default class IOVPlayer extends ListenerBaseClass {
     }
   }
 
-  restart () {
+  restart = debounce(() => {
+    if (this.destroyed) {
+      return;
+    }
+
     this.debug('restart');
 
     this.stop();
     this.play();
-  }
+  }, this.options.restartDelay, { leading: true });
 
   /**
    * To be run every time a moof is received.
@@ -478,8 +501,6 @@ export default class IOVPlayer extends ListenerBaseClass {
   }
 
   destroy () {
-    console.log('destroy', this.constructor.name, this.destroyed);
-
     if (this.destroyed) {
       return;
     }
@@ -490,13 +511,14 @@ export default class IOVPlayer extends ListenerBaseClass {
 
     this.stop();
 
+    window.removeEventListener('maxMediaSourceRetriesExceeded', this.onMaxMediaSourceRetriesExceeded);
+
     // Note you will need to destroy the iov yourself.  The child should
     // probably not destroy the parent
     this.iov = null;
 
     this.firstFrameShown = null;
 
-    this.playerInstance = null;
     this.videoJsVideoElement = null;
     this.videoElementParent = null;
 

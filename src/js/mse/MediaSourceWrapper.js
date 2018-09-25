@@ -300,8 +300,6 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
   }
 
   destroy () {
-    console.error('destroy', this.constructor.name, this.destroyed);
-
     if (this.destroyed) {
       return;
     }

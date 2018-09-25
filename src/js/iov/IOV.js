@@ -159,7 +159,7 @@ export default class IOV extends ListenerBaseClass {
 
     this.player = IOVPlayer.factory(
       this,
-      this.playerInstance,
+      this.playerInstance.el().firstChild.id,
       { enableMetrics: this.options.enableMetrics }
     );
 
@@ -167,7 +167,7 @@ export default class IOV extends ListenerBaseClass {
       this.metric(type, value, true);
     });
 
-    this.player.on('maxRetriesExceeded', () => {
+    this.player.on('maxMediaSourceRetriesExceeded', () => {
       this.trigger('criticalError');
     });
 
@@ -343,8 +343,6 @@ export default class IOV extends ListenerBaseClass {
   }
 
   destroy () {
-    console.log('destroy', this.constructor.name, this.destroyed);
-
     if (this.destroyed) {
       return;
     }
