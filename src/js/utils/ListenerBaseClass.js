@@ -1,9 +1,15 @@
 'use strict';
 
 import Debug from 'debug';
+import defaults from 'lodash/defaults';
 
 export default class ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:utils:ListenerBaseClass';
+
+  static DEFAULT_OPTIONS = {
+    enableMetrics: false,
+    destroyWait: 60 * 1000,
+  };
 
   static EVENT_NAMES = [
     'metric',
@@ -11,9 +17,13 @@ export default class ListenerBaseClass {
 
   static METRIC_TYPES = [];
 
-  constructor (debugName) {
+  constructor (debugName, options) {
     this.debug = Debug(debugName);
     this.silly = Debug(`silly:${debugName}`);
+
+    this.debug('Constructing...');
+
+    this.options = defaults({}, options, this.constructor.DEFAULT_OPTIONS);
 
     this.metrics = {};
     this.events = {};
@@ -23,8 +33,20 @@ export default class ListenerBaseClass {
     }
 
     this.firstMetricListenerRegistered = false;
+    this.destroyed = false;
   }
 
+  /**
+   * There are some cases where metrics need to be captured at the
+   * time of instantiation.  However, at that time, the metric event
+   * listener has not been registered.  Override this method, being
+   * sure to call super, to perform metrics that are meant to set at
+   * the time of instantiation.
+   *
+   * @todo - this is not a proper solution.  If there are multiple
+   * metric event listeners, only the first one will ever recieve
+   * the constructor metrics.  Find a better way to do this.
+   */
   onFirstMetricListenerRegistered () {
     this.debug('onFirstMetricListenerRegistered...');
 
@@ -107,6 +129,12 @@ export default class ListenerBaseClass {
     });
   }
 
+  /**
+   * Destroy the instance by dereferencing all of its instance properties.
+   * Note that this will wait to dereference things that affect event
+   * listeners, in case there are some that are still being cleaned up.
+   * Also note that it is up to the caller to set `destroyed` to false.
+   */
   destroy () {
     this.firstMetricListenerRegistered = null;
 
@@ -120,6 +148,7 @@ export default class ListenerBaseClass {
       this.events = null;
       this.debug = null;
       this.silly = null;
-    }, 10000);
+      this.options = null;
+    }, this.options.destroyWait);
   }
 }

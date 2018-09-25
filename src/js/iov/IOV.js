@@ -22,6 +22,13 @@ const DEFAULT_SSL_PORT = 443;
 export default class IOV extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:iov:iov';
 
+  static DEFAULT_OPTIONS = {
+    changeSourceMaxWait: 9750,
+    statsInterval: 30000,
+    defaultNonSslPort: DEFAULT_NON_SSL_PORT,
+    defaultSslPort: DEFAULT_SSL_PORT,
+  };
+
   static EVENT_NAMES = [
     ...ListenerBaseClass.EVENT_NAMES,
     'onReadyCalledMultipleTimes',
@@ -111,23 +118,13 @@ export default class IOV extends ListenerBaseClass {
   constructor (mqttConduitCollection, player, config, options) {
     const id = uuidv4();
 
-    super(`${IOV.DEBUG_NAME}:${id}:main`);
-
-    this.debug('constructor');
+    super(`${IOV.DEBUG_NAME}:${id}:main`, options);
 
     this.id = id;
     this.destroyed = false;
     this.onReadyCalledMultipleTimes = false;
     this.playerInstance = player;
     this.videoElement = this.playerInstance.el();
-
-    this.options = defaults({}, options, {
-      changeSourceMaxWait: 9750,
-      statsInterval: 30000,
-      enableMetrics: false,
-      defaultNonSslPort: DEFAULT_NON_SSL_PORT,
-      defaultSslPort: DEFAULT_SSL_PORT,
-    });
 
     this.config = {
       clientId: this.id,

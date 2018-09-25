@@ -6,8 +6,6 @@
  * uses cross-document communication to route data to and from the iframe.
  */
 
-import defaults from 'lodash/defaults';
-
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
 
 // We want the minified file so that we minimize the size of each iframe
@@ -29,18 +27,11 @@ export default class Conduit extends ListenerBaseClass {
   }
 
   constructor (iov, options) {
-    super(`${Conduit.DEBUG_NAME}:${iov.id}`);
-
-    this.debug('Constructing...');
+    super(`${Conduit.DEBUG_NAME}:${iov.id}`, options);
 
     this.iov = iov;
     this.clientId = iov.id;
 
-    this.options = defaults({}, options, {
-      enableMetrics: false,
-    });
-
-    this.destroyed = false;
     this.handlers = {};
     this.iframe = this.generateIframe();
     this.attachIframe();

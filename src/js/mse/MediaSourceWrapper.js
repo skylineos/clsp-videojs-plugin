@@ -9,6 +9,10 @@ import SourceBufferWrapper from './SourceBufferWrapper';
 export default class MediaSourceWrapper extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:mse:MediaSourceWrapper';
 
+  static DEFAULT_OPTIONS = {
+    duration: 10,
+  };
+
   static EVENT_NAMES = [
     ...ListenerBaseClass.EVENT_NAMES,
     'sourceOpen',
@@ -35,23 +39,20 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
   }
 
   constructor (videoElement, options = {}) {
-    super(MediaSourceWrapper.DEBUG_NAME);
-
-    this.debug('Constructing...');
-
     if (!videoElement) {
       throw new Error('videoElement is required to construct an MediaSourceWrapper.');
     }
 
+    super(MediaSourceWrapper.DEBUG_NAME, options);
+
     this.videoElement = videoElement;
 
-    this.options = defaults({}, options, {
-      duration: 10,
-      enableMetrics: false,
-    });
+    this.mediaSource = null;
+    this.sourceBuffer = null;
+    this.objectURL = null;
 
-    this.metric('mediaSource.instances', 1);
-
+    // @todo - can probably use the on method here rather than having this
+    // special property
     this.eventListeners = {
       sourceopen: () => {
         // This can only be set when the media source is open.
@@ -78,11 +79,12 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
         this.trigger('error', error);
       },
     };
+  }
 
-    this.destroyed = false;
-    this.mediaSource = null;
-    this.sourceBuffer = null;
-    this.objectURL = null;
+  onFirstMetricListenerRegistered () {
+    super.onFirstMetricListenerRegistered();
+
+    this.metric('mediaSource.instances', 1);
   }
 
   async initializeMediaSource (options = {}) {
@@ -276,7 +278,6 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
     return this.destroyMediaSource().then(() => {
       this.videoElement = null;
 
-      this.options = null;
       this.eventListeners = null;
 
       super.destroy();

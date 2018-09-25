@@ -1,7 +1,5 @@
 'use strict';
 
-import uuidv4 from 'uuid/v4';
-import defaults from 'lodash/defaults';
 import debounce from 'lodash/debounce';
 
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
@@ -22,6 +20,13 @@ import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
 */
 export default class IOVPlayer extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:iov:player';
+
+  static DEFAULT_OPTIONS = {
+    maxMoofWait: 30 * 1000,
+    segmentIntervalSampleSize: 5,
+    driftCorrectionConstant: 2,
+    maxMediaSourceWrapperGenericErrorRestartCount: 50,
+  };
 
   static EVENT_NAMES = [
     ...ListenerBaseClass.EVENT_NAMES,
@@ -48,9 +53,7 @@ export default class IOVPlayer extends ListenerBaseClass {
   }
 
   constructor (iov, playerInstance, options) {
-    super(IOVPlayer.DEBUG_NAME);
-
-    this.debug('constructor');
+    super(IOVPlayer.DEBUG_NAME, options);
 
     this.iov = iov;
     this.playerInstance = playerInstance;
@@ -59,24 +62,7 @@ export default class IOVPlayer extends ListenerBaseClass {
 
     this.initializeVideoElement();
 
-    this.options = defaults({}, options, {
-      maxMoofWait: 30 * 1000,
-      segmentIntervalSampleSize: 5,
-      driftCorrectionConstant: 2,
-      maxMediaSourceWrapperGenericErrorRestartCount: 50,
-      enableMetrics: false,
-    });
-
-    this.metric('iovPlayer.instances', 1);
-    this.metric('iovPlayer.clientId', this.iov.config.clientId);
-
     this.firstFrameShown = false;
-
-    // Used for determining the size of the internal buffer hidden from the MSE
-    // api by recording the size and time of each chunk of video upon buffer append
-    // and recording the time when the updateend event is called.
-    this.LogSourceBuffer = false;
-    this.LogSourceBufferTopic = null;
 
     this.latestSegmentReceived = null;
     this.segmentIntervalAverage = null;
@@ -98,6 +84,13 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.mediaSourceWrapper = null;
     this.moov = null;
     this.mimeCodec = null;
+  }
+
+  onFirstMetricListenerRegistered () {
+    super.onFirstMetricListenerRegistered();
+
+    this.metric('iovPlayer.instances', 1);
+    this.metric('iovPlayer.clientId', this.iov.config.clientId);
   }
 
   _onError (type, message, error) {

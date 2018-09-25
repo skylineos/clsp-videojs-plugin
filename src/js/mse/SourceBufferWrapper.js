@@ -7,6 +7,17 @@ import ListenerBaseClass from '~/utils/ListenerBaseClass';
 export default class SourceBufferWrapper extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:mse:SourceBufferWrapper';
 
+  static DEFAULT_OPTIONS = {
+    // These default buffer value provide the best results in my testing.
+    // It keeps the memory usage as low as is practical, and rarely causes
+    // the video to stutter
+    bufferSizeLimit: 90 + Math.floor(Math.random() * (200)),
+    bufferTruncateFactor: 2,
+    bufferTruncateValue: null,
+    driftThreshold: 2000,
+    minimumBufferIncrementSize: 0.5,
+  };
+
   static EVENT_NAMES = [
     ...ListenerBaseClass.EVENT_NAMES,
     'appendStart',
@@ -56,23 +67,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
   }
 
   constructor (mediaSource, options) {
-    super(SourceBufferWrapper.DEBUG_NAME);
-
-    this.debug('initializeSourceBuffer...');
-
-    this.options = defaults({}, options, {
-      // These default buffer value provide the best results in my testing.
-      // It keeps the memory usage as low as is practical, and rarely causes
-      // the video to stutter
-      bufferSizeLimit: 90 + Math.floor(Math.random() * (200)),
-      bufferTruncateFactor: 2,
-      bufferTruncateValue: null,
-      driftThreshold: 2000,
-      enableMetrics: false,
-      minimumBufferIncrementSize: 0.5,
-    });
-
-    this.metric('sourceBuffer.instances', 1);
+    super(SourceBufferWrapper.DEBUG_NAME, options);
 
     if (!this.options.bufferTruncateValue) {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
@@ -84,8 +79,13 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
     this.sourceBuffer = this.mediaSource.mediaSource.addSourceBuffer(this.mediaSource.mimeCodec);
     this.sourceBuffer.mode = 'sequence';
 
-    this.metric('sourceBuffer.created', 1);
+    this.segmentQueue = [];
+    this.sequenceNumber = 0;
+    this.timeBuffered = null;
+    this.previousTimeEnd = null;
 
+    // @todo - can probably use the on method here rather than having this
+    // special property
     this.eventListeners = {
       onUpdateEnd: () => {
         this.onUpdateEnd();
@@ -116,12 +116,12 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
     // Supported Events
     this.sourceBuffer.addEventListener('updateend', this.eventListeners.onUpdateEnd);
     this.sourceBuffer.addEventListener('error', this.eventListeners.onError);
+  }
 
-    this.destroyed = false;
-    this.segmentQueue = [];
-    this.sequenceNumber = 0;
-    this.timeBuffered = null;
-    this.previousTimeEnd = null;
+  onFirstMetricListenerRegistered () {
+    super.onFirstMetricListenerRegistered();
+
+    this.metric('sourceBuffer.created', 1);
   }
 
   isReady () {
@@ -167,7 +167,8 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
       return;
     }
 
-    if (!this.mediaSource.isReady()) {
+    // I have come across the mediaSource not existing...
+    if (!this.mediaSource || !this.mediaSource.isReady()) {
       this.debug('The mediaSource is not ready');
       this.metric('sourceBuffer.queue.mediaSourceNotReady', 1);
       this.metric('sourceBuffer.queue.cannotProcessNext', 1);
@@ -401,7 +402,6 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
       this.previousTimeEnd = null;
       this.segmentQueue = null;
 
-      this.options = null;
       this.eventListeners = null;
 
       this.mediaSource = null;
