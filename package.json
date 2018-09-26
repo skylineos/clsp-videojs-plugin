@@ -1,6 +1,6 @@
 {
   "name": "clsp-videojs-plugin",
-  "version": "0.14.0-12",
+  "version": "0.14.0-13",
   "description": "Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ",
   "main": "dist/clsp-videojs-plugin.js",
   "generator-videojs-plugin": {
