@@ -353,126 +353,6 @@ jquery__WEBPACK_IMPORTED_MODULE_2___default()(function () {
 
 /***/ }),
 
-/***/ "./dist/Router.min.js":
-/*!****************************!*\
-  !*** ./dist/Router.min.js ***!
-  \****************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(module) {var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-!function (e, n) {
-  if ("object" == ( false ? undefined : _typeof(exports)) && "object" == ( false ? undefined : _typeof(module))) module.exports = n();else if (true) !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (n),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));else { var o, t; }
-}(window, function () {
-  return function (e) {
-    var n = {};function t(o) {
-      if (n[o]) return n[o].exports;var r = n[o] = { i: o, l: !1, exports: {} };return e[o].call(r.exports, r, r.exports, t), r.l = !0, r.exports;
-    }return t.m = e, t.c = n, t.d = function (e, n, o) {
-      t.o(e, n) || Object.defineProperty(e, n, { enumerable: !0, get: o });
-    }, t.r = function (e) {
-      "undefined" != typeof Symbol && Symbol.toStringTag && Object.defineProperty(e, Symbol.toStringTag, { value: "Module" }), Object.defineProperty(e, "__esModule", { value: !0 });
-    }, t.t = function (e, n) {
-      if (1 & n && (e = t(e)), 8 & n) return e;if (4 & n && "object" == (typeof e === "undefined" ? "undefined" : _typeof(e)) && e && e.__esModule) return e;var o = Object.create(null);if (t.r(o), Object.defineProperty(o, "default", { enumerable: !0, value: e }), 2 & n && "string" != typeof e) for (var r in e) {
-        t.d(o, r, function (n) {
-          return e[n];
-        }.bind(null, r));
-      }return o;
-    }, t.n = function (e) {
-      var n = e && e.__esModule ? function () {
-        return e.default;
-      } : function () {
-        return e;
-      };return t.d(n, "a", n), n;
-    }, t.o = function (e, n) {
-      return Object.prototype.hasOwnProperty.call(e, n);
-    }, t.p = "", t(t.s = 0);
-  }([function (e, n, t) {
-    e.exports = t(1);
-  }, function (e, n, t) {
-    "use strict";
-    t.r(n), n.default = function () {
-      return { clspRouter: function clspRouter() {
-          var e = window.parent.videojs.getPlugin("clsp").conduits.getById(window.MqttClientId).iov,
-              n = -1;function t(n, t) {
-            console.warn("Error for " + e.id + ":"), console.warn(n), t && console.error(t);
-          }function o(n) {
-            try {
-              n.clientId = e.id, window.parent.postMessage(n, "*");
-            } catch (e) {
-              t('Error while executing "postMessage"...', e);
-            }
-          }function r() {
-            if (window.MQTTClient) try {
-              window.MQTTClient.disconnect();
-            } catch (e) {
-              t("Error while trying to disconnect...", e);
-            }
-          }function i(e) {
-            var n = "";try {
-              n = e.payloadString;
-            } catch (e) {}o({ event: "data", destinationName: e.destinationName, payloadString: n, payloadBytes: e.payloadBytes || null });
-          }function a(e) {
-            var n = e.data;try {
-              switch (n.method) {case "destroy":
-                  r();break;case "subscribe":
-                  window.MQTTClient.subscribe(n.topic);break;case "unsubscribe":
-                  window.MQTTClient.unsubscribe(n.topic);break;case "publish":
-                  try {
-                    !function (e, n) {
-                      try {
-                        var o = new window.parent.Paho.Message(n);o.destinationName = e, window.MQTTClient.send(o);
-                      } catch (e) {
-                        t("Error while sending mqtt message...", e);
-                      }
-                    }(n.topic, JSON.stringify(n.data));
-                  } catch (e) {
-                    return t("Unable to parse message data..."), void t(n.data);
-                  }break;default:
-                  t('Unknown message method "' + n.method + '" received...');}
-            } catch (e) {
-              t("Unknown onMessage error...", e), o({ event: "fail", reason: "network failure" }), r();
-            }
-          }function c() {
-            try {
-              r();
-            } catch (e) {}-1 === n && (n = setInterval(function () {
-              l();
-            }, 2e3));
-          }function s() {
-            window.addEventListener ? window.addEventListener("message", a, !1) : window.attachEvent && window.attachEvent("onmessage", a), o({ event: "ready" }), -1 !== n && (clearInterval(n), n = -1);
-          }function d(e) {
-            var n = "Failed to connect: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
-          }function u(e) {
-            if (0 !== e.errorCode) {
-              var n = "Lost connection: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
-            }
-          }function l() {
-            var n = new window.parent.Paho.Message(JSON.stringify({ clientId: e.id }));n.destinationName = "iov/clientDisconnect";var r = { timeout: 120, onSuccess: s, onFailure: d, willMessage: n };!0 === e.config.useSSL && (r.useSSL = !0);try {
-              window.MQTTClient.connect(r);
-            } catch (e) {
-              t("Unknown connection failure...", e), o({ event: "fail", reason: "connect failed" });
-            }
-          }!function () {
-            try {
-              window.MQTTClient = new window.parent.Paho.Client(e.config.wsbroker, e.config.wsport, e.id), window.MQTTClient.onConnectionLost = u, window.MQTTClient.onMessageArrived = i, l();
-            } catch (e) {
-              console.error("IFRAME error"), console.error(e);
-            }
-          }();
-        }, onunload: function onunload() {
-          window.MQTTClient && window.MQTTClient.disconnect();
-        } };
-    };
-  }]);
-});
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/module.js */ "./node_modules/webpack/buildin/module.js")(module)))
-
-/***/ }),
-
 /***/ "./node_modules/aes-decrypter/dist/aes-decrypter.es.js":
 /*!*************************************************************!*\
   !*** ./node_modules/aes-decrypter/dist/aes-decrypter.es.js ***!
@@ -54918,7 +54798,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var aes_decrypter__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! aes-decrypter */ "./node_modules/aes-decrypter/dist/aes-decrypter.es.js");
 var _typeof2=typeof Symbol==="function"&&typeof Symbol.iterator==="symbol"?function(obj){return typeof obj;}:function(obj){return obj&&typeof Symbol==="function"&&obj.constructor===Symbol&&obj!==Symbol.prototype?"symbol":typeof obj;};/**
  * @license
- * Video.js 7.2.2 <http://videojs.com/>
+ * Video.js 7.2.3 <http://videojs.com/>
  * Copyright Brightcove, Inc. <https://www.brightcove.com/>
  * Available under Apache License Version 2.0
  * <https://github.com/videojs/video.js/blob/master/LICENSE>
@@ -54926,7 +54806,7 @@ var _typeof2=typeof Symbol==="function"&&typeof Symbol.iterator==="symbol"?funct
  * Includes vtt.js <https://github.com/mozilla/vtt.js>
  * Available under Apache License Version 2.0
  * <https://github.com/mozilla/vtt.js/blob/master/LICENSE>
- */var version="7.2.2";/**
+ */var version="7.2.3";/**
  * @file log.js
  * @module log
  */var log=void 0;// This is the private tracking variable for logging level.
@@ -61441,7 +61321,7 @@ if(options.persistTextTrackSettings===undefined){_this.options_.persistTextTrack
    *        If this is set to null it will ignore the native ResizeObserver and fall back to the iframe fallback.
    */function ResizeManager(player,options){classCallCheck(this,ResizeManager);var RESIZE_OBSERVER_AVAILABLE=options.ResizeObserver||global_window__WEBPACK_IMPORTED_MODULE_0___default.a.ResizeObserver;// if `null` was passed, we want to disable the ResizeObserver
 if(options.ResizeObserver===null){RESIZE_OBSERVER_AVAILABLE=false;}// Only create an element when ResizeObserver isn't available
-var options_=mergeOptions({createEl:!RESIZE_OBSERVER_AVAILABLE,reportTouchActivity:false},options);var _this=possibleConstructorReturn(this,_Component.call(this,player,options_));_this.ResizeObserver=options.ResizeObserver||global_window__WEBPACK_IMPORTED_MODULE_0___default.a.ResizeObserver;_this.loadListener_=null;_this.resizeObserver_=null;_this.debouncedHandler_=debounce(function(){_this.resizeHandler();},100,false,player);if(RESIZE_OBSERVER_AVAILABLE){_this.resizeObserver_=new _this.ResizeObserver(_this.debouncedHandler_);_this.resizeObserver_.observe(player.el());}else{_this.loadListener_=function(){if(_this.el_.contentWindow){on(_this.el_.contentWindow,'resize',_this.debouncedHandler_);}_this.off('load',_this.loadListener_);};_this.on('load',_this.loadListener_);}return _this;}ResizeManager.prototype.createEl=function createEl(){return _Component.prototype.createEl.call(this,'iframe',{className:'vjs-resize-manager'});};/**
+var options_=mergeOptions({createEl:!RESIZE_OBSERVER_AVAILABLE,reportTouchActivity:false},options);var _this=possibleConstructorReturn(this,_Component.call(this,player,options_));_this.ResizeObserver=options.ResizeObserver||global_window__WEBPACK_IMPORTED_MODULE_0___default.a.ResizeObserver;_this.loadListener_=null;_this.resizeObserver_=null;_this.debouncedHandler_=debounce(function(){_this.resizeHandler();},100,false,_this);if(RESIZE_OBSERVER_AVAILABLE){_this.resizeObserver_=new _this.ResizeObserver(_this.debouncedHandler_);_this.resizeObserver_.observe(player.el());}else{_this.loadListener_=function(){if(!_this.el_||!_this.el_.contentWindow){return;}on(_this.el_.contentWindow,'resize',_this.debouncedHandler_);};_this.one('load',_this.loadListener_);}return _this;}ResizeManager.prototype.createEl=function createEl(){return _Component.prototype.createEl.call(this,'iframe',{className:'vjs-resize-manager'});};/**
    * Called when a resize is triggered on the iframe or a resize is observed via the ResizeObserver
    *
    * @fires Player#playerresize
@@ -61450,7 +61330,9 @@ var options_=mergeOptions({createEl:!RESIZE_OBSERVER_AVAILABLE,reportTouchActivi
      *
      * @event Player#playerresize
      * @type {EventTarget~Event}
-     */this.player_.trigger('playerresize');};ResizeManager.prototype.dispose=function dispose(){if(this.resizeObserver_){if(this.player_.el()){this.resizeObserver_.unobserve(this.player_.el());}this.resizeObserver_.disconnect();}if(this.el_&&this.el_.contentWindow){off(this.el_.contentWindow,'resize',this.debouncedHandler_);}if(this.loadListener_){this.off('load',this.loadListener_);}if(this.debouncedHandler_){this.debouncedHandler_.cancel();}this.ResizeObserver=null;this.resizeObserver=null;this.debouncedHandler_=null;this.loadListener_=null;_Component.prototype.dispose.call(this);};return ResizeManager;}(Component);Component.registerComponent('ResizeManager',ResizeManager);/**
+     */// make sure player is still around to trigger
+// prevents this from causing an error after dispose
+if(!this.player_||!this.player_.trigger){return;}this.player_.trigger('playerresize');};ResizeManager.prototype.dispose=function dispose(){if(this.debouncedHandler_){this.debouncedHandler_.cancel();}if(this.resizeObserver_){if(this.player_.el()){this.resizeObserver_.unobserve(this.player_.el());}this.resizeObserver_.disconnect();}if(this.el_&&this.el_.contentWindow){off(this.el_.contentWindow,'resize',this.debouncedHandler_);}if(this.loadListener_){this.off('load',this.loadListener_);}this.ResizeObserver=null;this.resizeObserver=null;this.debouncedHandler_=null;this.loadListener_=null;};return ResizeManager;}(Component);Component.registerComponent('ResizeManager',ResizeManager);/**
  * This function is used to fire a sourceset when there is something
  * similar to `mediaEl.load()` being called. It will try to find the source via
  * the `src` attribute and then the `<source>` elements. It will then fire `sourceset`
@@ -62703,12 +62585,12 @@ var attrs=getAttributes(tag);if(divEmbed){el=this.el_=tag;tag=this.tag=global_do
 // `src` or `controls` that were set via js before the player
 // was initialized.
 Object.keys(el).forEach(function(k){tag[k]=el[k];});}// set tabindex to -1 to remove the video element from the focus order
-tag.setAttribute('tabindex','-1');// Workaround for #4583 (JAWS+IE doesn't announce BPB or play button)
+tag.setAttribute('tabindex','-1');attrs.tabindex='-1';// Workaround for #4583 (JAWS+IE doesn't announce BPB or play button)
 // See https://github.com/FreedomScientific/VFO-standards-support/issues/78
 // Note that we can't detect if JAWS is being used, but this ARIA attribute
 //  doesn't change behavior of IE11 if JAWS is not being used
-if(IE_VERSION){tag.setAttribute('role','application');}// Remove width/height attrs from tag so CSS can make it 100% width/height
-tag.removeAttribute('width');tag.removeAttribute('height');Object.getOwnPropertyNames(attrs).forEach(function(attr){// don't copy over the class attribute to the player element when we're in a div embed
+if(IE_VERSION){tag.setAttribute('role','application');attrs.role='application';}// Remove width/height attrs from tag so CSS can make it 100% width/height
+tag.removeAttribute('width');tag.removeAttribute('height');if('width'in attrs){delete attrs.width;}if('height'in attrs){delete attrs.height;}Object.getOwnPropertyNames(attrs).forEach(function(attr){// don't copy over the class attribute to the player element when we're in a div embed
 // the class is already set up properly in the divEmbed case
 // and we want to make sure that the `video-js` class doesn't get lost
 if(!(divEmbed&&attr==='class')){el.setAttribute(attr,attrs[attr]);}if(divEmbed){tag.setAttribute(attr,attrs[attr]);}});// Update tag id/class for use as HTML5 playback tech
@@ -62829,7 +62711,7 @@ if(titleTechName!=='Html5'&&this.tag){Tech.getTech('Html5').disposeMediaElement(
 this.isReady_=false;// if autoplay is a string we pass false to the tech
 // because the player is going to handle autoplay on `loadstart`
 var autoplay=typeof this.autoplay()==='string'?false:this.autoplay();// Grab tech-specific options from player options and add source and parent element to use.
-var techOptions={source:source,autoplay:autoplay,'nativeControlsForTouch':this.options_.nativeControlsForTouch,'playerId':this.id(),'techId':this.id()+'_'+titleTechName+'_api','playsinline':this.options_.playsinline,'preload':this.options_.preload,'loop':this.options_.loop,'muted':this.options_.muted,'poster':this.poster(),'language':this.language(),'playerElIngest':this.playerElIngest_||false,'vtt.js':this.options_['vtt.js'],'canOverridePoster':!!this.options_.techCanOverridePoster,'enableSourceset':this.options_.enableSourceset};ALL.names.forEach(function(name$$1){var props=ALL[name$$1];techOptions[props.getterName]=_this2[props.privateName];});assign(techOptions,this.options_[titleTechName]);assign(techOptions,this.options_[camelTechName]);assign(techOptions,this.options_[techName.toLowerCase()]);if(this.tag){techOptions.tag=this.tag;}if(source&&source.src===this.cache_.src&&this.cache_.currentTime>0){techOptions.startTime=this.cache_.currentTime;}// Initialize tech instance
+var techOptions={source:source,autoplay:autoplay,'nativeControlsForTouch':this.options_.nativeControlsForTouch,'playerId':this.id(),'techId':this.id()+'_'+camelTechName+'_api','playsinline':this.options_.playsinline,'preload':this.options_.preload,'loop':this.options_.loop,'muted':this.options_.muted,'poster':this.poster(),'language':this.language(),'playerElIngest':this.playerElIngest_||false,'vtt.js':this.options_['vtt.js'],'canOverridePoster':!!this.options_.techCanOverridePoster,'enableSourceset':this.options_.enableSourceset};ALL.names.forEach(function(name$$1){var props=ALL[name$$1];techOptions[props.getterName]=_this2[props.privateName];});assign(techOptions,this.options_[titleTechName]);assign(techOptions,this.options_[camelTechName]);assign(techOptions,this.options_[techName.toLowerCase()]);if(this.tag){techOptions.tag=this.tag;}if(source&&source.src===this.cache_.src&&this.cache_.currentTime>0){techOptions.startTime=this.cache_.currentTime;}// Initialize tech instance
 var TechClass=Tech.getTech(techName);if(!TechClass){throw new Error('No Tech named \''+titleTechName+'\' exists! \''+titleTechName+'\' should be registered using videojs.registerTech()\'');}this.tech_=new TechClass(techOptions);// player.triggerReady is always async, so don't need this to be async
 this.tech_.ready(bind(this,this.handleTechReady_),true);textTrackConverter.jsonToTextTracks(this.textTracksJson_||[],this.tech_);// Listen to all HTML5-defined events and trigger them on the player
 TECH_EVENTS_RETRIGGER.forEach(function(event){_this2.on(_this2.tech_,event,_this2['handleTech'+toTitleCase(event)+'_']);});Object.keys(TECH_EVENTS_QUEUE).forEach(function(event){_this2.on(_this2.tech_,event,function(eventObj){if(_this2.tech_.playbackRate()===0&&_this2.tech_.seeking()){_this2.queuedCallbacks_.push({callback:_this2['handleTech'+TECH_EVENTS_QUEUE[event]+'_'].bind(_this2),event:eventObj});return;}_this2['handleTech'+TECH_EVENTS_QUEUE[event]+'_'](eventObj);});});this.on(this.tech_,'loadstart',this.handleTechLoadStart_);this.on(this.tech_,'sourceset',this.handleTechSourceset_);this.on(this.tech_,'waiting',this.handleTechWaiting_);this.on(this.tech_,'ended',this.handleTechEnded_);this.on(this.tech_,'seeking',this.handleTechSeeking_);this.on(this.tech_,'play',this.handleTechPlay_);this.on(this.tech_,'firstplay',this.handleTechFirstPlay_);this.on(this.tech_,'pause',this.handleTechPause_);this.on(this.tech_,'durationchange',this.handleTechDurationChange_);this.on(this.tech_,'fullscreenchange',this.handleTechFullscreenChange_);this.on(this.tech_,'error',this.handleTechError_);this.on(this.tech_,'loadedmetadata',this.updateStyleEl_);this.on(this.tech_,'posterchange',this.handleTechPosterChange_);this.on(this.tech_,'textdata',this.handleTechTextData_);this.on(this.tech_,'ratechange',this.handleTechRateChange_);this.usingNativeControls(this.techGet_('controls'));if(this.controls()&&!this.usingNativeControls()){this.addTechControlsListeners_();}// Add the tech element in the DOM if it was not already there
@@ -64944,7 +64826,7 @@ Object.keys(Player.players).map(function(k){return Player.players[k];}).filter(B
  * and Tech's
  */videojs$1.url=Url;/**
  * @videojs/http-streaming
- * @version 1.2.4
+ * @version 1.2.5
  * @copyright 2018 Brightcove, Inc
  * @license Apache-2.0
  *//**
@@ -69443,13 +69325,17 @@ player.reloadSourceOnError=reinitPlugin;};/**
  * wasn't an error previously within the last 30 seconds
  *
  * @param {Object} [options] an object with plugin options
- */var reloadSourceOnError=function reloadSourceOnError(options){initPlugin(this,options);};var version$1="1.2.4";// since VHS handles HLS and DASH (and in the future, more types), use * to capture all
+ */var reloadSourceOnError=function reloadSourceOnError(options){initPlugin(this,options);};var version$1="1.2.5";// since VHS handles HLS and DASH (and in the future, more types), use * to capture all
 videojs$1.use('*',function(player){return{setSource:function setSource(srcObj,next){// pass null as the first argument to indicate that the source is not rejected
 next(null,srcObj);},// VHS needs to know when seeks happen. For external seeks (generated at the player
 // level), this middleware will capture the action. For internal seeks (generated at
 // the tech level), we use a wrapped function so that we can handle it on our own
 // (specified elsewhere).
-setCurrentTime:function setCurrentTime(time){if(player.vhs&&player.currentSource().src===player.vhs.source_.src){player.vhs.setCurrentTime(time);}return time;}};});/**
+setCurrentTime:function setCurrentTime(time){if(player.vhs&&player.currentSource().src===player.vhs.source_.src){player.vhs.setCurrentTime(time);}return time;},// Sync VHS after play requests.
+// This specifically handles replay where the order of actions is
+// play, video element will seek to 0 (skipping the setCurrentTime middleware)
+// then triggers a play event.
+play:function play(){if(player.vhs&&player.currentSource().src===player.vhs.source_.src){player.vhs.setCurrentTime(player.currentTime());}}};});/**
  * @file videojs-http-streaming.js
  *
  * The main file for the HLS project.
@@ -72048,7 +71934,7 @@ function extend() {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-11","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-12","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -72061,11 +71947,8 @@ module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-11","descriptio
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
-/* harmony import */ var _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ~root/dist/Router.min */ "./dist/Router.min.js");
-/* harmony import */ var _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_root_dist_Router_min__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
+!(function webpackMissingModule() { var e = new Error("Cannot find module '~root/dist/Router.min'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
 
 
 /**
@@ -72085,8 +71968,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
 
 
 
@@ -72110,18 +71991,11 @@ var Conduit = function (_ListenerBaseClass) {
   function Conduit(iov, options) {
     _classCallCheck(this, Conduit);
 
-    var _this = _possibleConstructorReturn(this, (Conduit.__proto__ || Object.getPrototypeOf(Conduit)).call(this, Conduit.DEBUG_NAME + ':' + iov.id));
-
-    _this.debug('Constructing...');
+    var _this = _possibleConstructorReturn(this, (Conduit.__proto__ || Object.getPrototypeOf(Conduit)).call(this, Conduit.DEBUG_NAME + ':' + iov.id, options));
 
     _this.iov = iov;
     _this.clientId = iov.id;
 
-    _this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default()({}, options, {
-      enableMetrics: false
-    });
-
-    _this.destroyed = false;
     _this.handlers = {};
     _this.iframe = _this.generateIframe();
     _this.attachIframe();
@@ -72149,7 +72023,7 @@ var Conduit = function (_ListenerBaseClass) {
       iframe.width = 0;
       iframe.height = 0;
 
-      iframe.srcdoc = '\n      <html>\n        <head>\n          <script type="text/javascript">\n            window.MqttClientId = "' + this.clientId + '";\n            window.iframeCode = ' + _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_2___default.a.toString() + '();\n          </script>\n        </head>\n        <body\n          onload="window.iframeCode.clspRouter();"\n          onunload="window.iframeCode.onunload();"\n        >\n          <div id="message"></div>\n        </body>\n      </html>\n    ';
+      iframe.srcdoc = '\n      <html>\n        <head>\n          <script type="text/javascript">\n            window.MqttClientId = "' + this.clientId + '";\n            window.iframeCode = ' + !(function webpackMissingModule() { var e = new Error("Cannot find module '~root/dist/Router.min'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()).toString() + '();\n          </script>\n        </head>\n        <body\n          onload="window.iframeCode.clspRouter();"\n          onunload="window.iframeCode.onunload();"\n        >\n          <div id="message"></div>\n        </body>\n      </html>\n    ';
 
       return iframe;
     }
@@ -72239,14 +72113,14 @@ var Conduit = function (_ListenerBaseClass) {
     value: function unsubscribe(topic) {
       this.debug('unsubscribing from ' + topic + '...');
 
-      if (topic in this.handlers) {
-        delete this.handlers[topic];
-      }
+      // if (topic in this.handlers) {
+      //   delete this.handlers[topic];
+      // }
 
-      this.command({
-        method: 'unsubscribe',
-        topic: topic
-      });
+      // this.command({
+      //   method: 'unsubscribe',
+      //   topic,
+      // });
     }
   }, {
     key: 'publish',
@@ -72399,7 +72273,9 @@ var Conduit = function (_ListenerBaseClass) {
       this.debug('clearing ' + registeredTopicCount + ' handlers...');
 
       for (var i = 0; i < registeredTopicCount; i++) {
-        this.unsubscribe(this.handlers[registeredTopics[i]]);
+        var topic = registeredTopics[i];
+
+        this.unsubscribe(topic);
       }
 
       this.handlers = {};
@@ -72415,9 +72291,14 @@ var Conduit = function (_ListenerBaseClass) {
 
       this.debug('destroying...');
 
-      this.command({ method: 'destroy' });
-
       this.clearHandlers();
+
+      try {
+        this.command({ method: 'destroy' });
+      } catch (error) {
+        console.error(error);
+        console.warn('Failed to issue "destroy" command to iframe.');
+      }
 
       this.iframe.parentNode.removeChild(this.iframe);
       this.iframe.srcdoc = '';
@@ -72432,7 +72313,7 @@ var Conduit = function (_ListenerBaseClass) {
   }]);
 
   return Conduit;
-}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"]);
+}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_0__["default"]);
 
 Conduit.DEBUG_NAME = 'skyline:clsp:iov:conduit';
 Conduit.METRIC_TYPES = ['iovConduit.instances', 'iovConduit.clientId', 'iovConduit.guid', 'iovConduit.mimeCodec'];
@@ -72577,27 +72458,17 @@ var IOV = function (_ListenerBaseClass) {
 
     var id = uuid_v4__WEBPACK_IMPORTED_MODULE_0___default()();
 
-    var _this = _possibleConstructorReturn(this, (IOV.__proto__ || Object.getPrototypeOf(IOV)).call(this, IOV.DEBUG_NAME + ':' + id + ':main'));
+    var _this = _possibleConstructorReturn(this, (IOV.__proto__ || Object.getPrototypeOf(IOV)).call(this, IOV.DEBUG_NAME + ':' + id + ':main', options));
 
     _this.onChangeSource = function (event, data) {
       return _this.changeSource(data.url);
     };
-
-    _this.debug('constructor');
 
     _this.id = id;
     _this.destroyed = false;
     _this.onReadyCalledMultipleTimes = false;
     _this.playerInstance = player;
     _this.videoElement = _this.playerInstance.el();
-
-    _this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
-      changeSourceMaxWait: 9750,
-      statsInterval: 30000,
-      enableMetrics: false,
-      defaultNonSslPort: DEFAULT_NON_SSL_PORT,
-      defaultSslPort: DEFAULT_SSL_PORT
-    });
 
     _this.config = {
       clientId: _this.id,
@@ -72637,13 +72508,17 @@ var IOV = function (_ListenerBaseClass) {
         _this2.metric(type, value, true);
       });
 
-      this.player = _Player__WEBPACK_IMPORTED_MODULE_4__["default"].factory(this, this.playerInstance, { enableMetrics: this.options.enableMetrics });
+      this.player = _Player__WEBPACK_IMPORTED_MODULE_4__["default"].factory(this, this.playerInstance.el().firstChild.id, { enableMetrics: this.options.enableMetrics });
 
       this.player.on('metric', function (_ref2) {
         var type = _ref2.type,
             value = _ref2.value;
 
         _this2.metric(type, value, true);
+      });
+
+      this.player.on('maxMediaSourceRetriesExceeded', function () {
+        _this2.trigger('criticalError');
       });
 
       return this;
@@ -72781,7 +72656,7 @@ var IOV = function (_ListenerBaseClass) {
 
         handler(message);
       } catch (error) {
-        console.error(error);
+        this.trigger('handlerError', error);
       }
     }
   }, {
@@ -72846,7 +72721,13 @@ var IOV = function (_ListenerBaseClass) {
 }(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_3__["default"]);
 
 IOV.DEBUG_NAME = 'skyline:clsp:iov:iov';
-IOV.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_3__["default"].EVENT_NAMES), ['onReadyCalledMultipleTimes']);
+IOV.DEFAULT_OPTIONS = {
+  changeSourceMaxWait: 9750,
+  statsInterval: 30000,
+  defaultNonSslPort: DEFAULT_NON_SSL_PORT,
+  defaultSslPort: DEFAULT_SSL_PORT
+};
+IOV.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_3__["default"].EVENT_NAMES), ['onReadyCalledMultipleTimes', 'handlerError', 'criticalError']);
 IOV.METRIC_TYPES = ['iov.instances', 'iov.clientId'];
 /* harmony default export */ __webpack_exports__["default"] = (IOV);
 ;
@@ -72862,15 +72743,14 @@ IOV.METRIC_TYPES = ['iov.instances', 'iov.clientId'];
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lodash/debounce */ "./node_modules/lodash/debounce.js");
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
-/* harmony import */ var _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ~/mse/MediaSourceWrapper */ "./src/js/mse/MediaSourceWrapper.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash/debounce */ "./node_modules/lodash/debounce.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
+/* harmony import */ var _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ~/mse/MediaSourceWrapper */ "./src/js/mse/MediaSourceWrapper.js");
 
+
+// @todo - some of the debounces in here can lead to things occurring at
+// unexpected times.  Try to find a more proper solution
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
@@ -72885,8 +72765,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
 
 
 
@@ -72912,54 +72790,275 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
   _createClass(IOVPlayer, null, [{
     key: 'factory',
-    value: function factory(iov, playerInstance) {
+    value: function factory(iov, videoJsElementId) {
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-      return new IOVPlayer(iov, playerInstance, options);
+      return new IOVPlayer(iov, videoJsElementId, options);
     }
   }]);
 
-  function IOVPlayer(iov, playerInstance, options) {
+  function IOVPlayer(iov, videoJsElementId, options) {
+    var _this2 = this;
+
     _classCallCheck(this, IOVPlayer);
 
-    var _this = _possibleConstructorReturn(this, (IOVPlayer.__proto__ || Object.getPrototypeOf(IOVPlayer)).call(this, IOVPlayer.DEBUG_NAME));
+    var _this = _possibleConstructorReturn(this, (IOVPlayer.__proto__ || Object.getPrototypeOf(IOVPlayer)).call(this, IOVPlayer.DEBUG_NAME, options));
 
-    _this.debug('constructor');
+    _this.onMaxMediaSourceRetriesExceeded = function () {
+      // @todo - there is no need to do this for the instance that triggered the event
+      // perhaps send the eid, and compare it to this.eid
+      _this.retryCount = 0;
+    };
+
+    _this.reinitializeMseWrapper = lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default()(function () {
+      if (_this.destroyed) {
+        return;
+      }
+
+      if (_this.retryCount >= _this.options.maxMediaSourceRetries) {
+        _this.trigger('maxMediaSourceRetriesExceeded');
+        window.dispatchEvent(new window.Event('maxMediaSourceRetriesExceeded'));
+        return;
+      }
+
+      _this.retryCount++;
+
+      if (_this.resetRetryCount) {
+        clearTimeout(_this.resetRetryCount);
+      }
+
+      _this.resetRetryCount = setTimeout(function () {
+        _this.retryCount = 0;
+      }, _this.options.maxMediaSourceRetryInterval);
+
+      if (_this.mediaSourceWrapper) {
+        _this.mediaSourceWrapper.destroy();
+      }
+
+      _this.mediaSourceWrapperGenericErrorRestartCount = 0;
+
+      _this.mediaSourceWrapper = _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory(_this.videoElement, {
+        enableMetrics: _this.options.enableMetrics
+      });
+
+      _this.mediaSourceWrapper.moov = _this.moov;
+      _this.mediaSourceWrapper.registerMimeCodec(_this.mimeCodec);
+
+      _this.mediaSourceWrapper.on('metric', function (_ref) {
+        var type = _ref.type,
+            value = _ref.value;
+
+        _this.metric(type, value, true);
+      });
+
+      _this.mediaSourceWrapper.on('sourceOpen', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _this.debug('on mediaSource sourceopen');
+
+                // @todo - shouldn't the mediaSource pass this option?
+                _context3.next = 3;
+                return _this.mediaSourceWrapper.initializeSourceBuffer({
+                  enableMetrics: _this.options.enableMetrics
+                });
+
+              case 3:
+
+                // @todo - shouldn't sourceBuffer metrics come from the "parent"
+                // mediaSourceWrapper?
+                _this.mediaSourceWrapper.sourceBuffer.on('metric', function (_ref3) {
+                  var type = _ref3.type,
+                      value = _ref3.value;
+
+                  _this.metric(type, value, true);
+                });
+
+                _this.mediaSourceWrapper.sourceBuffer.on('appendFinish', function (info) {
+                  _this.silly('On Append Finish...');
+
+                  if (!_this.firstFrameShown) {
+                    _this.firstFrameShown = true;
+                    _this.trigger('firstFrameShown');
+                  }
+
+                  _this.drift = info.bufferTimeEnd - _this.videoElement.currentTime;
+
+                  _this.metric('iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+                  _this.metric('iovPlayer.video.currentTime', _this.videoElement.currentTime);
+                  _this.metric('iovPlayer.video.drift', _this.drift);
+
+                  if (_this.drift > _this.segmentIntervalAverage / 1000 + _this.options.driftCorrectionConstant) {
+                    _this.metric('iovPlayer.video.driftCorrection', 1);
+                    _this.videoElement.currentTime = info.bufferTimeEnd;
+                  }
+
+                  if (_this.videoElement.paused === true) {
+                    _this.debug('Video is paused!');
+
+                    try {
+                      var promise = _this.videoElement.play();
+
+                      if (typeof promise !== 'undefined') {
+                        promise.catch(function (error) {
+                          _this._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                        });
+                      }
+                    } catch (error) {
+                      _this._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+                    }
+                  }
+                });
+
+                _this.mediaSourceWrapper.sourceBuffer.on('appendError', function () {
+                  var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(error) {
+                    return regeneratorRuntime.wrap(function _callee$(_context) {
+                      while (1) {
+                        switch (_context.prev = _context.next) {
+                          case 0:
+                            // Can occur when the tab in the browser where this video player
+                            // lives is hidden, then shown after about 10 seconds or more.
+                            // Can occur when "The SourceBuffer is full, and cannot free space to append additional buffers."
+                            // Can occur when "The HTMLMediaElement.error attribute is not null."
+                            _this._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
+
+                            // @todo - can we just restart here instead of creating a new wrapper?
+                            _context.next = 3;
+                            return _this.reinitializeMseWrapper();
+
+                          case 3:
+                          case 'end':
+                            return _context.stop();
+                        }
+                      }
+                    }, _callee, _this2);
+                  }));
+
+                  return function (_x2) {
+                    return _ref4.apply(this, arguments);
+                  };
+                }());
+
+                _this.mediaSourceWrapper.sourceBuffer.on('removeFinish', function (info) {
+                  _this.debug('onRemoveFinish');
+                });
+
+                _this.mediaSourceWrapper.sourceBuffer.on('removeError', function (error) {
+                  if (error.constructor.name === 'DOMException') {
+                    // @todo - every time the mediaSourceWrapper is destroyed, there is a
+                    // sourceBuffer error.  No need to log that, but you should fix it
+                    return;
+                  }
+
+                  // observed this fail during a memry snapshot in chrome
+                  // otherwise no observed failure, so ignore exception.
+                  _this._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
+                });
+
+                _this.mediaSourceWrapper.sourceBuffer.on('streamFrozen', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+                  return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                    while (1) {
+                      switch (_context2.prev = _context2.next) {
+                        case 0:
+                          _this.debug('stream appears to be frozen - reinitializing...');
+
+                          // @todo - can we just restart here instead of creating a new wrapper?
+                          // await this.reinitializeMseWrapper();
+                          _this.restart();
+
+                        case 2:
+                        case 'end':
+                          return _context2.stop();
+                      }
+                    }
+                  }, _callee2, _this2);
+                })));
+
+                _this.mediaSourceWrapper.sourceBuffer.on('error', function (error) {
+                  _this.mediaSourceWrapperGenericErrorRestartCount++;
+
+                  // Sometimes, when we receive this error, it is due to a bad segment
+                  // at or near the beginning of the stream.  In those instances, restarting
+                  // the stream may fix the issue, so try it a few times.
+                  if (_this.mediaSourceWrapperGenericErrorRestartCount <= _this.options.maxMediaSourceWrapperGenericErrorRestartCount) {
+                    _this.metric('iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount', _this.mediaSourceWrapperGenericErrorRestartCount);
+
+                    _this.restart();
+                  }
+
+                  _this._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+                });
+
+                _this.trigger('videoInfoReceived');
+
+              case 11:
+              case 'end':
+                return _context3.stop();
+            }
+          }
+        }, _callee3, _this2);
+      })));
+
+      _this.mediaSourceWrapper.on('sourceEnded', function () {
+        _this.debug('on mediaSource sourceended');
+
+        // @todo - do we need to clear the buffer manually?
+        _this.stop();
+      });
+
+      _this.mediaSourceWrapper.on('sourceOpenFailure', function () {
+        _this.debug('media source failed to become ready');
+
+        _this.restart();
+      });
+
+      _this.mediaSourceWrapper.on('error', function (error) {
+        _this._onError('mediaSource.generic', 'mediaSource error', error);
+      });
+
+      _this.mediaSourceWrapper.initializeMediaSource().then(function () {
+        if (!_this.mediaSourceWrapper.mediaSource || !_this.videoElement) {
+          throw new Error('The video element or mediaSource is not ready!');
+        }
+
+        _this.mediaSourceWrapper.reinitializeVideoElementSrc();
+      });
+    }, _this.options.mediaSourceRetryInterval, { leading: true });
+    _this.restart = lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default()(function () {
+      if (_this.destroyed) {
+        return;
+      }
+
+      _this.debug('restart');
+
+      _this.stop();
+      _this.play();
+    }, _this.options.restartDelay, { leading: true });
+
 
     _this.iov = iov;
-    _this.playerInstance = playerInstance;
-    _this.eid = _this.playerInstance.el().firstChild.id;
+    _this.eid = videoJsElementId;
     _this.videoId = 'clsp-video-' + _this.iov.config.clientId;
 
     _this.initializeVideoElement();
 
-    _this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
-      maxMoofWait: 30 * 1000,
-      segmentIntervalSampleSize: 5,
-      driftCorrectionConstant: 2,
-      maxMediaSourceWrapperGenericErrorRestartCount: 50,
-      enableMetrics: false
-    });
-
-    _this.metric('iovPlayer.instances', 1);
-    _this.metric('iovPlayer.clientId', _this.iov.config.clientId);
-
     _this.firstFrameShown = false;
-
-    // Used for determining the size of the internal buffer hidden from the MSE
-    // api by recording the size and time of each chunk of video upon buffer append
-    // and recording the time when the updateend event is called.
-    _this.LogSourceBuffer = false;
-    _this.LogSourceBufferTopic = null;
 
     _this.latestSegmentReceived = null;
     _this.segmentIntervalAverage = null;
     _this.segmentInterval = null;
     _this.segmentIntervals = [];
     _this.moofWaitReset = null;
+    _this.retryCount = 0;
+    _this.resetRetryCount = null;
 
     if (_this.options.maxMoofWait) {
-      _this.moofWaitReset = lodash_debounce__WEBPACK_IMPORTED_MODULE_2___default()(function () {
+      _this.moofWaitReset = lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default()(function () {
+        if (_this.destroyed) {
+          return;
+        }
+
         _this.metric('iovPlayer.moofWaitExceeded', 1);
 
         // When we stop receiving moofs, reinitializing the mediasource will not
@@ -72972,10 +73071,21 @@ var IOVPlayer = function (_ListenerBaseClass) {
     _this.mediaSourceWrapper = null;
     _this.moov = null;
     _this.mimeCodec = null;
+
+    // @todo - don't use a window event unless you really have to...
+    window.addEventListener('maxMediaSourceRetriesExceeded', _this.onMaxMediaSourceRetriesExceeded);
     return _this;
   }
 
   _createClass(IOVPlayer, [{
+    key: 'onFirstMetricListenerRegistered',
+    value: function onFirstMetricListenerRegistered() {
+      _get(IOVPlayer.prototype.__proto__ || Object.getPrototypeOf(IOVPlayer.prototype), 'onFirstMetricListenerRegistered', this).call(this);
+
+      this.metric('iovPlayer.instances', 1);
+      this.metric('iovPlayer.clientId', this.iov.config.clientId);
+    }
+  }, {
     key: '_onError',
     value: function _onError(type, message, error) {
       console.error(type, message);
@@ -72984,7 +73094,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
   }, {
     key: 'initializeVideoElement',
     value: function initializeVideoElement() {
-      var _this2 = this;
+      var _this3 = this;
 
       this.videoJsVideoElement = document.getElementById(this.eid);
 
@@ -73008,22 +73118,22 @@ var IOVPlayer = function (_ListenerBaseClass) {
         // @todo - this may be overkill given the IOV changeSourceMaxWait...
         // When the video is ready to be displayed, swap out the video player if
         // the source has changed.  This is what allows tours to switch to the next
-        if (_this2.videoElementParent !== null) {
+        if (_this3.videoElementParent !== null) {
           try {
-            _this2.videoElementParent.insertBefore(_this2.videoElement, _this2.videoJsVideoElement);
+            _this3.videoElementParent.insertBefore(_this3.videoElement, _this3.videoJsVideoElement);
 
-            var videos = _this2.videoElementParent.getElementsByTagName('video');
+            var videos = _this3.videoElementParent.getElementsByTagName('video');
 
             for (var i = 0; i < videos.length; i++) {
               var video = videos[i];
               var id = video.getAttribute('id');
 
-              if (id !== _this2.eid && id !== _this2.videoId) {
+              if (id !== _this3.eid && id !== _this3.videoId) {
                 // video.pause();
                 // video.removeAttribute('src');
                 // video.load();
                 // video.style.display = 'none';
-                _this2.videoElementParent.removeChild(video);
+                _this3.videoElementParent.removeChild(video);
                 video.remove();
                 video = null;
                 videos = null;
@@ -73041,248 +73151,6 @@ var IOVPlayer = function (_ListenerBaseClass) {
       });
     }
   }, {
-    key: 'reinitializeMseWrapper',
-    value: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-        var _this3 = this;
-
-        var message;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                if (this.mediaSourceWrapper) {
-                  this.mediaSourceWrapper.destroy();
-                }
-
-                this.mediaSourceWrapperGenericErrorRestartCount = 0;
-                this.mediaSourceWrapper = _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_4__["default"].factory(this.videoElement, {
-                  enableMetrics: this.options.enableMetrics
-                });
-                this.mediaSourceWrapper.moov = this.moov;
-
-                _context4.prev = 4;
-
-                this.mediaSourceWrapper.registerMimeCodec(this.mimeCodec);
-                _context4.next = 14;
-                break;
-
-              case 8:
-                _context4.prev = 8;
-                _context4.t0 = _context4['catch'](4);
-                message = 'Unsupported mime codec: ' + this.mimeCodec;
-
-
-                this.videoPlayer.errors.extend({
-                  PLAYER_ERR_IOV: {
-                    headline: 'Error Playing Stream',
-                    message: message
-                  }
-                });
-
-                this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
-
-                throw new Error(message);
-
-              case 14:
-
-                this.mediaSourceWrapper.on('metric', function (_ref2) {
-                  var type = _ref2.type,
-                      value = _ref2.value;
-
-                  _this3.metric(type, value, true);
-                });
-
-                this.mediaSourceWrapper.on('sourceOpen', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-                  return regeneratorRuntime.wrap(function _callee3$(_context3) {
-                    while (1) {
-                      switch (_context3.prev = _context3.next) {
-                        case 0:
-                          _this3.debug('on mediaSource sourceopen');
-
-                          // @todo - shouldn't the mediaSource pass this option?
-                          _context3.next = 3;
-                          return _this3.mediaSourceWrapper.initializeSourceBuffer({
-                            enableMetrics: _this3.options.enableMetrics
-                          });
-
-                        case 3:
-
-                          // @todo - shouldn't sourceBuffer metrics come from the "parent"
-                          // mediaSourceWrapper?
-                          _this3.mediaSourceWrapper.sourceBuffer.on('metric', function (_ref4) {
-                            var type = _ref4.type,
-                                value = _ref4.value;
-
-                            _this3.metric(type, value, true);
-                          });
-
-                          _this3.mediaSourceWrapper.sourceBuffer.on('appendFinish', function (info) {
-                            _this3.silly('On Append Finish...');
-
-                            if (!_this3.firstFrameShown) {
-                              _this3.firstFrameShown = true;
-                              _this3.trigger('firstFrameShown');
-                            }
-
-                            _this3.drift = info.bufferTimeEnd - _this3.videoElement.currentTime;
-
-                            _this3.metric('iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
-                            _this3.metric('iovPlayer.video.currentTime', _this3.videoElement.currentTime);
-                            _this3.metric('iovPlayer.video.drift', _this3.drift);
-
-                            if (_this3.drift > _this3.segmentIntervalAverage / 1000 + _this3.options.driftCorrectionConstant) {
-                              _this3.metric('iovPlayer.video.driftCorrection', 1);
-                              _this3.videoElement.currentTime = info.bufferTimeEnd;
-                            }
-
-                            if (_this3.videoElement.paused === true) {
-                              _this3.debug('Video is paused!');
-
-                              try {
-                                var promise = _this3.videoElement.play();
-
-                                if (typeof promise !== 'undefined') {
-                                  promise.catch(function (error) {
-                                    _this3._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
-                                  });
-                                }
-                              } catch (error) {
-                                _this3._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
-                              }
-                            }
-                          });
-
-                          _this3.mediaSourceWrapper.sourceBuffer.on('appendError', function () {
-                            var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(error) {
-                              return regeneratorRuntime.wrap(function _callee$(_context) {
-                                while (1) {
-                                  switch (_context.prev = _context.next) {
-                                    case 0:
-                                      // Can occur when the tab in the browser where this video player
-                                      // lives is hidden, then shown after about 10 seconds or more.
-                                      // Can occur when "The SourceBuffer is full, and cannot free space to append additional buffers."
-                                      // Can occur when "The HTMLMediaElement.error attribute is not null."
-                                      _this3._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
-
-                                      // @todo - can we just restart here instead of creating a new wrapper?
-                                      _context.next = 3;
-                                      return _this3.reinitializeMseWrapper();
-
-                                    case 3:
-                                    case 'end':
-                                      return _context.stop();
-                                  }
-                                }
-                              }, _callee, _this3);
-                            }));
-
-                            return function (_x2) {
-                              return _ref5.apply(this, arguments);
-                            };
-                          }());
-
-                          _this3.mediaSourceWrapper.sourceBuffer.on('removeFinish', function (info) {
-                            _this3.debug('onRemoveFinish');
-                          });
-
-                          _this3.mediaSourceWrapper.sourceBuffer.on('removeError', function (error) {
-                            if (error.constructor.name === 'DOMException') {
-                              // @todo - every time the mediaSourceWrapper is destroyed, there is a
-                              // sourceBuffer error.  No need to log that, but you should fix it
-                              return;
-                            }
-
-                            // observed this fail during a memry snapshot in chrome
-                            // otherwise no observed failure, so ignore exception.
-                            _this3._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
-                          });
-
-                          _this3.mediaSourceWrapper.sourceBuffer.on('streamFrozen', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-                            return regeneratorRuntime.wrap(function _callee2$(_context2) {
-                              while (1) {
-                                switch (_context2.prev = _context2.next) {
-                                  case 0:
-                                    _this3.debug('stream appears to be frozen - reinitializing...');
-
-                                    // @todo - can we just restart here instead of creating a new wrapper?
-                                    _context2.next = 3;
-                                    return _this3.reinitializeMseWrapper();
-
-                                  case 3:
-                                  case 'end':
-                                    return _context2.stop();
-                                }
-                              }
-                            }, _callee2, _this3);
-                          })));
-
-                          _this3.mediaSourceWrapper.sourceBuffer.on('error', function (error) {
-                            _this3.mediaSourceWrapperGenericErrorRestartCount++;
-
-                            // Sometimes, when we receive this error, it is due to a bad segment
-                            // at or near the beginning of the stream.  In those instances, restarting
-                            // the stream may fix the issue, so try it a few times.
-                            if (_this3.mediaSourceWrapperGenericErrorRestartCount <= _this3.options.maxMediaSourceWrapperGenericErrorRestartCount) {
-                              _this3.metric('iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount', _this3.mediaSourceWrapperGenericErrorRestartCount);
-
-                              _this3.restart();
-                            }
-
-                            _this3._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
-                          });
-
-                          _this3.trigger('videoInfoReceived');
-
-                        case 11:
-                        case 'end':
-                          return _context3.stop();
-                      }
-                    }
-                  }, _callee3, _this3);
-                })));
-
-                this.mediaSourceWrapper.on('sourceEnded', function () {
-                  _this3.debug('on mediaSource sourceended');
-
-                  // @todo - do we need to clear the buffer manually?
-                  _this3.stop();
-                });
-
-                this.mediaSourceWrapper.on('error', function (error) {
-                  _this3._onError('mediaSource.generic', 'mediaSource error', error);
-                });
-
-                _context4.next = 20;
-                return this.mediaSourceWrapper.initializeMediaSource();
-
-              case 20:
-                if (!(!this.mediaSourceWrapper.mediaSource || !this.videoElement)) {
-                  _context4.next = 22;
-                  break;
-                }
-
-                throw new Error('The video element or mediaSource is not ready!');
-
-              case 22:
-
-                this.mediaSourceWrapper.reinitializeVideoElementSrc();
-
-              case 23:
-              case 'end':
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this, [[4, 8]]);
-      }));
-
-      function reinitializeMseWrapper() {
-        return _ref.apply(this, arguments);
-      }
-
-      return reinitializeMseWrapper;
-    }()
-  }, {
     key: 'play',
     value: function play(streamName) {
       var _this4 = this;
@@ -73290,10 +73158,10 @@ var IOVPlayer = function (_ListenerBaseClass) {
       this.debug('play');
 
       this.iov.conduit.start(function () {
-        var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(mimeCodec, moov) {
-          return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(mimeCodec, moov) {
+          return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
-              switch (_context6.prev = _context6.next) {
+              switch (_context5.prev = _context5.next) {
                 case 0:
                   // These are needed for reinitializeMseWrapper
                   _this4.mimeCodec = mimeCodec;
@@ -73314,43 +73182,49 @@ var IOVPlayer = function (_ListenerBaseClass) {
                     // @todo - somehow, this can be called when either the
                     // mediaSourceWrapper or the sourceBuffer doesn't exist
                     try {
+                      if (!_this4.mediaSourceWrapper || !_this4.mediaSourceWrapper.sourceBuffer) {
+                        _this4.restart();
+
+                        return;
+                      }
+
                       _this4.mediaSourceWrapper.sourceBuffer.append(moof);
                     } catch (error) {
                       console.error(error);
                     }
                   });
 
-                  _this4.iov.conduit.onResync(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-                    return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                  _this4.iov.conduit.onResync(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+                    return regeneratorRuntime.wrap(function _callee4$(_context4) {
                       while (1) {
-                        switch (_context5.prev = _context5.next) {
+                        switch (_context4.prev = _context4.next) {
                           case 0:
                             _this4.debug('sync event received');
 
-                            _context5.next = 3;
+                            _context4.next = 3;
                             return _this4.reinitializeMseWrapper();
 
                           case 3:
                           case 'end':
-                            return _context5.stop();
+                            return _context4.stop();
                         }
                       }
-                    }, _callee5, _this4);
+                    }, _callee4, _this4);
                   })));
 
-                  _context6.next = 6;
+                  _context5.next = 6;
                   return _this4.reinitializeMseWrapper();
 
                 case 6:
                 case 'end':
-                  return _context6.stop();
+                  return _context5.stop();
               }
             }
-          }, _callee6, _this4);
+          }, _callee5, _this4);
         }));
 
         return function (_x3, _x4) {
-          return _ref7.apply(this, arguments);
+          return _ref6.apply(this, arguments);
         };
       }());
     }
@@ -73372,13 +73246,8 @@ var IOVPlayer = function (_ListenerBaseClass) {
       }
     }
   }, {
-    key: 'restart',
-    value: function restart() {
-      this.debug('restart');
+    key: 'calculateSegmentIntervalMetrics',
 
-      this.stop();
-      this.play();
-    }
 
     /**
      * To be run every time a moof is received.
@@ -73390,9 +73259,6 @@ var IOVPlayer = function (_ListenerBaseClass) {
      * us identify what guarantees we can make about how close to real-time any
      * given stream can be.
      */
-
-  }, {
-    key: 'calculateSegmentIntervalMetrics',
     value: function calculateSegmentIntervalMetrics() {
       var previousSegmentReceived = this.latestSegmentReceived;
 
@@ -73439,18 +73305,22 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
       this.stop();
 
+      window.removeEventListener('maxMediaSourceRetriesExceeded', this.onMaxMediaSourceRetriesExceeded);
+
       // Note you will need to destroy the iov yourself.  The child should
       // probably not destroy the parent
       this.iov = null;
 
       this.firstFrameShown = null;
 
-      this.playerInstance = null;
       this.videoJsVideoElement = null;
       this.videoElementParent = null;
 
-      this.LogSourceBuffer = null;
-      this.LogSourceBufferTopic = null;
+      if (this.resetRetryCount) {
+        clearTimeout(this.resetRetryCount);
+      }
+      this.resetRetryCount = null;
+      this.retryCount = null;
 
       this.latestSegmentReceived = null;
       this.segmentIntervalAverage = null;
@@ -73481,10 +73351,33 @@ var IOVPlayer = function (_ListenerBaseClass) {
   }]);
 
   return IOVPlayer;
-}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_3__["default"]);
+}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 IOVPlayer.DEBUG_NAME = 'skyline:clsp:iov:player';
-IOVPlayer.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_3__["default"].EVENT_NAMES), ['firstFrameShown', 'videoReceived', 'videoInfoReceived']);
+IOVPlayer.DEFAULT_OPTIONS = {
+  maxMoofWait: 30 * 1000,
+  segmentIntervalSampleSize: 5,
+  driftCorrectionConstant: 2,
+  maxMediaSourceWrapperGenericErrorRestartCount: 50,
+  // The options below control the "insufficient resources"
+  // detection, which has the event name "maxMediaSourceRetriesExceeded".
+  // The relationship of all of them to one another
+  // is important, and using values other than the defaults is
+  // discouraged.  These values seemed to perform the best on
+  // moderate hardware, though individual results will vary.
+  // The intervals and delays reduce the seizure-inducing
+  // effect of the players flashing.  These values and their
+  // uses are great and all, but if they are not used in
+  // conjunction with a "global" event that resets the retry
+  // counters of all of the other video players, it is not
+  // very useful.
+  // These settings were tested against 32 "high quality" streams
+  maxMediaSourceRetries: 15,
+  maxMediaSourceRetryInterval: 15 * 1000,
+  mediaSourceRetryInterval: 0.5 * 1000,
+  restartDelay: 0.5 * 1000
+};
+IOVPlayer.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"].EVENT_NAMES), ['firstFrameShown', 'videoReceived', 'videoInfoReceived', 'maxMediaSourceRetriesExceeded', 'noMimeCodec']);
 IOVPlayer.METRIC_TYPES = ['iovPlayer.instances', 'iovPlayer.clientId', 'iovPlayer.moofWaitExceeded', 'iovPlayer.video.currentTime', 'iovPlayer.video.drift', 'iovPlayer.video.driftCorrection', 'iovPlayer.video.segmentInterval', 'iovPlayer.video.segmentIntervalAverage', 'iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd', 'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount'];
 /* harmony default export */ __webpack_exports__["default"] = (IOVPlayer);
 ;
@@ -73550,41 +73443,52 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
 
     _classCallCheck(this, MediaSourceWrapper);
 
-    var _this = _possibleConstructorReturn(this, (MediaSourceWrapper.__proto__ || Object.getPrototypeOf(MediaSourceWrapper)).call(this, MediaSourceWrapper.DEBUG_NAME));
-
-    _this.debug('Constructing...');
-
     if (!videoElement) {
       throw new Error('videoElement is required to construct an MediaSourceWrapper.');
     }
 
+    var _this = _possibleConstructorReturn(this, (MediaSourceWrapper.__proto__ || Object.getPrototypeOf(MediaSourceWrapper)).call(this, MediaSourceWrapper.DEBUG_NAME, options));
+
     _this.videoElement = videoElement;
 
-    _this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default()({}, options, {
-      duration: 10,
-      enableMetrics: false
-    });
+    _this.mediaSource = null;
+    _this.sourceBuffer = null;
+    _this.objectURL = null;
+    _this.readyRetries = 0;
 
-    _this.metric('mediaSource.instances', 1);
-
+    // @todo - can probably use the on method here rather than having this
+    // special property
     _this.eventListeners = {
       sourceopen: function sourceopen() {
-        // This can only be set when the media source is open.
-        // @todo - does this do memory management for us so we don't have
-        // to call remove on the buffer, which is expensive?  It seems
-        // like it...
-        _this.mediaSource.duration = _this.options.duration;
-
-        _this.trigger('sourceOpen');
-
-        // We originally were having the moov appended by the iov player,
-        // but I think it is more proper to do it here, however, can we
-        // mandate that the moov exist prior to the sourceopen event? If
-        // so, then we should be strict about the moov needing to exist
-        // here, rather than checking for its existence.
-        if (_this.moov) {
-          _this.sourceBuffer.appendMoov(_this.moov);
+        if (_this.isReady()) {
+          _this._onSourceOpen();
+          return;
         }
+
+        var interval = setInterval(function () {
+          if (_this.destroyed) {
+            console.warn('Media source was destroyed before it was ready.');
+            clearInterval(interval);
+            // this.trigger('sourceOpenFailure');
+            return;
+          }
+
+          if (_this.readyRetries >= _this.options.readyRetryMax) {
+            console.warn('Media source failed to become ready.');
+            clearInterval(interval);
+            _this.trigger('sourceOpenFailure');
+            return;
+          }
+
+          if (!_this.isReady()) {
+            _this.readyRetries++;
+            return;
+          }
+
+          _this._onSourceOpen();
+
+          clearInterval(interval);
+        }, _this.options.readyRetryInterval);
       },
       sourceended: function sourceended() {
         _this.trigger('sourceEnded');
@@ -73593,15 +73497,37 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
         _this.trigger('error', _error);
       }
     };
-
-    _this.destroyed = false;
-    _this.mediaSource = null;
-    _this.sourceBuffer = null;
-    _this.objectURL = null;
     return _this;
   }
 
   _createClass(MediaSourceWrapper, [{
+    key: 'onFirstMetricListenerRegistered',
+    value: function onFirstMetricListenerRegistered() {
+      _get(MediaSourceWrapper.prototype.__proto__ || Object.getPrototypeOf(MediaSourceWrapper.prototype), 'onFirstMetricListenerRegistered', this).call(this);
+
+      this.metric('mediaSource.instances', 1);
+    }
+  }, {
+    key: '_onSourceOpen',
+    value: function _onSourceOpen() {
+      // This can only be set when the media source is open.
+      // @todo - does this do memory management for us so we don't have
+      // to call remove on the buffer, which is expensive?  It seems
+      // like it...
+      this.mediaSource.duration = this.options.duration;
+
+      this.trigger('sourceOpen');
+
+      // We originally were having the moov appended by the iov player,
+      // but I think it is more proper to do it here, however, can we
+      // mandate that the moov exist prior to the sourceopen event? If
+      // so, then we should be strict about the moov needing to exist
+      // here, rather than checking for its existence.
+      if (this.moov) {
+        this.sourceBuffer.appendMoov(this.moov);
+      }
+    }
+  }, {
     key: 'initializeMediaSource',
     value: function () {
       var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
@@ -73790,16 +73716,16 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                this.debug('Destroying mediaSource...');
-
-                if (this.mediaSource) {
-                  _context3.next = 3;
+                if (!(!this.mediaSource || this.destroyed)) {
+                  _context3.next = 2;
                   break;
                 }
 
                 return _context3.abrupt('return');
 
-              case 3:
+              case 2:
+
+                this.debug('Destroying mediaSource...');
 
                 this.mediaSource.removeEventListener('sourceopen', this.eventListeners.sourceopen);
                 this.mediaSource.removeEventListener('sourceended', this.eventListeners.sourceended);
@@ -73830,7 +73756,11 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
                 }
 
                 // @todo - should the sourceBuffer do this?
-                this.mediaSource.removeSourceBuffer(this.sourceBuffer.sourceBuffer);
+                // @todo - there should not be a scenario where this.sourceBuffer is
+                // not defined
+                if (this.sourceBuffer) {
+                  this.mediaSource.removeSourceBuffer(this.sourceBuffer.sourceBuffer);
+                }
 
                 // @todo - is this happening at the right time, or should it happen
                 // prior to removing the source buffers?
@@ -73883,7 +73813,6 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
       return this.destroyMediaSource().then(function () {
         _this2.videoElement = null;
 
-        _this2.options = null;
         _this2.eventListeners = null;
 
         _get(MediaSourceWrapper.prototype.__proto__ || Object.getPrototypeOf(MediaSourceWrapper.prototype), 'destroy', _this2).call(_this2);
@@ -73895,7 +73824,12 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
 }(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__["default"]);
 
 MediaSourceWrapper.DEBUG_NAME = 'skyline:clsp:mse:MediaSourceWrapper';
-MediaSourceWrapper.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__["default"].EVENT_NAMES), ['sourceOpen', 'sourceEnded', 'error']);
+MediaSourceWrapper.DEFAULT_OPTIONS = {
+  duration: 10,
+  readyRetryInterval: 500,
+  readyRetryMax: 100
+};
+MediaSourceWrapper.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__["default"].EVENT_NAMES), ['sourceOpen', 'sourceEnded', 'error', 'sourceOpenFailure']);
 MediaSourceWrapper.METRIC_TYPES = ['mediaSource.instances', 'mediaSource.created', 'mediaSource.destroyed', 'mediaSource.reinitialized', 'mediaSource.objectURL.created', 'mediaSource.objectURL.revoked', 'mediaSource.endOfStream.error'];
 /* harmony default export */ __webpack_exports__["default"] = (MediaSourceWrapper);
 
@@ -73951,23 +73885,7 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
   function SourceBufferWrapper(mediaSource, options) {
     _classCallCheck(this, SourceBufferWrapper);
 
-    var _this = _possibleConstructorReturn(this, (SourceBufferWrapper.__proto__ || Object.getPrototypeOf(SourceBufferWrapper)).call(this, SourceBufferWrapper.DEBUG_NAME));
-
-    _this.debug('initializeSourceBuffer...');
-
-    _this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default()({}, options, {
-      // These default buffer value provide the best results in my testing.
-      // It keeps the memory usage as low as is practical, and rarely causes
-      // the video to stutter
-      bufferSizeLimit: 90 + Math.floor(Math.random() * 200),
-      bufferTruncateFactor: 2,
-      bufferTruncateValue: null,
-      driftThreshold: 2000,
-      enableMetrics: false,
-      minimumBufferIncrementSize: 0.5
-    });
-
-    _this.metric('sourceBuffer.instances', 1);
+    var _this = _possibleConstructorReturn(this, (SourceBufferWrapper.__proto__ || Object.getPrototypeOf(SourceBufferWrapper)).call(this, SourceBufferWrapper.DEBUG_NAME, options));
 
     if (!_this.options.bufferTruncateValue) {
       _this.options.bufferTruncateValue = parseInt(_this.options.bufferSizeLimit / _this.options.bufferTruncateFactor);
@@ -73979,8 +73897,13 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
     _this.sourceBuffer = _this.mediaSource.mediaSource.addSourceBuffer(_this.mediaSource.mimeCodec);
     _this.sourceBuffer.mode = 'sequence';
 
-    _this.metric('sourceBuffer.created', 1);
+    _this.segmentQueue = [];
+    _this.sequenceNumber = 0;
+    _this.timeBuffered = null;
+    _this.previousTimeEnd = null;
 
+    // @todo - can probably use the on method here rather than having this
+    // special property
     _this.eventListeners = {
       onUpdateEnd: function onUpdateEnd() {
         _this.onUpdateEnd();
@@ -74011,16 +73934,17 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
     // Supported Events
     _this.sourceBuffer.addEventListener('updateend', _this.eventListeners.onUpdateEnd);
     _this.sourceBuffer.addEventListener('error', _this.eventListeners.onError);
-
-    _this.destroyed = false;
-    _this.segmentQueue = [];
-    _this.sequenceNumber = 0;
-    _this.timeBuffered = null;
-    _this.previousTimeEnd = null;
     return _this;
   }
 
   _createClass(SourceBufferWrapper, [{
+    key: 'onFirstMetricListenerRegistered',
+    value: function onFirstMetricListenerRegistered() {
+      _get(SourceBufferWrapper.prototype.__proto__ || Object.getPrototypeOf(SourceBufferWrapper.prototype), 'onFirstMetricListenerRegistered', this).call(this);
+
+      this.metric('sourceBuffer.created', 1);
+    }
+  }, {
     key: 'isReady',
     value: function isReady() {
       return this.sourceBuffer && this.sourceBuffer.updating === false;
@@ -74067,7 +73991,8 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
         return;
       }
 
-      if (!this.mediaSource.isReady()) {
+      // I have come across the mediaSource not existing...
+      if (!this.mediaSource || !this.mediaSource.isReady()) {
         this.debug('The mediaSource is not ready');
         this.metric('sourceBuffer.queue.mediaSourceNotReady', 1);
         this.metric('sourceBuffer.queue.cannotProcessNext', 1);
@@ -74318,7 +74243,6 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
         _this2.previousTimeEnd = null;
         _this2.segmentQueue = null;
 
-        _this2.options = null;
         _this2.eventListeners = null;
 
         _this2.mediaSource = null;
@@ -74333,6 +74257,16 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
 }(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 SourceBufferWrapper.DEBUG_NAME = 'skyline:clsp:mse:SourceBufferWrapper';
+SourceBufferWrapper.DEFAULT_OPTIONS = {
+  // These default buffer value provide the best results in my testing.
+  // It keeps the memory usage as low as is practical, and rarely causes
+  // the video to stutter
+  bufferSizeLimit: 90 + Math.floor(Math.random() * 200),
+  bufferTruncateFactor: 2,
+  bufferTruncateValue: null,
+  driftThreshold: 2000,
+  minimumBufferIncrementSize: 0.5
+};
 SourceBufferWrapper.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"].EVENT_NAMES), ['appendStart', 'appendFinish', 'removeFinish', 'appendError', 'removeError', 'streamFrozen', 'error']);
 SourceBufferWrapper.METRIC_TYPES = ['sourceBuffer.instances', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'sourceBuffer.queue.added', 'sourceBuffer.queue.removed', 'sourceBuffer.append', 'sourceBuffer.append.error', 'sourceBuffer.frameDrop.hiddenTab', 'sourceBuffer.queue.mediaSourceNotReady', 'sourceBuffer.queue.sourceBufferNotReady', 'sourceBuffer.queue.shift', 'sourceBuffer.queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.insufficientBufferAppends', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen', 'sourceBuffer.abort', 'sourceBuffer.abort.error', 'sourceBuffer.lastMoofSize'];
 /* harmony default export */ __webpack_exports__["default"] = (SourceBufferWrapper);
@@ -74443,6 +74377,19 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_3__["default"].getPlugin('plugin'
         _this.metric(metric);
       };
 
+      _this.onMqttHandlerError = function () {
+        var mqttHandler = _this.player.tech(true).mqtt;
+
+        mqttHandler.destroy();
+
+        _this.player.error({
+          code: 0,
+          type: 'INSUFFICIENT_RESOURCES',
+          headline: 'Insufficient Resources',
+          message: 'The current hardware cannot support the current number of playing streams.'
+        });
+      };
+
       _this.debug = debug__WEBPACK_IMPORTED_MODULE_1___default()('skyline:clsp:plugin:ClspPlugin');
       _this.debug('constructing...');
 
@@ -74521,6 +74468,7 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_3__["default"].getPlugin('plugin'
         var error = player.error();
 
         switch (error.code) {
+          case 0:
           case 4:
           case 5:
           case 'PLAYER_ERR_IOV':
@@ -74593,6 +74541,9 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_3__["default"].getPlugin('plugin'
 
         mqttHandler.off('metric', this.onMqttHandlerMetric);
         mqttHandler.on('metric', this.onMqttHandlerMetric);
+
+        mqttHandler.off('error', this.onMqttHandlerError);
+        mqttHandler.on('error', this.onMqttHandlerError);
 
         mqttHandler.createIOV(player, {
           enableMetrics: this.options.enableMetrics,
@@ -74741,6 +74692,9 @@ var MqttConduitCollection = function () {
       // @todo - should all conduits be destroyed?
       this._conduits = null;
 
+      this.debug = null;
+      this.silly = null;
+
       window.removeEventListener('message', this.onMessage);
     }
   }]);
@@ -74881,6 +74835,14 @@ var MqttHandler = function (_Component) {
           // Note that I originally tried to trigger this event on the player
           // rather than the tech, but that causes the video not to play...
           _this2.metric(metric);
+        });
+
+        this.iov.on('criticalError', function (error) {
+          console.error(error);
+
+          _this2.destroyIOV();
+
+          _this2.trigger('error');
         });
       }
     }
@@ -75078,6 +75040,8 @@ var MqttSourceHandler = function () {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_1__);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -75086,12 +75050,17 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 
 
+
 var ListenerBaseClass = function () {
-  function ListenerBaseClass(debugName) {
+  function ListenerBaseClass(debugName, options) {
     _classCallCheck(this, ListenerBaseClass);
 
     this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(debugName);
     this.silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + debugName);
+
+    this.debug('Constructing...');
+
+    this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, this.constructor.DEFAULT_OPTIONS);
 
     this.metrics = {};
     this.events = {};
@@ -75101,7 +75070,21 @@ var ListenerBaseClass = function () {
     }
 
     this.firstMetricListenerRegistered = false;
+    this.destroyed = false;
   }
+
+  /**
+   * There are some cases where metrics need to be captured at the
+   * time of instantiation.  However, at that time, the metric event
+   * listener has not been registered.  Override this method, being
+   * sure to call super, to perform metrics that are meant to set at
+   * the time of instantiation.
+   *
+   * @todo - this is not a proper solution.  If there are multiple
+   * metric event listeners, only the first one will ever recieve
+   * the constructor metrics.  Find a better way to do this.
+   */
+
 
   _createClass(ListenerBaseClass, [{
     key: 'onFirstMetricListenerRegistered',
@@ -75116,7 +75099,8 @@ var ListenerBaseClass = function () {
       this.debug('Registering Listener for ' + name + ' event...');
 
       if (!this.constructor.EVENT_NAMES.includes(name)) {
-        throw new Error('"' + name + '" is not a valid event."');
+        console.warn('"' + name + '" is not a valid event."');
+        return;
       }
 
       this.events[name].push(action);
@@ -75192,6 +75176,14 @@ var ListenerBaseClass = function () {
         value: this.metrics[type]
       });
     }
+
+    /**
+     * Destroy the instance by dereferencing all of its instance properties.
+     * Note that this will wait to dereference things that affect event
+     * listeners, in case there are some that are still being cleaned up.
+     * Also note that it is up to the caller to set `destroyed` to false.
+     */
+
   }, {
     key: 'destroy',
     value: function destroy() {
@@ -75209,7 +75201,8 @@ var ListenerBaseClass = function () {
         _this.events = null;
         _this.debug = null;
         _this.silly = null;
-      }, 10000);
+        _this.options = null;
+      }, this.options.destroyWait);
     }
   }]);
 
@@ -75217,6 +75210,10 @@ var ListenerBaseClass = function () {
 }();
 
 ListenerBaseClass.DEBUG_NAME = 'skyline:clsp:utils:ListenerBaseClass';
+ListenerBaseClass.DEFAULT_OPTIONS = {
+  enableMetrics: false,
+  destroyWait: 60 * 1000
+};
 ListenerBaseClass.EVENT_NAMES = ['metric'];
 ListenerBaseClass.METRIC_TYPES = [];
 /* harmony default export */ __webpack_exports__["default"] = (ListenerBaseClass);
