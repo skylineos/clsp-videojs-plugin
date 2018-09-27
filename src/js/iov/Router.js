@@ -59,7 +59,10 @@ export default function () {
       function disconnect () {
         if (window.MQTTClient) {
           try {
-            window.MQTTClient.disconnect();
+            if (window.MQTTClient.socket) {
+              // @see - https://github.com/eclipse/paho.mqtt.javascript/blob/v1.1.0/src/paho-mqtt.js#L991
+              window.MQTTClient.disconnect();
+            }
           }
           catch (error) {
             logError('Error while trying to disconnect...', error);
@@ -229,7 +232,13 @@ export default function () {
         }
 
         try {
-          window.MQTTClient.connect(options);
+          // @see - https://github.com/eclipse/paho.mqtt.javascript/blob/v1.1.0/src/paho-mqtt.js#L863
+          if (!window.MQTTClient.connected && !window.MQTTClient.socket) {
+            window.MQTTClient.connect(options);
+          }
+          else {
+            console.warn('Trying to connect to an already-connected client!');
+          }
         }
         catch (error) {
           logError('Unknown connection failure...', error);
@@ -265,7 +274,16 @@ export default function () {
 
     onunload: function onunload () {
       if (window.MQTTClient) {
-        window.MQTTClient.disconnect();
+        try {
+          if (window.MQTTClient.socket) {
+            // @see - https://github.com/eclipse/paho.mqtt.javascript/blob/v1.1.0/src/paho-mqtt.js#L991
+            window.MQTTClient.disconnect();
+          }
+        }
+        catch (error) {
+          console.warn('Error while trying to disconnect...');
+          console.error(error);
+        }
       }
     },
   };

@@ -32,7 +32,7 @@ const defaultWallUrls = [
 let wallInterval = null;
 
 function initializeWall () {
-  function setupVwallCell (eid, src, cellId) {
+  function setupVwallCell (eid, src, cellId, playerOptions) {
     const $container = $(`#${eid}`);
 
     if (!$container.length) {
@@ -85,15 +85,7 @@ function initializeWall () {
       window.alert(`No match for element "video-${parseInt(cellId)}"`);
     }
 
-    const player = window.videojs(cell, {
-      autoplay: true,
-      muted: true,
-      preload: 'auto',
-      poster: 'skyline_logo.png',
-      clsp: {
-        enableMetrics: true,
-      },
-    });
+    const player = window.videojs(cell, playerOptions);
 
     $container.find('.video-stream .close').on('click', () => {
       $('#wallTotalVideos').text(parseInt($('#wallTotalVideos').text(), 10) - 1);
@@ -187,10 +179,22 @@ function initializeWall () {
 
     $(`#videowall`).html(html);
 
+    const playerOptions = {
+      autoplay: true,
+      muted: true,
+      preload: 'auto',
+      poster: 'skyline_logo.png',
+      clsp: {
+        enableMetrics: $('#enableMetrics').prop('checked'),
+      },
+    };
+
+    console.log('videojs player options', playerOptions);
+
     for (let i = 0; i < cellIndex; i++) {
       const urlListIndex = i % urlList.length;
 
-      setupVwallCell(`vwcell-${i}`, urlList[urlListIndex], i);
+      setupVwallCell(`vwcell-${i}`, urlList[urlListIndex], i, playerOptions);
     }
 
     const now = Date.now();

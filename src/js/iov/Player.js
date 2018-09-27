@@ -215,6 +215,12 @@ export default class IOVPlayer extends ListenerBaseClass {
       this.mediaSourceWrapper.destroy();
     }
 
+    if (!this.mimeCodec) {
+      // @todo - this should never happen - need to investigate
+      console.warn('mime codec not available yet...');
+      return;
+    }
+
     this.mediaSourceWrapperGenericErrorRestartCount = 0;
 
     this.mediaSourceWrapper = MediaSourceWrapper.factory(this.videoElement, {
