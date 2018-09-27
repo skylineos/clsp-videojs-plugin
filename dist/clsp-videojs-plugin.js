@@ -140,7 +140,7 @@
             }
           }function r() {
             if (window.MQTTClient) try {
-              window.MQTTClient.disconnect();
+              window.MQTTClient.socket && window.MQTTClient.disconnect();
             } catch (e) {
               t("Error while trying to disconnect...", e);
             }
@@ -148,7 +148,7 @@
             var n = "";try {
               n = e.payloadString;
             } catch (e) {}o({ event: "data", destinationName: e.destinationName, payloadString: n, payloadBytes: e.payloadBytes || null });
-          }function a(e) {
+          }function c(e) {
             var n = e.data;try {
               switch (n.method) {case "destroy":
                   r();break;case "subscribe":
@@ -169,35 +169,39 @@
             } catch (e) {
               t("Unknown onMessage error...", e), o({ event: "fail", reason: "network failure" }), r();
             }
-          }function c() {
+          }function a() {
             try {
               r();
             } catch (e) {}-1 === n && (n = setInterval(function () {
-              l();
+              u();
             }, 2e3));
           }function s() {
-            window.addEventListener ? window.addEventListener("message", a, !1) : window.attachEvent && window.attachEvent("onmessage", a), o({ event: "ready" }), -1 !== n && (clearInterval(n), n = -1);
+            window.addEventListener ? window.addEventListener("message", c, !1) : window.attachEvent && window.attachEvent("onmessage", c), o({ event: "ready" }), -1 !== n && (clearInterval(n), n = -1);
           }function d(e) {
-            var n = "Failed to connect: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
-          }function u(e) {
+            var n = "Failed to connect: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), a();
+          }function l(e) {
             if (0 !== e.errorCode) {
-              var n = "Lost connection: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
+              var n = "Lost connection: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), a();
             }
-          }function l() {
+          }function u() {
             var n = new window.parent.Paho.Message(JSON.stringify({ clientId: e.id }));n.destinationName = "iov/clientDisconnect";var r = { timeout: 120, onSuccess: s, onFailure: d, willMessage: n };!0 === e.config.useSSL && (r.useSSL = !0);try {
-              window.MQTTClient.connect(r);
+              window.MQTTClient.connected || window.MQTTClient.socket ? console.warn("Trying to connect to an already-connected client!") : window.MQTTClient.connect(r);
             } catch (e) {
               t("Unknown connection failure...", e), o({ event: "fail", reason: "connect failed" });
             }
           }!function () {
             try {
-              window.MQTTClient = new window.parent.Paho.Client(e.config.wsbroker, e.config.wsport, e.id), window.MQTTClient.onConnectionLost = u, window.MQTTClient.onMessageArrived = i, l();
+              window.MQTTClient = new window.parent.Paho.Client(e.config.wsbroker, e.config.wsport, e.id), window.MQTTClient.onConnectionLost = l, window.MQTTClient.onMessageArrived = i, u();
             } catch (e) {
               console.error("IFRAME error"), console.error(e);
             }
           }();
         }, onunload: function onunload() {
-          window.MQTTClient && window.MQTTClient.disconnect();
+          if (window.MQTTClient) try {
+            window.MQTTClient.socket && window.MQTTClient.disconnect();
+          } catch (e) {
+            console.warn("Error while trying to disconnect..."), console.error(e);
+          }
         } };
     };
   }]);
@@ -5667,7 +5671,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-13","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-14","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -6597,6 +6601,12 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
       if (_this.mediaSourceWrapper) {
         _this.mediaSourceWrapper.destroy();
+      }
+
+      if (!_this.mimeCodec) {
+        // @todo - this should never happen - need to investigate
+        console.warn('mime codec not available yet...');
+        return;
       }
 
       _this.mediaSourceWrapperGenericErrorRestartCount = 0;
