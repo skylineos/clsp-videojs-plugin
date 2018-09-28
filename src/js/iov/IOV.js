@@ -226,7 +226,7 @@ export default class IOV extends ListenerBaseClass {
 
     let shouldPlayNext = true;
 
-    if (this.options.changeSourceWait) {
+    if (clone.options.changeSourceWait) {
       const changeSourceTimeout = setTimeout(() => {
         shouldPlayNext = false;
 
@@ -235,9 +235,18 @@ export default class IOV extends ListenerBaseClass {
         }
 
         if (!clone.firstFrameShown) {
+          clone.playerInstance.error({
+            code: 0,
+            type: 'MEDIA_SOURCE_LOAD_FAILED',
+            headline: 'MEDIA_SOURCE_LOAD_FAILED',
+            message: `Unable to retrieve source: ${src}`,
+          });
+
+          this.player.destroy();
+
           clone.destroy();
         }
-      }, this.options.changeSourceMaxWait);
+      }, clone.options.changeSourceMaxWait);
     }
 
     clone.player.on('firstFrameShown', () => {
@@ -247,14 +256,16 @@ export default class IOV extends ListenerBaseClass {
 
       clone.firstFrameShown = true;
 
-      console.log('firstFrameShown', this.config.streamName, this.player.id, clone)
+      console.log('firstFrameShown', clone.config.streamName, clone.player.id, clone)
       // @todo - need to figure out when to show it
-      this.playerInstance.loadingSpinner.hide();
+      clone.playerInstance.loadingSpinner.hide();
 
       setTimeout(() => {
         clone.player.videoElement.style.display = 'initial';
         clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-      }, this.options.changeSourceReadyDelay);
+        clone.playerInstance.error(null);
+        clone.playerInstance.errorDisplay.close();
+      }, clone.options.changeSourceReadyDelay);
     });
 
     // When the tab is not in focus, chrome doesn't handle things the same
