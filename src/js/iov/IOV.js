@@ -27,7 +27,7 @@ export default class IOV extends ListenerBaseClass {
     changeSourceImmediately: false,
     changeSourceWait: true,
     changeSourceMaxWait: 15 * 1000,
-    changeSourceReadyDelay: 1 * 1000,
+    changeSourceReadyDelay: 1.5 * 1000,
     statsInterval: 30 * 1000,
     defaultNonSslPort: DEFAULT_NON_SSL_PORT,
     defaultSslPort: DEFAULT_SSL_PORT,
