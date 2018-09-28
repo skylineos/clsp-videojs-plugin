@@ -68,6 +68,18 @@ html, body {
       margin: auto;
     }
   }
+
+  #links {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 0.25rem 1rem;
+    background-color: lightgray;
+
+    a {
+      padding: 0.25rem;
+    }
+  }
 }
 
 section {

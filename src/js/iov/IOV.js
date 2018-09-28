@@ -23,8 +23,11 @@ export default class IOV extends ListenerBaseClass {
   static DEBUG_NAME = 'skyline:clsp:iov:iov';
 
   static DEFAULT_OPTIONS = {
-    changeSourceMaxWait: 9750,
-    statsInterval: 30000,
+    // autoplay: false,
+    changeSourceWait: true,
+    changeSourceMaxWait: 15 * 1000,
+    changeSourceReadyDelay: 0.5 * 1000,
+    statsInterval: 30 * 1000,
     defaultNonSslPort: DEFAULT_NON_SSL_PORT,
     defaultSslPort: DEFAULT_SSL_PORT,
   };
@@ -122,11 +125,14 @@ export default class IOV extends ListenerBaseClass {
 
     super(`${IOV.DEBUG_NAME}:${id}:main`, options);
 
+    console.log('creating iov ', id)
+
     this.id = id;
     this.destroyed = false;
     this.onReadyCalledMultipleTimes = false;
     this.playerInstance = player;
     this.videoElement = this.playerInstance.el();
+    this.firstFrameShown = false;
 
     this.config = {
       clientId: this.id,
@@ -171,6 +177,20 @@ export default class IOV extends ListenerBaseClass {
       this.trigger('criticalError');
     });
 
+    this.player.on('videoReceived', () => {
+      // reset the timeout monitor from videojs-errors
+      this.playerInstance.trigger('timeupdate');
+    });
+
+    this.player.on('videoInfoReceived', () => {
+      // reset the timeout monitor from videojs-errors
+      this.playerInstance.trigger('timeupdate');
+    });
+
+    this.playerInstance.on('changesrc', this.onChangeSource);
+
+    this.videoElement.addEventListener('mse-error-event', this.onMseError, false);
+
     return this;
   }
 
@@ -190,20 +210,52 @@ export default class IOV extends ListenerBaseClass {
     );
   }
 
-  changeSource (url) {
+  changeSource ({ src, type }) {
     this.debug(`changeSource on player "${this.id}""`);
 
-    if (!url) {
-      throw new Error('Unable to change source because there is no url!');
+    if (!src) {
+      throw new Error('Unable to change source because there is no src!');
     }
 
-    let iovUpdated = false;
-
-    const clone = this.clone(IOV.generateConfigFromUrl(url, this.options), this.options);
+    console.log('creating clone', this.id);
+    const clone = this.clone(IOV.generateConfigFromUrl(src, this.options), this.options);
 
     clone.initialize();
 
     clone.player.videoElement.style.display = 'none';
+
+    let shouldPlayNext = true;
+
+    if (this.options.changeSourceWait) {
+      const changeSourceTimeout = setTimeout(() => {
+        shouldPlayNext = false;
+
+        if (changeSourceTimeout) {
+          clearTimeout(changeSourceTimeout);
+        }
+
+        if (!clone.firstFrameShown) {
+          clone.destroy();
+        }
+      }, this.options.changeSourceMaxWait);
+    }
+
+    clone.player.on('firstFrameShown', () => {
+      if (!shouldPlayNext) {
+        return;
+      }
+
+      clone.firstFrameShown = true;
+
+      console.log('firstFrameShown', this.config.streamName, this.player.id, clone)
+      // @todo - need to figure out when to show it
+      this.playerInstance.loadingSpinner.hide();
+
+      setTimeout(() => {
+        clone.player.videoElement.style.display = 'initial';
+        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+      }, this.options.changeSourceReadyDelay);
+    });
 
     // When the tab is not in focus, chrome doesn't handle things the same
     // way as when the tab is in focus, and it seems that the result of that
@@ -217,12 +269,6 @@ export default class IOV extends ListenerBaseClass {
     // MSEWrapper, but I don't think that is likely to happen until the MSE
     // is standardized, and even then, we may be subject to non-intuitive
     // behavior based on tab switching, etc.
-    setTimeout(() => {
-      if (!iovUpdated) {
-        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-        clone.player.videoElement.style.display = 'initial';
-      }
-    }, clone.options.changeSourceMaxWait);
 
     // Under normal circumstances, meaning when the tab is in focus, we want
     // to respond by switching the IOV when the new IOV Player has something
@@ -234,8 +280,13 @@ export default class IOV extends ListenerBaseClass {
     // });
   }
 
-  onChangeSource = (event, data) => {
-    return this.changeSource(data.url);
+  onMseError = () => {
+    this.player.restart();
+  };
+
+  onChangeSource = (event, source) => {
+    console.log('changing source to ', source, this.id)
+    return this.changeSource(source);
   }
 
   onReady (event) {
@@ -244,14 +295,6 @@ export default class IOV extends ListenerBaseClass {
     // @todo - why is this necessary?
     if (this.videoElement.parentNode !== null) {
       this.config.videoElementParentId = this.videoElement.parentNode.id;
-    }
-
-    const videoTag = this.playerInstance.children()[0];
-
-    // @todo - there must be a better way to determine autoplay...
-    if (videoTag.getAttribute('autoplay') !== null) {
-      // playButton.trigger('click');
-      this.playerInstance.trigger('play', videoTag);
     }
 
     if (this.onReadyCalledMultipleTimes) {
@@ -264,31 +307,13 @@ export default class IOV extends ListenerBaseClass {
 
     this.onReadyCalledMultipleTimes = true;
 
-    this.player.on('firstFrameShown', () => {
-      // @todo - it doesn't seem like anything in this listener is necessary
-      // @todo - need to figure out when to show it
-      this.playerInstance.loadingSpinner.hide();
-
-      videoTag.style.display = 'none';
-    });
-
-    this.player.on('videoReceived', () => {
-      // reset the timeout monitor from videojs-errors
-      this.playerInstance.trigger('timeupdate');
-    });
-
-    this.player.on('videoInfoReceived', () => {
-      // reset the timeout monitor from videojs-errors
-      this.playerInstance.trigger('timeupdate');
-    });
-
-    this.playerInstance.on('changesrc', this.onChangeSource);
+    // @todo - is this needed?  If so, it is in the wrong place.  This should
+    // trigger "ready" if anything
+    // if (this.options.autoplay) {
+    //   this.playerInstance.trigger('play');
+    // }
 
     this.player.play(this.videoElement.firstChild.id, this.config.streamName);
-
-    this.videoElement.addEventListener('mse-error-event', (e) => {
-      this.player.restart();
-    }, false);
   }
 
   onFail (event) {
@@ -347,6 +372,8 @@ export default class IOV extends ListenerBaseClass {
       return;
     }
 
+    console.log('destroying ', this.id)
+
     this.destroyed = true;
 
     this.debug('destroying...');
@@ -358,6 +385,7 @@ export default class IOV extends ListenerBaseClass {
     this.mqttConduitCollection.remove(this.id);
     this.conduit.destroy();
 
+    this.videoElement.removeEventListener('mse-error-event', this.onMseError);
     this.playerInstance.off('changesrc', this.onChangeSource);
     this.playerInstance = null;
 

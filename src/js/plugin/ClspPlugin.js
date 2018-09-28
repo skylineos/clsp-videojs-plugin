@@ -50,6 +50,7 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
        * If a positive number is passed, retry that many times
        */
       maxRetriesOnError: -1,
+      tourDuration: 10 * 1000,
       enableMetrics: false,
     };
   }
@@ -67,6 +68,9 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
       ...defaults,
       ...(playerOptions.clsp || {}),
     }, options);
+
+    this._playerOptions = playerOptions;
+    this.currentSourceIndex = 0;
 
     player.addClass('vjs-clsp');
 
@@ -99,15 +103,17 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
       });
     }
 
+    this.autoplayEnabled = playerOptions.autoplay || player.getAttribute('autoplay') === 'true';
+
     // for debugging...
-    /*
-    const oldTrigger = player.trigger.bind(player);
-    player.trigger = (eventName, ...args) => {
-      console.log(eventName);
-      console.log(...args);
-      oldTrigger(eventName, ...args);
-    };
-    */
+
+    // const oldTrigger = player.trigger.bind(player);
+    // player.trigger = (eventName, ...args) => {
+    //   console.log(eventName);
+    //   console.log(...args);
+    //   oldTrigger(eventName, ...args);
+    // };
+
 
     // Track the number of times we've retried on error
     player._errorRetriesCount = 0;
@@ -122,7 +128,7 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
     // This is currently needed for autoplay.
     player.on('ready', () => {
-      if (playerOptions.autoplay || player.getAttribute('autoplay') === 'true') {
+      if (this.autoplayEnabled) {
         // Even though the "ready" event has fired, it's not actually ready...
         setTimeout(() => {
           player.play();
@@ -193,6 +199,10 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
 
       mqttHandler.destroy();
     });
+
+    if (playerOptions.sources && playerOptions.sources.length > 1 && this.options.tourDuration) {
+      this.queueNextSource();
+    }
   }
 
   onMqttHandlerMetric = (event, { metric }) => {
@@ -235,6 +245,17 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     });
   }
 
+  queueNextSource () {
+    setTimeout(() => {
+      this.currentSourceIndex = this.currentSourceIndex >= (this._playerOptions.sources.length - 1)
+        ? 0
+        : this.currentSourceIndex + 1;
+
+      this.player.trigger('changesrc', this._playerOptions.sources[this.currentSourceIndex]);
+      this.queueNextSource();
+    }, this.options.tourDuration);
+  }
+
   metric (metric) {
     if (this.options.enableMetrics) {
       this.trigger('metric', { metric });
@@ -248,6 +269,8 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
 
     mqttHandler.off('metric', this.onMqttHandlerMetric);
 
+    this._playerOptions = null;
+    this.currentSourceIndex = null;
     this.debug = null;
   }
 };

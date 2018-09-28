@@ -3,6 +3,7 @@
 // @todo - some of the debounces in here can lead to things occurring at
 // unexpected times.  Try to find a more proper solution
 import debounce from 'lodash/debounce';
+import uuidv4 from 'uuid/v4';
 
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
 import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
@@ -76,6 +77,7 @@ export default class IOVPlayer extends ListenerBaseClass {
   constructor (iov, videoJsElementId, options) {
     super(IOVPlayer.DEBUG_NAME, options);
 
+    this.id = uuidv4();
     this.iov = iov;
     this.eid = videoJsElementId;
     this.videoId = `clsp-video-${this.iov.config.clientId}`;
@@ -167,10 +169,6 @@ export default class IOVPlayer extends ListenerBaseClass {
             const id = video.getAttribute('id');
 
             if (id !== this.eid && id !== this.videoId) {
-              // video.pause();
-              // video.removeAttribute('src');
-              // video.load();
-              // video.style.display = 'none';
               this.videoElementParent.removeChild(video);
               video.remove();
               video = null;

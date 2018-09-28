@@ -92,6 +92,7 @@ module.exports = () => [
     entry: {
       // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
       demo: [path.resolve(__dirname, 'demo', 'src', 'js', 'demo.js')],
+      tourDemo: [path.resolve(__dirname, 'demo', 'src', 'js', 'tourDemo.js')],
     },
     output: {
       filename: '[name].js',
