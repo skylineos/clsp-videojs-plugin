@@ -1,9 +1,5 @@
 'use strict';
 
-// @todo - can webpack be configured to process this without having
-// include it like this?
-import '~styles/clsp-videojs-plugin.scss';
-
 import Debug from 'debug';
 import Paho from 'paho-client';
 
