@@ -32,22 +32,24 @@ const defaultWallUrls = [
 let wallInterval = null;
 
 function initializeWall () {
-  function setupVwallCell (eid, src, cellId, playerOptions) {
-    const $container = $(`#${eid}`);
+  function createVideoPlayer (index, playerOptions) {
+    const videoId = `video-${index}`;
 
-    if (!$container.length) {
-      window.alert(`No match for element "${eid}"`);
-      return;
-    }
+    const $container = $('#videowall')
+      .append(document.getElementById('video-template').innerHTML)
+      .find('#container-null');
 
-    const html = document.getElementById('cell').innerHTML
-      .replace(/\$cellId/g, cellId)
-      .replace('$src', src);
+    const $video = $container.find('video');
 
-    $container.html(html);
+    $video.attr('id', videoId);
 
-    $container.find('.video-stream .index').text(cellId);
-    $container.find('.video-stream .url').text(src);
+    $container.attr('id', `container-${index}`);
+    $container.find('.video-stream .index').text(index);
+    $container.find('.video-stream .url').text(playerOptions.sources[0].src);
+    $container.find('.video-stream .close').on('click', () => {
+      $('#wallTotalVideos').text(parseInt($('#wallTotalVideos').text(), 10) - 1);
+      player.dispose();
+    });
 
     const $videoMetrics = $container.find('.video-metrics');
 
@@ -79,25 +81,12 @@ function initializeWall () {
       }
     }
 
-    const cell = document.getElementById(`video-${cellId}`);
-
-    if (!cell) {
-      window.alert(`No match for element "video-${parseInt(cellId)}"`);
-    }
-
-    const player = window.videojs(cell, playerOptions);
-
-    $container.find('.video-stream .close').on('click', () => {
-      $('#wallTotalVideos').text(parseInt($('#wallTotalVideos').text(), 10) - 1);
-      player.dispose();
-    });
+    const player = window.videojs(videoId, playerOptions);
 
     const tech = player.clsp();
 
-    const $videoMetricContainer = $container.find('.video-metrics');
-
     tech.on('metric', (event, { metric }) => {
-      $videoMetricContainer.find(`.${metric.type.replace(new RegExp(/\./, 'g'), '-')} .value`)
+      $videoMetrics.find(`.${metric.type.replace(new RegExp(/\./, 'g'), '-')} .value`)
         .attr('title', metric.value)
         .html(metric.value);
     });
@@ -152,54 +141,36 @@ function initializeWall () {
     const urlList = window.localStorage.getItem('skyline.clspPlugin.wallUrls').split('\n');
     const timesToReplicate = $('#wallReplicate').val();
 
-    let html = '<table>';
-    let cellIndex = 0;
+    let videoIndex = 0;
 
     for (let i = 0; i < timesToReplicate; i++) {
       for (let j = 0; j < urlList.length; j++) {
-        if (cellIndex % 4 === 0) {
-          html += '<tr>';
-        }
+        const playerOptions = {
+          autoplay: true,
+          muted: true,
+          preload: 'auto',
+          poster: 'skyline_logo.png',
+          sources: [
+            {
+              src: urlList[j % urlList.length],
+              type: "video/mp4; codecs='avc1.42E01E'",
+            },
+          ],
+          clsp: {
+            enableMetrics: $('#enableMetrics').prop('checked'),
+          },
+        };
 
-        html += `<td id="vwcell-${cellIndex}"></td>`;
+        createVideoPlayer(videoIndex, playerOptions);
 
-        if (cellIndex % 4 === 3) {
-          html += '</tr>';
-        }
-
-        cellIndex++;
+        videoIndex++;
       }
-    }
-
-    if (urlList.length < 4) {
-      html += '</tr>';
-    }
-
-    html += '</table>';
-
-    $(`#videowall`).html(html);
-
-    const playerOptions = {
-      autoplay: true,
-      muted: true,
-      preload: 'auto',
-      poster: 'skyline_logo.png',
-      clsp: {
-        enableMetrics: $('#enableMetrics').prop('checked'),
-      },
-    };
-
-    console.log('videojs player options', playerOptions);
-
-    for (let i = 0; i < cellIndex; i++) {
-      const urlListIndex = i % urlList.length;
-
-      setupVwallCell(`vwcell-${i}`, urlList[urlListIndex], i, playerOptions);
     }
 
     const now = Date.now();
 
-    $('#wallTotalVideos').text(cellIndex);
+    document.getElementById('videowall').style.gridTemplateColumns = `repeat(${Math.ceil(Math.sqrt(videoIndex + 1))}, 1fr)`;
+    $('#wallTotalVideos').text(videoIndex);
     $('#wallStartTime').text(moment(now).format('MMMM Do YYYY, h:mm:ss a'));
 
     if (wallInterval) {
@@ -240,7 +211,7 @@ function initializeWall () {
 $(() => {
   const pageTitle = `CLSP ${window.CLSP_DEMO_VERSION} Demo Page`;
   document.title = pageTitle;
-  $('#page-title').html(pageTitle);
+  $('#page-title-version').html(window.CLSP_DEMO_VERSION);
 
   window.HELP_IMPROVE_VIDEOJS = false;
 

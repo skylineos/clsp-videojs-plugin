@@ -60,21 +60,12 @@ html, body {
   }
 
   #wallSummary {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
 
-    & > div {
-      display: flex;
-      flex-direction: column;
-      padding: 5px 10px;
-
-      &.labels {
-        font-weight: bold;
-        text-align: right;
-      }
-
-      span {
-        margin: 5px;
-      }
+    & > * {
+      padding: 0.5rem;
+      margin: auto;
     }
   }
 }
@@ -94,6 +85,9 @@ section {
   }
 
   &.wall {
+    flex-grow: 1;
+    flex-shrink: 0;
+
     .controls {
       background-color: lightgray;
       padding: 1rem;
@@ -110,34 +104,23 @@ section {
     }
 
     #videowall {
-      & > table {
-        width: 100%;
-        display: flex;
-
-        tbody {
-          width: 100%;
-
-          tr {
-            width: 100%;
-            display: flex;
-
-            td {
-              width: 25%;
-              display: flex;
-              overflow: hidden;
-            }
-          }
-        }
-      }
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      flex-grow: 1;
+      flex-shrink: 0;
     }
 
     .wall-video-container {
-      border: 2px solid grey;
-      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       padding: 0.5rem;
+      border: 2px solid grey;
+      overflow: hidden;
 
       .video-stream {
         display: flex;
+        width: 100%;
         align-items: center;
         justify-content: space-between;
         padding: 10px;
@@ -159,6 +142,10 @@ section {
           color: white;
           border-radius: 50%;
         }
+      }
+
+      .video-container {
+        display: flex;
       }
 
       .video-metrics {

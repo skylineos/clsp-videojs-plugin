@@ -1,36 +1,29 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <title>CLSP Demo</title>
   <link href="../dist/demo.css" rel="stylesheet">
   <script src="../dist/demo.js"></script>
 </head>
+
 <body>
   <div class="page-header">
     <img src="./skyline_logo.png" />
     <div class="page-title">
       <h2>CLSP Plugin</h2>
       <h1 id="page-title-version">--version not yet loaded--</h1>
-      <h2>Player Demo</h2>
+      <h2>Tour Demo</h2>
     </div>
     <div class="controls">
-      <button
-        id="controls-toggle"
-        data-state="shown"
-      >Hide Controls</button>
+      <button id="controls-toggle" data-state="shown">Hide Controls</button>
       <label for="enableMetrics">
-        <input
-          id="enableMetrics"
-          type="checkbox"
-        />
+        <input id="enableMetrics" type="checkbox" />
         <span>Enable Metrics</span>
       </label>
       <label for="showMetrics">
-        <input
-          id="showMetrics"
-          type="checkbox"
-        />
+        <input id="showMetrics" type="checkbox" />
         <span>Show Metrics</span>
       </label>
     </div>
@@ -53,21 +46,13 @@
       <div class="wall-urls-container">
         <span>Urls:</span>
         <br />
-        <textarea
-          id="wallUrls"
-          rows="25"
-          cols="80"
-        ></textarea>
+        <textarea id="wallUrls" rows="25" cols="80"></textarea>
       </div>
       <div class="wall-controls-container">
         <div>
           <span>Times to Replicate</span>
           <br />
-          <input
-            id="wallReplicate"
-            value="1"
-            type="number"
-          />
+          <input id="wallReplicate" value="1" type="number" />
         </div>
         <div>
           <button id="walltest">Create Video Wall</button>
@@ -79,22 +64,14 @@
   </section>
 
   <template id="video-template">
-    <div
-      id="container-null"
-      class="wall-video-container"
-    >
+    <div id="container-null" class="wall-video-container">
       <div class="video-stream">
         <span class="index"></span>
         <span class="url"></span>
         <button class="close">&times;</button>
       </div>
       <div class="video-container">
-        <video
-          height="240px"
-          class="video-js vjs-default-skin"
-          controls
-          muted
-        ></video>
+        <video height="240px" class="video-js vjs-default-skin" controls muted></video>
       </div>
       <div class="video-metrics"></div>
     </div>
@@ -102,4 +79,5 @@
 
   <script src="../dist/clsp-videojs-plugin.js"></script>
 </body>
+
 </html>
