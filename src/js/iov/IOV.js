@@ -191,6 +191,38 @@ export default class IOV extends ListenerBaseClass {
 
     this.videoElement.addEventListener('mse-error-event', this.onMseError, false);
 
+    this.shouldPlayNext = true;
+
+    if (this.options.changeSourceWait) {
+      const changeSourceTimeout = setTimeout(() => {
+        this.shouldPlayNext = false;
+
+        if (changeSourceTimeout) {
+          clearTimeout(changeSourceTimeout);
+        }
+
+        if (!this.firstFrameShown) {
+          this.playerInstance.trigger('readyForNextSource', true);
+        }
+      }, this.options.changeSourceMaxWait);
+    }
+
+    this.player.on('firstFrameShown', () => {
+      if (!this.shouldPlayNext) {
+        return;
+      }
+
+      this.firstFrameShown = true;
+
+      console.log('firstFrameShown', this.config.streamName, this.player.id, this)
+      // @todo - need to figure out when to show it
+      this.playerInstance.loadingSpinner.hide();
+
+      setTimeout(() => {
+        this.playerInstance.trigger('readyForNextSource');
+      }, this.options.changeSourceReadyDelay);
+    });
+
     return this;
   }
 
@@ -224,41 +256,29 @@ export default class IOV extends ListenerBaseClass {
 
     clone.player.videoElement.style.display = 'none';
 
-    let shouldPlayNext = true;
+    clone.onCloneReadyForNextSource = (event, failure) => {
+      if (failure) {
+        clone.playerInstance.error({
+          code: 0,
+          type: 'MEDIA_SOURCE_LOAD_FAILED',
+          headline: 'MEDIA_SOURCE_LOAD_FAILED',
+          message: `Unable to retrieve source: ${src}`,
+        });
 
-    if (clone.options.changeSourceWait) {
-      const changeSourceTimeout = setTimeout(() => {
-        shouldPlayNext = false;
+        this.player.destroy();
 
-        if (changeSourceTimeout) {
-          clearTimeout(changeSourceTimeout);
-        }
+        clone.destroy();
+      }
+    };
 
-        if (!clone.firstFrameShown) {
-          clone.playerInstance.error({
-            code: 0,
-            type: 'MEDIA_SOURCE_LOAD_FAILED',
-            headline: 'MEDIA_SOURCE_LOAD_FAILED',
-            message: `Unable to retrieve source: ${src}`,
-          });
-
-          this.player.destroy();
-
-          clone.destroy();
-        }
-      }, clone.options.changeSourceMaxWait);
-    }
+    clone.playerInstance.on('readyForNextSource', clone.onCloneReadyForNextSource);
 
     clone.player.on('firstFrameShown', () => {
-      if (!shouldPlayNext) {
+      if (!clone.shouldPlayNext) {
         return;
       }
 
-      clone.firstFrameShown = true;
-
-      console.log('firstFrameShown', clone.config.streamName, clone.player.id, clone)
-      // @todo - need to figure out when to show it
-      clone.playerInstance.loadingSpinner.hide();
+      clone.playerInstance.off('readyForNextSource', clone.onCloneReadyForNextSource);
 
       setTimeout(() => {
         clone.player.videoElement.style.display = 'initial';
@@ -388,6 +408,12 @@ export default class IOV extends ListenerBaseClass {
     this.destroyed = true;
 
     this.debug('destroying...');
+
+    // this.playerInstance.off('readyForNextSource', this.onReadyForNextSource);
+
+    if (this.onCloneReadyForNextSource) {
+      this.playerInstance.off('readyForNextSource', this.onCloneReadyForNextSource);
+    }
 
     // For whatever reason, the things must be destroyed in this order
     this.player.destroy();

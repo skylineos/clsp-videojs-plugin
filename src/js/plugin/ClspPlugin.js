@@ -136,6 +136,18 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
       }
     });
 
+    player.on('readyForNextSource', () => {
+      setTimeout(() => {
+        if (playerOptions.sources && playerOptions.sources.length > 1 && this.options.tourDuration) {
+          this.currentSourceIndex = this.currentSourceIndex >= (this._playerOptions.sources.length - 1)
+            ? 0
+            : this.currentSourceIndex + 1;
+
+          this.player.trigger('changesrc', this._playerOptions.sources[this.currentSourceIndex]);
+        }
+      }, this.options.tourDuration);
+    });
+
     // @todo - this seems like we aren't using videojs properly
     player.on('error', (event) => {
       const error = player.error();
@@ -199,10 +211,6 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
 
       mqttHandler.destroy();
     });
-
-    if (playerOptions.sources && playerOptions.sources.length > 1 && this.options.tourDuration) {
-      this.queueNextSource();
-    }
   }
 
   onMqttHandlerMetric = (event, { metric }) => {
@@ -243,17 +251,6 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
       defaultNonSslPort: this.options.defaultNonSslPort,
       defaultSslPort: this.options.defaultSslPort,
     });
-  }
-
-  queueNextSource () {
-    setTimeout(() => {
-      this.currentSourceIndex = this.currentSourceIndex >= (this._playerOptions.sources.length - 1)
-        ? 0
-        : this.currentSourceIndex + 1;
-
-      this.player.trigger('changesrc', this._playerOptions.sources[this.currentSourceIndex]);
-      this.queueNextSource();
-    }, this.options.tourDuration);
   }
 
   metric (metric) {
