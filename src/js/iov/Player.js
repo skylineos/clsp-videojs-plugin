@@ -293,7 +293,7 @@ export default class IOVPlayer extends ListenerBaseClass {
         }
       });
 
-      this.mediaSourceWrapper.sourceBuffer.on('appendError', async (error) => {
+      this.mediaSourceWrapper.sourceBuffer.on('appendError', (error) => {
         // Can occur when the tab in the browser where this video player
         // lives is hidden, then shown after about 10 seconds or more.
         // Can occur when "The SourceBuffer is full, and cannot free space to append additional buffers."
@@ -305,7 +305,8 @@ export default class IOVPlayer extends ListenerBaseClass {
         );
 
         // @todo - can we just restart here instead of creating a new wrapper?
-        await this.reinitializeMseWrapper();
+        // await this.reinitializeMseWrapper();
+        this.restart();
       });
 
       this.mediaSourceWrapper.sourceBuffer.on('removeFinish', (info) => {
@@ -328,11 +329,9 @@ export default class IOVPlayer extends ListenerBaseClass {
         );
       });
 
-      this.mediaSourceWrapper.sourceBuffer.on('streamFrozen', async () => {
+      this.mediaSourceWrapper.sourceBuffer.on('streamFrozen', () => {
         this.debug('stream appears to be frozen - reinitializing...');
 
-        // @todo - can we just restart here instead of creating a new wrapper?
-        // await this.reinitializeMseWrapper();
         this.restart();
       });
 
@@ -391,7 +390,7 @@ export default class IOVPlayer extends ListenerBaseClass {
   play (streamName) {
     this.debug('play');
 
-    this.iov.conduit.start(async (mimeCodec, moov) => {
+    this.iov.conduit.start((mimeCodec, moov) => {
       // These are needed for reinitializeMseWrapper
       this.mimeCodec = mimeCodec;
       this.moov = moov;
@@ -424,13 +423,13 @@ export default class IOVPlayer extends ListenerBaseClass {
         }
       });
 
-      this.iov.conduit.onResync(async () => {
+      this.iov.conduit.onResync(() => {
         this.debug('sync event received');
 
-        await this.reinitializeMseWrapper();
+        this.reinitializeMseWrapper();
       });
 
-      await this.reinitializeMseWrapper();
+      this.reinitializeMseWrapper();
     });
   }
 
