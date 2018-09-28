@@ -1,9 +1,9 @@
 'use strict';
 
 import uuidv4 from 'uuid/v4';
-import defaults from 'lodash/defaults';
 
 // Needed for crossbrowser iframe support
+// @todo - isn't this needed in conduit or something?
 import 'srcdoc-polyfill';
 
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
@@ -24,9 +24,10 @@ export default class IOV extends ListenerBaseClass {
 
   static DEFAULT_OPTIONS = {
     // autoplay: false,
+    changeSourceImmediately: false,
     changeSourceWait: true,
     changeSourceMaxWait: 15 * 1000,
-    changeSourceReadyDelay: 0.5 * 1000,
+    changeSourceReadyDelay: 1 * 1000,
     statsInterval: 30 * 1000,
     defaultNonSslPort: DEFAULT_NON_SSL_PORT,
     defaultSslPort: DEFAULT_SSL_PORT,
@@ -203,6 +204,7 @@ export default class IOV extends ListenerBaseClass {
 
         if (!this.firstFrameShown) {
           this.playerInstance.trigger('readyForNextSource', true);
+          this.player.trigger('readyForNextSource', true);
         }
       }, this.options.changeSourceMaxWait);
     }
@@ -213,6 +215,8 @@ export default class IOV extends ListenerBaseClass {
       }
 
       this.firstFrameShown = true;
+      console.log('iov firstFrameShown')
+
 
       console.log('firstFrameShown', this.config.streamName, this.player.id, this)
       // @todo - need to figure out when to show it
@@ -220,8 +224,15 @@ export default class IOV extends ListenerBaseClass {
 
       setTimeout(() => {
         this.playerInstance.trigger('readyForNextSource');
+        this.player.trigger('readyForNextSource');
       }, this.options.changeSourceReadyDelay);
     });
+
+    if (this.options.changeSourceImmediately) {
+      // @todo - we probably should not mutate the options
+      this.options.changeSourceImmediately = false;
+      this.playerInstance.trigger('changeSourceImmediately');
+    }
 
     return this;
   }
@@ -256,7 +267,23 @@ export default class IOV extends ListenerBaseClass {
 
     clone.player.videoElement.style.display = 'none';
 
-    clone.onCloneReadyForNextSource = (event, failure) => {
+    clone.onVisibilityChange = () => {
+      if (document.hidden) {
+        try {
+          this.player.destroy();
+          clone.destroy();
+        }
+        catch (error) {
+          console.error(error);
+        }
+      }
+
+      document.removeEventListener('visibilitychange', clone.onVisibilityChange);
+    };
+
+    document.addEventListener('visibilitychange', clone.onVisibilityChange);
+
+    clone.player.on('readyForNextSource', (failure) => {
       if (failure) {
         clone.playerInstance.error({
           code: 0,
@@ -269,18 +296,16 @@ export default class IOV extends ListenerBaseClass {
 
         clone.destroy();
       }
-    };
-
-    clone.playerInstance.on('readyForNextSource', clone.onCloneReadyForNextSource);
+    });
 
     clone.player.on('firstFrameShown', () => {
+      console.log('clone firstFrameShown')
       if (!clone.shouldPlayNext) {
         return;
       }
 
-      clone.playerInstance.off('readyForNextSource', clone.onCloneReadyForNextSource);
-
       setTimeout(() => {
+        console.log(clone.id)
         clone.player.videoElement.style.display = 'initial';
         clone.playerInstance.tech(true).mqtt.updateIOV(clone);
         clone.playerInstance.error(null);
@@ -409,10 +434,8 @@ export default class IOV extends ListenerBaseClass {
 
     this.debug('destroying...');
 
-    // this.playerInstance.off('readyForNextSource', this.onReadyForNextSource);
-
-    if (this.onCloneReadyForNextSource) {
-      this.playerInstance.off('readyForNextSource', this.onCloneReadyForNextSource);
+    if (this.onVisibilityChange) {
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
     }
 
     // For whatever reason, the things must be destroyed in this order

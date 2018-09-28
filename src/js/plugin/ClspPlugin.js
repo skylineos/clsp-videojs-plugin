@@ -136,15 +136,19 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
       }
     });
 
+    player.on('changeSourceImmediately', () => {
+      if (playerOptions.sources && playerOptions.sources.length > 1 && this.options.tourDuration) {
+        this.currentSourceIndex = this.currentSourceIndex >= (this._playerOptions.sources.length - 1)
+          ? 0
+          : this.currentSourceIndex + 1;
+
+        this.player.trigger('changesrc', this._playerOptions.sources[this.currentSourceIndex]);
+      }
+    });
+
     player.on('readyForNextSource', () => {
       setTimeout(() => {
-        if (playerOptions.sources && playerOptions.sources.length > 1 && this.options.tourDuration) {
-          this.currentSourceIndex = this.currentSourceIndex >= (this._playerOptions.sources.length - 1)
-            ? 0
-            : this.currentSourceIndex + 1;
-
-          this.player.trigger('changesrc', this._playerOptions.sources[this.currentSourceIndex]);
-        }
+        player.trigger('changeSourceImmediately');
       }, this.options.tourDuration);
     });
 

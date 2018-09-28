@@ -55,6 +55,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     'videoInfoReceived',
     'maxMediaSourceRetriesExceeded',
     'noMimeCodec',
+    'readyForNextSource',
   ];
 
   static METRIC_TYPES = [

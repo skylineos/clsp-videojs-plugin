@@ -121,7 +121,11 @@ export default class MqttHandler extends Component {
   }
 
   recreateIOV () {
-    this.createIOV(this._oldIovPlayerInstance, this._oldIovOptions);
+    this.createIOV(this._oldIovPlayerInstance, {
+      ...this._oldIovOptions,
+      changeSourceImmediately: true,
+    });
+
     this._oldIovPlayerInstance = null;
     this._oldIovOptions = null;
   }
