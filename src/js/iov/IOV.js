@@ -196,6 +196,10 @@ export default class IOV extends ListenerBaseClass {
 
     if (this.options.changeSourceWait) {
       const changeSourceTimeout = setTimeout(() => {
+        if (this.destroyed) {
+          return;
+        }
+
         this.shouldPlayNext = false;
 
         if (changeSourceTimeout) {
@@ -456,8 +460,11 @@ export default class IOV extends ListenerBaseClass {
 
     this.debug('destroying...');
 
-    if (this.onVisibilityChange) {
-      // document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    // If the tab is not in focus, do not remove this event listener, because
+    // that will prevent it from executing when it is supposed to.  It will
+    // remove itself when it runs
+    if (this.onVisibilityChange && !document.hidden) {
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
     }
 
     // For whatever reason, the things must be destroyed in this order

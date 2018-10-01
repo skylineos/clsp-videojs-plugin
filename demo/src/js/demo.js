@@ -102,32 +102,29 @@ function initializeWall () {
     }
   }
 
+  const $controls = $('.wall .controls');
+  const $controlsToggle = $('#wall-controls-toggle');
+
   function toggleControls () {
-    $('#controls-toggle').attr('data-state') === 'hidden'
+    $controlsToggle.attr('data-state') === 'hidden'
       ? showControls()
       : hideControls();
   }
 
   function showControls () {
-    const $controls = $('.wall .controls');
-    const $controlsToggle = $('#controls-toggle');
-
     $controls.show();
     $controlsToggle.attr('data-state', 'shown');
     $controlsToggle.text('Hide Controls');
   }
 
   function hideControls () {
-    const $controls = $('.wall .controls');
-    const $controlsToggle = $('#controls-toggle');
-
     $controls.hide();
     $controlsToggle.attr('data-state', 'hidden');
     $controlsToggle.text('Show Controls');
   }
 
   function setMetricsVisibility () {
-    if ($('#showMetrics').prop('checked')) {
+    if ($('#wallShowMetrics').prop('checked')) {
       $('.video-metrics').show();
     }
     else {
@@ -157,7 +154,7 @@ function initializeWall () {
             },
           ],
           clsp: {
-            enableMetrics: $('#enableMetrics').prop('checked'),
+            enableMetrics: $('#wallEnableMetrics').prop('checked'),
           },
         };
 
@@ -195,9 +192,9 @@ function initializeWall () {
     window.localStorage.setItem('skyline.clspPlugin.wallUrls', defaultWallUrls.join('\n'));
   }
 
-  $('#walltest').click(onclick);
-  $('#controls-toggle').click(toggleControls);
-  $('#showMetrics').on('change', setMetricsVisibility);
+  $('#wallCreate').click(onclick);
+  $('#wall-controls-toggle').click(toggleControls);
+  $('#wallShowMetrics').on('change', setMetricsVisibility);
 
   const $wallUrls = $('#wallUrls');
 

@@ -9,79 +9,111 @@
 <body>
   <div class="page-header">
     <img src="./skyline_logo.png" />
-    <div class="page-title">
-      <h2>CLSP Plugin</h2>
-      <h1 id="page-title-version">--version not yet loaded--</h1>
-      <h2>Player Demo</h2>
-    </div>
-    <div class="controls">
-      <button
-        id="controls-toggle"
-        data-state="shown"
-      >Hide Controls</button>
-      <label for="enableMetrics">
-        <input
-          id="enableMetrics"
-          type="checkbox"
-        />
-        <span>Enable Metrics</span>
-      </label>
-      <label for="showMetrics">
-        <input
-          id="showMetrics"
-          type="checkbox"
-        />
-        <span>Show Metrics</span>
-      </label>
-    </div>
-    <div id="wallSummary">
-      <span>Total videos playing:</span>
-      <h2 id="wallTotalVideos">N/A</h2>
-      <span>Time Elapsed:</span>
-      <h2 id="wallDuration">N/A</h2>
-      <span>Time Started:</span>
-      <span id="wallStartTime">N/A</span>
-    </div>
-    <div id="links">
-      <a href="./index.html">Player Demo</a>
-      <a href="./tourDemo.html">Tour Demo</a>
-    </div>
+    <h2>CLSP Plugin</h2>
+    <h1 id="page-title-version">--version not yet loaded--</h1>
   </div>
 
-  <section class="wall">
-    <div class="controls">
-      <div class="wall-urls-container">
-        <span>Urls:</span>
-        <br />
-        <textarea
-          id="wallUrls"
-          rows="25"
-          cols="80"
-        ></textarea>
+  <div class="page-body">
+    <section class="wall">
+      <div class="monitor">
+        <button id="wall-controls-toggle" data-state="shown">Hide Controls</button>
+        <div id="wallSummary" class="summary">
+          <span>Total videos playing:</span>
+          <h2 id="wallTotalVideos">N/A</h2>
+          <span>Time Elapsed:</span>
+          <h2 id="wallDuration">N/A</h2>
+          <span>Time Started:</span>
+          <span id="wallStartTime">N/A</span>
+        </div>
       </div>
-      <div class="wall-controls-container">
-        <div>
-          <span>Times to Replicate</span>
+      <div class="controls">
+        <div class="urls-container">
+          <span>Urls:</span>
           <br />
-          <input
-            id="wallReplicate"
-            value="1"
-            type="number"
-          />
+          <textarea
+            id="wallUrls"
+            rows="25"
+            cols="80"
+          ></textarea>
         </div>
-        <div>
-          <button id="walltest">Create Video Wall</button>
+        <div class="controls-container">
+          <div>
+            <span>Times to Replicate</span>
+            <br />
+            <input
+              id="wallReplicate"
+              value="1"
+              type="number"
+            />
+          </div>
+          <label for="wallEnableMetrics">
+            <input id="wallEnableMetrics" type="checkbox" />
+            <span>Enable Metrics</span>
+          </label>
+          <label for="wallShowMetrics">
+            <input id="wallShowMetrics" type="checkbox" />
+            <span>Show Metrics</span>
+          </label>
+          <div>
+            <button id="wallCreate">Create Video Wall</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div id="videowall"></div>
-  </section>
+      <div id="videowall"></div>
+    </section>
+
+    <section class="tour">
+      <div class="monitor">
+        <button id="tour-controls-toggle" data-state="shown">Hide Controls</button>
+        <div id="tourSummary" class="summary">
+          <span>Total videos playing:</span>
+          <h2 id="tourTotalVideos">N/A</h2>
+          <span>Time Elapsed:</span>
+          <h2 id="tourDuration">N/A</h2>
+          <span>Time Started:</span>
+          <span id="tourStartTime">N/A</span>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="urls-container">
+          <span>Urls:</span>
+          <br />
+          <textarea id="tourUrls" rows="25" cols="80"></textarea>
+        </div>
+        <div class="controls-container">
+          <div>
+            <span>Times to Replicate</span>
+            <br />
+            <input id="tourReplicate" value="1" type="number" />
+          </div>
+          <div>
+            <span>Tour Duration</span>
+            <br />
+            <input id="tourDuration" value="10" type="number" />
+          </div>
+          <label for="tourEnableMetrics">
+            <input id="tourEnableMetrics" type="checkbox" />
+            <span>Enable Metrics</span>
+          </label>
+          <label for="tourShowMetrics">
+            <input id="tourShowMetrics" type="checkbox" />
+            <span>Show Metrics</span>
+          </label>
+          <div>
+            <button id="tourCreate">Create Video Tour Wall</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tourwall"></div>
+    </section>
+  </div>
 
   <template id="video-template">
     <div
       id="container-null"
-      class="wall-video-container"
+      class="player-container"
     >
       <div class="video-stream">
         <span class="index"></span>

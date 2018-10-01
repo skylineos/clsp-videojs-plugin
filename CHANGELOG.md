@@ -28,7 +28,7 @@
 * remove gulp, rely solely on bash scripts and webpack
 * demo page now disables metrics by default to improve performance
 * demo page has option to enable / disable metrics
-* create tour demo page
+* create tour demo section
 * decouple mqtt conduit logic
 * decouple the MSE abstraction by creating separate mediasource and sourcebuffer abstractions
 * file / class restructure
