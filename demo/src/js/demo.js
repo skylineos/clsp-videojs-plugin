@@ -29,21 +29,45 @@ const defaultWallUrls = [
   'clsp://172.28.12.57:9001/40004',
 ];
 
+const defaultTourUrls = [
+  ...defaultWallUrls,
+];
+
 let wallInterval = null;
+let tourInterval = null;
+
+const wallPlayers = [];
+const tourPlayers = [];
+
+function destroyAllWallPlayers () {
+  for (let i = 0; i < wallPlayers.length; i++) {
+    const player = wallPlayers[i];
+
+    player.dispose();
+  }
+}
+
+function destroyAllTourPlayers () {
+  for (let i = 0; i < tourPlayers.length; i++) {
+    const player = tourPlayers[i];
+
+    player.dispose();
+  }
+}
 
 function initializeWall () {
   function createVideoPlayer (index, playerOptions) {
-    const videoId = `video-${index}`;
+    const videoId = `wall-video-${index}`;
 
     const $container = $('#videowall')
-      .append(document.getElementById('video-template').innerHTML)
-      .find('#container-null');
+      .append(document.getElementById('wall-video-template').innerHTML)
+      .find('#wall-container-null');
 
     const $video = $container.find('video');
 
     $video.attr('id', videoId);
 
-    $container.attr('id', `container-${index}`);
+    $container.attr('id', `wall-container-${index}`);
     $container.find('.video-stream .index').text(index);
     $container.find('.video-stream .url').text(playerOptions.sources[0].src);
     $container.find('.video-stream .close').on('click', () => {
@@ -51,7 +75,7 @@ function initializeWall () {
       player.dispose();
     });
 
-    const $videoMetrics = $container.find('.video-metrics');
+    const $videoMetrics = $container.find('.wall-video-metrics');
 
     const metricTypes = [
       ClspPlugin().METRIC_TYPES,
@@ -83,6 +107,8 @@ function initializeWall () {
 
     const player = window.videojs(videoId, playerOptions);
 
+    wallPlayers.push(player);
+
     const tech = player.clsp();
 
     tech.on('metric', (event, { metric }) => {
@@ -90,16 +116,6 @@ function initializeWall () {
         .attr('title', metric.value)
         .html(metric.value);
     });
-  }
-
-  function destroyAllPlayers () {
-    const players = videojs.getAllPlayers();
-
-    for (let i = 0; i < players.length; i++) {
-      const player = players[i];
-
-      player.dispose();
-    }
   }
 
   const $controls = $('.wall .controls');
@@ -125,15 +141,15 @@ function initializeWall () {
 
   function setMetricsVisibility () {
     if ($('#wallShowMetrics').prop('checked')) {
-      $('.video-metrics').show();
+      $('.wall-video-metrics').show();
     }
     else {
-      $('.video-metrics').hide();
+      $('.wall-video-metrics').hide();
     }
   }
 
   function onclick () {
-    destroyAllPlayers();
+    destroyAllWallPlayers();
 
     const urlList = window.localStorage.getItem('skyline.clspPlugin.wallUrls').split('\n');
     const timesToReplicate = $('#wallReplicate').val();
@@ -205,6 +221,185 @@ function initializeWall () {
   });
 }
 
+function initializeTour () {
+  function createVideoPlayer (index, playerOptions) {
+    const videoId = `tour-video-${index}`;
+
+    const $container = $('#tourwall')
+      .append(document.getElementById('tour-video-template').innerHTML)
+      .find('#tour-container-null');
+
+    const $video = $container.find('video');
+
+    $video.attr('id', videoId);
+
+    $container.attr('id', `tour-container-${index}`);
+    $container.find('.video-stream .index').text(index);
+    $container.find('.video-stream .url').text(playerOptions.sources[0].src);
+    $container.find('.video-stream .close').on('click', () => {
+      $('#tourTotalVideos').text(parseInt($('#tourTotalVideos').text(), 10) - 1);
+      player.dispose();
+    });
+
+    const $videoMetrics = $container.find('.tour-video-metrics');
+
+    const metricTypes = [
+      ClspPlugin().METRIC_TYPES,
+      IOV.METRIC_TYPES,
+      Conduit.METRIC_TYPES,
+      IOVPlayer.METRIC_TYPES,
+      MediaSourceWrapper.METRIC_TYPES,
+      SourceBufferWrapper.METRIC_TYPES,
+    ];
+
+    for (let i = 0; i < metricTypes.length; i++) {
+      const metricType = metricTypes[i];
+
+      for (let j = 0; j < metricType.length; j++) {
+        const text = metricType[j];
+        const name = text.replace(new RegExp(/\./, 'g'), '-');
+        const $metric = $('<div/>', { class: `metric ${name}` });
+
+        $metric.append($('<span/>', { class: 'value' }));
+        $metric.append($('<span/>', {
+          class: 'type',
+          title: text,
+          text,
+        }));
+
+        $videoMetrics.append($metric);
+      }
+    }
+
+    const player = window.videojs(videoId, playerOptions);
+
+    tourPlayers.push(player);
+
+    player.on('changesrc', (event, source) => {
+      $container.find('.video-stream .url').text(source.src);
+    });
+
+    const tech = player.clsp();
+
+    tech.on('metric', (event, { metric }) => {
+      $videoMetrics.find(`.${metric.type.replace(new RegExp(/\./, 'g'), '-')} .value`)
+        .attr('title', metric.value)
+        .html(metric.value);
+    });
+  }
+
+  const $controls = $('.tour .controls');
+  const $controlsToggle = $('#tour-controls-toggle');
+
+  function toggleControls () {
+    $controlsToggle.attr('data-state') === 'hidden'
+      ? showControls()
+      : hideControls();
+  }
+
+  function showControls () {
+    $controls.show();
+    $controlsToggle.attr('data-state', 'shown');
+    $controlsToggle.text('Hide Controls');
+  }
+
+  function hideControls () {
+    $controls.hide();
+    $controlsToggle.attr('data-state', 'hidden');
+    $controlsToggle.text('Show Controls');
+  }
+
+  function setMetricsVisibility () {
+    const $tourMetrics = $('.tour-video-metrics');
+
+    if ($('#tourShowMetrics').prop('checked')) {
+      $tourMetrics.show();
+    }
+    else {
+      $tourMetrics.hide();
+    }
+  }
+
+  function onclick () {
+    destroyAllTourPlayers();
+
+    const urlList = window.localStorage.getItem('skyline.clspPlugin.tourUrls').split('\n');
+    const timesToReplicate = $('#tourReplicate').val();
+
+    let videoIndex = 0;
+
+    for (let i = 0; i < timesToReplicate; i++) {
+      let sources = [];
+      const type = "video/mp4; codecs='avc1.42E01E'";
+
+      for (let j = 0; j < urlList.length; j++) {
+        sources.push({
+          src: urlList[j],
+          type,
+        });
+      }
+
+      const playerOptions = {
+        autoplay: true,
+        muted: true,
+        preload: 'auto',
+        poster: 'skyline_logo.png',
+        controls: true,
+        sources,
+        clsp: {
+          tourDuration: $('#tourDurationValue').val() * 1000,
+          enableMetrics: $('#tourEnableMetrics').prop('checked'),
+        },
+      };
+
+      createVideoPlayer(videoIndex, playerOptions);
+
+      videoIndex++;
+    }
+
+    const now = Date.now();
+
+    document.getElementById('tourwall').style.gridTemplateColumns = `repeat(${Math.ceil(Math.sqrt(timesToReplicate))}, 1fr)`;
+    document.getElementById('tourwall').style.gridTemplateRows = `repeat(${Math.ceil(Math.sqrt(timesToReplicate))}, 1fr)`;
+
+    $('#tourTotalVideos').text(`${videoIndex} x ${urlList.length} (${videoIndex * urlList.length})`);
+    $('#tourStartTime').text(moment(now).format('MMMM Do YYYY, h:mm:ss a'));
+
+    if (tourInterval) {
+      window.clearInterval(tourInterval);
+    }
+
+    $('#tourDuration').text('0 hours 0 minutes 0 seconds');
+
+    tourInterval = setInterval(() => {
+      const hoursFromStart = Math.floor(moment.duration(Date.now() - now).asHours());
+      const minutesFromStart = Math.floor(moment.duration(Date.now() - now).asMinutes()) - (hoursFromStart * 60);
+      const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
+
+      $('#tourDuration').text(`${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+    }, 1000);
+
+    hideControls();
+    setMetricsVisibility();
+  }
+
+  if (!window.localStorage.getItem('skyline.clspPlugin.tourUrls')) {
+    window.localStorage.setItem('skyline.clspPlugin.tourUrls', defaultTourUrls.join('\n'));
+  }
+
+  $('#tourCreate').click(onclick);
+  $('#tour-controls-toggle').click(toggleControls);
+  $('#tourShowMetrics').on('change', setMetricsVisibility);
+
+  const $tourUrls = $('#tourUrls');
+
+  $tourUrls.val(window.localStorage.getItem('skyline.clspPlugin.tourUrls'));
+
+  $tourUrls.on('change', () => {
+    window.localStorage.setItem('skyline.clspPlugin.tourUrls', $tourUrls.val().trim());
+  });
+}
+
 $(() => {
   const pageTitle = `CLSP ${window.CLSP_DEMO_VERSION} Demo Page`;
   document.title = pageTitle;
@@ -213,4 +408,5 @@ $(() => {
   window.HELP_IMPROVE_VIDEOJS = false;
 
   initializeWall();
+  initializeTour();
 });

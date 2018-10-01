@@ -38,29 +38,24 @@ html, body {
   flex-shrink: 0;
   flex-grow: 0;
   align-items: center;
+  justify-content: space-around;
   padding: 10px;
   background: black;
   color: white;
 
   & > * {
-    margin-right: 50px;
+    margin: 0;
   }
 
-  .controls {
-    display: flex;
-    flex-direction: column;
-
-    & > * {
-      margin: 5px 0;
-    }
-
-    #controls-toggle {
-      padding: 20px;
-    }
+  img {
+    height: 3rem;
   }
 }
 
 .page-body {
+  display: flex;
+  flex-direction: column;
+
   section {
     border: solid 3px black;
     padding: 5px;
@@ -107,7 +102,8 @@ html, body {
       }
     }
 
-    #videowall {
+    #videowall,
+    #tourwall {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       flex-grow: 1;

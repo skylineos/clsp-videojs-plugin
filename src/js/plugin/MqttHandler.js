@@ -44,7 +44,6 @@ export default class MqttHandler extends Component {
   onVisibilityChange = () => {
     const hidden = document.hidden;
 
-    console.log('detected tab visibility change')
     this.debug(`detected tab visibility change.  tab is now ${hidden ? 'hidden' : 'visible'}`);
 
     if (hidden) {

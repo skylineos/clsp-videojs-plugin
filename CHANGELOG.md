@@ -11,8 +11,8 @@
 * improve metrics
 * minimize and minify the iframe srcdoc javascript
 * make iframe javascript reference parent window paho library to reduce code duplication
-* implement workaround for videojs 7 autoplay issue
 * update to videojs 7 to improve memory management
+* implement workaround for videojs 7 autoplay issue
 * fix tab visibility memory leaks
 * fix tab visibility browser freezing
 * improve memory management
@@ -23,9 +23,9 @@
 * demo displays index number and stream url
 * demo page remembers last used urls
 * demo page allows user to close an individual player
-* demo page only contains wall
 * fix webpack config mutations, which fixes dev server
 * remove gulp, rely solely on bash scripts and webpack
+* remove unused html and js from demo
 * demo page now disables metrics by default to improve performance
 * demo page has option to enable / disable metrics
 * create tour demo section

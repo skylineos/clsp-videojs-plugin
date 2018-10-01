@@ -90,7 +90,7 @@
           <div>
             <span>Tour Duration</span>
             <br />
-            <input id="tourDuration" value="10" type="number" />
+            <input id="tourDurationValue" value="10" type="number" />
           </div>
           <label for="tourEnableMetrics">
             <input id="tourEnableMetrics" type="checkbox" />
@@ -110,9 +110,9 @@
     </section>
   </div>
 
-  <template id="video-template">
+  <template id="wall-video-template">
     <div
-      id="container-null"
+      id="wall-container-null"
       class="player-container"
     >
       <div class="video-stream">
@@ -123,7 +123,21 @@
       <div class="video-container">
         <video class="video-js vjs-default-skin"></video>
       </div>
-      <div class="video-metrics"></div>
+      <div class="wall-video-metrics video-metrics"></div>
+    </div>
+  </template>
+
+  <template id="tour-video-template">
+    <div id="tour-container-null" class="player-container">
+      <div class="video-stream">
+        <span class="index"></span>
+        <span class="url"></span>
+        <button class="close">&times;</button>
+      </div>
+      <div class="video-container">
+        <video class="video-js vjs-default-skin"></video>
+      </div>
+      <div class="tour-video-metrics video-metrics"></div>
     </div>
   </template>
 

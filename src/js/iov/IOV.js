@@ -126,8 +126,6 @@ export default class IOV extends ListenerBaseClass {
 
     super(`${IOV.DEBUG_NAME}:${id}:main`, options);
 
-    console.log('creating iov ', id)
-
     this.id = id;
     this.destroyed = false;
     this.onReadyCalledMultipleTimes = false;
@@ -219,9 +217,7 @@ export default class IOV extends ListenerBaseClass {
       }
 
       this.firstFrameShown = true;
-      console.log('iov firstFrameShown')
 
-      console.log('firstFrameShown', this.config.streamName, this.player.id, this)
       // @todo - need to figure out when to show it
       this.playerInstance.loadingSpinner.hide();
 
@@ -273,7 +269,6 @@ export default class IOV extends ListenerBaseClass {
       throw new Error('Unable to change source because there is no src!');
     }
 
-    console.log('creating clone', this.id);
     const clone = this.clone(IOV.generateConfigFromUrl(src, this.options), this.options);
 
     clone.initialize();
@@ -281,8 +276,6 @@ export default class IOV extends ListenerBaseClass {
     clone.player.videoElement.style.display = 'none';
 
     clone.onVisibilityChange = () => {
-      console.log('YOOOOOOOOOOO detected tab visibility change')
-
       if (!document.hidden) {
         return;
       }
@@ -290,7 +283,6 @@ export default class IOV extends ListenerBaseClass {
       document.removeEventListener('visibilitychange', clone.onVisibilityChange);
 
       try {
-        console.log('about to destroy this player and the clone 1')
         this.destroy();
         clone.destroy();
       }
@@ -299,7 +291,6 @@ export default class IOV extends ListenerBaseClass {
       }
     };
 
-    console.log('setting clone visibilitychange')
     document.addEventListener('visibilitychange', clone.onVisibilityChange);
 
     clone.player.on('readyForNextSource', (failure) => {
@@ -311,20 +302,17 @@ export default class IOV extends ListenerBaseClass {
           message: `Unable to retrieve source: ${src}`,
         });
 
-        console.log('about to destroy this player and the clone 2')
         this.player.destroy();
         clone.destroy();
       }
     });
 
     clone.player.on('firstFrameShown', () => {
-      console.log('clone firstFrameShown')
       if (!clone.shouldPlayNext) {
         return;
       }
 
       setTimeout(() => {
-        console.log(clone.id, 'clone first frame')
         clone.player.videoElement.style.display = 'initial';
         clone.playerInstance.tech(true).mqtt.updateIOV(clone);
         clone.playerInstance.error(null);
@@ -360,14 +348,12 @@ export default class IOV extends ListenerBaseClass {
   };
 
   onChangeSource = (event, source) => {
-    console.log('changing source for iov ', this.id)
     if (this.destroyed) {
       console.warn('tried to change source on a dead iov', this.id);
       this.playerInstance.off('changesrc', this.onChangeSource);
       return;
     }
 
-    console.log('changing source to ', source, this.id)
     return this.changeSource(source);
   }
 
@@ -454,8 +440,6 @@ export default class IOV extends ListenerBaseClass {
       return;
     }
 
-    console.log('destroying ', this.id)
-
     this.destroyed = true;
 
     this.debug('destroying...');
@@ -475,7 +459,6 @@ export default class IOV extends ListenerBaseClass {
     this.conduit.destroy();
 
     this.videoElement.removeEventListener('mse-error-event', this.onMseError);
-    console.log('removing changesrc listener for ', this.id)
     this.playerInstance.off('changesrc', this.onChangeSource);
     this.playerInstance = null;
 

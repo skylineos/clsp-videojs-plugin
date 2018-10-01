@@ -153,7 +153,6 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
         ? 0
         : this.currentSourceIndex + 1;
 
-      console.log('changing source for ', player.tech(true).mqtt.iov.id)
       this.player.trigger('changesrc', this._playerOptions.sources[this.currentSourceIndex]);
     });
 
