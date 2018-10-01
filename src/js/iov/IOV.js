@@ -294,6 +294,9 @@ export default class IOV extends ListenerBaseClass {
     document.addEventListener('visibilitychange', clone.onVisibilityChange);
 
     clone.player.on('readyForNextSource', (failure) => {
+      if (clone.destroyed) {
+        return;
+      }
       if (failure) {
         clone.playerInstance.error({
           code: 0,
@@ -313,6 +316,9 @@ export default class IOV extends ListenerBaseClass {
       }
 
       setTimeout(() => {
+        if (clone.destroyed) {
+          return;
+        }
         clone.player.videoElement.style.display = 'initial';
         clone.playerInstance.tech(true).mqtt.updateIOV(clone);
         clone.playerInstance.error(null);

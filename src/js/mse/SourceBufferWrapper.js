@@ -327,6 +327,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
     // and we need to reinitialize or something.
     if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
       this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
+      console.log("stream frozen")
       this.eventListeners.onStreamFrozen();
       return;
     }
@@ -336,7 +337,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
     }
 
     this.previousTimeEnd = info.bufferTimeEnd;
-
+    console.log("event listener trigggerrrererere")
     this.eventListeners.onAppendFinish(info);
     this.trimBuffer(info);
   }
