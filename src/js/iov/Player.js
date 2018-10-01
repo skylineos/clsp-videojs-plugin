@@ -389,16 +389,28 @@ export default class IOVPlayer extends ListenerBaseClass {
   play (streamName) {
     this.debug('play');
 
+    if (this.destroyed) {
+      return;
+    }
+
     this.iov.conduit.start((mimeCodec, moov) => {
+      if (this.destroyed) {
+        return;
+      }
+
       // These are needed for reinitializeMseWrapper
       this.mimeCodec = mimeCodec;
       this.moov = moov;
 
       this.iov.conduit.stream((moof) => {
+        if (this.destroyed) {
+          return;
+        }
+
         this.trigger('videoReceived');
         this.calculateSegmentIntervalMetrics();
 
-        if (document.hidden || this.destroyed) {
+        if (document.hidden) {
           return;
         }
 
@@ -423,6 +435,10 @@ export default class IOVPlayer extends ListenerBaseClass {
       });
 
       this.iov.conduit.onResync(() => {
+        if (this.destroyed) {
+          return;
+        }
+
         this.debug('sync event received');
 
         this.reinitializeMseWrapper();

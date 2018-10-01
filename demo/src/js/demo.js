@@ -152,7 +152,7 @@ function initializeWall () {
     destroyAllWallPlayers();
 
     const urlList = window.localStorage.getItem('skyline.clspPlugin.wallUrls').split('\n');
-    const timesToReplicate = $('#wallReplicate').val();
+    const timesToReplicate = window.localStorage.getItem('skyline.clspPlugin.wallReplicate');
 
     let videoIndex = 0;
 
@@ -204,20 +204,32 @@ function initializeWall () {
     setMetricsVisibility();
   }
 
-  if (!window.localStorage.getItem('skyline.clspPlugin.wallUrls')) {
-    window.localStorage.setItem('skyline.clspPlugin.wallUrls', defaultWallUrls.join('\n'));
-  }
-
   $('#wallCreate').click(onclick);
   $('#wall-controls-toggle').click(toggleControls);
   $('#wallShowMetrics').on('change', setMetricsVisibility);
 
   const $wallUrls = $('#wallUrls');
 
+  if (!window.localStorage.getItem('skyline.clspPlugin.wallUrls')) {
+    window.localStorage.setItem('skyline.clspPlugin.wallUrls', defaultWallUrls.join('\n'));
+  }
+
   $wallUrls.val(window.localStorage.getItem('skyline.clspPlugin.wallUrls'));
 
   $wallUrls.on('change', () => {
     window.localStorage.setItem('skyline.clspPlugin.wallUrls', $wallUrls.val().trim());
+  });
+
+  const $wallReplicate = $('#wallReplicate');
+
+  if (!window.localStorage.getItem('skyline.clspPlugin.wallReplicate')) {
+    window.localStorage.setItem('skyline.clspPlugin.wallReplicate', 1);
+  }
+
+  $wallReplicate.val(window.localStorage.getItem('skyline.clspPlugin.wallReplicate'));
+
+  $wallReplicate.on('change', () => {
+    window.localStorage.setItem('skyline.clspPlugin.wallReplicate', $wallReplicate.val().trim());
   });
 }
 
@@ -324,7 +336,8 @@ function initializeTour () {
     destroyAllTourPlayers();
 
     const urlList = window.localStorage.getItem('skyline.clspPlugin.tourUrls').split('\n');
-    const timesToReplicate = $('#tourReplicate').val();
+    const timesToReplicate = window.localStorage.getItem('skyline.clspPlugin.tourReplicate');
+    const tourDurationValue = window.localStorage.getItem('skyline.clspPlugin.tourDurationValue');
 
     let videoIndex = 0;
 
@@ -347,7 +360,7 @@ function initializeTour () {
         controls: true,
         sources,
         clsp: {
-          tourDuration: $('#tourDurationValue').val() * 1000,
+          tourDuration: tourDurationValue * 1000,
           enableMetrics: $('#tourEnableMetrics').prop('checked'),
         },
       };
@@ -383,20 +396,44 @@ function initializeTour () {
     setMetricsVisibility();
   }
 
-  if (!window.localStorage.getItem('skyline.clspPlugin.tourUrls')) {
-    window.localStorage.setItem('skyline.clspPlugin.tourUrls', defaultTourUrls.join('\n'));
-  }
-
   $('#tourCreate').click(onclick);
   $('#tour-controls-toggle').click(toggleControls);
   $('#tourShowMetrics').on('change', setMetricsVisibility);
 
   const $tourUrls = $('#tourUrls');
 
+  if (!window.localStorage.getItem('skyline.clspPlugin.tourUrls')) {
+    window.localStorage.setItem('skyline.clspPlugin.tourUrls', defaultTourUrls.join('\n'));
+  }
+
   $tourUrls.val(window.localStorage.getItem('skyline.clspPlugin.tourUrls'));
 
   $tourUrls.on('change', () => {
     window.localStorage.setItem('skyline.clspPlugin.tourUrls', $tourUrls.val().trim());
+  });
+
+  const $tourReplicate = $('#tourReplicate');
+
+  if (!window.localStorage.getItem('skyline.clspPlugin.tourReplicate')) {
+    window.localStorage.setItem('skyline.clspPlugin.tourReplicate', 12);
+  }
+
+  $tourReplicate.val(window.localStorage.getItem('skyline.clspPlugin.tourReplicate'));
+
+  $tourReplicate.on('change', () => {
+    window.localStorage.setItem('skyline.clspPlugin.tourReplicate', $tourReplicate.val().trim());
+  });
+
+  const $tourDurationValue = $('#tourDurationValue');
+
+  if (!window.localStorage.getItem('skyline.clspPlugin.tourDurationValue')) {
+    window.localStorage.setItem('skyline.clspPlugin.tourDurationValue', 10);
+  }
+
+  $tourDurationValue.val(window.localStorage.getItem('skyline.clspPlugin.tourDurationValue'));
+
+  $tourDurationValue.on('change', () => {
+    window.localStorage.setItem('skyline.clspPlugin.tourDurationValue', $tourDurationValue.val().trim());
   });
 }
 
