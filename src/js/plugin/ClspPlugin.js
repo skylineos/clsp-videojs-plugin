@@ -137,13 +137,24 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     });
 
     player.on('changeSourceImmediately', () => {
-      if (playerOptions.sources && playerOptions.sources.length > 1 && this.options.tourDuration) {
-        this.currentSourceIndex = this.currentSourceIndex >= (this._playerOptions.sources.length - 1)
-          ? 0
-          : this.currentSourceIndex + 1;
-
-        this.player.trigger('changesrc', this._playerOptions.sources[this.currentSourceIndex]);
+      if (document.hidden) {
+        return;
       }
+
+      if (!playerOptions.sources || playerOptions.sources.length <= 1) {
+        return;
+      }
+
+      if (!this.options.tourDuration) {
+        return;
+      }
+
+      this.currentSourceIndex = this.currentSourceIndex >= (this._playerOptions.sources.length - 1)
+        ? 0
+        : this.currentSourceIndex + 1;
+
+      console.log('changing source for ', player.tech(true).mqtt.iov.id)
+      this.player.trigger('changesrc', this._playerOptions.sources[this.currentSourceIndex]);
     });
 
     player.on('readyForNextSource', () => {

@@ -4,6 +4,9 @@
 
 ## v0.14.0 - WIP - Critical
 
+* re-implement the ability to change source on first frame of next stream
+* support for playlists
+* disable metrics by default
 * perform destroy / cleanup logic when the videojs player is disposed
 * improve metrics
 * minimize and minify the iframe srcdoc javascript
@@ -23,6 +26,9 @@
 * demo page only contains wall
 * fix webpack config mutations, which fixes dev server
 * remove gulp, rely solely on bash scripts and webpack
+* demo page now disables metrics by default to improve performance
+* demo page has option to enable / disable metrics
+* create tour demo page
 * decouple mqtt conduit logic
 * decouple the MSE abstraction by creating separate mediasource and sourcebuffer abstractions
 * file / class restructure

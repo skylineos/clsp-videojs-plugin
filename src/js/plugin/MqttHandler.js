@@ -44,13 +44,20 @@ export default class MqttHandler extends Component {
   onVisibilityChange = () => {
     const hidden = document.hidden;
 
+    console.log('detected tab visibility change')
     this.debug(`detected tab visibility change.  tab is now ${hidden ? 'hidden' : 'visible'}`);
 
     if (hidden) {
       this.destroyIOV();
     }
     else {
-      this.recreateIOV();
+      // @todo - there must be a cleaner way to do this...
+      // this.recreateIOV(!this.iov.isClone);
+
+      // When we come back after switching tabs with a clone, we don't
+      // want to change the source immediately - we want to let the
+      // recreated iov play its stream
+      this.recreateIOV(false);
     }
   }
 
@@ -120,10 +127,10 @@ export default class MqttHandler extends Component {
     this.iov.destroy();
   }
 
-  recreateIOV () {
+  recreateIOV (changeSourceImmediately = true) {
     this.createIOV(this._oldIovPlayerInstance, {
       ...this._oldIovOptions,
-      changeSourceImmediately: true,
+      changeSourceImmediately,
     });
 
     this._oldIovPlayerInstance = null;

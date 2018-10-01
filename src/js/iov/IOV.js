@@ -217,12 +217,15 @@ export default class IOV extends ListenerBaseClass {
       this.firstFrameShown = true;
       console.log('iov firstFrameShown')
 
-
       console.log('firstFrameShown', this.config.streamName, this.player.id, this)
       // @todo - need to figure out when to show it
       this.playerInstance.loadingSpinner.hide();
 
       setTimeout(() => {
+        if (document.hidden) {
+          return;
+        }
+
         this.playerInstance.trigger('readyForNextSource');
         this.player.trigger('readyForNextSource');
       }, this.options.changeSourceReadyDelay);
@@ -245,12 +248,18 @@ export default class IOV extends ListenerBaseClass {
       videoElementParent: this.config.videoElementParent,
     };
 
-    return IOV.factory(
+    const clone = IOV.factory(
       this.mqttConduitCollection,
       this.playerInstance,
       cloneConfig,
       options
     );
+
+    // @todo - a hack to "know" when the mqtt handler should changesrc
+    // immediately or not...
+    clone.isClone = true;
+
+    return clone;
   }
 
   changeSource ({ src, type }) {
@@ -268,19 +277,25 @@ export default class IOV extends ListenerBaseClass {
     clone.player.videoElement.style.display = 'none';
 
     clone.onVisibilityChange = () => {
-      if (document.hidden) {
-        try {
-          this.player.destroy();
-          clone.destroy();
-        }
-        catch (error) {
-          console.error(error);
-        }
+      console.log('YOOOOOOOOOOO detected tab visibility change')
+
+      if (!document.hidden) {
+        return;
       }
 
       document.removeEventListener('visibilitychange', clone.onVisibilityChange);
+
+      try {
+        console.log('about to destroy this player and the clone 1')
+        this.destroy();
+        clone.destroy();
+      }
+      catch (error) {
+        console.error(error);
+      }
     };
 
+    console.log('setting clone visibilitychange')
     document.addEventListener('visibilitychange', clone.onVisibilityChange);
 
     clone.player.on('readyForNextSource', (failure) => {
@@ -292,8 +307,8 @@ export default class IOV extends ListenerBaseClass {
           message: `Unable to retrieve source: ${src}`,
         });
 
+        console.log('about to destroy this player and the clone 2')
         this.player.destroy();
-
         clone.destroy();
       }
     });
@@ -305,7 +320,7 @@ export default class IOV extends ListenerBaseClass {
       }
 
       setTimeout(() => {
-        console.log(clone.id)
+        console.log(clone.id, 'clone first frame')
         clone.player.videoElement.style.display = 'initial';
         clone.playerInstance.tech(true).mqtt.updateIOV(clone);
         clone.playerInstance.error(null);
@@ -341,6 +356,13 @@ export default class IOV extends ListenerBaseClass {
   };
 
   onChangeSource = (event, source) => {
+    console.log('changing source for iov ', this.id)
+    if (this.destroyed) {
+      console.warn('tried to change source on a dead iov', this.id);
+      this.playerInstance.off('changesrc', this.onChangeSource);
+      return;
+    }
+
     console.log('changing source to ', source, this.id)
     return this.changeSource(source);
   }
@@ -435,7 +457,7 @@ export default class IOV extends ListenerBaseClass {
     this.debug('destroying...');
 
     if (this.onVisibilityChange) {
-      document.removeEventListener('visibilitychange', this.onVisibilityChange);
+      // document.removeEventListener('visibilitychange', this.onVisibilityChange);
     }
 
     // For whatever reason, the things must be destroyed in this order
@@ -446,6 +468,7 @@ export default class IOV extends ListenerBaseClass {
     this.conduit.destroy();
 
     this.videoElement.removeEventListener('mse-error-event', this.onMseError);
+    console.log('removing changesrc listener for ', this.id)
     this.playerInstance.off('changesrc', this.onChangeSource);
     this.playerInstance = null;
 

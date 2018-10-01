@@ -82,6 +82,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.iov = iov;
     this.eid = videoJsElementId;
     this.videoId = `clsp-video-${this.iov.config.clientId}`;
+    console.log('creating player', this.id)
 
     this.initializeVideoElement();
 
@@ -508,6 +509,8 @@ export default class IOVPlayer extends ListenerBaseClass {
     if (this.destroyed) {
       return;
     }
+
+    console.log('destroying player', this.id)
 
     this.destroyed = true;
 
