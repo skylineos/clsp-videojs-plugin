@@ -5671,7 +5671,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-15","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-16","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -6416,6 +6416,9 @@ var IOV = function (_ListenerBaseClass) {
       document.addEventListener('visibilitychange', clone.onVisibilityChange);
 
       clone.player.on('readyForNextSource', function (failure) {
+        if (clone.destroyed) {
+          return;
+        }
         if (failure) {
           clone.playerInstance.error({
             code: 0,
@@ -6435,6 +6438,9 @@ var IOV = function (_ListenerBaseClass) {
         }
 
         setTimeout(function () {
+          if (clone.destroyed) {
+            return;
+          }
           clone.player.videoElement.style.display = 'initial';
           clone.playerInstance.tech(true).mqtt.updateIOV(clone);
           clone.playerInstance.error(null);
@@ -7002,16 +7008,28 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
       this.debug('play');
 
+      if (this.destroyed) {
+        return;
+      }
+
       this.iov.conduit.start(function (mimeCodec, moov) {
+        if (_this4.destroyed) {
+          return;
+        }
+
         // These are needed for reinitializeMseWrapper
         _this4.mimeCodec = mimeCodec;
         _this4.moov = moov;
 
         _this4.iov.conduit.stream(function (moof) {
+          if (_this4.destroyed) {
+            return;
+          }
+
           _this4.trigger('videoReceived');
           _this4.calculateSegmentIntervalMetrics();
 
-          if (document.hidden || _this4.destroyed) {
+          if (document.hidden) {
             return;
           }
 
@@ -7035,6 +7053,10 @@ var IOVPlayer = function (_ListenerBaseClass) {
         });
 
         _this4.iov.conduit.onResync(function () {
+          if (_this4.destroyed) {
+            return;
+          }
+
           _this4.debug('sync event received');
 
           _this4.reinitializeMseWrapper();
@@ -7990,7 +8012,6 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
       }
 
       this.previousTimeEnd = info.bufferTimeEnd;
-
       this.eventListeners.onAppendFinish(info);
       this.trimBuffer(info);
     }
