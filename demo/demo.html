@@ -15,6 +15,10 @@
       width: 356,
       height: 244
     }
+    #tours {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
   </style>
 </head>
 <body>
@@ -287,65 +291,77 @@
   <div id="videowall"></div>
 
 
-<hr>
+<hr />
+
 <h2>Video tour</h2>
-Enter a list of clsp urls separated by newline.
-<br>
+<span>Enter a list of clsp urls separated by newline.</span>
+<br />
 <textarea id="tour-list" rows="10" cols="80" style="overflow: scroll;">
-clsp://172.28.12.247/testpattern
-clsp://172.28.12.57:9001/FairfaxVideo0520
-clsp://172.28.12.57:9001/40004
+clsps://172.28.12.57/testpattern
+clsps://172.28.12.57/FairfaxVideo0520
+clsps://172.28.12.57/40004
 </textarea>
-
-<h3 id="now-playing"></h3>
-  <video id="tour-video"
-    width="352"
-    height="240"
-    autoplay
-    muted
-  >
-  <source id="tour-first-source"
-    src=""
-    type="video/mp4; codecs='avc1.42E01E'"
-  />
-
-  </video>
-
-<br>
-
-Play time per <input type="number" id="tour-switch-interval" value="10"/>
+<br />
+<span>Play time per:</span>
+<input
+  id="tour-switch-interval"
+  type="number"
+  value="10"
+/>
+<br />
+<span>Repeat Tours:</span>
+<input
+  id="tour-count"
+  type="number"
+  value="12"
+/>
+<br />
 <button id="start-tour">Start Video Tour</button>
 
+<div id="tours"></div>
+
+<template id="tour">
+  <div class="tour-container-$index">
+    <h3 id="now-playing-$index"></h3>
+    <video
+      id="tour-video-$index"
+      width="352"
+      height="240"
+      autoplay
+      muted
+    >
+      <source
+        id="tour-first-source-$index"
+        src=""
+        type="video/mp4; codecs='avc1.42E01E'"
+      />
+    </video>
+  </div>
+</template>
 
 <script>
-$(function(){
-  var tour = {
-    player: null,
-    plist: [],
-    interval: 10,
-    counter: 0,
-    timer: null
-  };
+$(function () {
+  function setupTourVideoElement(index) {
+    $('#tours').append(document.getElementById('tour').innerHTML.replace(/\$index/g, index));
 
-  $('#start-tour').click(function(){
-    tour.interval = parseInt($('#tour-switch-interval').val());
-    tour.plist = [];
+    return $('#tour-container-' + index);
+  }
 
-    var x = $('#tour-list').val().split("\n");
-    for(var i = 0; i < x.length; i++) {
-        if (x[i].length > 0) {
-            tour.plist.push(x[i]);
-        }
-    }
+  function playTour (index, urls, interval) {
+    setupTourVideoElement(index);
 
+    var tour = {
+      player: null,
+      urls: urls,
+      interval: interval * 1000,
+      counter: 0,
+      timer: null
+    };
 
+    var $tourSrc = $('#tour-first-source-' + index);
+    var $tourNowPlaying = $('#now-playing-' + index);
 
-
-    if (tour.plist.length < 2) {
-       alert("at least two source needed!");
-       return;
-    }
-    $('#tour-first-source').attr('src',tour.plist[0]);
+    $tourSrc.attr('src', tour.urls[0]);
 
     tour.counter = 1;
     tour.player = null;
@@ -354,30 +370,49 @@ $(function(){
       clearInterval(tour.timer);
     }
 
-    $(function(){
-      tour.player = window.videojs('#tour-video');
-      tour.player.clsp(); // start playing first stream
-      $('#now-playing').html(tour.plist[0]);
+    $tourNowPlaying.html(tour.urls[0]);
 
-      tour.player.on("network-error", function(evt, message){
-          console.log("!!!!! Handled network-error", evt);
-          console.log(message);
-      });
-
-
-      tour.timer = setInterval(function(){
-        var url = tour.plist[ tour.counter % tour.plist.length ];
-        $('#now-playing').html('switching to ' + tour.plist[tour.counter % tour.plist.length] + 'on next the h264 iframe');
-
-        tour.counter += 1;
-        console.log("selected url", url, tour.plist);
-        tour.player.trigger('changesrc', {eid: 'tour-video', url:url});
-      }, tour.interval * 1000);
-
+    tour.player = window.videojs('#tour-video-' + index);
+    tour.player.clsp({
+      onPlayFailed: function (player) {
+        console.log("failed to play");
+        console.log(player);
+      }
+    });
+    tour.player.on("network-error", function (evt, message) {
+      console.log("!!!!! Handled network-error", evt);
+      console.log(message);
     });
 
-  });
+    tour.timer = setInterval(function () {
+      var url = tour.urls[tour.counter % tour.urls.length];
+      $tourNowPlaying.text(url);
+      tour.counter += 1;
+      tour.player.trigger('changesrc', { eid: 'tour-video', url: url });
+    }, tour.interval);
+  }
 
+  $('#start-tour').click(function(){
+    var tourCount = parseInt($('#tour-count').val());
+    var interval = parseInt($('#tour-switch-interval').val());
+    var _urls = $('#tour-list').val().split("\n");
+    var urls = [];
+
+    for (var i = 0; i < _urls.length; i++) {
+      if (_urls[i].length > 0) {
+        urls.push(_urls[i]);
+      }
+    }
+
+    if (urls.length < 2) {
+      alert("at least two source needed!");
+      return;
+    }
+
+    for (var i = 0; i < tourCount; i++) {
+      playTour(i, urls, interval);
+    }
+  });
 });
 </script>
 
