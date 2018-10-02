@@ -287,6 +287,7 @@ export default class IOV extends ListenerBaseClass {
       if (clone.destroyed) {
         return;
       }
+
       if (failure) {
         clone.videoJsPlayer.error({
           code: 0,
@@ -305,11 +306,15 @@ export default class IOV extends ListenerBaseClass {
         return;
       }
 
+      // Make it visible right away to ensure there is no black frame
+      // shown when the video elements transition
+      clone.player.videoElement.style.display = 'initial';
+
       setTimeout(() => {
         if (clone.destroyed) {
           return;
         }
-        clone.player.videoElement.style.display = 'initial';
+
         clone.videoJsPlayer.tech(true).mqtt.updateIOV(clone);
         clone.videoJsPlayer.error(null);
         clone.videoJsPlayer.errorDisplay.close();

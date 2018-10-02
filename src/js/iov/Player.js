@@ -119,7 +119,7 @@ export default class IOVPlayer extends ListenerBaseClass {
 
   onMaxMediaSourceRetriesExceeded = () => {
     // @todo - there is no need to do this for the instance that triggered the event
-    // perhaps send the eid, and compare it to this.iov.videoId
+    // perhaps send the eid, and compare it to this.eid
     this.retryCount = 0;
   };
 
@@ -136,54 +136,57 @@ export default class IOVPlayer extends ListenerBaseClass {
   }
 
   initializeVideoElement () {
-    this.videoJsVideoElement = document.getElementById(this.iov.videoId);
+    // If using a single source, this will be the video DOM element that videojs is aware of.
+    // If using tours, on all but the first source, this will be the video DOM element of the
+    // previous video in the tour.
+    const previousVideoId = this.iov.videoElement.firstChild.id;
+    const previousVideoElement = document.getElementById(previousVideoId);
 
-    if (!this.videoJsVideoElement) {
-      throw new Error(`Unable to find an element in the DOM with id "${this.iov.videoId}".`);
+    if (!previousVideoElement) {
+      throw new Error(`Unable to find an element in the DOM with id "${previousVideoId}".`);
     }
+
+    const videoElementParent = previousVideoElement.parentNode;
 
     // when videojs initializes the video element (or something like that),
     // it creates events and listeners on that element that it uses, however
     // these events interfere with our ability to play clsp streams.  Cloning
     // the element like this and reinserting it is a blunt instrument to remove
     // all of the videojs events so that we are in control of the player.
-    // this.videoElement = this.videoJsVideoElement.cloneNode();
-    this.videoElement = this.videoJsVideoElement.cloneNode();
+    this.videoElement = previousVideoElement.cloneNode();
     this.videoElement.setAttribute('id', this.videoId);
     this.videoElement.classList.add('clsp-video');
 
-    this.videoElementParent = this.videoJsVideoElement.parentNode;
-
+    // @todo - since this only matters for clones in tours, move it to where
+    // the clone logic is
     this.on('firstFrameShown', () => {
+      if (!videoElementParent) {
+        return;
+      }
+
       // @todo - this may be overkill given the IOV changeSourceMaxWait...
       // When the video is ready to be displayed, swap out the video player if
       // the source has changed.  This is what allows tours to switch to the next
-      if (this.videoElementParent !== null) {
-        try {
-          this.videoElementParent.insertBefore(this.videoElement, this.videoJsVideoElement);
+      try {
+        let videos = videoElementParent.getElementsByTagName('video');
 
-          let videos = this.videoElementParent.getElementsByTagName('video');
+        videoElementParent.insertBefore(this.videoElement, previousVideoElement);
 
-          for (let i = 0; i < videos.length; i++) {
-            let video = videos[i];
-            const id = video.getAttribute('id');
+        for (let i = 0; i < videos.length; i++) {
+          const video = videos[i];
+          const id = video.getAttribute('id');
 
-            if (id !== this.iov.videoId && id !== this.videoId) {
-              this.videoElementParent.removeChild(video);
-              video.remove();
-              video = null;
-              videos = null;
-              break;
-            }
+          // Remove old video elements, but leave the current, previous, and original
+          if (id !== this.iov.videoId && id !== previousVideoId && id !== this.videoId) {
+            videoElementParent.removeChild(video);
+            video.remove();
           }
+        }
 
-          // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
-          // is there still a reference to this element?
-          // this.videoJsVideoElement = null;
-        }
-        catch (e) {
-          console.error(e);
-        }
+        videos = null;
+      }
+      catch (e) {
+        console.error(e);
       }
     });
   }
@@ -343,6 +346,9 @@ export default class IOVPlayer extends ListenerBaseClass {
           this.metric('iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount', this.mediaSourceWrapperGenericErrorRestartCount);
 
           this.restart();
+        }
+        else {
+          // @todo - what should we do when we exceed the maxMediaSourceWrapperGenericErrorRestartCount?
         }
 
         this._onError(
@@ -537,9 +543,6 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.iov = null;
 
     this.firstFrameShown = null;
-
-    this.videoJsVideoElement = null;
-    this.videoElementParent = null;
 
     if (this.resetRetryCount) {
       clearTimeout(this.resetRetryCount);
