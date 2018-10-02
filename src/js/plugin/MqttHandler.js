@@ -121,18 +121,18 @@ export default class MqttHandler extends Component {
   }
 
   destroyIOV () {
-    this._oldIovPlayerInstance = this.iov.playerInstance;
+    this._oldIovVideoJsPlayer = this.iov.videoJsPlayer;
     this._oldIovOptions = this.iov.options;
     this.iov.destroy();
   }
 
   recreateIOV (changeSourceImmediately = true) {
-    this.createIOV(this._oldIovPlayerInstance, {
+    this.createIOV(this._oldIovVideoJsPlayer, {
       ...this._oldIovOptions,
       changeSourceImmediately,
     });
 
-    this._oldIovPlayerInstance = null;
+    this._oldIovVideoJsPlayer = null;
     this._oldIovOptions = null;
   }
 
@@ -147,7 +147,7 @@ export default class MqttHandler extends Component {
 
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
-    this._oldIovPlayerInstance = null;
+    this._oldIovVideoJsPlayer = null;
     this._oldIovOptions = null;
     this.iov.destroy();
     this.iov = null;

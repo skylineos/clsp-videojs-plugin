@@ -9,11 +9,13 @@
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
 
 // We want the minified file so that we minimize the size of each iframe
-import iframeCode from '~root/dist/Router.min';
+import iframeCode from '~root/dist/Router';
 
 // @todo - this needs to be an event listener
 export default class Conduit extends ListenerBaseClass {
-  static DEBUG_NAME = 'skyline:clsp:iov:conduit';
+  static DEFAULT_OPTIONS = {
+    iframeTimeout: 9 * 1000,
+  };
 
   static METRIC_TYPES = [
     'iovConduit.instances',
@@ -27,7 +29,7 @@ export default class Conduit extends ListenerBaseClass {
   }
 
   constructor (iov, options) {
-    super(`${Conduit.DEBUG_NAME}:${iov.id}`, options);
+    super(options);
 
     this.iov = iov;
     this.clientId = iov.id;
@@ -80,35 +82,37 @@ export default class Conduit extends ListenerBaseClass {
 
     // attach hidden iframe to player
     // document.body.appendChild(iframe);
-    if (this.iov.config.videoElementParent !== null) {
+    if (this.iov.config.videoElementParent) {
       this.iov.config.videoElementParent.appendChild(this.iframe);
+      return;
     }
-    else if (this.iov.videoElement.parentNode !== null) {
+
+    if (this.iov.videoElement.parentNode) {
       this.iov.videoElement.parentNode.appendChild(this.iframe);
       this.iov.config.videoElementParent = this.iov.videoElement.parentNode;
+      return;
     }
-    else {
-      const interval = setInterval(() => {
-        if (this.iov.videoElement.parentNode !== null) {
-          try {
-            this.iov.videoElement.parentNode.appendChild(this.iframe);
-            this.iov.config.videoElementParent = this.iov.videoElement.parentNode;
-          }
-          catch (error) {
-            console.error(error);
-          }
 
-          clearInterval(interval);
+    const interval = setInterval(() => {
+      if (this.iov.videoElement.parentNode !== null) {
+        try {
+          this.iov.videoElement.parentNode.appendChild(this.iframe);
+          this.iov.config.videoElementParent = this.iov.videoElement.parentNode;
         }
-      }, 1000);
-    }
+        catch (error) {
+          console.error(error);
+        }
+
+        clearInterval(interval);
+      }
+    }, 1000);
   }
 
   // primitive function that routes message to iframe
   command (message) {
     this.debug('posting message from iframe...');
 
-    if (this.iframe.contentWindow !== null) {
+    if (this.iframe.contentWindow) {
       this.iframe.contentWindow.postMessage(message, '*');
       return;
     }
@@ -153,14 +157,14 @@ export default class Conduit extends ListenerBaseClass {
   unsubscribe (topic) {
     this.debug(`unsubscribing from ${topic}...`);
 
-    // if (topic in this.handlers) {
-    //   delete this.handlers[topic];
-    // }
+    if (topic in this.handlers) {
+      delete this.handlers[topic];
+    }
 
-    // this.command({
-    //   method: 'unsubscribe',
-    //   topic,
-    // });
+    this.command({
+      method: 'unsubscribe',
+      topic,
+    });
   }
 
   publish (topic, data) {
@@ -305,22 +309,35 @@ export default class Conduit extends ListenerBaseClass {
 
     this.clearHandlers();
 
-    try {
-      this.command({ method: 'destroy' });
-    }
-    catch (error) {
-      console.error(error);
-      console.warn('Failed to issue "destroy" command to iframe.');
-    }
-
-    this.iframe.parentNode.removeChild(this.iframe);
-    this.iframe.srcdoc = '';
-    this.iframe = null;
-
     this.iov = null;
     this.clientId = null;
     this.handlers = null;
 
-    super.destroy();
+    try {
+      this.command({
+        method: 'destroy',
+        topic: 'iov/video/grand_cam_037/resync',
+      });
+    }
+    catch (error) {
+      console.error(error);
+      console.warn('Failed when issuing "destroy" command to iframe.');
+    }
+
+    // As part of the destroy process, we have to terminate all connections
+    // to the server, then perform a true disconnect.  Currently, we do not
+    // know when these disconnections are finished.  Until this is implemented,
+    // we will simply wait a little while, then destroy the iframe.  If we
+    // destroy the iframe before the disconnections occur, there will be
+    // nothing to hear the posted messages, and the SFS may retain open
+    // connections unecessarily.
+    // @todo - implement a way in the Router to know when actions finish.
+    setTimeout(() => {
+      this.iframe.parentNode.removeChild(this.iframe);
+      this.iframe.srcdoc = '';
+      this.iframe = null;
+
+      super.destroy();
+    }, this.options.iframeTimeout);
   }
 }

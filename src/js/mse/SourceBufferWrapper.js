@@ -1,12 +1,9 @@
 'use strict';
 
-import defaults from 'lodash/defaults';
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
 // import { mp4toJSON } from '~/utils/mp4-inspect';
 
 export default class SourceBufferWrapper extends ListenerBaseClass {
-  static DEBUG_NAME = 'skyline:clsp:mse:SourceBufferWrapper';
-
   static DEFAULT_OPTIONS = {
     // These default buffer value provide the best results in my testing.
     // It keeps the memory usage as low as is practical, and rarely causes
@@ -67,7 +64,7 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
   }
 
   constructor (mediaSource, options) {
-    super(SourceBufferWrapper.DEBUG_NAME, options);
+    super(options);
 
     if (!this.options.bufferTruncateValue) {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);

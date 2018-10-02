@@ -2,9 +2,10 @@
 
 import Debug from 'debug';
 import defaults from 'lodash/defaults';
+import uuidv4 from 'uuid/v4';
 
 export default class ListenerBaseClass {
-  static DEBUG_NAME = 'skyline:clsp:utils:ListenerBaseClass';
+  static DEBUG_PREFIX = 'skyline:clsp:utils:ListenerBaseClass';
 
   static DEFAULT_OPTIONS = {
     enableMetrics: false,
@@ -17,13 +18,20 @@ export default class ListenerBaseClass {
 
   static METRIC_TYPES = [];
 
-  constructor (debugName, options) {
-    this.debug = Debug(debugName);
-    this.silly = Debug(`silly:${debugName}`);
+  constructor (options) {
+    this.id = uuidv4();
+    this._debugId = `skyline:clsp:${this.constructor.name}:${this.id}`;
+
+    this.debug = Debug(this._debugId);
+    this.silly = Debug(`silly:${this._debugId}`);
 
     this.debug('Constructing...');
 
-    this.options = defaults({}, options, this.constructor.DEFAULT_OPTIONS);
+    this.options = defaults(
+      {},
+      options,
+      this.constructor.DEFAULT_OPTIONS
+    );
 
     this.metrics = {};
     this.events = {};

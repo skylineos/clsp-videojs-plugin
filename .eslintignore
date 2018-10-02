@@ -1,2 +1,3 @@
 node_modules/*
 dist/*
+src/js/utils/mp4-inspect.js

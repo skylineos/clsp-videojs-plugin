@@ -1,7 +1,5 @@
 'use strict';
 
-import uuidv4 from 'uuid/v4';
-
 // Needed for crossbrowser iframe support
 // @todo - isn't this needed in conduit or something?
 import 'srcdoc-polyfill';
@@ -20,8 +18,6 @@ const DEFAULT_SSL_PORT = 443;
 //  @todo - should this be the videojs component?  it seems like the
 // mqttHandler does nothing, and that this could replace it
 export default class IOV extends ListenerBaseClass {
-  static DEBUG_NAME = 'skyline:clsp:iov:iov';
-
   static DEFAULT_OPTIONS = {
     // autoplay: false,
     changeSourceImmediately: false,
@@ -122,15 +118,13 @@ export default class IOV extends ListenerBaseClass {
   }
 
   constructor (mqttConduitCollection, player, config, options) {
-    const id = uuidv4();
+    super(options);
 
-    super(`${IOV.DEBUG_NAME}:${id}:main`, options);
-
-    this.id = id;
-    this.destroyed = false;
     this.onReadyCalledMultipleTimes = false;
-    this.playerInstance = player;
-    this.videoElement = this.playerInstance.el();
+    // @todo - there must be a way to look this up on the player
+    this.videoId = `${player.id()}_html5_api`;
+    this.videoJsPlayer = player;
+    this.videoElement = this.videoJsPlayer.el();
     this.firstFrameShown = false;
 
     this.config = {
@@ -162,11 +156,7 @@ export default class IOV extends ListenerBaseClass {
       this.metric(type, value, true);
     });
 
-    this.player = IOVPlayer.factory(
-      this,
-      this.playerInstance.el().firstChild.id,
-      { enableMetrics: this.options.enableMetrics }
-    );
+    this.player = IOVPlayer.factory(this, { enableMetrics: this.options.enableMetrics });
 
     this.player.on('metric', ({ type, value }) => {
       this.metric(type, value, true);
@@ -178,15 +168,15 @@ export default class IOV extends ListenerBaseClass {
 
     this.player.on('videoReceived', () => {
       // reset the timeout monitor from videojs-errors
-      this.playerInstance.trigger('timeupdate');
+      this.videoJsPlayer.trigger('timeupdate');
     });
 
     this.player.on('videoInfoReceived', () => {
       // reset the timeout monitor from videojs-errors
-      this.playerInstance.trigger('timeupdate');
+      this.videoJsPlayer.trigger('timeupdate');
     });
 
-    this.playerInstance.on('changesrc', this.onChangeSource);
+    this.videoJsPlayer.on('changesrc', this.onChangeSource);
 
     this.videoElement.addEventListener('mse-error-event', this.onMseError, false);
 
@@ -205,7 +195,7 @@ export default class IOV extends ListenerBaseClass {
         }
 
         if (!this.firstFrameShown) {
-          this.playerInstance.trigger('readyForNextSource', true);
+          this.videoJsPlayer.trigger('readyForNextSource', true);
           this.player.trigger('readyForNextSource', true);
         }
       }, this.options.changeSourceMaxWait);
@@ -219,14 +209,14 @@ export default class IOV extends ListenerBaseClass {
       this.firstFrameShown = true;
 
       // @todo - need to figure out when to show it
-      this.playerInstance.loadingSpinner.hide();
+      this.videoJsPlayer.loadingSpinner.hide();
 
       setTimeout(() => {
         if (document.hidden) {
           return;
         }
 
-        this.playerInstance.trigger('readyForNextSource');
+        this.videoJsPlayer.trigger('readyForNextSource');
         this.player.trigger('readyForNextSource');
       }, this.options.changeSourceReadyDelay);
     });
@@ -234,7 +224,7 @@ export default class IOV extends ListenerBaseClass {
     if (this.options.changeSourceImmediately) {
       // @todo - we probably should not mutate the options
       this.options.changeSourceImmediately = false;
-      this.playerInstance.trigger('changeSourceImmediately');
+      this.videoJsPlayer.trigger('changeSourceImmediately');
     }
 
     return this;
@@ -250,7 +240,7 @@ export default class IOV extends ListenerBaseClass {
 
     const clone = IOV.factory(
       this.mqttConduitCollection,
-      this.playerInstance,
+      this.videoJsPlayer,
       cloneConfig,
       options
     );
@@ -298,7 +288,7 @@ export default class IOV extends ListenerBaseClass {
         return;
       }
       if (failure) {
-        clone.playerInstance.error({
+        clone.videoJsPlayer.error({
           code: 0,
           type: 'MEDIA_SOURCE_LOAD_FAILED',
           headline: 'MEDIA_SOURCE_LOAD_FAILED',
@@ -320,9 +310,9 @@ export default class IOV extends ListenerBaseClass {
           return;
         }
         clone.player.videoElement.style.display = 'initial';
-        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-        clone.playerInstance.error(null);
-        clone.playerInstance.errorDisplay.close();
+        clone.videoJsPlayer.tech(true).mqtt.updateIOV(clone);
+        clone.videoJsPlayer.error(null);
+        clone.videoJsPlayer.errorDisplay.close();
       }, clone.options.changeSourceReadyDelay);
     });
 
@@ -344,7 +334,7 @@ export default class IOV extends ListenerBaseClass {
     // to display
     // clone.player.on('firstFrameShown', () => {
     //   if (!iovUpdated) {
-    //     clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+    //     clone.videoJsPlayer.tech(true).mqtt.updateIOV(clone);
     //   }
     // });
   }
@@ -356,7 +346,7 @@ export default class IOV extends ListenerBaseClass {
   onChangeSource = (event, source) => {
     if (this.destroyed) {
       console.warn('tried to change source on a dead iov', this.id);
-      this.playerInstance.off('changesrc', this.onChangeSource);
+      this.videoJsPlayer.off('changesrc', this.onChangeSource);
       return;
     }
 
@@ -384,7 +374,7 @@ export default class IOV extends ListenerBaseClass {
     // @todo - is this needed?  If so, it is in the wrong place.  This should
     // trigger "ready" if anything
     // if (this.options.autoplay) {
-    //   this.playerInstance.trigger('play');
+    //   this.videoJsPlayer.trigger('play');
     // }
 
     this.player.play(this.videoElement.firstChild.id, this.config.streamName);
@@ -394,7 +384,7 @@ export default class IOV extends ListenerBaseClass {
     this.debug('onFail');
 
     this.debug('network error', event.data.reason);
-    this.playerInstance.trigger('network-error', event.data.reason);
+    this.videoJsPlayer.trigger('network-error', event.data.reason);
   }
 
   onData (event) {
@@ -465,8 +455,8 @@ export default class IOV extends ListenerBaseClass {
     this.conduit.destroy();
 
     this.videoElement.removeEventListener('mse-error-event', this.onMseError);
-    this.playerInstance.off('changesrc', this.onChangeSource);
-    this.playerInstance = null;
+    this.videoJsPlayer.off('changesrc', this.onChangeSource);
+    this.videoJsPlayer = null;
 
     super.destroy();
   }

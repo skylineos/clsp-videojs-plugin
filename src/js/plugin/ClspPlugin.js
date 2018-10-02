@@ -114,7 +114,6 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     //   oldTrigger(eventName, ...args);
     // };
 
-
     // Track the number of times we've retried on error
     player._errorRetriesCount = 0;
 

@@ -7,8 +7,6 @@ import ListenerBaseClass from '~/utils/ListenerBaseClass';
 import SourceBufferWrapper from './SourceBufferWrapper';
 
 export default class MediaSourceWrapper extends ListenerBaseClass {
-  static DEBUG_NAME = 'skyline:clsp:mse:MediaSourceWrapper';
-
   static DEFAULT_OPTIONS = {
     duration: 10,
     readyRetryInterval: 500,
@@ -46,7 +44,7 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
       throw new Error('videoElement is required to construct an MediaSourceWrapper.');
     }
 
-    super(MediaSourceWrapper.DEBUG_NAME, options);
+    super(options);
 
     this.videoElement = videoElement;
 

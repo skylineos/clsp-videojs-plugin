@@ -3,7 +3,6 @@
 // @todo - some of the debounces in here can lead to things occurring at
 // unexpected times.  Try to find a more proper solution
 import debounce from 'lodash/debounce';
-import uuidv4 from 'uuid/v4';
 
 import ListenerBaseClass from '~/utils/ListenerBaseClass';
 import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
@@ -22,8 +21,6 @@ import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
  * player.play( video_element_id, stream_name );
 */
 export default class IOVPlayer extends ListenerBaseClass {
-  static DEBUG_NAME = 'skyline:clsp:iov:player';
-
   static DEFAULT_OPTIONS = {
     maxMoofWait: 30 * 1000,
     segmentIntervalSampleSize: 5,
@@ -71,17 +68,19 @@ export default class IOVPlayer extends ListenerBaseClass {
     'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount',
   ];
 
-  static factory (iov, videoJsElementId, options = {}) {
-    return new IOVPlayer(iov, videoJsElementId, options);
+  static factory (iov, options = {}) {
+    return new IOVPlayer(iov, options);
   }
 
-  constructor (iov, videoJsElementId, options) {
-    super(IOVPlayer.DEBUG_NAME, options);
+  constructor (iov, options) {
+    super(options);
 
-    this.id = uuidv4();
+    // The parent IOV that this player belongs to
     this.iov = iov;
-    this.eid = videoJsElementId;
-    this.videoId = `clsp-video-${this.iov.config.clientId}`;
+    // The ID we will use for the `video` DOM element that will be
+    // used to show the clsp stream video (which is NOT the same
+    // `video` DOM element as the one that videojs initializes)
+    this.videoId = `clsp-video-${this.iov.id}`;
 
     this.initializeVideoElement();
 
@@ -120,7 +119,7 @@ export default class IOVPlayer extends ListenerBaseClass {
 
   onMaxMediaSourceRetriesExceeded = () => {
     // @todo - there is no need to do this for the instance that triggered the event
-    // perhaps send the eid, and compare it to this.eid
+    // perhaps send the eid, and compare it to this.iov.videoId
     this.retryCount = 0;
   };
 
@@ -128,7 +127,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     super.onFirstMetricListenerRegistered();
 
     this.metric('iovPlayer.instances', 1);
-    this.metric('iovPlayer.clientId', this.iov.config.clientId);
+    this.metric('iovPlayer.clientId', this.iov.id);
   }
 
   _onError (type, message, error) {
@@ -137,10 +136,10 @@ export default class IOVPlayer extends ListenerBaseClass {
   }
 
   initializeVideoElement () {
-    this.videoJsVideoElement = document.getElementById(this.eid);
+    this.videoJsVideoElement = document.getElementById(this.iov.videoId);
 
     if (!this.videoJsVideoElement) {
-      throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
+      throw new Error(`Unable to find an element in the DOM with id "${this.iov.videoId}".`);
     }
 
     // when videojs initializes the video element (or something like that),
@@ -169,7 +168,7 @@ export default class IOVPlayer extends ListenerBaseClass {
             let video = videos[i];
             const id = video.getAttribute('id');
 
-            if (id !== this.eid && id !== this.videoId) {
+            if (id !== this.iov.videoId && id !== this.videoId) {
               this.videoElementParent.removeChild(video);
               video.remove();
               video = null;
