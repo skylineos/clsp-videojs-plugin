@@ -86,10 +86,10 @@
 /************************************************************************/
 /******/ ({
 
-/***/ "./dist/Router.min.js":
-/*!****************************!*\
-  !*** ./dist/Router.min.js ***!
-  \****************************/
+/***/ "./dist/Router.js":
+/*!************************!*\
+  !*** ./dist/Router.js ***!
+  \************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -140,7 +140,7 @@
             }
           }function r() {
             if (window.MQTTClient) try {
-              window.MQTTClient.socket && window.MQTTClient.disconnect();
+              window.MQTTClient.disconnect();
             } catch (e) {
               t("Error while trying to disconnect...", e);
             }
@@ -148,7 +148,7 @@
             var n = "";try {
               n = e.payloadString;
             } catch (e) {}o({ event: "data", destinationName: e.destinationName, payloadString: n, payloadBytes: e.payloadBytes || null });
-          }function c(e) {
+          }function a(e) {
             var n = e.data;try {
               switch (n.method) {case "destroy":
                   r();break;case "subscribe":
@@ -169,19 +169,19 @@
             } catch (e) {
               t("Unknown onMessage error...", e), o({ event: "fail", reason: "network failure" }), r();
             }
-          }function a() {
+          }function c() {
             try {
               r();
             } catch (e) {}-1 === n && (n = setInterval(function () {
               u();
             }, 2e3));
           }function s() {
-            window.addEventListener ? window.addEventListener("message", c, !1) : window.attachEvent && window.attachEvent("onmessage", c), o({ event: "ready" }), -1 !== n && (clearInterval(n), n = -1);
+            window.addEventListener ? window.addEventListener("message", a, !1) : window.attachEvent("onmessage", a), o({ event: "ready" }), -1 !== n && (clearInterval(n), n = -1);
           }function d(e) {
-            var n = "Failed to connect: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), a();
+            var n = "Failed to connect: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
           }function l(e) {
             if (0 !== e.errorCode) {
-              var n = "Lost connection: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), a();
+              var n = "Lost connection: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
             }
           }function u() {
             var n = new window.parent.Paho.Message(JSON.stringify({ clientId: e.id }));n.destinationName = "iov/clientDisconnect";var r = { timeout: 120, onSuccess: s, onFailure: d, willMessage: n };!0 === e.config.useSSL && (r.useSSL = !0);try {
@@ -198,10 +198,8 @@
           }();
         }, onunload: function onunload() {
           if (window.MQTTClient) try {
-            window.MQTTClient.socket && window.MQTTClient.disconnect();
-          } catch (e) {
-            console.warn("Error while trying to disconnect..."), console.error(e);
-          }
+            window.MQTTClient.disconnect();
+          } catch (e) {}
         } };
     };
   }]);
@@ -5671,7 +5669,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-16","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-17","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -5715,8 +5713,8 @@ clspPlugin.register();
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
-/* harmony import */ var _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ~root/dist/Router.min */ "./dist/Router.min.js");
-/* harmony import */ var _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_root_dist_Router_min__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _root_dist_Router__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ~root/dist/Router */ "./dist/Router.js");
+/* harmony import */ var _root_dist_Router__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_root_dist_Router__WEBPACK_IMPORTED_MODULE_1__);
 
 
 /**
@@ -5759,7 +5757,7 @@ var Conduit = function (_ListenerBaseClass) {
   function Conduit(iov, options) {
     _classCallCheck(this, Conduit);
 
-    var _this = _possibleConstructorReturn(this, (Conduit.__proto__ || Object.getPrototypeOf(Conduit)).call(this, Conduit.DEBUG_NAME + ':' + iov.id, options));
+    var _this = _possibleConstructorReturn(this, (Conduit.__proto__ || Object.getPrototypeOf(Conduit)).call(this, options));
 
     _this.iov = iov;
     _this.clientId = iov.id;
@@ -5791,7 +5789,7 @@ var Conduit = function (_ListenerBaseClass) {
       iframe.width = 0;
       iframe.height = 0;
 
-      iframe.srcdoc = '\n      <html>\n        <head>\n          <script type="text/javascript">\n            window.MqttClientId = "' + this.clientId + '";\n            window.iframeCode = ' + _root_dist_Router_min__WEBPACK_IMPORTED_MODULE_1___default.a.toString() + '();\n          </script>\n        </head>\n        <body\n          onload="window.iframeCode.clspRouter();"\n          onunload="window.iframeCode.onunload();"\n        >\n          <div id="message"></div>\n        </body>\n      </html>\n    ';
+      iframe.srcdoc = '\n      <html>\n        <head>\n          <script type="text/javascript">\n            window.MqttClientId = "' + this.clientId + '";\n            window.iframeCode = ' + _root_dist_Router__WEBPACK_IMPORTED_MODULE_1___default.a.toString() + '();\n          </script>\n        </head>\n        <body\n          onload="window.iframeCode.clspRouter();"\n          onunload="window.iframeCode.onunload();"\n        >\n          <div id="message"></div>\n        </body>\n      </html>\n    ';
 
       return iframe;
     }
@@ -5804,25 +5802,29 @@ var Conduit = function (_ListenerBaseClass) {
 
       // attach hidden iframe to player
       // document.body.appendChild(iframe);
-      if (this.iov.config.videoElementParent !== null) {
+      if (this.iov.config.videoElementParent) {
         this.iov.config.videoElementParent.appendChild(this.iframe);
-      } else if (this.iov.videoElement.parentNode !== null) {
+        return;
+      }
+
+      if (this.iov.videoElement.parentNode) {
         this.iov.videoElement.parentNode.appendChild(this.iframe);
         this.iov.config.videoElementParent = this.iov.videoElement.parentNode;
-      } else {
-        var interval = setInterval(function () {
-          if (_this2.iov.videoElement.parentNode !== null) {
-            try {
-              _this2.iov.videoElement.parentNode.appendChild(_this2.iframe);
-              _this2.iov.config.videoElementParent = _this2.iov.videoElement.parentNode;
-            } catch (error) {
-              console.error(error);
-            }
-
-            clearInterval(interval);
-          }
-        }, 1000);
+        return;
       }
+
+      var interval = setInterval(function () {
+        if (_this2.iov.videoElement.parentNode !== null) {
+          try {
+            _this2.iov.videoElement.parentNode.appendChild(_this2.iframe);
+            _this2.iov.config.videoElementParent = _this2.iov.videoElement.parentNode;
+          } catch (error) {
+            console.error(error);
+          }
+
+          clearInterval(interval);
+        }
+      }, 1000);
     }
 
     // primitive function that routes message to iframe
@@ -5834,7 +5836,7 @@ var Conduit = function (_ListenerBaseClass) {
 
       this.debug('posting message from iframe...');
 
-      if (this.iframe.contentWindow !== null) {
+      if (this.iframe.contentWindow) {
         this.iframe.contentWindow.postMessage(message, '*');
         return;
       }
@@ -5881,14 +5883,14 @@ var Conduit = function (_ListenerBaseClass) {
     value: function unsubscribe(topic) {
       this.debug('unsubscribing from ' + topic + '...');
 
-      // if (topic in this.handlers) {
-      //   delete this.handlers[topic];
-      // }
+      if (topic in this.handlers) {
+        delete this.handlers[topic];
+      }
 
-      // this.command({
-      //   method: 'unsubscribe',
-      //   topic,
-      // });
+      this.command({
+        method: 'unsubscribe',
+        topic: topic
+      });
     }
   }, {
     key: 'publish',
@@ -6051,6 +6053,8 @@ var Conduit = function (_ListenerBaseClass) {
   }, {
     key: 'destroy',
     value: function destroy() {
+      var _this6 = this;
+
       if (this.destroyed) {
         return;
       }
@@ -6061,29 +6065,44 @@ var Conduit = function (_ListenerBaseClass) {
 
       this.clearHandlers();
 
-      try {
-        this.command({ method: 'destroy' });
-      } catch (error) {
-        console.error(error);
-        console.warn('Failed to issue "destroy" command to iframe.');
-      }
-
-      this.iframe.parentNode.removeChild(this.iframe);
-      this.iframe.srcdoc = '';
-      this.iframe = null;
-
       this.iov = null;
       this.clientId = null;
       this.handlers = null;
 
-      _get(Conduit.prototype.__proto__ || Object.getPrototypeOf(Conduit.prototype), 'destroy', this).call(this);
+      try {
+        this.command({
+          method: 'destroy',
+          topic: 'iov/video/grand_cam_037/resync'
+        });
+      } catch (error) {
+        console.error(error);
+        console.warn('Failed when issuing "destroy" command to iframe.');
+      }
+
+      // As part of the destroy process, we have to terminate all connections
+      // to the server, then perform a true disconnect.  Currently, we do not
+      // know when these disconnections are finished.  Until this is implemented,
+      // we will simply wait a little while, then destroy the iframe.  If we
+      // destroy the iframe before the disconnections occur, there will be
+      // nothing to hear the posted messages, and the SFS may retain open
+      // connections unecessarily.
+      // @todo - implement a way in the Router to know when actions finish.
+      setTimeout(function () {
+        _this6.iframe.parentNode.removeChild(_this6.iframe);
+        _this6.iframe.srcdoc = '';
+        _this6.iframe = null;
+
+        _get(Conduit.prototype.__proto__ || Object.getPrototypeOf(Conduit.prototype), 'destroy', _this6).call(_this6);
+      }, this.options.iframeTimeout);
     }
   }]);
 
   return Conduit;
 }(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_0__["default"]);
 
-Conduit.DEBUG_NAME = 'skyline:clsp:iov:conduit';
+Conduit.DEFAULT_OPTIONS = {
+  iframeTimeout: 9 * 1000
+};
 Conduit.METRIC_TYPES = ['iovConduit.instances', 'iovConduit.clientId', 'iovConduit.guid', 'iovConduit.mimeCodec'];
 /* harmony default export */ __webpack_exports__["default"] = (Conduit);
 
@@ -6098,13 +6117,14 @@ Conduit.METRIC_TYPES = ['iovConduit.instances', 'iovConduit.clientId', 'iovCondu
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
-/* harmony import */ var _Player__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Player */ "./src/js/iov/Player.js");
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
+/* harmony import */ var _Player__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Player */ "./src/js/iov/Player.js");
 
+
+// Needed for crossbrowser iframe support
+// @todo - isn't this needed in conduit or something?
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
@@ -6120,10 +6140,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-
-
-// Needed for crossbrowser iframe support
-// @todo - isn't this needed in conduit or something?
 
 
 
@@ -6222,9 +6238,7 @@ var IOV = function (_ListenerBaseClass) {
   function IOV(mqttConduitCollection, player, config, options) {
     _classCallCheck(this, IOV);
 
-    var id = uuid_v4__WEBPACK_IMPORTED_MODULE_0___default()();
-
-    var _this = _possibleConstructorReturn(this, (IOV.__proto__ || Object.getPrototypeOf(IOV)).call(this, IOV.DEBUG_NAME + ':' + id + ':main', options));
+    var _this = _possibleConstructorReturn(this, (IOV.__proto__ || Object.getPrototypeOf(IOV)).call(this, options));
 
     _this.onMseError = function () {
       _this.player.restart();
@@ -6233,18 +6247,18 @@ var IOV = function (_ListenerBaseClass) {
     _this.onChangeSource = function (event, source) {
       if (_this.destroyed) {
         console.warn('tried to change source on a dead iov', _this.id);
-        _this.playerInstance.off('changesrc', _this.onChangeSource);
+        _this.videoJsPlayer.off('changesrc', _this.onChangeSource);
         return;
       }
 
       return _this.changeSource(source);
     };
 
-    _this.id = id;
-    _this.destroyed = false;
     _this.onReadyCalledMultipleTimes = false;
-    _this.playerInstance = player;
-    _this.videoElement = _this.playerInstance.el();
+    // @todo - there must be a way to look this up on the player
+    _this.videoId = player.id() + '_html5_api';
+    _this.videoJsPlayer = player;
+    _this.videoElement = _this.videoJsPlayer.el();
     _this.firstFrameShown = false;
 
     _this.config = {
@@ -6285,7 +6299,7 @@ var IOV = function (_ListenerBaseClass) {
         _this2.metric(type, value, true);
       });
 
-      this.player = _Player__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this, this.playerInstance.el().firstChild.id, { enableMetrics: this.options.enableMetrics });
+      this.player = _Player__WEBPACK_IMPORTED_MODULE_2__["default"].factory(this, { enableMetrics: this.options.enableMetrics });
 
       this.player.on('metric', function (_ref2) {
         var type = _ref2.type,
@@ -6300,15 +6314,15 @@ var IOV = function (_ListenerBaseClass) {
 
       this.player.on('videoReceived', function () {
         // reset the timeout monitor from videojs-errors
-        _this2.playerInstance.trigger('timeupdate');
+        _this2.videoJsPlayer.trigger('timeupdate');
       });
 
       this.player.on('videoInfoReceived', function () {
         // reset the timeout monitor from videojs-errors
-        _this2.playerInstance.trigger('timeupdate');
+        _this2.videoJsPlayer.trigger('timeupdate');
       });
 
-      this.playerInstance.on('changesrc', this.onChangeSource);
+      this.videoJsPlayer.on('changesrc', this.onChangeSource);
 
       this.videoElement.addEventListener('mse-error-event', this.onMseError, false);
 
@@ -6327,7 +6341,7 @@ var IOV = function (_ListenerBaseClass) {
           }
 
           if (!_this2.firstFrameShown) {
-            _this2.playerInstance.trigger('readyForNextSource', true);
+            _this2.videoJsPlayer.trigger('readyForNextSource', true);
             _this2.player.trigger('readyForNextSource', true);
           }
         }, this.options.changeSourceMaxWait);
@@ -6341,14 +6355,14 @@ var IOV = function (_ListenerBaseClass) {
         _this2.firstFrameShown = true;
 
         // @todo - need to figure out when to show it
-        _this2.playerInstance.loadingSpinner.hide();
+        _this2.videoJsPlayer.loadingSpinner.hide();
 
         setTimeout(function () {
           if (document.hidden) {
             return;
           }
 
-          _this2.playerInstance.trigger('readyForNextSource');
+          _this2.videoJsPlayer.trigger('readyForNextSource');
           _this2.player.trigger('readyForNextSource');
         }, _this2.options.changeSourceReadyDelay);
       });
@@ -6356,7 +6370,7 @@ var IOV = function (_ListenerBaseClass) {
       if (this.options.changeSourceImmediately) {
         // @todo - we probably should not mutate the options
         this.options.changeSourceImmediately = false;
-        this.playerInstance.trigger('changeSourceImmediately');
+        this.videoJsPlayer.trigger('changeSourceImmediately');
       }
 
       return this;
@@ -6370,7 +6384,7 @@ var IOV = function (_ListenerBaseClass) {
         videoElementParent: this.config.videoElementParent
       });
 
-      var clone = IOV.factory(this.mqttConduitCollection, this.playerInstance, cloneConfig, options);
+      var clone = IOV.factory(this.mqttConduitCollection, this.videoJsPlayer, cloneConfig, options);
 
       // @todo - a hack to "know" when the mqtt handler should changesrc
       // immediately or not...
@@ -6419,8 +6433,9 @@ var IOV = function (_ListenerBaseClass) {
         if (clone.destroyed) {
           return;
         }
+
         if (failure) {
-          clone.playerInstance.error({
+          clone.videoJsPlayer.error({
             code: 0,
             type: 'MEDIA_SOURCE_LOAD_FAILED',
             headline: 'MEDIA_SOURCE_LOAD_FAILED',
@@ -6437,14 +6452,18 @@ var IOV = function (_ListenerBaseClass) {
           return;
         }
 
+        // Make it visible right away to ensure there is no black frame
+        // shown when the video elements transition
+        clone.player.videoElement.style.display = 'initial';
+
         setTimeout(function () {
           if (clone.destroyed) {
             return;
           }
-          clone.player.videoElement.style.display = 'initial';
-          clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-          clone.playerInstance.error(null);
-          clone.playerInstance.errorDisplay.close();
+
+          clone.videoJsPlayer.tech(true).mqtt.updateIOV(clone);
+          clone.videoJsPlayer.error(null);
+          clone.videoJsPlayer.errorDisplay.close();
         }, clone.options.changeSourceReadyDelay);
       });
 
@@ -6466,7 +6485,7 @@ var IOV = function (_ListenerBaseClass) {
       // to display
       // clone.player.on('firstFrameShown', () => {
       //   if (!iovUpdated) {
-      //     clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+      //     clone.videoJsPlayer.tech(true).mqtt.updateIOV(clone);
       //   }
       // });
     }
@@ -6493,7 +6512,7 @@ var IOV = function (_ListenerBaseClass) {
       // @todo - is this needed?  If so, it is in the wrong place.  This should
       // trigger "ready" if anything
       // if (this.options.autoplay) {
-      //   this.playerInstance.trigger('play');
+      //   this.videoJsPlayer.trigger('play');
       // }
 
       this.player.play(this.videoElement.firstChild.id, this.config.streamName);
@@ -6504,7 +6523,7 @@ var IOV = function (_ListenerBaseClass) {
       this.debug('onFail');
 
       this.debug('network error', event.data.reason);
-      this.playerInstance.trigger('network-error', event.data.reason);
+      this.videoJsPlayer.trigger('network-error', event.data.reason);
     }
   }, {
     key: 'onData',
@@ -6581,17 +6600,16 @@ var IOV = function (_ListenerBaseClass) {
       this.conduit.destroy();
 
       this.videoElement.removeEventListener('mse-error-event', this.onMseError);
-      this.playerInstance.off('changesrc', this.onChangeSource);
-      this.playerInstance = null;
+      this.videoJsPlayer.off('changesrc', this.onChangeSource);
+      this.videoJsPlayer = null;
 
       _get(IOV.prototype.__proto__ || Object.getPrototypeOf(IOV.prototype), 'destroy', this).call(this);
     }
   }]);
 
   return IOV;
-}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__["default"]);
+}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
-IOV.DEBUG_NAME = 'skyline:clsp:iov:iov';
 IOV.DEFAULT_OPTIONS = {
   // autoplay: false,
   changeSourceImmediately: false,
@@ -6602,7 +6620,7 @@ IOV.DEFAULT_OPTIONS = {
   defaultNonSslPort: DEFAULT_NON_SSL_PORT,
   defaultSslPort: DEFAULT_SSL_PORT
 };
-IOV.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__["default"].EVENT_NAMES), ['onReadyCalledMultipleTimes', 'handlerError', 'criticalError']);
+IOV.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"].EVENT_NAMES), ['onReadyCalledMultipleTimes', 'handlerError', 'criticalError']);
 IOV.METRIC_TYPES = ['iov.instances', 'iov.clientId'];
 /* harmony default export */ __webpack_exports__["default"] = (IOV);
 ;
@@ -6620,10 +6638,8 @@ IOV.METRIC_TYPES = ['iov.instances', 'iov.clientId'];
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash/debounce */ "./node_modules/lodash/debounce.js");
 /* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
-/* harmony import */ var _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ~/mse/MediaSourceWrapper */ "./src/js/mse/MediaSourceWrapper.js");
+/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
+/* harmony import */ var _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ~/mse/MediaSourceWrapper */ "./src/js/mse/MediaSourceWrapper.js");
 
 
 // @todo - some of the debounces in here can lead to things occurring at
@@ -6642,7 +6658,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
 
 
 
@@ -6668,19 +6683,20 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
   _createClass(IOVPlayer, null, [{
     key: 'factory',
-    value: function factory(iov, videoJsElementId) {
-      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    value: function factory(iov) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-      return new IOVPlayer(iov, videoJsElementId, options);
+      return new IOVPlayer(iov, options);
     }
   }]);
 
-  function IOVPlayer(iov, videoJsElementId, options) {
+  function IOVPlayer(iov, options) {
     var _this2 = this;
 
     _classCallCheck(this, IOVPlayer);
 
-    var _this = _possibleConstructorReturn(this, (IOVPlayer.__proto__ || Object.getPrototypeOf(IOVPlayer)).call(this, IOVPlayer.DEBUG_NAME, options));
+    // The parent IOV that this player belongs to
+    var _this = _possibleConstructorReturn(this, (IOVPlayer.__proto__ || Object.getPrototypeOf(IOVPlayer)).call(this, options));
 
     _this.onMaxMediaSourceRetriesExceeded = function () {
       // @todo - there is no need to do this for the instance that triggered the event
@@ -6721,7 +6737,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
       _this.mediaSourceWrapperGenericErrorRestartCount = 0;
 
-      _this.mediaSourceWrapper = _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory(_this.videoElement, {
+      _this.mediaSourceWrapper = _mse_MediaSourceWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory(_this.videoElement, {
         enableMetrics: _this.options.enableMetrics
       });
 
@@ -6839,6 +6855,8 @@ var IOVPlayer = function (_ListenerBaseClass) {
                     _this.metric('iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount', _this.mediaSourceWrapperGenericErrorRestartCount);
 
                     _this.restart();
+                  } else {
+                    // @todo - what should we do when we exceed the maxMediaSourceWrapperGenericErrorRestartCount?
                   }
 
                   _this._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
@@ -6889,12 +6907,11 @@ var IOVPlayer = function (_ListenerBaseClass) {
       _this.stop();
       _this.play();
     }, _this.options.restartDelay, { leading: true });
-
-
-    _this.id = uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
     _this.iov = iov;
-    _this.eid = videoJsElementId;
-    _this.videoId = 'clsp-video-' + _this.iov.config.clientId;
+    // The ID we will use for the `video` DOM element that will be
+    // used to show the clsp stream video (which is NOT the same
+    // `video` DOM element as the one that videojs initializes)
+    _this.videoId = 'clsp-video-' + _this.iov.id;
 
     _this.initializeVideoElement();
 
@@ -6938,7 +6955,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
       _get(IOVPlayer.prototype.__proto__ || Object.getPrototypeOf(IOVPlayer.prototype), 'onFirstMetricListenerRegistered', this).call(this);
 
       this.metric('iovPlayer.instances', 1);
-      this.metric('iovPlayer.clientId', this.iov.config.clientId);
+      this.metric('iovPlayer.clientId', this.iov.id);
     }
   }, {
     key: '_onError',
@@ -6951,53 +6968,56 @@ var IOVPlayer = function (_ListenerBaseClass) {
     value: function initializeVideoElement() {
       var _this3 = this;
 
-      this.videoJsVideoElement = document.getElementById(this.eid);
+      // If using a single source, this will be the video DOM element that videojs is aware of.
+      // If using tours, on all but the first source, this will be the video DOM element of the
+      // previous video in the tour.
+      var previousVideoId = this.iov.videoElement.firstChild.id;
+      var previousVideoElement = document.getElementById(previousVideoId);
 
-      if (!this.videoJsVideoElement) {
-        throw new Error('Unable to find an element in the DOM with id "' + this.eid + '".');
+      if (!previousVideoElement) {
+        throw new Error('Unable to find an element in the DOM with id "' + previousVideoId + '".');
       }
+
+      var videoElementParent = previousVideoElement.parentNode;
 
       // when videojs initializes the video element (or something like that),
       // it creates events and listeners on that element that it uses, however
       // these events interfere with our ability to play clsp streams.  Cloning
       // the element like this and reinserting it is a blunt instrument to remove
       // all of the videojs events so that we are in control of the player.
-      // this.videoElement = this.videoJsVideoElement.cloneNode();
-      this.videoElement = this.videoJsVideoElement.cloneNode();
+      this.videoElement = previousVideoElement.cloneNode();
       this.videoElement.setAttribute('id', this.videoId);
       this.videoElement.classList.add('clsp-video');
 
-      this.videoElementParent = this.videoJsVideoElement.parentNode;
-
+      // @todo - since this only matters for clones in tours, move it to where
+      // the clone logic is
       this.on('firstFrameShown', function () {
+        if (!videoElementParent) {
+          return;
+        }
+
         // @todo - this may be overkill given the IOV changeSourceMaxWait...
         // When the video is ready to be displayed, swap out the video player if
         // the source has changed.  This is what allows tours to switch to the next
-        if (_this3.videoElementParent !== null) {
-          try {
-            _this3.videoElementParent.insertBefore(_this3.videoElement, _this3.videoJsVideoElement);
+        try {
+          var videos = videoElementParent.getElementsByTagName('video');
 
-            var videos = _this3.videoElementParent.getElementsByTagName('video');
+          videoElementParent.insertBefore(_this3.videoElement, previousVideoElement);
 
-            for (var i = 0; i < videos.length; i++) {
-              var video = videos[i];
-              var id = video.getAttribute('id');
+          for (var i = 0; i < videos.length; i++) {
+            var video = videos[i];
+            var id = video.getAttribute('id');
 
-              if (id !== _this3.eid && id !== _this3.videoId) {
-                _this3.videoElementParent.removeChild(video);
-                video.remove();
-                video = null;
-                videos = null;
-                break;
-              }
+            // Remove old video elements, but leave the current, previous, and original
+            if (id !== _this3.iov.videoId && id !== previousVideoId && id !== _this3.videoId) {
+              videoElementParent.removeChild(video);
+              video.remove();
             }
-
-            // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
-            // is there still a reference to this element?
-            // this.videoJsVideoElement = null;
-          } catch (e) {
-            console.error(e);
           }
+
+          videos = null;
+        } catch (e) {
+          console.error(e);
         }
       });
     }
@@ -7150,9 +7170,6 @@ var IOVPlayer = function (_ListenerBaseClass) {
 
       this.firstFrameShown = null;
 
-      this.videoJsVideoElement = null;
-      this.videoElementParent = null;
-
       if (this.resetRetryCount) {
         clearTimeout(this.resetRetryCount);
       }
@@ -7188,9 +7205,8 @@ var IOVPlayer = function (_ListenerBaseClass) {
   }]);
 
   return IOVPlayer;
-}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__["default"]);
+}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
-IOVPlayer.DEBUG_NAME = 'skyline:clsp:iov:player';
 IOVPlayer.DEFAULT_OPTIONS = {
   maxMoofWait: 30 * 1000,
   segmentIntervalSampleSize: 5,
@@ -7214,7 +7230,7 @@ IOVPlayer.DEFAULT_OPTIONS = {
   mediaSourceRetryInterval: 0.5 * 1000,
   restartDelay: 0.5 * 1000
 };
-IOVPlayer.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__["default"].EVENT_NAMES), ['firstFrameShown', 'videoReceived', 'videoInfoReceived', 'maxMediaSourceRetriesExceeded', 'noMimeCodec', 'readyForNextSource']);
+IOVPlayer.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"].EVENT_NAMES), ['firstFrameShown', 'videoReceived', 'videoInfoReceived', 'maxMediaSourceRetriesExceeded', 'noMimeCodec', 'readyForNextSource']);
 IOVPlayer.METRIC_TYPES = ['iovPlayer.instances', 'iovPlayer.clientId', 'iovPlayer.moofWaitExceeded', 'iovPlayer.video.currentTime', 'iovPlayer.video.drift', 'iovPlayer.video.driftCorrection', 'iovPlayer.video.segmentInterval', 'iovPlayer.video.segmentIntervalAverage', 'iovPlayer.mediaSource.sourceBuffer.bufferTimeEnd', 'iovPlayer.mediaSource.sourceBuffer.genericErrorRestartCount'];
 /* harmony default export */ __webpack_exports__["default"] = (IOVPlayer);
 ;
@@ -7284,7 +7300,7 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
       throw new Error('videoElement is required to construct an MediaSourceWrapper.');
     }
 
-    var _this = _possibleConstructorReturn(this, (MediaSourceWrapper.__proto__ || Object.getPrototypeOf(MediaSourceWrapper)).call(this, MediaSourceWrapper.DEBUG_NAME, options));
+    var _this = _possibleConstructorReturn(this, (MediaSourceWrapper.__proto__ || Object.getPrototypeOf(MediaSourceWrapper)).call(this, options));
 
     _this.videoElement = videoElement;
 
@@ -7660,7 +7676,6 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
   return MediaSourceWrapper;
 }(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_2__["default"]);
 
-MediaSourceWrapper.DEBUG_NAME = 'skyline:clsp:mse:MediaSourceWrapper';
 MediaSourceWrapper.DEFAULT_OPTIONS = {
   duration: 10,
   readyRetryInterval: 500,
@@ -7681,9 +7696,7 @@ MediaSourceWrapper.METRIC_TYPES = ['mediaSource.instances', 'mediaSource.created
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
+/* harmony import */ var _utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~/utils/ListenerBaseClass */ "./src/js/utils/ListenerBaseClass.js");
 
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
@@ -7697,7 +7710,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
 
 
 // import { mp4toJSON } from '~/utils/mp4-inspect';
@@ -7722,7 +7734,7 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
   function SourceBufferWrapper(mediaSource, options) {
     _classCallCheck(this, SourceBufferWrapper);
 
-    var _this = _possibleConstructorReturn(this, (SourceBufferWrapper.__proto__ || Object.getPrototypeOf(SourceBufferWrapper)).call(this, SourceBufferWrapper.DEBUG_NAME, options));
+    var _this = _possibleConstructorReturn(this, (SourceBufferWrapper.__proto__ || Object.getPrototypeOf(SourceBufferWrapper)).call(this, options));
 
     if (!_this.options.bufferTruncateValue) {
       _this.options.bufferTruncateValue = parseInt(_this.options.bufferSizeLimit / _this.options.bufferTruncateFactor);
@@ -8090,9 +8102,8 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
   }]);
 
   return SourceBufferWrapper;
-}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"]);
+}(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_0__["default"]);
 
-SourceBufferWrapper.DEBUG_NAME = 'skyline:clsp:mse:SourceBufferWrapper';
 SourceBufferWrapper.DEFAULT_OPTIONS = {
   // These default buffer value provide the best results in my testing.
   // It keeps the memory usage as low as is practical, and rarely causes
@@ -8103,7 +8114,7 @@ SourceBufferWrapper.DEFAULT_OPTIONS = {
   driftThreshold: 2000,
   minimumBufferIncrementSize: 0.5
 };
-SourceBufferWrapper.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_1__["default"].EVENT_NAMES), ['appendStart', 'appendFinish', 'removeFinish', 'appendError', 'removeError', 'streamFrozen', 'error']);
+SourceBufferWrapper.EVENT_NAMES = [].concat(_toConsumableArray(_utils_ListenerBaseClass__WEBPACK_IMPORTED_MODULE_0__["default"].EVENT_NAMES), ['appendStart', 'appendFinish', 'removeFinish', 'appendError', 'removeError', 'streamFrozen', 'error']);
 SourceBufferWrapper.METRIC_TYPES = ['sourceBuffer.instances', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'sourceBuffer.queue.added', 'sourceBuffer.queue.removed', 'sourceBuffer.append', 'sourceBuffer.append.error', 'sourceBuffer.frameDrop.hiddenTab', 'sourceBuffer.queue.mediaSourceNotReady', 'sourceBuffer.queue.sourceBufferNotReady', 'sourceBuffer.queue.shift', 'sourceBuffer.queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.insufficientBufferAppends', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen', 'sourceBuffer.abort', 'sourceBuffer.abort.error', 'sourceBuffer.lastMoofSize'];
 /* harmony default export */ __webpack_exports__["default"] = (SourceBufferWrapper);
 
@@ -8274,7 +8285,6 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_2___default.a.getPlugin('plugin')
       //   console.log(...args);
       //   oldTrigger(eventName, ...args);
       // };
-
 
       // Track the number of times we've retried on error
       player._errorRetriesCount = 0;
@@ -8720,7 +8730,7 @@ var MqttHandler = function (_Component) {
   }, {
     key: 'destroyIOV',
     value: function destroyIOV() {
-      this._oldIovPlayerInstance = this.iov.playerInstance;
+      this._oldIovVideoJsPlayer = this.iov.videoJsPlayer;
       this._oldIovOptions = this.iov.options;
       this.iov.destroy();
     }
@@ -8729,11 +8739,11 @@ var MqttHandler = function (_Component) {
     value: function recreateIOV() {
       var changeSourceImmediately = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
-      this.createIOV(this._oldIovPlayerInstance, _extends({}, this._oldIovOptions, {
+      this.createIOV(this._oldIovVideoJsPlayer, _extends({}, this._oldIovOptions, {
         changeSourceImmediately: changeSourceImmediately
       }));
 
-      this._oldIovPlayerInstance = null;
+      this._oldIovVideoJsPlayer = null;
       this._oldIovOptions = null;
     }
   }, {
@@ -8749,7 +8759,7 @@ var MqttHandler = function (_Component) {
 
       document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
-      this._oldIovPlayerInstance = null;
+      this._oldIovVideoJsPlayer = null;
       this._oldIovOptions = null;
       this.iov.destroy();
       this.iov = null;
@@ -8919,6 +8929,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
+/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_2__);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -8928,12 +8940,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 
 
+
 var ListenerBaseClass = function () {
-  function ListenerBaseClass(debugName, options) {
+  function ListenerBaseClass(options) {
     _classCallCheck(this, ListenerBaseClass);
 
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(debugName);
-    this.silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + debugName);
+    this.id = uuid_v4__WEBPACK_IMPORTED_MODULE_2___default()();
+    this._debugId = 'skyline:clsp:' + this.constructor.name + ':' + this.id;
+
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(this._debugId);
+    this.silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + this._debugId);
 
     this.debug('Constructing...');
 
@@ -9086,7 +9102,7 @@ var ListenerBaseClass = function () {
   return ListenerBaseClass;
 }();
 
-ListenerBaseClass.DEBUG_NAME = 'skyline:clsp:utils:ListenerBaseClass';
+ListenerBaseClass.DEBUG_PREFIX = 'skyline:clsp:utils:ListenerBaseClass';
 ListenerBaseClass.DEFAULT_OPTIONS = {
   enableMetrics: false,
   destroyWait: 60 * 1000
