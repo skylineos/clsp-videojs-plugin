@@ -1,0 +1,9 @@
+.vjs-clsp video:not(.clsp-video) {
+  display: none !important; }
+
+.vjs-clsp .clsp-video {
+  background-color: black; }
+  .vjs-clsp .clsp-video.hide {
+    display: none !important; }
+
+/*# sourceMappingURL=clsp-videojs-plugin.css.map*/

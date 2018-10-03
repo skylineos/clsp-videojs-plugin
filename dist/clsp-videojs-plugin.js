@@ -128,78 +128,75 @@
   }, function (e, n, t) {
     "use strict";
     t.r(n), n.default = function () {
-      return { clspRouter: function clspRouter() {
-          var e = window.parent.videojs.getPlugin("clsp").conduits.getById(window.MqttClientId).iov,
-              n = -1;function t(n, t) {
-            console.warn("Error for " + e.id + ":"), console.warn(n), t && console.error(t);
-          }function o(n) {
+      var e;function n(n, t) {
+        console.warn("Error for " + e.id + ":"), console.warn(n), t && console.error(t);
+      }function t() {
+        if (window.MQTTClient) try {
+          window.MQTTClient.disconnect();
+        } catch (e) {
+          if (e.message.startsWith("AMQJS0011E")) return;n("Error while trying to disconnect...", e);
+        }
+      }return { onunload: function onunload() {
+          t();
+        }, clspRouter: function clspRouter() {
+          var o = -1;function r(t) {
             try {
-              n.clientId = e.id, window.parent.postMessage(n, "*");
+              t.clientId = e.id, window.parent.postMessage(t, "*");
             } catch (e) {
-              t('Error while executing "postMessage"...', e);
-            }
-          }function r() {
-            if (window.MQTTClient) try {
-              window.MQTTClient.disconnect();
-            } catch (e) {
-              t("Error while trying to disconnect...", e);
+              n('Error while executing "postMessage"...', e);
             }
           }function i(e) {
             var n = "";try {
               n = e.payloadString;
-            } catch (e) {}o({ event: "data", destinationName: e.destinationName, payloadString: n, payloadBytes: e.payloadBytes || null });
+            } catch (e) {}r({ event: "data", destinationName: e.destinationName, payloadString: n, payloadBytes: e.payloadBytes || null });
           }function a(e) {
-            var n = e.data;try {
-              switch (n.method) {case "destroy":
-                  r();break;case "subscribe":
-                  window.MQTTClient.subscribe(n.topic);break;case "unsubscribe":
-                  window.MQTTClient.unsubscribe(n.topic);break;case "publish":
+            var o = e.data;try {
+              switch (o.method) {case "destroy":
+                  t();break;case "subscribe":
+                  window.MQTTClient.subscribe(o.topic);break;case "unsubscribe":
+                  window.MQTTClient.unsubscribe(o.topic);break;case "publish":
                   try {
-                    !function (e, n) {
+                    !function (e, t) {
                       try {
-                        var o = new window.parent.Paho.Message(n);o.destinationName = e, window.MQTTClient.send(o);
+                        var o = new window.parent.Paho.Message(t);o.destinationName = e, window.MQTTClient.send(o);
                       } catch (e) {
-                        t("Error while sending mqtt message...", e);
+                        n("Error while sending mqtt message...", e);
                       }
-                    }(n.topic, JSON.stringify(n.data));
+                    }(o.topic, JSON.stringify(o.data));
                   } catch (e) {
-                    return t("Unable to parse message data..."), void t(n.data);
+                    return n("Unable to parse message data..."), void n(o.data);
                   }break;default:
-                  t('Unknown message method "' + n.method + '" received...');}
+                  n('Unknown message method "' + o.method + '" received...');}
             } catch (e) {
-              t("Unknown onMessage error...", e), o({ event: "fail", reason: "network failure" }), r();
+              n("Unknown onMessage error...", e), r({ event: "fail", reason: "network failure" }), t();
             }
           }function c() {
             try {
-              r();
-            } catch (e) {}-1 === n && (n = setInterval(function () {
-              u();
+              t();
+            } catch (e) {}-1 === o && (o = setInterval(function () {
+              l();
             }, 2e3));
           }function s() {
-            window.addEventListener ? window.addEventListener("message", a, !1) : window.attachEvent("onmessage", a), o({ event: "ready" }), -1 !== n && (clearInterval(n), n = -1);
+            window.addEventListener ? window.addEventListener("message", a, !1) : window.attachEvent("onmessage", a), r({ event: "ready" }), -1 !== o && (clearInterval(o), o = -1);
           }function d(e) {
-            var n = "Failed to connect: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
-          }function l(e) {
+            var t = "Failed to connect: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;n(t), r({ event: "fail", reason: t }), c();
+          }function u(e) {
             if (0 !== e.errorCode) {
-              var n = "Lost connection: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;t(n), o({ event: "fail", reason: n }), c();
+              var t = "Lost connection: Error code " + parseInt(e.errorCode) + ": " + e.errorMessage;n(t), r({ event: "fail", reason: t }), c();
             }
-          }function u() {
-            var n = new window.parent.Paho.Message(JSON.stringify({ clientId: e.id }));n.destinationName = "iov/clientDisconnect";var r = { timeout: 120, onSuccess: s, onFailure: d, willMessage: n };!0 === e.config.useSSL && (r.useSSL = !0);try {
-              window.MQTTClient.connected || window.MQTTClient.socket ? console.warn("Trying to connect to an already-connected client!") : window.MQTTClient.connect(r);
+          }function l() {
+            var t = new window.parent.Paho.Message(JSON.stringify({ clientId: e.id }));t.destinationName = "iov/clientDisconnect";var o = { timeout: 120, onSuccess: s, onFailure: d, willMessage: t };!0 === e.config.useSSL && (o.useSSL = !0);try {
+              window.MQTTClient.connected || window.MQTTClient.socket ? console.warn("Trying to connect to an already-connected client!") : window.MQTTClient.connect(o);
             } catch (e) {
-              t("Unknown connection failure...", e), o({ event: "fail", reason: "connect failed" });
+              n("Unknown connection failure...", e), r({ event: "fail", reason: "connect failed" });
             }
-          }!function () {
+          }e = window.parent.videojs.getPlugin("clsp").conduits.getById(window.MqttClientId).iov, function () {
             try {
-              window.MQTTClient = new window.parent.Paho.Client(e.config.wsbroker, e.config.wsport, e.id), window.MQTTClient.onConnectionLost = l, window.MQTTClient.onMessageArrived = i, u();
+              window.MQTTClient = new window.parent.Paho.Client(e.config.wsbroker, e.config.wsport, e.id), window.MQTTClient.onConnectionLost = u, window.MQTTClient.onMessageArrived = i, l();
             } catch (e) {
               console.error("IFRAME error"), console.error(e);
             }
           }();
-        }, onunload: function onunload() {
-          if (window.MQTTClient) try {
-            window.MQTTClient.disconnect();
-          } catch (e) {}
         } };
     };
   }]);
@@ -5669,7 +5666,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-17","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-18","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -5682,7 +5679,9 @@ module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-17","descriptio
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _plugin_ClspPlugin__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ~/plugin/ClspPlugin */ "./src/js/plugin/ClspPlugin.js");
+/* harmony import */ var _styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../styles/clsp-videojs-plugin.scss */ "./src/styles/clsp-videojs-plugin.scss");
+/* harmony import */ var _styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_styles_clsp_videojs_plugin_scss__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _plugin_ClspPlugin__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./plugin/ClspPlugin */ "./src/js/plugin/ClspPlugin.js");
 
 
 /**
@@ -5695,7 +5694,8 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var clspPlugin = Object(_plugin_ClspPlugin__WEBPACK_IMPORTED_MODULE_0__["default"])();
+
+var clspPlugin = Object(_plugin_ClspPlugin__WEBPACK_IMPORTED_MODULE_1__["default"])();
 
 clspPlugin.register();
 
@@ -6257,6 +6257,7 @@ var IOV = function (_ListenerBaseClass) {
     _this.onReadyCalledMultipleTimes = false;
     // @todo - there must be a way to look this up on the player
     _this.videoId = player.id() + '_html5_api';
+    _this.videoJsElement = document.getElementById(_this.videoId);
     _this.videoJsPlayer = player;
     _this.videoElement = _this.videoJsPlayer.el();
     _this.firstFrameShown = false;
@@ -6341,6 +6342,8 @@ var IOV = function (_ListenerBaseClass) {
           }
 
           if (!_this2.firstFrameShown) {
+            // @todo - if the FIRST video in the tour fails, this should
+            // trigger changeSourceImmediately instead...
             _this2.videoJsPlayer.trigger('readyForNextSource', true);
             _this2.player.trigger('readyForNextSource', true);
           }
@@ -6386,10 +6389,6 @@ var IOV = function (_ListenerBaseClass) {
 
       var clone = IOV.factory(this.mqttConduitCollection, this.videoJsPlayer, cloneConfig, options);
 
-      // @todo - a hack to "know" when the mqtt handler should changesrc
-      // immediately or not...
-      clone.isClone = true;
-
       return clone;
     }
   }, {
@@ -6406,6 +6405,9 @@ var IOV = function (_ListenerBaseClass) {
         throw new Error('Unable to change source because there is no src!');
       }
 
+      // @todo - the old tour/changesrc logic was able to reuse the existing
+      // mqtt connection rather than creating a new one then destroying the
+      // old one...  seems that that would be more efficient
       var clone = this.clone(IOV.generateConfigFromUrl(src, this.options), this.options);
 
       clone.initialize();
@@ -6454,11 +6456,21 @@ var IOV = function (_ListenerBaseClass) {
 
         // Make it visible right away to ensure there is no black frame
         // shown when the video elements transition
-        clone.player.videoElement.style.display = 'initial';
+        setTimeout(function () {
+          clone.player.videoElement.style.display = 'initial';
+        }, clone.options.changeSourceReadyDelay / 2);
 
         setTimeout(function () {
           if (clone.destroyed) {
             return;
+          }
+
+          // At this point, the clone's videoElement should be showing
+          // frames, which means the old iov player should be ready to
+          // be hidden.  The player/videoElement may not exist if there
+          // was a problem loading the previous stream
+          if (_this3.player && _this3.player.videoElement) {
+            _this3.player.videoElement.classList.add('hide');
           }
 
           clone.videoJsPlayer.tech(true).mqtt.updateIOV(clone);
@@ -6514,6 +6526,11 @@ var IOV = function (_ListenerBaseClass) {
       // if (this.options.autoplay) {
       //   this.videoJsPlayer.trigger('play');
       // }
+
+      // @todo - this should never happen...
+      if (this.player.destroyed) {
+        return;
+      }
 
       this.player.play(this.videoElement.firstChild.id, this.config.streamName);
     }
@@ -6985,7 +7002,7 @@ var IOVPlayer = function (_ListenerBaseClass) {
       // these events interfere with our ability to play clsp streams.  Cloning
       // the element like this and reinserting it is a blunt instrument to remove
       // all of the videojs events so that we are in control of the player.
-      this.videoElement = previousVideoElement.cloneNode();
+      this.videoElement = this.iov.videoJsElement.cloneNode();
       this.videoElement.setAttribute('id', this.videoId);
       this.videoElement.classList.add('clsp-video');
 
@@ -7008,11 +7025,14 @@ var IOVPlayer = function (_ListenerBaseClass) {
             var video = videos[i];
             var id = video.getAttribute('id');
 
-            // Remove old video elements, but leave the current, previous, and original
-            if (id !== _this3.iov.videoId && id !== previousVideoId && id !== _this3.videoId) {
-              videoElementParent.removeChild(video);
-              video.remove();
+            // Do not process the current video or the videojs video DOM element
+            if (id === _this3.videoId || id === _this3.iov.videoId || id === previousVideoId) {
+              continue;
             }
+
+            // Remove any other video elements
+            videoElementParent.removeChild(video);
+            video.remove();
           }
 
           videos = null;
@@ -8627,9 +8647,6 @@ var MqttHandler = function (_Component) {
       if (hidden) {
         _this.destroyIOV();
       } else {
-        // @todo - there must be a cleaner way to do this...
-        // this.recreateIOV(!this.iov.isClone);
-
         // When we come back after switching tabs with a clone, we don't
         // want to change the source immediately - we want to let the
         // recreated iov play its stream
@@ -9177,6 +9194,17 @@ function isSupportedMimeType(mimeType) {
   supported: browserIsCompatable,
   isSupportedMimeType: isSupportedMimeType
 });
+
+/***/ }),
+
+/***/ "./src/styles/clsp-videojs-plugin.scss":
+/*!*********************************************!*\
+  !*** ./src/styles/clsp-videojs-plugin.scss ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
 
 /***/ }),
 
