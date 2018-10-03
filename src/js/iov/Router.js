@@ -9,19 +9,44 @@
 // Keep the contents of the exported function light and ES5 only.
 
 export default function () {
-  return {
-    clspRouter: function clspRouter () {
-      var iov = window.parent.videojs.getPlugin('clsp').conduits.getById(window.MqttClientId).iov;
-      var Reconnect = -1;
+  var iov;
 
-      function logError (message, error) {
-        console.warn('Error for ' + iov.id + ':');
-        console.warn(message);
+  function logError (message, error) {
+    console.warn('Error for ' + iov.id + ':');
+    console.warn(message);
 
-        if (error) {
-          console.error(error);
-        }
+    if (error) {
+      console.error(error);
+    }
+  }
+
+  function disconnect () {
+    if (!window.MQTTClient) {
+      return;
+    }
+
+    try {
+      // @see - https://github.com/eclipse/paho.mqtt.javascript/blob/v1.1.0/src/paho-mqtt.js#L991
+      window.MQTTClient.disconnect();
+    }
+    catch (error) {
+      // The client is already disconnected
+      if (error.message.startsWith('AMQJS0011E')) {
+        return;
       }
+
+      logError('Error while trying to disconnect...', error);
+    }
+  }
+
+  return {
+    onunload: function onunload () {
+      disconnect();
+    },
+
+    clspRouter: function clspRouter () {
+      var Reconnect = -1;
+      iov = window.parent.videojs.getPlugin('clsp').conduits.getById(window.MqttClientId).iov;
 
       /**
        * Send a message from this iframe to the main window, which will then delegate
@@ -53,20 +78,6 @@ export default function () {
         }
         catch (error) {
           logError('Error while sending mqtt message...', error);
-        }
-      }
-
-      function disconnect () {
-        if (!window.MQTTClient) {
-          return;
-        }
-
-        try {
-          // @see - https://github.com/eclipse/paho.mqtt.javascript/blob/v1.1.0/src/paho-mqtt.js#L991
-          window.MQTTClient.disconnect();
-        }
-        catch (error) {
-          logError('Error while trying to disconnect...', error);
         }
       }
 
@@ -270,21 +281,6 @@ export default function () {
       }
 
       main();
-    },
-
-    onunload: function onunload () {
-      if (!window.MQTTClient) {
-        return;
-      }
-
-      try {
-        // @see - https://github.com/eclipse/paho.mqtt.javascript/blob/v1.1.0/src/paho-mqtt.js#L991
-        window.MQTTClient.disconnect();
-      }
-      catch (error) {
-        // console.warn('Error while trying to disconnect...');
-        // console.error(error);
-      }
-    },
+    }
   };
 };

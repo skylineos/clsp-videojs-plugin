@@ -321,8 +321,11 @@ export default class IOV extends ListenerBaseClass {
 
         // At this point, the clone's videoElement should be showing
         // frames, which means the old iov player should be ready to
-        // be hidden
-        this.player.videoElement.classList.add('hide');
+        // be hidden.  The player/videoElement may not exist if there
+        // was a problem loading the previous stream
+        if (this.player && this.player.videoElement) {
+          this.player.videoElement.classList.add('hide');
+        }
 
         clone.videoJsPlayer.tech(true).mqtt.updateIOV(clone);
         clone.videoJsPlayer.error(null);
