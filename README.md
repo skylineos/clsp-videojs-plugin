@@ -19,7 +19,7 @@ Currently, this plugin is only supported in Chrome.  We have demonstrated a proo
 
 #### video.js
 
-Video JS 6.7.1 is required.  Currently, this is the last version that correctly implements autoplay.  The CLSP plugin is compatible with the 7.x version of video.js, but due to the missing autoplay feature, its use is not recommended.
+Video JS >= 7.2
 
 #### babel-polyfill
 
@@ -92,7 +92,7 @@ Currently, only the `video/mp4; codecs='avc1.42E01E'` (H.264 baseline 3.0) codec
   <head>
     <link
       rel="stylesheet"
-      href="//vjs.zencdn.net/6.7.1/video-js.min.css"
+      href="//vjs.zencdn.net/7.2.2/video-js.min.css"
     >
     <link
       rel="stylesheet"
@@ -104,7 +104,7 @@ Currently, only the `video/mp4; codecs='avc1.42E01E'` (H.264 baseline 3.0) codec
     ></script>
     <script
       type="text/javascript"
-      src="//vjs.zencdn.net/6.7.1/video.min.js"
+      src="//vjs.zencdn.net/7.2.2/video.min.js"
     ></script>
   </head>
   <body>
@@ -132,6 +132,9 @@ Currently, only the `video/mp4; codecs='avc1.42E01E'` (H.264 baseline 3.0) codec
 </html>
 ```
 
+See the demo files for more advanced usage.
+
+
 ### Webpack and ES6
 
 When using with Webpack, you will need to register the global `videojs` in your `webpack.config.js` file:
@@ -158,6 +161,8 @@ In your code, you will need to set videojs on the window prior to requiring this
  * @see - https://github.com/videojs/videojs-contrib-hls/issues/600#issuecomment-321281442
  */
 import videojs from 'video.js';
+
+// This would be a good spot to import the styles, if you use webpack for css
 
 window.videojs = videojs;
 

@@ -153,7 +153,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     // these events interfere with our ability to play clsp streams.  Cloning
     // the element like this and reinserting it is a blunt instrument to remove
     // all of the videojs events so that we are in control of the player.
-    this.videoElement = previousVideoElement.cloneNode();
+    this.videoElement = this.iov.videoJsElement.cloneNode();
     this.videoElement.setAttribute('id', this.videoId);
     this.videoElement.classList.add('clsp-video');
 
@@ -176,11 +176,14 @@ export default class IOVPlayer extends ListenerBaseClass {
           const video = videos[i];
           const id = video.getAttribute('id');
 
-          // Remove old video elements, but leave the current, previous, and original
-          if (id !== this.iov.videoId && id !== previousVideoId && id !== this.videoId) {
-            videoElementParent.removeChild(video);
-            video.remove();
+          // Do not process the current video or the videojs video DOM element
+          if (id === this.videoId || id === this.iov.videoId || id === previousVideoId) {
+            continue;
           }
+
+          // Remove any other video elements
+          videoElementParent.removeChild(video);
+          video.remove();
         }
 
         videos = null;

@@ -50,9 +50,6 @@ export default class MqttHandler extends Component {
       this.destroyIOV();
     }
     else {
-      // @todo - there must be a cleaner way to do this...
-      // this.recreateIOV(!this.iov.isClone);
-
       // When we come back after switching tabs with a clone, we don't
       // want to change the source immediately - we want to let the
       // recreated iov play its stream

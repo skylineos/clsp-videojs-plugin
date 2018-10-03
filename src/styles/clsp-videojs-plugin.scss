@@ -1,0 +1,14 @@
+.vjs-clsp {
+  // Always hide the videojs video DOM element
+  video:not(.clsp-video) {
+    display: none !important;
+  }
+
+  .clsp-video {
+    background-color: black;
+
+    &.hide {
+      display: none !important;
+    }
+  }
+}

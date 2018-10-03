@@ -123,6 +123,7 @@ export default class IOV extends ListenerBaseClass {
     this.onReadyCalledMultipleTimes = false;
     // @todo - there must be a way to look this up on the player
     this.videoId = `${player.id()}_html5_api`;
+    this.videoJsElement = document.getElementById(this.videoId);
     this.videoJsPlayer = player;
     this.videoElement = this.videoJsPlayer.el();
     this.firstFrameShown = false;
@@ -195,6 +196,8 @@ export default class IOV extends ListenerBaseClass {
         }
 
         if (!this.firstFrameShown) {
+          // @todo - if the FIRST video in the tour fails, this should
+          // trigger changeSourceImmediately instead...
           this.videoJsPlayer.trigger('readyForNextSource', true);
           this.player.trigger('readyForNextSource', true);
         }
@@ -245,10 +248,6 @@ export default class IOV extends ListenerBaseClass {
       options
     );
 
-    // @todo - a hack to "know" when the mqtt handler should changesrc
-    // immediately or not...
-    clone.isClone = true;
-
     return clone;
   }
 
@@ -259,6 +258,9 @@ export default class IOV extends ListenerBaseClass {
       throw new Error('Unable to change source because there is no src!');
     }
 
+    // @todo - the old tour/changesrc logic was able to reuse the existing
+    // mqtt connection rather than creating a new one then destroying the
+    // old one...  seems that that would be more efficient
     const clone = this.clone(IOV.generateConfigFromUrl(src, this.options), this.options);
 
     clone.initialize();
@@ -308,12 +310,19 @@ export default class IOV extends ListenerBaseClass {
 
       // Make it visible right away to ensure there is no black frame
       // shown when the video elements transition
-      clone.player.videoElement.style.display = 'initial';
+      setTimeout(() => {
+        clone.player.videoElement.style.display = 'initial';
+      }, clone.options.changeSourceReadyDelay / 2);
 
       setTimeout(() => {
         if (clone.destroyed) {
           return;
         }
+
+        // At this point, the clone's videoElement should be showing
+        // frames, which means the old iov player should be ready to
+        // be hidden
+        this.player.videoElement.classList.add('hide');
 
         clone.videoJsPlayer.tech(true).mqtt.updateIOV(clone);
         clone.videoJsPlayer.error(null);
@@ -381,6 +390,11 @@ export default class IOV extends ListenerBaseClass {
     // if (this.options.autoplay) {
     //   this.videoJsPlayer.trigger('play');
     // }
+
+    // @todo - this should never happen...
+    if (this.player.destroyed) {
+      return;
+    }
 
     this.player.play(this.videoElement.firstChild.id, this.config.streamName);
   }

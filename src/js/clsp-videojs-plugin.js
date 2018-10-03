@@ -8,7 +8,8 @@
  * for you, you can include the `ClspPlugin` file directly (ES6 only).
  */
 
-import ClspPlugin from '~/plugin/ClspPlugin';
+import '../styles/clsp-videojs-plugin.scss';
+import ClspPlugin from './plugin/ClspPlugin';
 
 const clspPlugin = ClspPlugin();
 
