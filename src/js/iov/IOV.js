@@ -273,6 +273,7 @@ export default class IOV extends ListenerBaseClass {
       }
 
       document.removeEventListener('visibilitychange', clone.onVisibilityChange);
+      this.onVisibilityChange = null;
 
       try {
         this.destroy();
@@ -458,8 +459,6 @@ export default class IOV extends ListenerBaseClass {
       return;
     }
 
-    console.log('destroying iov...')
-
     this.destroyed = true;
 
     this.debug('destroying...');
@@ -469,6 +468,7 @@ export default class IOV extends ListenerBaseClass {
     // remove itself when it runs
     if (this.onVisibilityChange && !document.hidden) {
       document.removeEventListener('visibilitychange', this.onVisibilityChange);
+      this.onVisibilityChange = null;
     }
 
     // For whatever reason, the things must be destroyed in this order
