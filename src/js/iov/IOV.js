@@ -477,6 +477,7 @@ export default class IOV extends ListenerBaseClass {
 
     this.mqttConduitCollection.remove(this.id);
     this.conduit.destroy();
+    this.conduit = null;
 
     this.videoElement.removeEventListener('mse-error-event', this.onMseError);
     this.videoJsPlayer.off('changesrc', this.onChangeSource);

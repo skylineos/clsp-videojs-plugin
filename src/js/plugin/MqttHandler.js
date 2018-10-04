@@ -118,9 +118,12 @@ export default class MqttHandler extends Component {
   }
 
   destroyIOV () {
-    this._oldIovVideoJsPlayer = this.iov.videoJsPlayer;
-    this._oldIovOptions = this.iov.options;
-    this.iov.destroy();
+    if (this.iov) {
+      this._oldIovVideoJsPlayer = this.iov.videoJsPlayer;
+      this._oldIovOptions = this.iov.options;
+      this.iov.destroy();
+      this.iov = null;
+    }
   }
 
   recreateIOV (changeSourceImmediately = true) {
