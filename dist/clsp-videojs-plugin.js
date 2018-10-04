@@ -5666,7 +5666,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-18","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"clsp-videojs-plugin","version":"0.14.0-19","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/clsp-videojs-plugin.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"https://www.skylinenet.net","license":"Apache-2.0","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-client":"git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","jquery":"^3.3.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"^7.2.2","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -6420,6 +6420,7 @@ var IOV = function (_ListenerBaseClass) {
         }
 
         document.removeEventListener('visibilitychange', clone.onVisibilityChange);
+        _this3.onVisibilityChange = null;
 
         try {
           _this3.destroy();
@@ -6607,6 +6608,7 @@ var IOV = function (_ListenerBaseClass) {
       // remove itself when it runs
       if (this.onVisibilityChange && !document.hidden) {
         document.removeEventListener('visibilitychange', this.onVisibilityChange);
+        this.onVisibilityChange = null;
       }
 
       // For whatever reason, the things must be destroyed in this order
@@ -6615,6 +6617,7 @@ var IOV = function (_ListenerBaseClass) {
 
       this.mqttConduitCollection.remove(this.id);
       this.conduit.destroy();
+      this.conduit = null;
 
       this.videoElement.removeEventListener('mse-error-event', this.onMseError);
       this.videoJsPlayer.off('changesrc', this.onChangeSource);
@@ -7668,22 +7671,26 @@ var MediaSourceWrapper = function (_ListenerBaseClass) {
     value: function destroy() {
       var _this2 = this;
 
-      if (this.destroyed) {
+      if (this.destroyed || this.destroying) {
         return;
       }
 
-      // Note that destroy must be defined as synchronous, even though
-      // it performs asynchronous operations, to ensure that as soon
-      // as destroy is called, the destroy property is set to true.
-      // This is needed and time sensitive because multiple to calls
-      // to destroy are possible, and subsequent calls may occur before
-      // the destroyed property is set here if the destroy method is
-      // defined as asynchronous
-      this.destroyed = true;
-
       this.debug('destroySourceBuffer...');
 
+      // Note that the destroy method must be defined as synchronous,
+      // even though it performs asynchronous operations, to ensure
+      // that as soon as destroy is called, the destroying property
+      // is set to true. This is needed and is time-sensitive because
+      // multiple calls to destroy are possible, and subsequent calls
+      // may occur before the destroying property is set here if the
+      // destroy method is defined as asynchronous
+      this.destroying = true;
+
+      this.moov = null;
+
       return this.destroyMediaSource().then(function () {
+        _this2.destroyed = true;
+
         _this2.videoElement = null;
 
         _this2.eventListeners = null;
@@ -8088,22 +8095,33 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
       var _this2 = this;
 
       return new Promise(function (resolve, reject) {
-        if (_this2.destroyed) {
+        if (_this2.destroyed || _this2.destroying) {
           return resolve();
         }
 
-        _this2.destroyed = true;
-
         _this2.debug('destroying...');
+
+        _this2.destroying = true;
 
         _this2.abort();
 
         _this2.sourceBuffer.removeEventListener('updateend', _this2.eventListeners.onUpdateEnd);
         _this2.sourceBuffer.removeEventListener('error', _this2.eventListeners.onError);
 
-        _this2.sourceBuffer.addEventListener('updateend', function () {
+        var self = _this2;
+
+        var onUpdateEnd = function onUpdateEnd() {
+          if (self && self.destroyed) {
+            return;
+          }
+
+          self.sourceBuffer.removeEventListener('error', onUpdateEnd);
+          self.sourceBuffer = null;
+          self.destroyed = true;
           resolve();
-        });
+        };
+
+        _this2.sourceBuffer.addEventListener('updateend', onUpdateEnd);
 
         _this2.trimBuffer(undefined, true);
 
@@ -8114,9 +8132,11 @@ var SourceBufferWrapper = function (_ListenerBaseClass) {
         _this2.eventListeners = null;
 
         _this2.mediaSource = null;
-        _this2.sourceBuffer = null;
 
-        _get(SourceBufferWrapper.prototype.__proto__ || Object.getPrototypeOf(SourceBufferWrapper.prototype), 'destroy', _this2).call(_this2);
+        // Call onUpdateEnd again after the base class destroy delay to ensure
+        // this promise resolves in the event that there is an issue with the
+        // sourceBuffer updateend event not firing or failing
+        _get(SourceBufferWrapper.prototype.__proto__ || Object.getPrototypeOf(SourceBufferWrapper.prototype), 'destroy', _this2).call(_this2).then(onUpdateEnd);
       });
     }
   }]);
@@ -8747,9 +8767,12 @@ var MqttHandler = function (_Component) {
   }, {
     key: 'destroyIOV',
     value: function destroyIOV() {
-      this._oldIovVideoJsPlayer = this.iov.videoJsPlayer;
-      this._oldIovOptions = this.iov.options;
-      this.iov.destroy();
+      if (this.iov) {
+        this._oldIovVideoJsPlayer = this.iov.videoJsPlayer;
+        this._oldIovOptions = this.iov.options;
+        this.iov.destroy();
+        this.iov = null;
+      }
     }
   }, {
     key: 'recreateIOV',
@@ -9101,18 +9124,24 @@ var ListenerBaseClass = function () {
 
       this.firstMetricListenerRegistered = null;
 
+      // @todo - can we set the destroyed or destroying properties here?
+
       // @todo - since so much of what is going on with this plugin is
       // asynchronous and pub/sub, wait a full ten seconds before
       // dereferencing these, in case there are a few outstanding
       // events or method calls.
       // There must be a more proper way to do this, but for now it works
-      setTimeout(function () {
-        _this.metrics = null;
-        _this.events = null;
-        _this.debug = null;
-        _this.silly = null;
-        _this.options = null;
-      }, this.options.destroyWait);
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+          _this.metrics = null;
+          _this.events = null;
+          _this.debug = null;
+          _this.silly = null;
+          _this.options = null;
+
+          resolve();
+        }, _this.options.destroyWait);
+      });
     }
   }]);
 
