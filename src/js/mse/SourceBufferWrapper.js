@@ -388,14 +388,16 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
       this.sourceBuffer.removeEventListener('updateend', this.eventListeners.onUpdateEnd);
       this.sourceBuffer.removeEventListener('error', this.eventListeners.onError);
 
-      function onUpdateEnd () {
-        if (this.destroyed) {
+      const self = this;
+
+      const onUpdateEnd = () => {
+        if (self && self.destroyed) {
           return;
         }
 
-        this.sourceBuffer.removeEventListener('error', onUpdateEnd);
-        this.sourceBuffer = null;
-        this.destroyed = true;
+        self.sourceBuffer.removeEventListener('error', onUpdateEnd);
+        self.sourceBuffer = null;
+        self.destroyed = true;
         resolve();
       };
 

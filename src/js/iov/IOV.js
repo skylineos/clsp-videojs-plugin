@@ -458,6 +458,8 @@ export default class IOV extends ListenerBaseClass {
       return;
     }
 
+    console.log('destroying iov...')
+
     this.destroyed = true;
 
     this.debug('destroying...');

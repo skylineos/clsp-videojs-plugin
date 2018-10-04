@@ -303,6 +303,8 @@ export default class Conduit extends ListenerBaseClass {
       return;
     }
 
+    console.log('destroying conduit...')
+
     this.destroyed = true;
 
     this.debug('destroying...');
