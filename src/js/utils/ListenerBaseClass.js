@@ -147,17 +147,23 @@ export default class ListenerBaseClass {
   destroy () {
     this.firstMetricListenerRegistered = null;
 
+    // @todo - can we set the destroyed or destroying properties here?
+
     // @todo - since so much of what is going on with this plugin is
     // asynchronous and pub/sub, wait a full ten seconds before
     // dereferencing these, in case there are a few outstanding
     // events or method calls.
     // There must be a more proper way to do this, but for now it works
-    setTimeout(() => {
-      this.metrics = null;
-      this.events = null;
-      this.debug = null;
-      this.silly = null;
-      this.options = null;
-    }, this.options.destroyWait);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        this.metrics = null;
+        this.events = null;
+        this.debug = null;
+        this.silly = null;
+        this.options = null;
+
+        resolve();
+      }, this.options.destroyWait);
+    });
   }
 }

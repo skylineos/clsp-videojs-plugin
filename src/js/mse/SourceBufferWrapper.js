@@ -375,22 +375,31 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
 
   destroy () {
     return new Promise((resolve, reject) => {
-      if (this.destroyed) {
+      if (this.destroyed || this.destroying) {
         return resolve();
       }
 
-      this.destroyed = true;
-
       this.debug('destroying...');
+
+      this.destroying = true;
 
       this.abort();
 
       this.sourceBuffer.removeEventListener('updateend', this.eventListeners.onUpdateEnd);
       this.sourceBuffer.removeEventListener('error', this.eventListeners.onError);
 
-      this.sourceBuffer.addEventListener('updateend', () => {
+      function onUpdateEnd () {
+        if (this.destroyed) {
+          return;
+        }
+
+        this.sourceBuffer.removeEventListener('error', onUpdateEnd);
+        this.sourceBuffer = null;
+        this.destroyed = true;
         resolve();
-      });
+      };
+
+      this.sourceBuffer.addEventListener('updateend', onUpdateEnd);
 
       this.trimBuffer(undefined, true);
 
@@ -401,9 +410,11 @@ export default class SourceBufferWrapper extends ListenerBaseClass {
       this.eventListeners = null;
 
       this.mediaSource = null;
-      this.sourceBuffer = null;
 
-      super.destroy();
+      // Call onUpdateEnd again after the base class destroy delay to ensure
+      // this promise resolves in the event that there is an issue with the
+      // sourceBuffer updateend event not firing or failing
+      super.destroy().then(onUpdateEnd);
     });
   }
 }
