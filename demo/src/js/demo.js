@@ -163,6 +163,7 @@ function initializeWall () {
           muted: true,
           preload: 'auto',
           poster: 'skyline_logo.png',
+          controls: true,
           sources: [
             {
               src: urlList[j % urlList.length],

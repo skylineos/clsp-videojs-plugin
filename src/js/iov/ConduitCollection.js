@@ -6,18 +6,18 @@ import Conduit from '~/iov/Conduit';
 
 let singleton;
 
-export default class MqttConduitCollection {
+export default class ConduitCollection {
   static factory () {
     if (!singleton) {
-      singleton = new MqttConduitCollection();
+      singleton = new ConduitCollection();
     }
 
     return singleton;
   }
 
   constructor () {
-    this.debug = Debug('skyline:clsp:plugin:MqttConduitCollection');
-    this.silly = Debug('skyline:silly:clsp:plugin:MqttConduitCollection');
+    this.debug = Debug('skyline:clsp:plugin:ConduitCollection');
+    this.silly = Debug('skyline:silly:clsp:plugin:ConduitCollection');
 
     this.debug('constructing...');
 
@@ -66,7 +66,11 @@ export default class MqttConduitCollection {
   }
 
   remove (id) {
+    const conduit = this._conduits[id];
+
     delete this._conduits[id];
+
+    conduit.destroy();
   }
 
   addFromIov (iov, options) {

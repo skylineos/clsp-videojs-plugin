@@ -96,18 +96,16 @@ export default class IOV extends ListenerBaseClass {
     };
   }
 
-  static factory (mqttConduitCollection, player, config = {}, options = {}) {
+  static factory (player, config = {}, options = {}) {
     return new IOV(
-      mqttConduitCollection,
       player,
       config,
       options
     );
   }
 
-  static fromUrl (url, mqttConduitCollection, player, config = {}, options = {}) {
+  static fromUrl (url, player, config = {}, options = {}) {
     return IOV.factory(
-      mqttConduitCollection,
       player,
       {
         ...config,
@@ -117,7 +115,7 @@ export default class IOV extends ListenerBaseClass {
     );
   }
 
-  constructor (mqttConduitCollection, player, config, options) {
+  constructor (player, config, options) {
     super(options);
 
     this.onReadyCalledMultipleTimes = false;
@@ -136,9 +134,6 @@ export default class IOV extends ListenerBaseClass {
       streamName: config.streamName,
       videoElementParent: config.videoElementParent || null,
     };
-
-    // @todo - this needs to be a global service or something
-    this.mqttConduitCollection = mqttConduitCollection;
   }
 
   onFirstMetricListenerRegistered () {
@@ -151,7 +146,7 @@ export default class IOV extends ListenerBaseClass {
   initialize () {
     this.debug('initializing...');
 
-    this.conduit = this.mqttConduitCollection.addFromIov(this, { enableMetrics: this.options.enableMetrics });
+    this.conduit = window.conduitCollection.addFromIov(this, { enableMetrics: this.options.enableMetrics });
 
     this.conduit.on('metric', ({ type, value }) => {
       this.metric(type, value, true);
@@ -242,7 +237,6 @@ export default class IOV extends ListenerBaseClass {
     };
 
     const clone = IOV.factory(
-      this.mqttConduitCollection,
       this.videoJsPlayer,
       cloneConfig,
       options
@@ -475,8 +469,7 @@ export default class IOV extends ListenerBaseClass {
     this.player.destroy();
     this.player = null;
 
-    this.mqttConduitCollection.remove(this.id);
-    this.conduit.destroy();
+    window.conduitCollection.remove(this.id);
     this.conduit = null;
 
     this.videoElement.removeEventListener('mse-error-event', this.onMseError);

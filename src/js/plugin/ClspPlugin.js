@@ -9,7 +9,7 @@ import videojs from 'video.js';
 
 import utils from '~/utils/utils';
 import MqttSourceHandler from './MqttSourceHandler';
-import MqttConduitCollection from './MqttConduitCollection';
+import ConduitCollection from '~/iov/ConduitCollection';
 
 const Plugin = videojs.getPlugin('plugin');
 
@@ -17,8 +17,6 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
   static VERSION = utils.version;
 
   static utils = utils;
-
-  static conduits = MqttConduitCollection.factory();
 
   static METRIC_TYPES = [
     'videojs.errorRetriesCount',
@@ -30,8 +28,10 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     }
 
     window.Paho = Paho;
+    // @todo - do not pollute the global namespace - inject this where needed
+    window.conduitCollection = ConduitCollection.factory();
 
-    const sourceHandler = MqttSourceHandler.factory('html5', ClspPlugin.conduits);
+    const sourceHandler = MqttSourceHandler.factory('html5');
 
     videojs.getTech('Html5').registerSourceHandler(sourceHandler, 0);
     videojs.registerPlugin(utils.name, ClspPlugin);

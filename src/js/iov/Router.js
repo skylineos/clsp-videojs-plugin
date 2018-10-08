@@ -46,7 +46,7 @@ export default function () {
 
     clspRouter: function clspRouter () {
       var Reconnect = -1;
-      iov = window.parent.videojs.getPlugin('clsp').conduits.getById(window.MqttClientId).iov;
+      iov = window.parent.conduitCollection.getById(window.MqttClientId).iov;
 
       /**
        * Send a message from this iframe to the main window, which will then delegate

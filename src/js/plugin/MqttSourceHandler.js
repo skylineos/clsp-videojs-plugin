@@ -18,11 +18,11 @@ import MqttHandler from './MqttHandler';
 import utils from '~/utils/utils';
 
 export default class MqttSourceHandler {
-  static factory (mode, conduits) {
-    return new MqttSourceHandler(mode, conduits);
+  static factory (mode) {
+    return new MqttSourceHandler(mode);
   }
 
-  constructor (mode, conduits) {
+  constructor (mode) {
     this.debug = Debug('skyline:clsp:plugin:MqttSourceHandler');
     this.debug('constructor');
 
@@ -30,7 +30,6 @@ export default class MqttSourceHandler {
     this.VERSION = utils.version;
 
     this.mode = mode;
-    this.conduits = conduits;
     this.defaultLocalOptions = { mqtt: { mode: this.mode } };
   }
 
@@ -64,7 +63,6 @@ export default class MqttSourceHandler {
     tech.mqtt = new MqttHandler(
       source,
       tech,
-      this.conduits,
       localOptions
     );
 
@@ -91,7 +89,6 @@ export default class MqttSourceHandler {
     this.name = null;
     this.VERSION = null;
     this.mode = null;
-    this.conduits = null;
     this.defaultLocalOptions = null;
   }
 };

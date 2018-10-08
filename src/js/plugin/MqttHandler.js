@@ -8,7 +8,7 @@ import IOV from '~/iov/IOV';
 const Component = videojs.getComponent('Component');
 
 export default class MqttHandler extends Component {
-  constructor (source, tech, conduits, options) {
+  constructor (source, tech, options) {
     super(tech, options.mqtt);
 
     this.debug = Debug('skyline:clsp:plugin:MqttHandler');
@@ -22,7 +22,6 @@ export default class MqttHandler extends Component {
     // @todo - is there a better way to do this where we don't pollute the
     // top level namespace?  does it matter?
     this.iov = null;
-    this.conduits = conduits;
 
     // We must detect and then respond to chrome performing "background tab performance
     // stuff", because it can cause instability with the video players over extended
@@ -62,7 +61,6 @@ export default class MqttHandler extends Component {
 
     this.updateIOV(IOV.fromUrl(
       this.source_.src,
-      this.conduits,
       player,
       {},
       iovOptions,
@@ -158,6 +156,5 @@ export default class MqttHandler extends Component {
     this.debug = null;
     this.tech_ = null;
     this.source_ = null;
-    this.conduits = null;
   }
 };
