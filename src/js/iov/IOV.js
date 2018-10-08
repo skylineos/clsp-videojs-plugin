@@ -39,7 +39,7 @@ export default class IOV extends ListenerBaseClass {
   // @todo - implement some metrics
   static METRIC_TYPES = [
     'iov.instances',
-    'iov.clientId',
+    'iov.id',
   ];
 
   static generateConfigFromUrl (url, options = {}) {
@@ -127,7 +127,6 @@ export default class IOV extends ListenerBaseClass {
     this.firstFrameShown = false;
 
     this.config = {
-      clientId: this.id,
       wsbroker: config.wsbroker,
       wsport: config.wsport,
       useSSL: config.useSSL,
@@ -140,7 +139,7 @@ export default class IOV extends ListenerBaseClass {
     super.onFirstMetricListenerRegistered();
 
     this.metric('iov.instances', 1);
-    this.metric('iov.clientId', this.id);
+    this.metric('iov.id', this.id);
   }
 
   initialize () {
@@ -442,6 +441,10 @@ export default class IOV extends ListenerBaseClass {
         this.onData(event);
         break;
       }
+      case 'disconnect': {
+        // @todo
+        break;
+      }
       default: {
         console.error(`No match for event: ${eventType}`);
       }
@@ -469,7 +472,7 @@ export default class IOV extends ListenerBaseClass {
     this.player.destroy();
     this.player = null;
 
-    window.conduitCollection.remove(this.id);
+    window.conduitCollection.remove(this.conduit.id);
     this.conduit = null;
 
     this.videoElement.removeEventListener('mse-error-event', this.onMseError);

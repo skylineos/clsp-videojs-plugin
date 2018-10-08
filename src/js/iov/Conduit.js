@@ -15,11 +15,12 @@ import iframeCode from '~root/dist/Router';
 export default class Conduit extends ListenerBaseClass {
   static DEFAULT_OPTIONS = {
     iframeTimeout: 9 * 1000,
+    connectionTimeout: 120, // in seconds!
   };
 
   static METRIC_TYPES = [
     'iovConduit.instances',
-    'iovConduit.clientId',
+    'iovConduit.id',
     'iovConduit.guid',
     'iovConduit.mimeCodec',
   ];
@@ -31,86 +32,88 @@ export default class Conduit extends ListenerBaseClass {
   constructor (iov, options) {
     super(options);
 
-    this.iov = iov;
-    this.clientId = iov.id;
+    this.iframeLoaded = false;
+
+    this.assign(iov);
+    this.handleIframe();
 
     this.handlers = {};
-    this.iframe = this.generateIframe();
-    this.attachIframe();
+  }
+
+  assign (iov) {
+    this.iov = iov;
+    this.config = {
+      streamName: iov.config.streamName,
+      wsbroker: iov.config.wsbroker,
+      wsport: iov.config.wsport,
+      useSSL: iov.config.useSSL,
+    };
+  }
+
+  isCompatibleWithIOV (iov) {
+    if (this.config.wsbroker !== iov.config.wsbroker) {
+      return false;
+    }
+
+    if (this.config.wsport !== iov.config.wsport) {
+      return false;
+    }
+
+    if (this.config.useSSL !== iov.config.useSSL) {
+      return false;
+    }
+
+    return true;
   }
 
   onFirstMetricListenerRegistered () {
     super.onFirstMetricListenerRegistered();
 
     this.metric('iovConduit.instances', 1);
-    this.metric('iovConduit.clientId', this.clientId);
+    this.metric('iovConduit.id', this.id);
   }
 
-  generateIframe () {
+  handleIframe () {
     this.debug('generating iframe...');
 
-    const iframe = document.createElement('iframe');
+    this.iframe = document.createElement('iframe');
 
-    iframe.setAttribute('style', 'display:none;');
-    iframe.setAttribute('id', this.clientId);
+    this.iframe.setAttribute('style', 'display:none;');
+    this.iframe.setAttribute('id', this.id);
 
-    iframe.width = 0;
-    iframe.height = 0;
+    this.iframe.width = 0;
+    this.iframe.height = 0;
 
-    iframe.srcdoc = `
+    this.iframe.srcdoc = `
       <html>
         <head>
           <script type="text/javascript">
-            window.MqttClientId = "${this.clientId}";
-            window.iframeCode = ${iframeCode.toString()}();
+            var Router = ${iframeCode.toString()}();
+
+            window.router = Router.factory(
+              "${this.id}",
+              "${this.config.wsbroker}",
+              ${this.config.wsport},
+              ${this.config.useSSL || false},
+              ${this.options.connectionTimeout}
+            );
           </script>
         </head>
         <body
-          onload="window.iframeCode.clspRouter();"
-          onunload="window.iframeCode.onunload();"
+          onload="window.router.initialize();"
+          onunload="window.router.destroy();"
         >
           <div id="message"></div>
         </body>
       </html>
     `;
 
-    return iframe;
-  }
-
-  attachIframe () {
-    this.debug('attaching iframe...');
-
-    // attach hidden iframe to player
-    // document.body.appendChild(iframe);
-    if (this.iov.config.videoElementParent) {
-      this.iov.config.videoElementParent.appendChild(this.iframe);
-      return;
-    }
-
-    if (this.iov.videoElement.parentNode) {
-      this.iov.videoElement.parentNode.appendChild(this.iframe);
-      this.iov.config.videoElementParent = this.iov.videoElement.parentNode;
-      return;
-    }
-
-    const interval = setInterval(() => {
-      if (this.iov.videoElement.parentNode !== null) {
-        try {
-          this.iov.videoElement.parentNode.appendChild(this.iframe);
-          this.iov.config.videoElementParent = this.iov.videoElement.parentNode;
-        }
-        catch (error) {
-          console.error(error);
-        }
-
-        clearInterval(interval);
-      }
-    }, 1000);
+    document.getElementById('clsp-conduit-iframe-collection').appendChild(this.iframe);
   }
 
   // primitive function that routes message to iframe
   command (message) {
-    this.debug('posting message from iframe...');
+    this.debug('posting message to iframe...');
 
     if (this.iframe.contentWindow) {
       this.iframe.contentWindow.postMessage(message, '*');
@@ -167,13 +170,16 @@ export default class Conduit extends ListenerBaseClass {
     });
   }
 
-  publish (topic, data) {
+  publish (topic, data = {}) {
     this.debug(`publishing to ${topic}...`);
 
     this.command({
       method: 'publish',
       topic,
-      data,
+      data: {
+        clientId: this.id,
+        ...data,
+      },
     });
   }
 
@@ -191,8 +197,8 @@ export default class Conduit extends ListenerBaseClass {
   start (cb) {
     this.debug('starting...');
 
-    const responseTopic = `${this.clientId}'/response/'${parseInt(Math.random() * 1000000)}`;
-    const initSegmentTopic = `${this.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
+    const responseTopic = `${this.id}'/response/'${parseInt(Math.random() * 1000000)}`;
+    const initSegmentTopic = `${this.id}/init-segment/${parseInt(Math.random() * 1000000)}`;
 
     this.subscribe(responseTopic, (mqtt_resp) => {
       this.debug(`received response for ${responseTopic}...`);
@@ -218,21 +224,13 @@ export default class Conduit extends ListenerBaseClass {
       });
 
       // Tell the server we're ready to play
-      this.publish(`iov/video/${this.guid}/play`, {
-        initSegmentTopic,
-        clientId: this.clientId,
-      });
+      this.publish(`iov/video/${this.guid}/play`, { initSegmentTopic });
 
       // cleanup.
       this.unsubscribe(responseTopic);
     });
 
-    // start transaction
-    // MQTTClient.send(mqtt_msg);
-    this.publish(`iov/video/${window.btoa(this.iov.config.streamName)}/request`, {
-      clientId: this.clientId,
-      resp_topic: responseTopic,
-    });
+    this.publish(`iov/video/${window.btoa(this.config.streamName)}/request`, { resp_topic: responseTopic });
   }
 
   stream (cb) {
@@ -260,27 +258,32 @@ export default class Conduit extends ListenerBaseClass {
     });
   }
 
-  stop () {
+  stop (guid = this.guid) {
     this.debug('stopping...');
 
-    if (!this.guid) {
+    if (!guid) {
       // throw new Error('The Conduit must be started before it can stop.');
       return;
     }
 
     // Stop listening for moofs
-    this.unsubscribe(`iov/video/${this.guid}/live`);
+    this.unsubscribe(`iov/video/${guid}/live`);
 
     // Stop listening for resync events
-    this.unsubscribe(`iov/video/${this.guid}/resync`);
+    this.unsubscribe(`iov/video/${guid}/resync`);
 
     // Tell the server we've stopped
-    this.publish(
-      `iov/video/${this.guid}/stop`,
-      { clientId: this.clientId }
-    );
+    this.publish(`iov/video/${guid}/stop`);
 
     // @todo - should we also call clearHandlers here?
+  }
+
+  unassign (guid) {
+    this.stop(guid);
+    this.clearHandlers();
+
+    this.config = null;
+    this.iov = null;
   }
 
   clearHandlers () {
@@ -307,17 +310,12 @@ export default class Conduit extends ListenerBaseClass {
 
     this.debug('destroying...');
 
-    this.clearHandlers();
-
-    this.iov = null;
-    this.clientId = null;
+    this.unassign();
+    this.id = null;
     this.handlers = null;
 
     try {
-      this.command({
-        method: 'destroy',
-        topic: 'iov/video/grand_cam_037/resync',
-      });
+      this.command({ method: 'destroy' });
     }
     catch (error) {
       console.error(error);

@@ -57,7 +57,7 @@ export default class IOVPlayer extends ListenerBaseClass {
 
   static METRIC_TYPES = [
     'iovPlayer.instances',
-    'iovPlayer.clientId',
+    'iovPlayer.iov.id',
     'iovPlayer.moofWaitExceeded',
     'iovPlayer.video.currentTime',
     'iovPlayer.video.drift',
@@ -80,7 +80,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     // The ID we will use for the `video` DOM element that will be
     // used to show the clsp stream video (which is NOT the same
     // `video` DOM element as the one that videojs initializes)
-    this.videoId = `clsp-video-${this.iov.id}`;
+    this.videoId = `clsp-video-${this.iov.conduit.id}`;
 
     this.initializeVideoElement();
 
@@ -127,7 +127,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     super.onFirstMetricListenerRegistered();
 
     this.metric('iovPlayer.instances', 1);
-    this.metric('iovPlayer.clientId', this.iov.id);
+    this.metric('iovPlayer.iov.id', this.iov.id);
   }
 
   _onError (type, message, error) {
@@ -156,6 +156,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.videoElement = this.iov.videoJsElement.cloneNode();
     this.videoElement.setAttribute('id', this.videoId);
     this.videoElement.classList.add('clsp-video');
+    this.videoElement.classList.remove('hide');
 
     // @todo - since this only matters for clones in tours, move it to where
     // the clone logic is
@@ -569,6 +570,7 @@ export default class IOVPlayer extends ListenerBaseClass {
     // the only reliable way we have found to ensure that MediaSource,
     // SourceBuffer, and various Video elements are properly dereferenced
     // to avoid memory leaks
+    // @see - https://bugs.chromium.org/p/chromium/issues/detail?id=637284
     this.videoElement.src = '';
     this.videoElement = null;
 

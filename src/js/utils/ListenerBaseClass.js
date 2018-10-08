@@ -107,11 +107,11 @@ export default class ListenerBaseClass {
     // skipValidTypeCheck, since this base class won't know the originating
     // metric instance?
     switch (type) {
-      case 'iov.clientId':
-      case 'iovConduit.clientId':
+      case 'iov.id':
+      case 'iovConduit.id':
       case 'iovConduit.guid':
       case 'iovConduit.mimeCodec':
-      case 'iovPlayer.clientId':
+      case 'iovPlayer.iov.id':
       case 'iovPlayer.video.currentTime':
       case 'iovPlayer.video.drift':
       case 'iovPlayer.video.segmentInterval':

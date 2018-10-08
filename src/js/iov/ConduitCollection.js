@@ -22,6 +22,15 @@ export default class ConduitCollection {
     this.debug('constructing...');
 
     this._conduits = {};
+    this._unassignedConduits = {};
+
+    const iframeCollection = document.createElement('div');
+
+    iframeCollection.setAttribute('id', 'clsp-conduit-iframe-collection');
+
+    // @todo - don't actually attach this to the body, just leave it as an
+    // orphan, if possible
+    document.body.appendChild(iframeCollection);
 
     window.addEventListener('message', this.onMessage);
   }
@@ -29,26 +38,35 @@ export default class ConduitCollection {
   onMessage = (event) => {
     this.silly('window on message');
 
-    const clientId = event.data.clientId;
+    const conduitId = event.data.conduitId;
 
-    if (!this.exists(clientId)) {
+    if (!this.exists(conduitId)) {
       // When the mqtt connection is interupted due to a listener being removed,
       // a fail event is always sent.  It is not necessary to log this as an error
       // in the console, because it is not an error.
       if (!event.data.event === 'fail') {
-        console.error(`No conduit with id "${clientId}" exists!`);
+        console.error(`No conduit with id "${conduitId}" exists!`);
       }
 
       return;
     }
 
-    this.getById(clientId).iov.onMessage(event);
+    const conduit = this.getById(conduitId);
+
+    if (event.data.event === 'loaded') {
+      conduit.command({ method: 'ready' });
+      conduit.iframeLoaded = true;
+
+      return;
+    }
+
+    conduit.iov.onMessage(event);
   }
 
-  set (id, conduit) {
-    this.debug('setting...', id, conduit);
+  set (conduit) {
+    this.debug('setting...', conduit);
 
-    this._conduits[id] = conduit;
+    this._conduits[conduit.id] = conduit;
 
     return conduit;
   }
@@ -70,17 +88,64 @@ export default class ConduitCollection {
 
     delete this._conduits[id];
 
-    conduit.destroy();
+    const conduitProfileKey = `${conduit.config.wsbroker}|${conduit.config.wsport}|${conduit.config.useSSL}`;
+
+    conduit.unassign();
+
+    // Ensure there is a category in the unassigned conduits
+    if (!this._unassignedConduits[conduitProfileKey]) {
+      this._unassignedConduits[conduitProfileKey] = [];
+    }
+
+    // Save it for later use
+    this._unassignedConduits[conduitProfileKey].push(conduit);
   }
 
   addFromIov (iov, options) {
-    this.debug('adding from iov...', iov);
+    this.debug(`adding from iov ${iov.id}...`);
 
-    const conduit = this.exists(iov.id)
-      ? this.getById(iov.id)
-      : Conduit.factory(iov, options);
+    const conduitProfileKey = `${iov.config.wsbroker}|${iov.config.wsport}|${iov.config.useSSL}`;
 
-    return this.set(iov.id, conduit);
+    let conduit;
+
+    // Create the unassigned conduit category for this iov
+    if (!this._unassignedConduits[conduitProfileKey]) {
+      this._unassignedConduits[conduitProfileKey] = [];
+    }
+
+    // Use an unassigned conduit that was instantiated with the same conduit profile,
+    // if one is available
+    if (this._unassignedConduits[conduitProfileKey].length) {
+      conduit = this._unassignedConduits[conduitProfileKey].pop();
+
+      // Don't use conduits that are destroyed
+      if (conduit.destroyed || conduit.destroying) {
+        conduit = null;
+      }
+      else {
+        this.debug(`reusing an unassigned ${conduitProfileKey} conduit ${conduit.id} for iov ${iov.id}`);
+
+        conduit.assign(iov);
+      }
+    }
+
+    // At this point, there is no conduit that can be reused, so create a new one
+    if (!conduit) {
+      this.debug(`creating a brand new conduit for iov ${iov.id}...`);
+      conduit = Conduit.factory(iov, options);
+    }
+
+    if (!conduit) {
+      throw new Error('Unable to create conduit!');
+    }
+
+    this.set(conduit);
+
+    if (conduit.iframeLoaded) {
+      conduit.command({ method: 'ready' });
+    }
+
+    return conduit;
   }
 
   destroy () {
