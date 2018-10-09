@@ -74,7 +74,7 @@ export default class MSEWrapper {
       bufferTruncateValue: null,
       driftThreshold: 2000,
       duration: 10,
-      enableMetrics: true,
+      enableMetrics: false,
     });
 
     this.segmentQueue = [];

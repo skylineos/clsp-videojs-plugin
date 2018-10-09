@@ -68,6 +68,7 @@ export default class IOVPlayer {
     this.options = defaults({}, options, {
       segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
       driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
+      enableMetrics: false,
     });
 
     this.state = 'initializing';
@@ -126,9 +127,9 @@ export default class IOVPlayer {
   }
 
   metric (type, value) {
-    // if (!this.options.enableMetrics) {
-    //   return;
-    // }
+    if (!this.options.enableMetrics) {
+      return;
+    }
 
     if (!IOVPlayer.METRIC_TYPES.includes(type)) {
       // @todo - should this throw?
