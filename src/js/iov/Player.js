@@ -156,7 +156,6 @@ export default class IOVPlayer extends ListenerBaseClass {
     this.videoElement = this.iov.videoJsElement.cloneNode();
     this.videoElement.setAttribute('id', this.videoId);
     this.videoElement.classList.add('clsp-video');
-    this.videoElement.classList.remove('hide');
 
     // @todo - since this only matters for clones in tours, move it to where
     // the clone logic is
@@ -171,7 +170,7 @@ export default class IOVPlayer extends ListenerBaseClass {
       try {
         let videos = videoElementParent.getElementsByTagName('video');
 
-        videoElementParent.insertBefore(this.videoElement, previousVideoElement);
+        videoElementParent.prepend(this.videoElement);
 
         for (let i = 0; i < videos.length; i++) {
           const video = videos[i];
@@ -182,9 +181,12 @@ export default class IOVPlayer extends ListenerBaseClass {
             continue;
           }
 
-          // Remove any other video elements
-          videoElementParent.removeChild(video);
-          video.remove();
+          // Remove any other video elements, being sure to NEVER remove the
+          // original videojs video.  That shouldn't ever occur, but...
+          if (video.classList.contains('clsp-video')) {
+            videoElementParent.removeChild(video);
+            video.remove();
+          }
         }
 
         videos = null;
@@ -210,6 +212,7 @@ export default class IOVPlayer extends ListenerBaseClass {
 
     if (this.resetRetryCount) {
       clearTimeout(this.resetRetryCount);
+      this.resetRetryCount = null;
     }
 
     this.resetRetryCount = setTimeout(() => {

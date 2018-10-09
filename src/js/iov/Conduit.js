@@ -95,7 +95,10 @@ export default class Conduit extends ListenerBaseClass {
               "${this.config.wsbroker}",
               ${this.config.wsport},
               ${this.config.useSSL || false},
-              ${this.options.connectionTimeout}
+              {
+                connectionTimeout: ${this.options.connectionTimeout},
+                reconnectIntervalTime: ${this.options.reconnectIntervalTime},
+              }
             );
           </script>
         </head>
@@ -120,7 +123,7 @@ export default class Conduit extends ListenerBaseClass {
       return;
     }
 
-    const interval = setInterval(() => {
+    let interval = setInterval(() => {
       if (this.iframe.contentWindow !== null) {
         try {
           this.iframe.contentWindow.postMessage(message, '*');
@@ -130,8 +133,17 @@ export default class Conduit extends ListenerBaseClass {
         }
 
         clearInterval(interval);
+        interval = null;
       }
     }, 1000);
+
+    setTimeout(() => {
+      if (interval) {
+        console.error('Unable to send command', message.method);
+        clearInterval(interval);
+        interval = null;
+      }
+    }, 10 * 1000);
   }
 
   getTopicHandler (topic) {

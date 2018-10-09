@@ -128,7 +128,8 @@ export default (defaults = {}) => class ClspPlugin extends Plugin {
     // This is currently needed for autoplay.
     player.on('ready', () => {
       if (this.autoplayEnabled) {
-        // Even though the "ready" event has fired, it's not actually ready...
+        // Even though the "ready" event has fired, it's not actually ready
+        // until the "next tick"...
         setTimeout(() => {
           player.play();
         });

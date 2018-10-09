@@ -7,7 +7,10 @@
   .clsp-video {
     background-color: black;
 
-    &.hide {
+    // This makes the use of the "hide" class unnecessary, and helps
+    // minimize the things that the plugin is required to manage as
+    // videos are clone and removed.
+    &[src=''] {
       display: none !important;
     }
   }

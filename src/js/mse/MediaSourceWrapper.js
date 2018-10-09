@@ -62,10 +62,11 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
           return;
         }
 
-        const interval = setInterval(() => {
+        let interval = setInterval(() => {
           if (this.destroyed) {
             console.warn('Media source was destroyed before it was ready.');
             clearInterval(interval);
+            interval = null;
             // this.trigger('sourceOpenFailure');
             return;
           }
@@ -73,6 +74,7 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
           if (this.readyRetries >= this.options.readyRetryMax) {
             console.warn('Media source failed to become ready.');
             clearInterval(interval);
+            interval = null;
             this.trigger('sourceOpenFailure');
             return;
           }
@@ -85,7 +87,16 @@ export default class MediaSourceWrapper extends ListenerBaseClass {
           this._onSourceOpen();
 
           clearInterval(interval);
+          interval = null;
         }, this.options.readyRetryInterval);
+
+        setTimeout(() => {
+          if (interval) {
+            // @todo - clear the interval, but still have to respect the maxRetries.
+            // perhaps have a configurable max wait here?
+            console.warn('mediasource sourceopen interval didnt finish...');
+          }
+        }, 10 * 1000);
       },
       sourceended: () => {
         this.trigger('sourceEnded');

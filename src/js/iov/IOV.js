@@ -178,7 +178,7 @@ export default class IOV extends ListenerBaseClass {
     this.shouldPlayNext = true;
 
     if (this.options.changeSourceWait) {
-      const changeSourceTimeout = setTimeout(() => {
+      let changeSourceTimeout = setTimeout(() => {
         if (this.destroyed) {
           return;
         }
@@ -187,6 +187,7 @@ export default class IOV extends ListenerBaseClass {
 
         if (changeSourceTimeout) {
           clearTimeout(changeSourceTimeout);
+          changeSourceTimeout = null;
         }
 
         if (!this.firstFrameShown) {
@@ -279,6 +280,8 @@ export default class IOV extends ListenerBaseClass {
 
     document.addEventListener('visibilitychange', clone.onVisibilityChange);
 
+    // @todo - i'm not convinced that this logic is correct - it seems that
+    // something is getting destroyed before it is supposed to...
     clone.player.on('readyForNextSource', (failure) => {
       if (clone.destroyed) {
         return;
@@ -305,20 +308,16 @@ export default class IOV extends ListenerBaseClass {
       // Make it visible right away to ensure there is no black frame
       // shown when the video elements transition
       setTimeout(() => {
+        if (clone.destroyed) {
+          return;
+        }
+
         clone.player.videoElement.style.display = 'initial';
       }, clone.options.changeSourceReadyDelay / 2);
 
       setTimeout(() => {
         if (clone.destroyed) {
           return;
-        }
-
-        // At this point, the clone's videoElement should be showing
-        // frames, which means the old iov player should be ready to
-        // be hidden.  The player/videoElement may not exist if there
-        // was a problem loading the previous stream
-        if (this.player && this.player.videoElement) {
-          this.player.videoElement.classList.add('hide');
         }
 
         clone.videoJsPlayer.tech(true).mqtt.updateIOV(clone);
