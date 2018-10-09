@@ -595,11 +595,10 @@ export default class MSEWrapper {
     // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
     // }
 
-    if (this.isMediaSourceReady()) {
+    if (this.isMediaSourceReady() && this.isSourceBufferReady()) {
       this.mediaSource.endOfStream();
+      this.mediaSource.removeSourceBuffer(this.sourceBuffer);
     }
-
-    this.mediaSource.removeSourceBuffer(this.sourceBuffer);
 
     // @todo - is this happening at the right time, or should it happen
     // prior to removing the source buffers?

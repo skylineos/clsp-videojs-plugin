@@ -73,6 +73,7 @@ export default class IOVPlayer {
 
     this.state = 'initializing';
     this.firstFrameShown = false;
+    this.stopped = false;
 
     // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
@@ -89,6 +90,8 @@ export default class IOVPlayer {
     this.moovBox = null;
     this.guid = null;
     this.mimeCodec = null;
+
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   on (name, action) {
@@ -366,7 +369,6 @@ export default class IOVPlayer {
       onSourceEnded: () => {
         debug('on mediaSource sourceended');
 
-        // @todo - do we need to clear the buffer manually?
         this.stop();
       },
       onError: (error) => {
@@ -403,8 +405,10 @@ export default class IOVPlayer {
     this.play();
   }
 
-  play (streamName) {
+  play () {
     debug('play');
+
+    this.stopped = false;
 
     this.iov.conduit.transaction(
       `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
@@ -416,16 +420,29 @@ export default class IOVPlayer {
   stop () {
     debug('stop');
 
+    this.stopped = true;
     this.moovBox = null;
 
-    if (this.guid !== undefined) {
+    if (this.guid) {
+      // Stop listening for moofs
       this.iov.conduit.unsubscribe(`iov/video/${this.guid}/live`);
+
+      // Stop listening for resync events
+      this.iov.conduit.unsubscribe(`iov/video/${this.guid}/resync`);
+
+      // Tell the server we've stopped
+      this.iov.conduit.publish(
+        `iov/video/${this.guid}/stop`,
+        { clientId: this.iov.config.clientId }
+      );
     }
 
-    this.iov.conduit.publish(
-      `iov/video/${this.guid}/stop`,
-      { clientId: this.iov.config.clientId }
-    );
+    // Don't wait until the next play event or the destruction of this player
+    // to clear the MSE
+    if (this.mseWrapper) {
+      this.mseWrapper.destroy();
+      this.mseWrapper = null;
+    }
   }
 
   getSegmentIntervalMetrics () {
@@ -456,8 +473,26 @@ export default class IOVPlayer {
     }
   }
 
+  onVisibilityChange = () => {
+    let timeout;
+
+    if (document.hidden) {
+      timeout = setTimeout(() => {
+        this.stop();
+      }, 1000);
+    }
+    else {
+      clearTimeout(timeout);
+      this.play();
+    }
+  };
+
   // @todo - there is much shared between this and onChangeSourceTransaction
   onIovPlayTransaction ({ mimeCodec, guid }) {
+    if (this.stopped) {
+      return;
+    }
+
     debug('onIovPlayTransaction');
 
     this.assertMimeCodecSupported(mimeCodec);
@@ -467,6 +502,10 @@ export default class IOVPlayer {
     this.state = 'waiting-for-first-moov';
 
     this.iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
+      if (this.stopped) {
+        return;
+      }
+
       debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
       debug(`received moov of type "${typeof payloadBytes}" from server`);
 
@@ -480,6 +519,11 @@ export default class IOVPlayer {
 
       // subscribe to the live video topic.
       this.iov.conduit.subscribe(newTopic, (mqtt_msg) => {
+        if (this.stopped) {
+          return;
+        }
+
+
         this.trigger('videoReceived');
         this.getSegmentIntervalMetrics();
         this.mseWrapper.append(mqtt_msg.payloadBytes);
@@ -510,6 +554,8 @@ export default class IOVPlayer {
 
     this.stop();
 
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+
     // Note you will need to destroy the iov yourself.  The child should
     // probably not destroy the parent
     this.iov = null;
@@ -536,8 +582,10 @@ export default class IOVPlayer {
     this.moovBox = null;
     this.mimeCodec = null;
 
-    this.mseWrapper.destroy();
-    this.mseWrapper = null;
+    if (this.mseWrapper) {
+      this.mseWrapper.destroy();
+      this.mseWrapper = null;
+    }
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,

@@ -273,7 +273,9 @@ export default class IOV {
 
     this.playerInstance.on('changesrc', this.playerInstanceEventListeners.changesrc);
 
-    this.player.play(this.videoElement.firstChild.id, this.config.streamName);
+    if (!document.hidden) {
+      this.player.play();
+    }
 
     this.videoElement.addEventListener('mse-error-event', (e) => {
       this.player.restart();
