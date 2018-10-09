@@ -355,6 +355,8 @@ export default class IOVPlayer {
               'mediaSource sourceBuffer error',
               error
             );
+
+            this.reinitializeMseWrapper(mimeCodec);
           },
         });
 

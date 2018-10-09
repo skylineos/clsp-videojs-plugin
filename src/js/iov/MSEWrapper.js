@@ -369,7 +369,7 @@ export default class MSEWrapper {
   processNextInQueue () {
     silly('processNextInQueue');
 
-    if (document.visibilityState === 'hidden') {
+    if (document.hidden) {
       debug('Tab not in focus - dropping frame...');
       this.metric('frameDrop.hiddenTab', 1);
       this.metric('queue.cannotProcessNext', 1);
