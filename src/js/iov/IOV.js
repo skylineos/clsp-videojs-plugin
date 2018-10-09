@@ -145,11 +145,24 @@ export default class IOV extends ListenerBaseClass {
   initialize () {
     this.debug('initializing...');
 
-    this.conduit = window.conduitCollection.addFromIov(this, { enableMetrics: this.options.enableMetrics });
+    if (this.options.conduit) {
+      try {
+        this.options.conduit.reassign(this);
+        this.conduit = this.options.conduit;
+      }
+      catch (error) {
+        // do nothing
+      }
+    }
 
-    this.conduit.on('metric', ({ type, value }) => {
-      this.metric(type, value, true);
-    });
+    if (!this.conduit) {
+      this.conduit = window.conduitCollection.addFromIov(this, { enableMetrics: this.options.enableMetrics });
+    }
+
+    // @todo - now that the conduit is being reused, this adds lots of metric listeners
+    // this.conduit.on('metric', ({ type, value }) => {
+    //   this.metric(type, value, true);
+    // });
 
     this.player = IOVPlayer.factory(this, { enableMetrics: this.options.enableMetrics });
 
@@ -252,10 +265,16 @@ export default class IOV extends ListenerBaseClass {
       throw new Error('Unable to change source because there is no src!');
     }
 
+
+    const options = {
+      ...this.options,
+      conduit: this.conduit,
+    };
+
     // @todo - the old tour/changesrc logic was able to reuse the existing
     // mqtt connection rather than creating a new one then destroying the
     // old one...  seems that that would be more efficient
-    const clone = this.clone(IOV.generateConfigFromUrl(src, this.options), this.options);
+    const clone = this.clone(IOV.generateConfigFromUrl(src, options), options);
 
     clone.initialize();
 
@@ -349,6 +368,7 @@ export default class IOV extends ListenerBaseClass {
     // });
   }
 
+  // @todo - is the mse error still a thing?
   onMseError = () => {
     this.player.restart();
   };

@@ -60,6 +60,7 @@ export default class ConduitCollection {
       return;
     }
 
+    // @todo - this may need to become the responsibility of the iov
     conduit.iov.onMessage(event);
   }
 

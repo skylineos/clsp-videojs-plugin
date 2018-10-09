@@ -50,6 +50,15 @@ export default class Conduit extends ListenerBaseClass {
     };
   }
 
+  reassign (iov) {
+    if (!this.isCompatibleWithIOV(iov)) {
+      throw new Error('This conduit cannot be reused, as the current hostname, port, and ssl do not match.');
+    }
+
+    this.assign(iov);
+  }
+
+  // @todo - this assumes that this.config exists
   isCompatibleWithIOV (iov) {
     if (this.config.wsbroker !== iov.config.wsbroker) {
       return false;
@@ -211,6 +220,9 @@ export default class Conduit extends ListenerBaseClass {
 
     const responseTopic = `${this.id}'/response/'${parseInt(Math.random() * 1000000)}`;
     const initSegmentTopic = `${this.id}/init-segment/${parseInt(Math.random() * 1000000)}`;
+    const previousSourceTopic = (this.guid)
+      ? `iov/video/${this.guid}/live`
+      : null;
 
     this.subscribe(responseTopic, (mqtt_resp) => {
       this.debug(`received response for ${responseTopic}...`);
@@ -231,6 +243,11 @@ export default class Conduit extends ListenerBaseClass {
 
         // Now that we have the moov, we no longer need to listen for it
         this.unsubscribe(initSegmentTopic);
+
+        // Unsubscribe from the previous topic if we're changing sources
+        if (previousSourceTopic) {
+          this.unsubscribe(previousSourceTopic);
+        }
 
         cb(response.mimeCodec, payloadBytes);
       });
