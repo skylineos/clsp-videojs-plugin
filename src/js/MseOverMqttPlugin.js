@@ -1,95 +1,224 @@
+
+'use strict';
+
 import Debug from 'debug';
+
+// This is configured as an external library by webpack, so the caller must
+// provide videojs on `window`
 import videojs from 'video.js';
 
-import { version as VERSION } from '../../package.json';
 import MqttSourceHandler from './MqttSourceHandler';
 import MqttConduitCollection from './MqttConduitCollection';
 import utils from './utils';
 
 const Plugin = videojs.getPlugin('plugin');
 
-const DEBUG_PREFIX = 'skyline:clsp';
+export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
+  static VERSION = utils.version;
 
-let registered = false;
+  static utils = utils;
 
-export default function (defaults = {}) {
-  class MseOverMqttPlugin extends Plugin {
-    static register () {
-      if (registered) {
-        throw new Error('You can only register the clsp plugin once, and it has already been registered.');
-      }
+  static METRIC_TYPES = [
+    'videojs.errorRetriesCount',
+  ];
 
-      // @todo - there is likely some way for videojs to tell us that the plugin has already
-      // been registered, or perhaps videojs itself will not let you register a plugin twice
-      // `videojs.getPlugin('clsp')`
-      registered = true;
-
-      videojs.getTech('Html5').registerSourceHandler(MqttSourceHandler()('html5', MqttConduitCollection.factory()), 0);
-      videojs.registerPlugin(MseOverMqttPlugin.pluginName, MseOverMqttPlugin);
-
-      return MseOverMqttPlugin;
+  static register () {
+    if (videojs.getPlugin(utils.name)) {
+      throw new Error('You can only register the clsp plugin once, and it has already been registered.');
     }
 
-    constructor (player, options) {
-      super(player, options);
+    videojs.getTech('Html5').registerSourceHandler(MqttSourceHandler()('html5', MqttConduitCollection.factory()), 0);
+    videojs.registerPlugin(utils.name, ClspPlugin);
 
-      this.debug = Debug(`${DEBUG_PREFIX}:MseOverMqttPlugin`);
-      this.debug('constructor');
+    return ClspPlugin;
+  }
 
-      options = videojs.mergeOptions(defaults, options);
+  static getDefaultOptions () {
+    return {
+      /**
+       * The number of times to retry playing the video when there is an error
+       * that we know we can recover from.
+       *
+       * If a negative number is passed, retry indefinitely
+       * If 0 is passed, never retry
+       * If a positive number is passed, retry that many times
+       */
+      maxRetriesOnError: -1,
+      tourDuration: 10 * 1000,
+      enableMetrics: false,
+    };
+  }
 
-      player.addClass('vjs-mse-over-mqtt');
+  constructor (player, options) {
+    super(player, options);
 
-      if (options.customClass) {
-        player.addClass(options.customClass);
-      }
+    this.debug = Debug('skyline:clsp:plugin:ClspPlugin');
+    this.debug('constructing...');
 
+    const playerOptions = player.options();
+
+    this.options = videojs.mergeOptions({
+      ...this.constructor.getDefaultOptions(),
+      ...defaultOptions,
+      ...(playerOptions.clsp || {}),
+    }, options);
+
+    this._playerOptions = playerOptions;
+    this.currentSourceIndex = 0;
+
+    player.addClass('vjs-mse-over-mqtt');
+
+    if (this.options.customClass) {
+      player.addClass(this.options.customClass);
+    }
+
+    // Support for the videojs-errors library
+    if (player.errors) {
       player.errors({
+        // @todo - make this configurable
+        // timeout: player.errors.options.timeout || 120 * 1000,
+        timeout: 120 * 1000,
         errors: {
           PLAYER_ERR_NOT_COMPAT: {
+            type: 'PLAYER_ERR_NOT_COMPAT',
             headline: 'This browser is unsupported.',
             message: 'Chrome 52+ is required.',
           },
         },
-        timeout: 120 * 1000,
-      });
-
-      if (!utils.supported()) {
-        return player.error({
-          code: 'PLAYER_ERR_NOT_COMPAT',
-          dismiss: false,
-        });
-      }
-
-      // Needed to make videojs-errors think that the video is progressing
-      // If we do not do this, videojs-errors will give us a timeout error
-      player._currentTime = 0;
-      player.currentTime = () => player._currentTime++;
-
-      player.on('firstplay', (event) => {
-        this.debug('on firstplay');
-
-        // @todo - the use of the tech here is discouraged.  What is the "right" way to
-        // get the information from the mqttHandler?
-        const mqttHandler = player.tech(true).mqtt;
-
-        if (!mqttHandler) {
-          return console.error('src not in lookup table');
-        }
-
-        mqttHandler.createIOV(player);
-
-        mqttHandler.iov.player.on('metric', (metric) => {
-          // @see - https://docs.videojs.com/tutorial-plugins.html#events
-          this.trigger('metric', { metric });
-        });
       });
     }
+
+    // @todo - this error doesn't work or display the way it's intended to
+    if (!utils.supported()) {
+      return player.error({
+        code: 'PLAYER_ERR_NOT_COMPAT',
+        type: 'PLAYER_ERR_NOT_COMPAT',
+        dismiss: false,
+      });
+    }
+
+    this.autoplayEnabled = playerOptions.autoplay || player.getAttribute('autoplay') === 'true';
+
+    // for debugging...
+
+    // const oldTrigger = player.trigger.bind(player);
+    // player.trigger = (eventName, ...args) => {
+    //   console.log(eventName);
+    //   console.log(...args);
+    //   oldTrigger(eventName, ...args);
+    // };
+
+    // Track the number of times we've retried on error
+    player._errorRetriesCount = 0;
+
+    // Needed to make videojs-errors think that the video is progressing
+    // If we do not do this, videojs-errors will give us a timeout error
+    player._currentTime = 0;
+    player.currentTime = () => player._currentTime++;
+
+    // @todo - are we not using videojs properly?
+    // @see - https://github.com/videojs/video.js/issues/5233
+    // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
+    // This is currently needed for autoplay.
+    player.on('ready', () => {
+      if (this.autoplayEnabled) {
+        // Even though the "ready" event has fired, it's not actually ready
+        // until the "next tick"...
+        setTimeout(() => {
+          player.play();
+        });
+      }
+    });
+
+    // @todo - this seems like we aren't using videojs properly
+    player.on('error', (event) => {
+      const error = player.error();
+
+      switch (error.code) {
+        case 0:
+        case 4:
+        case 5:
+        case 'PLAYER_ERR_IOV': {
+          break;
+        }
+        default: {
+          if (this.options.maxRetriesOnError === 0) {
+            break;
+          }
+
+          if (this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= this.options.maxRetriesOnError) {
+            // @todo - when can we reset this to zero?
+            player._errorRetriesCount++;
+
+            // @see - https://github.com/videojs/video.js/issues/4401
+            player.error(null);
+            player.errorDisplay.close();
+
+            const iov = player.tech(true).mqtt.iov;
+
+            // @todo - investigate how this can be called when the iov has been destroyed
+            if (!iov || iov.destroyed || !iov.player) {
+              this.initializeIOV(player);
+            }
+            else {
+              iov.player.restart();
+            }
+          }
+        }
+      }
+    });
+
+    // @todo - we are currently creating the IOV for this player on `firstplay`
+    // but we could do it on the `ready` event.  However, in order to support
+    // this, we need to make the IOV and its player able to be instantiated
+    // without automatically playing AND without automatically listening via
+    // a conduit
+    player.on('firstplay', (event) => {
+      this.debug('on player firstplay');
+
+      this.initializeIOV(player);
+    });
   }
 
-  MseOverMqttPlugin.pluginName = 'clsp';
-  MseOverMqttPlugin.VERSION = VERSION;
-  MseOverMqttPlugin.utils = utils;
+  onMqttHandlerError = () => {
+    const mqttHandler = this.player.tech(true).mqtt;
 
-  return MseOverMqttPlugin;
+    mqttHandler.destroy();
+
+    this.player.error({
+      code: 0,
+      type: 'INSUFFICIENT_RESOURCES',
+      headline: 'Insufficient Resources',
+      message: 'The current hardware cannot support the current number of playing streams.',
+    });
+  };
+
+  initializeIOV (player) {
+    const mqttHandler = player.tech(true).mqtt;
+
+    if (!mqttHandler) {
+      throw new Error(`VideoJS Player ${player.id()} does not have mqtt tech!`);
+    }
+
+    mqttHandler.off('error', this.onMqttHandlerError);
+    mqttHandler.on('error', this.onMqttHandlerError);
+
+    mqttHandler.createIOV(player, {
+      enableMetrics: this.options.enableMetrics,
+      defaultNonSslPort: this.options.defaultNonSslPort,
+      defaultSslPort: this.options.defaultSslPort,
+    });
+  }
+
+  destroy () {
+    this.debug('destroying...');
+
+    const mqttHandler = this.player.tech(true).mqtt;
+
+    mqttHandler.off('error', this.onMqttHandlerError);
+
+    this._playerOptions = null;
+    this.currentSourceIndex = null;
+    this.debug = null;
+  }
 };

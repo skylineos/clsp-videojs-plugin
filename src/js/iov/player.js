@@ -158,7 +158,7 @@ export default class IOVPlayer {
   }
 
   _onError (type, message, error) {
-    console.error(message);
+    console.warn(type, ':', message);
     console.error(error);
   }
 
@@ -326,7 +326,7 @@ export default class IOVPlayer {
               'Error while appending to sourceBuffer',
               error
             );
-            // this.videoPlayer.error({ code: 3 });
+
             this.reinitializeMseWrapper(mimeCodec);
           },
           onRemoveError: (error) => {
