@@ -2,7 +2,6 @@
 
 const gulp = require('gulp');
 const webpack = require('webpack');
-const serve = require('webpack-serve');
 
 const rm = require('gulp-rm');
 const runSequence = require('run-sequence');
@@ -30,7 +29,7 @@ function asPromise (fn, ...args) {
 }
 
 function webpackBuild (pathToConfig) {
-  const webpackConfig = require(pathToConfig);
+  const webpackConfig = require(pathToConfig)();
 
   return asPromise(webpack, webpackConfig)
     .then((stats) => {
@@ -63,16 +62,6 @@ gulp.task('generate-clsp-conduit', async () => {
 gulp.task('build-dev', () => webpackBuild('./webpack.config'));
 
 gulp.task('build-prod', () => webpackBuild('./webpack.config.prod'));
-
-gulp.task('start-dev', (done) => {
-  const webpackConfig = require('./webpack.config');
-
-  serve({
-    config: webpackConfig,
-    content: __dirname,
-    port: 9999,
-  });
-});
 
 gulp.task('build', () => asPromise(
   runSequence,

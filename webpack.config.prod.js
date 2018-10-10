@@ -2,7 +2,7 @@
 
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
-const config = require('./webpack.config');
+const config = require('./webpack.config')();
 
 const uglifyPlugin = new UglifyJsPlugin({
   uglifyOptions: {
@@ -33,7 +33,8 @@ function minifyConfig (config) {
   config.plugins.push(uglifyPlugin);
 }
 
-minifyConfig(config[0]);
-minifyConfig(config[1]);
+for (let i = 0; i < config.length; i++) {
+  minifyConfig(config[i]);
+}
 
-module.exports = config;
+module.exports = () => config;
