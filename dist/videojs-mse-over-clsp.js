@@ -359,13 +359,13 @@ function setup(env) {
     var prevTime;
 
     function debug() {
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-      }
-
       // Disabled?
       if (!debug.enabled) {
         return;
+      }
+
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
       }
 
       var self = debug; // Set `diff` timestamp
@@ -1173,26 +1173,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! global/document */ "./node_modules/global/document.js");
 /* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(global_document__WEBPACK_IMPORTED_MODULE_1__);
-/*! @name videojs-errors @version 4.1.3 @license Apache-2.0 */
+/*! @name videojs-errors @version 4.2.0 @license Apache-2.0 */
 
 
 
-var version = "4.1.3";
+var version = "4.2.0";
 
 var FlashObj = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getComponent('Flash');
-var defaultDismiss = !video_js__WEBPACK_IMPORTED_MODULE_0___default.a.browser.IS_IPHONE;
+var defaultDismiss = !video_js__WEBPACK_IMPORTED_MODULE_0___default.a.browser.IS_IPHONE; // Video.js 5/6 cross-compatibility.
 
-// Video.js 5/6 cross-compatibility.
-var registerPlugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.registerPlugin || video_js__WEBPACK_IMPORTED_MODULE_0___default.a.plugin;
+var registerPlugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.registerPlugin || video_js__WEBPACK_IMPORTED_MODULE_0___default.a.plugin; // Default options for the plugin.
 
-// Default options for the plugin.
 var defaults = {
   header: '',
   code: '',
   message: '',
   timeout: 45 * 1000,
   dismiss: defaultDismiss,
-  progressDisabled: false,
   errors: {
     '1': {
       type: 'MEDIA_ERR_ABORTED',
@@ -1242,15 +1239,14 @@ var defaults = {
 };
 
 var initPlugin = function initPlugin(player, options) {
-  var monitor = void 0;
-  var waiting = void 0;
-  var isStalling = void 0;
+  var monitor;
+  var waiting;
+  var isStalling;
   var listeners = [];
 
   var updateErrors = function updateErrors(updates) {
-    options.errors = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(options.errors, updates);
+    options.errors = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(options.errors, updates); // Create `code`s from errors which don't have them (based on their keys).
 
-    // Create `code`s from errors which don't have them (based on their keys).
     Object.keys(options.errors).forEach(function (k) {
       var err = options.errors[k];
 
@@ -1258,21 +1254,21 @@ var initPlugin = function initPlugin(player, options) {
         err.type = k;
       }
     });
-  };
+  }; // Make sure we flesh out initially-provided errors.
 
-  // Make sure we flesh out initially-provided errors.
-  updateErrors();
 
-  // clears the previous monitor timeout and sets up a new one
+  updateErrors(); // clears the previous monitor timeout and sets up a new one
+
   var resetMonitor = function resetMonitor() {
     // at this point the player has recovered
     player.clearTimeout(waiting);
+
     if (isStalling) {
       isStalling = false;
       player.removeClass('vjs-waiting');
-    }
+    } // start the loading spinner if player has stalled
 
-    // start the loading spinner if player has stalled
+
     waiting = player.setTimeout(function () {
       // player already has an error
       // or is not playing under normal conditions
@@ -1283,7 +1279,6 @@ var initPlugin = function initPlugin(player, options) {
       isStalling = true;
       player.addClass('vjs-waiting');
     }, 1000);
-
     player.clearTimeout(monitor);
     monitor = player.setTimeout(function () {
       // player already has an error
@@ -1296,28 +1291,28 @@ var initPlugin = function initPlugin(player, options) {
         code: -2,
         type: 'PLAYER_ERR_TIMEOUT'
       });
-    }, options.timeout);
-
-    // clear out any existing player timeout
+    }, options.timeout); // clear out any existing player timeout
     // playback has recovered
+
     if (player.error() && player.error().code === -2) {
       player.error(null);
     }
-  };
+  }; // clear any previously registered listeners
 
-  // clear any previously registered listeners
+
   var cleanup = function cleanup() {
-    var listener = void 0;
+    var listener;
 
     while (listeners.length) {
       listener = listeners.shift();
       player.off(listener[0], listener[1]);
     }
+
     player.clearTimeout(monitor);
     player.clearTimeout(waiting);
-  };
+  }; // creates and tracks a player listener if the player looks alive
 
-  // creates and tracks a player listener if the player looks alive
+
   var healthcheck = function healthcheck(type, fn) {
     var check = function check() {
       // if there's an error do not reset the monitor and
@@ -1332,13 +1327,14 @@ var initPlugin = function initPlugin(player, options) {
             type: 'PLAYER_ERR_TIMEOUT'
           });
           return;
-        }
+        } // playback isn't expected if the player is paused
 
-        // playback isn't expected if the player is paused
+
         if (player.paused()) {
           return resetMonitor();
-        }
-        // playback isn't expected once the video has ended
+        } // playback isn't expected once the video has ended
+
+
         if (player.ended()) {
           return resetMonitor();
         }
@@ -1353,24 +1349,17 @@ var initPlugin = function initPlugin(player, options) {
 
   var onPlayStartMonitor = function onPlayStartMonitor() {
     var lastTime = 0;
+    cleanup(); // if no playback is detected for long enough, trigger a timeout error
 
-    cleanup();
-
-    // if no playback is detected for long enough, trigger a timeout error
     resetMonitor();
     healthcheck(['timeupdate', 'adtimeupdate'], function () {
-      var currentTime = player.currentTime();
+      var currentTime = player.currentTime(); // playback is operating normally or has recovered
 
-      // playback is operating normally or has recovered
       if (currentTime !== lastTime) {
         lastTime = currentTime;
         resetMonitor();
       }
     });
-
-    if (!options.progressDisabled) {
-      healthcheck('progress', resetMonitor);
-    }
   };
 
   var onPlayNoSource = function onPlayNoSource() {
@@ -1386,10 +1375,9 @@ var initPlugin = function initPlugin(player, options) {
     var details = '';
     var error = player.error();
     var content = global_document__WEBPACK_IMPORTED_MODULE_1___default.a.createElement('div');
-    var dialogContent = '';
-
-    // In the rare case when `error()` does not return an error object,
+    var dialogContent = ''; // In the rare case when `error()` does not return an error object,
     // defensively escape the handler function.
+
     if (!error) {
       return;
     }
@@ -1397,33 +1385,27 @@ var initPlugin = function initPlugin(player, options) {
     error = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(error, options.errors[error.code || error.type || 0]);
 
     if (error.message) {
-      details = '<div class="vjs-errors-details">' + player.localize('Technical details') + '\n        : <div class="vjs-errors-message">' + player.localize(error.message) + '</div>\n        </div>';
+      details = "<div class=\"vjs-errors-details\">" + player.localize('Technical details') + "\n        : <div class=\"vjs-errors-message\">" + player.localize(error.message) + "</div>\n        </div>";
     }
 
     if (error.code === 4 && FlashObj && !FlashObj.isSupported()) {
       var flashMessage = player.localize('If you are using an older browser please try upgrading or installing Flash.');
-
-      details += '<span class="vjs-errors-flashmessage">' + flashMessage + '</span>';
+      details += "<span class=\"vjs-errors-flashmessage\">" + flashMessage + "</span>";
     }
 
     var display = player.getChild('errorDisplay');
-
     content.className = 'vjs-errors-dialog';
     content.id = 'vjs-errors-dialog';
-    dialogContent = '<div class="vjs-errors-content-container">\n      <h2 class="vjs-errors-headline">' + this.localize(error.headline) + '</h2>\n        <div><b>' + this.localize('Error Code') + '</b>: ' + (error.type || error.code) + '</div>\n        ' + details + '\n      </div>';
+    dialogContent = "<div class=\"vjs-errors-content-container\">\n      <h2 class=\"vjs-errors-headline\">" + this.localize(error.headline) + "</h2>\n        <div><b>" + this.localize('Error Code') + "</b>: " + (error.type || error.code) + "</div>\n        " + details + "\n      </div>";
+    var closeable = display.closeable(!('dismiss' in error) || error.dismiss); // We should get a close button
 
-    var closeable = display.closeable(!('dismiss' in error) || error.dismiss);
-
-    // We should get a close button
     if (closeable) {
-      dialogContent += '<div class="vjs-errors-ok-button-container">\n          <button class="vjs-errors-ok-button">' + this.localize('OK') + '</button>\n        </div>';
+      dialogContent += "<div class=\"vjs-errors-ok-button-container\">\n          <button class=\"vjs-errors-ok-button\">" + this.localize('OK') + "</button>\n        </div>";
       content.innerHTML = dialogContent;
-      display.fillWith(content);
-      // Get the close button inside the error display
+      display.fillWith(content); // Get the close button inside the error display
+
       display.contentEl().firstChild.appendChild(display.getChild('closeButton').el());
-
       var okButton = display.el().querySelector('.vjs-errors-ok-button');
-
       player.on(okButton, 'click', function () {
         display.close();
       });
@@ -1443,7 +1425,6 @@ var initPlugin = function initPlugin(player, options) {
 
   var onDisposeHandler = function onDisposeHandler() {
     cleanup();
-
     player.removeClass('vjs-errors');
     player.off('play', onPlayStartMonitor);
     player.off('play', onPlayNoSource);
@@ -1459,45 +1440,44 @@ var initPlugin = function initPlugin(player, options) {
   reInitPlugin.extend = function (errors) {
     return updateErrors(errors);
   };
+
   reInitPlugin.getAll = function () {
     return video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(options.errors);
-  };
+  }; // Get / set timeout value. Restart monitor if changed.
 
-  // Get / set timeout value. Restart monitor if changed.
+
   reInitPlugin.timeout = function (timeout) {
     if (typeof timeout === 'undefined') {
       return options.timeout;
     }
+
     if (timeout !== options.timeout) {
       options.timeout = timeout;
+
       if (!player.paused()) {
         onPlayStartMonitor();
       }
     }
-  };
+  }; // no-op API
+  // TODO: remove in a major version
 
-  reInitPlugin.disableProgress = function (disabled) {
-    options.progressDisabled = disabled;
-    onPlayStartMonitor();
-  };
+
+  reInitPlugin.disableProgress = function () {};
 
   player.on('play', onPlayStartMonitor);
   player.on('play', onPlayNoSource);
   player.on('dispose', onDisposeHandler);
   player.on(['aderror', 'error'], onErrorHandler);
-
   player.ready(function () {
     player.addClass('vjs-errors');
-  });
+  }); // if the plugin is re-initialised during playback, start the timeout handler.
 
-  // if the plugin is re-initialised during playback, start the timeout handler.
   if (!player.paused()) {
     onPlayStartMonitor();
-  }
+  } // Include the version number.
 
-  // Include the version number.
+
   reInitPlugin.VERSION = version;
-
   player.errors = reInitPlugin;
 };
 
@@ -1505,16 +1485,14 @@ var errors = function errors(options) {
   initPlugin(this, video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, options));
 };
 
-['extend', 'getAll', 'disableProgress'].forEach(function (k) {
+['extend', 'getAll'].forEach(function (k) {
   errors[k] = function () {
-    video_js__WEBPACK_IMPORTED_MODULE_0___default.a.log.warn('The errors.' + k + '() method is not available until the plugin has been initialized!');
+    video_js__WEBPACK_IMPORTED_MODULE_0___default.a.log.warn("The errors." + k + "() method is not available until the plugin has been initialized!");
   };
-});
+}); // Include the version number.
 
-// Include the version number.
-errors.VERSION = version;
+errors.VERSION = version; // Register the plugin with video.js.
 
-// Register the plugin with video.js.
 registerPlugin('errors', errors);
 
 /* harmony default export */ __webpack_exports__["default"] = (errors);
@@ -1560,7 +1538,7 @@ module.exports = g;
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.10.3","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","build-dev":"npm run build && npm run start-dev","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags","start-dev":"gulp start-dev"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","webpack":"^4.15.1","webpack-serve":"^0.1.5"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.10.4","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"echo '' && echo 'setting upstream...' && echo '' && git push --set-upstream origin $(git rev-parse --abbrev-ref HEAD)","version":"./scripts/version.sh","postversion":"echo '' && echo 'updating branch with build...' && echo '' && git push && git push --tags"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","videojs-errors":"^4.1.3","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
