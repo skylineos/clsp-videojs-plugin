@@ -93,28 +93,39 @@
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+
+var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _typeof(obj) {
+  if (typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol") {
+    _typeof = function _typeof(obj) {
+      return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+    };
+  } else {
+    _typeof = function _typeof(obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+    };
+  }return _typeof(obj);
+}
+
+/* eslint-env browser */
 
 /**
  * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
  */
-
-exports = module.exports = __webpack_require__(/*! ./debug */ "./node_modules/debug/src/debug.js");
 exports.log = log;
 exports.formatArgs = formatArgs;
 exports.save = save;
 exports.load = load;
 exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome && 'undefined' != typeof chrome.storage ? chrome.storage.local : localstorage();
-
+exports.storage = localstorage();
 /**
  * Colors.
  */
 
 exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066FF', '#0099CC', '#0099FF', '#00CC00', '#00CC33', '#00CC66', '#00CC99', '#00CCCC', '#00CCFF', '#3300CC', '#3300FF', '#3333CC', '#3333FF', '#3366CC', '#3366FF', '#3399CC', '#3399FF', '#33CC00', '#33CC33', '#33CC66', '#33CC99', '#33CCCC', '#33CCFF', '#6600CC', '#6600FF', '#6633CC', '#6633FF', '#66CC00', '#66CC33', '#9900CC', '#9900FF', '#9933CC', '#9933FF', '#99CC00', '#99CC33', '#CC0000', '#CC0033', '#CC0066', '#CC0099', '#CC00CC', '#CC00FF', '#CC3300', '#CC3333', '#CC3366', '#CC3399', '#CC33CC', '#CC33FF', '#CC6600', '#CC6633', '#CC9900', '#CC9933', '#CCCC00', '#CCCC33', '#FF0000', '#FF0033', '#FF0066', '#FF0099', '#FF00CC', '#FF00FF', '#FF3300', '#FF3333', '#FF3366', '#FF3399', '#FF33CC', '#FF33FF', '#FF6600', '#FF6633', '#FF9900', '#FF9933', '#FFCC00', '#FFCC33'];
-
 /**
  * Currently only WebKit-based Web Inspectors, Firefox >= v31,
  * and the Firebug extension (any Firefox version) are known
@@ -122,44 +133,29 @@ exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066F
  *
  * TODO: add a `localStorage` variable to explicitly enable/disable colors
  */
+// eslint-disable-next-line complexity
 
 function useColors() {
   // NB: In an Electron preload script, document will be defined but not fully
   // initialized. Since we know we're in Chrome, we'll just detect this case
   // explicitly
-  if (typeof window !== 'undefined' && window.process && window.process.type === 'renderer') {
+  if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
     return true;
-  }
+  } // Internet Explorer and Edge do not support colors.
 
-  // Internet Explorer and Edge do not support colors.
+
   if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
     return false;
-  }
-
-  // is webkit? http://stackoverflow.com/a/16459606/376773
+  } // Is webkit? http://stackoverflow.com/a/16459606/376773
   // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance ||
-  // is firebug? http://stackoverflow.com/a/398120/376773
-  typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) ||
-  // is firefox >= v31?
+
+
+  return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance || // Is firebug? http://stackoverflow.com/a/398120/376773
+  typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) || // Is firefox >= v31?
   // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 ||
-  // double check webkit in userAgent just in case we are in a worker
+  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 || // Double check webkit in userAgent just in case we are in a worker
   typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
 }
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function (v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
 /**
  * Colorize log arguments if enabled.
  *
@@ -167,33 +163,34 @@ exports.formatters.j = function (v) {
  */
 
 function formatArgs(args) {
-  var useColors = this.useColors;
+  args[0] = (this.useColors ? '%c' : '') + this.namespace + (this.useColors ? ' %c' : ' ') + args[0] + (this.useColors ? '%c ' : ' ') + '+' + module.exports.humanize(this.diff);
 
-  args[0] = (useColors ? '%c' : '') + this.namespace + (useColors ? ' %c' : ' ') + args[0] + (useColors ? '%c ' : ' ') + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return;
+  if (!this.useColors) {
+    return;
+  }
 
   var c = 'color: ' + this.color;
-  args.splice(1, 0, c, 'color: inherit');
-
-  // the final "%c" is somewhat tricky, because there could be other
+  args.splice(1, 0, c, 'color: inherit'); // The final "%c" is somewhat tricky, because there could be other
   // arguments passed either before or after the %c, so we need to
   // figure out the correct index to insert the CSS into
+
   var index = 0;
   var lastC = 0;
   args[0].replace(/%[a-zA-Z%]/g, function (match) {
-    if ('%%' === match) return;
+    if (match === '%%') {
+      return;
+    }
+
     index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
+
+    if (match === '%c') {
+      // We only are interested in the *last* %c
       // (the user may have provided their own)
       lastC = index;
     }
   });
-
   args.splice(lastC, 0, c);
 }
-
 /**
  * Invokes `console.log()` when available.
  * No-op when `console.log` is not a "function".
@@ -202,11 +199,12 @@ function formatArgs(args) {
  */
 
 function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === (typeof console === 'undefined' ? 'undefined' : _typeof(console)) && console.log && Function.prototype.apply.call(console.log, console, arguments);
-}
+  var _console;
 
+  // This hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return (typeof console === "undefined" ? "undefined" : _typeof(console)) === 'object' && console.log && (_console = console).log.apply(_console, arguments);
+}
 /**
  * Save `namespaces`.
  *
@@ -216,14 +214,15 @@ function log() {
 
 function save(namespaces) {
   try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
+    if (namespaces) {
+      exports.storage.setItem('debug', namespaces);
     } else {
-      exports.storage.debug = namespaces;
+      exports.storage.removeItem('debug');
     }
-  } catch (e) {}
+  } catch (error) {// Swallow
+    // XXX (@Qix-) should we be logging these?
+  }
 }
-
 /**
  * Load `namespaces`.
  *
@@ -233,24 +232,20 @@ function save(namespaces) {
 
 function load() {
   var r;
-  try {
-    r = exports.storage.debug;
-  } catch (e) {}
 
+  try {
+    r = exports.storage.getItem('debug');
+  } catch (error) {} // Swallow
+  // XXX (@Qix-) should we be logging these?
   // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+
+
   if (!r && typeof process !== 'undefined' && 'env' in process) {
     r = process.env.DEBUG;
   }
 
   return r;
 }
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
 /**
  * Localstorage attempts to return the localstorage.
  *
@@ -264,273 +259,284 @@ exports.enable(load());
 
 function localstorage() {
   try {
-    return window.localStorage;
-  } catch (e) {}
+    // TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+    // The Browser also has localStorage in the global context.
+    return localStorage;
+  } catch (error) {// Swallow
+    // XXX (@Qix-) should we be logging these?
+  }
 }
+
+module.exports = __webpack_require__(/*! ./common */ "./node_modules/debug/src/common.js")(exports);
+var formatters = module.exports.formatters;
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+formatters.j = function (v) {
+  try {
+    return JSON.stringify(v);
+  } catch (error) {
+    return '[UnexpectedJSONParseError]: ' + error.message;
+  }
+};
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../node-libs-browser/node_modules/process/browser.js */ "./node_modules/node-libs-browser/node_modules/process/browser.js")))
 
 /***/ }),
 
-/***/ "./node_modules/debug/src/debug.js":
-/*!*****************************************!*\
-  !*** ./node_modules/debug/src/debug.js ***!
-  \*****************************************/
+/***/ "./node_modules/debug/src/common.js":
+/*!******************************************!*\
+  !*** ./node_modules/debug/src/common.js ***!
+  \******************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 
 
 /**
  * This is the common logic for both the Node.js and web browser
  * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
  */
 
-exports = module.exports = createDebug.debug = createDebug['default'] = createDebug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
+function setup(env) {
+  createDebug.debug = createDebug;
+  createDebug.default = createDebug;
+  createDebug.coerce = coerce;
+  createDebug.disable = disable;
+  createDebug.enable = enable;
+  createDebug.enabled = enabled;
+  createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
+  Object.keys(env).forEach(function (key) {
+    createDebug[key] = env[key];
+  });
+  /**
+  * Active `debug` instances.
+  */
 
-/**
- * Active `debug` instances.
- */
-exports.instances = [];
+  createDebug.instances = [];
+  /**
+  * The currently active debug mode names, and names to skip.
+  */
 
-/**
- * The currently active debug mode names, and names to skip.
- */
+  createDebug.names = [];
+  createDebug.skips = [];
+  /**
+  * Map of special "%n" handling functions, for the debug "format" argument.
+  *
+  * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+  */
 
-exports.names = [];
-exports.skips = [];
+  createDebug.formatters = {};
+  /**
+  * Selects a color for a debug namespace
+  * @param {String} namespace The namespace string for the for the debug instance to be colored
+  * @return {Number|String} An ANSI color code for the given namespace
+  * @api private
+  */
 
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
- */
+  function selectColor(namespace) {
+    var hash = 0;
 
-exports.formatters = {};
+    for (var i = 0; i < namespace.length; i++) {
+      hash = (hash << 5) - hash + namespace.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
+    }
 
-/**
- * Select a color.
- * @param {String} namespace
- * @return {Number}
- * @api private
- */
-
-function selectColor(namespace) {
-  var hash = 0,
-      i;
-
-  for (i in namespace) {
-    hash = (hash << 5) - hash + namespace.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
+    return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
   }
 
-  return exports.colors[Math.abs(hash) % exports.colors.length];
-}
+  createDebug.selectColor = selectColor;
+  /**
+  * Create a debugger with the given `namespace`.
+  *
+  * @param {String} namespace
+  * @return {Function}
+  * @api public
+  */
 
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
+  function createDebug(namespace) {
+    var prevTime;
 
-function createDebug(namespace) {
-
-  var prevTime;
-
-  function debug() {
-    // disabled?
-    if (!debug.enabled) return;
-
-    var self = debug;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // turn the `arguments` into a proper Array
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %O
-      args.unshift('%O');
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
+    function debug() {
+      // Disabled?
+      if (!debug.enabled) {
+        return;
       }
-      return match;
-    });
 
-    // apply env-specific formatting (colors, etc.)
-    exports.formatArgs.call(self, args);
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
 
-    var logFn = debug.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
+      var self = debug; // Set `diff` timestamp
 
-  debug.namespace = namespace;
-  debug.enabled = exports.enabled(namespace);
-  debug.useColors = exports.useColors();
-  debug.color = selectColor(namespace);
-  debug.destroy = destroy;
+      var curr = Number(new Date());
+      var ms = curr - (prevTime || curr);
+      self.diff = ms;
+      self.prev = prevTime;
+      self.curr = curr;
+      prevTime = curr;
+      args[0] = createDebug.coerce(args[0]);
 
-  // env-specific initialization logic for debug instances
-  if ('function' === typeof exports.init) {
-    exports.init(debug);
-  }
+      if (typeof args[0] !== 'string') {
+        // Anything else let's inspect with %O
+        args.unshift('%O');
+      } // Apply any `formatters` transformations
 
-  exports.instances.push(debug);
 
-  return debug;
-}
+      var index = 0;
+      args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
+        // If we encounter an escaped % then don't increase the array index
+        if (match === '%%') {
+          return match;
+        }
 
-function destroy() {
-  var index = exports.instances.indexOf(this);
-  if (index !== -1) {
-    exports.instances.splice(index, 1);
-    return true;
-  } else {
-    return false;
-  }
-}
+        index++;
+        var formatter = createDebug.formatters[format];
 
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
+        if (typeof formatter === 'function') {
+          var val = args[index];
+          match = formatter.call(self, val); // Now we need to remove `args[index]` since it's inlined in the `format`
 
-function enable(namespaces) {
-  exports.save(namespaces);
+          args.splice(index, 1);
+          index--;
+        }
 
-  exports.names = [];
-  exports.skips = [];
+        return match;
+      }); // Apply env-specific formatting (colors, etc.)
 
-  var i;
-  var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
+      createDebug.formatArgs.call(self, args);
+      var logFn = self.log || createDebug.log;
+      logFn.apply(self, args);
     }
-  }
 
-  for (i = 0; i < exports.instances.length; i++) {
-    var instance = exports.instances[i];
-    instance.enabled = exports.enabled(instance.namespace);
-  }
-}
+    debug.namespace = namespace;
+    debug.enabled = createDebug.enabled(namespace);
+    debug.useColors = createDebug.useColors();
+    debug.color = selectColor(namespace);
+    debug.destroy = destroy;
+    debug.extend = extend; // Debug.formatArgs = formatArgs;
+    // debug.rawLog = rawLog;
+    // env-specific initialization logic for debug instances
 
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  if (name[name.length - 1] === '*') {
-    return true;
-  }
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
+    if (typeof createDebug.init === 'function') {
+      createDebug.init(debug);
     }
+
+    createDebug.instances.push(debug);
+    return debug;
   }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
+
+  function destroy() {
+    var index = createDebug.instances.indexOf(this);
+
+    if (index !== -1) {
+      createDebug.instances.splice(index, 1);
       return true;
     }
+
+    return false;
   }
-  return false;
-}
 
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
+  function extend(namespace, delimiter) {
+    return createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+  }
+  /**
+  * Enables a debug mode by namespaces. This can include modes
+  * separated by a colon and wildcards.
+  *
+  * @param {String} namespaces
+  * @api public
+  */
 
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
+  function enable(namespaces) {
+    createDebug.save(namespaces);
+    createDebug.names = [];
+    createDebug.skips = [];
+    var i;
+    var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+    var len = split.length;
 
-/***/ }),
+    for (i = 0; i < len; i++) {
+      if (!split[i]) {
+        // ignore empty strings
+        continue;
+      }
 
-/***/ "./node_modules/global/document.js":
-/*!*****************************************!*\
-  !*** ./node_modules/global/document.js ***!
-  \*****************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+      namespaces = split[i].replace(/\*/g, '.*?');
 
-/* WEBPACK VAR INJECTION */(function(global) {var topLevel = typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : {};
-var minDoc = __webpack_require__(/*! min-document */ 1);
-
-var doccy;
-
-if (typeof document !== 'undefined') {
-    doccy = document;
-} else {
-    doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'];
-
-    if (!doccy) {
-        doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'] = minDoc;
+      if (namespaces[0] === '-') {
+        createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+      } else {
+        createDebug.names.push(new RegExp('^' + namespaces + '$'));
+      }
     }
+
+    for (i = 0; i < createDebug.instances.length; i++) {
+      var instance = createDebug.instances[i];
+      instance.enabled = createDebug.enabled(instance.namespace);
+    }
+  }
+  /**
+  * Disable debug output.
+  *
+  * @api public
+  */
+
+  function disable() {
+    createDebug.enable('');
+  }
+  /**
+  * Returns true if the given mode name is enabled, false otherwise.
+  *
+  * @param {String} name
+  * @return {Boolean}
+  * @api public
+  */
+
+  function enabled(name) {
+    if (name[name.length - 1] === '*') {
+      return true;
+    }
+
+    var i;
+    var len;
+
+    for (i = 0, len = createDebug.skips.length; i < len; i++) {
+      if (createDebug.skips[i].test(name)) {
+        return false;
+      }
+    }
+
+    for (i = 0, len = createDebug.names.length; i < len; i++) {
+      if (createDebug.names[i].test(name)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+  /**
+  * Coerce `val`.
+  *
+  * @param {Mixed} val
+  * @return {Mixed}
+  * @api private
+  */
+
+  function coerce(val) {
+    if (val instanceof Error) {
+      return val.stack || val.message;
+    }
+
+    return val;
+  }
+
+  createDebug.enable(createDebug.load());
+  return createDebug;
 }
 
-module.exports = doccy;
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+module.exports = setup;
 
 /***/ }),
 
@@ -2234,6 +2240,7 @@ var s = 1000;
 var m = s * 60;
 var h = m * 60;
 var d = h * 24;
+var w = d * 7;
 var y = d * 365.25;
 
 /**
@@ -2274,7 +2281,7 @@ function parse(str) {
   if (str.length > 100) {
     return;
   }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
+  var match = /^((?:\d+)?\-?\d?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(str);
   if (!match) {
     return;
   }
@@ -2287,6 +2294,10 @@ function parse(str) {
     case 'yr':
     case 'y':
       return n * y;
+    case 'weeks':
+    case 'week':
+    case 'w':
+      return n * w;
     case 'days':
     case 'day':
     case 'd':
@@ -2329,16 +2340,17 @@ function parse(str) {
  */
 
 function fmtShort(ms) {
-  if (ms >= d) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
     return Math.round(ms / d) + 'd';
   }
-  if (ms >= h) {
+  if (msAbs >= h) {
     return Math.round(ms / h) + 'h';
   }
-  if (ms >= m) {
+  if (msAbs >= m) {
     return Math.round(ms / m) + 'm';
   }
-  if (ms >= s) {
+  if (msAbs >= s) {
     return Math.round(ms / s) + 's';
   }
   return ms + 'ms';
@@ -2353,21 +2365,29 @@ function fmtShort(ms) {
  */
 
 function fmtLong(ms) {
-  return plural(ms, d, 'day') || plural(ms, h, 'hour') || plural(ms, m, 'minute') || plural(ms, s, 'second') || ms + ' ms';
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return plural(ms, msAbs, d, 'day');
+  }
+  if (msAbs >= h) {
+    return plural(ms, msAbs, h, 'hour');
+  }
+  if (msAbs >= m) {
+    return plural(ms, msAbs, m, 'minute');
+  }
+  if (msAbs >= s) {
+    return plural(ms, msAbs, s, 'second');
+  }
+  return ms + ' ms';
 }
 
 /**
  * Pluralization helper.
  */
 
-function plural(ms, n, name) {
-  if (ms < n) {
-    return;
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name;
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's';
+function plural(ms, msAbs, n, name) {
+  var isPlural = msAbs >= n * 1.5;
+  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
 /***/ }),
@@ -2796,367 +2816,6 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ "./node_modules/videojs-errors/dist/videojs-errors.es.js":
-/*!***************************************************************!*\
-  !*** ./node_modules/videojs-errors/dist/videojs-errors.es.js ***!
-  \***************************************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! video.js */ "video.js");
-/* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! global/document */ "./node_modules/global/document.js");
-/* harmony import */ var global_document__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(global_document__WEBPACK_IMPORTED_MODULE_1__);
-/*! @name videojs-errors @version 4.1.3 @license Apache-2.0 */
-
-
-
-var version = "4.1.3";
-
-var FlashObj = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getComponent('Flash');
-var defaultDismiss = !video_js__WEBPACK_IMPORTED_MODULE_0___default.a.browser.IS_IPHONE;
-
-// Video.js 5/6 cross-compatibility.
-var registerPlugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.registerPlugin || video_js__WEBPACK_IMPORTED_MODULE_0___default.a.plugin;
-
-// Default options for the plugin.
-var defaults = {
-  header: '',
-  code: '',
-  message: '',
-  timeout: 45 * 1000,
-  dismiss: defaultDismiss,
-  progressDisabled: false,
-  errors: {
-    '1': {
-      type: 'MEDIA_ERR_ABORTED',
-      headline: 'The video download was cancelled'
-    },
-    '2': {
-      type: 'MEDIA_ERR_NETWORK',
-      headline: 'The video connection was lost, please confirm you are ' + 'connected to the internet'
-    },
-    '3': {
-      type: 'MEDIA_ERR_DECODE',
-      headline: 'The video is bad or in a format that cannot be played on your browser'
-    },
-    '4': {
-      type: 'MEDIA_ERR_SRC_NOT_SUPPORTED',
-      headline: 'This video is either unavailable or not supported in this browser'
-    },
-    '5': {
-      type: 'MEDIA_ERR_ENCRYPTED',
-      headline: 'The video you are trying to watch is encrypted and we do not know how ' + 'to decrypt it'
-    },
-    'unknown': {
-      type: 'MEDIA_ERR_UNKNOWN',
-      headline: 'An unanticipated problem was encountered, check back soon and try again'
-    },
-    '-1': {
-      type: 'PLAYER_ERR_NO_SRC',
-      headline: 'No video has been loaded'
-    },
-    '-2': {
-      type: 'PLAYER_ERR_TIMEOUT',
-      headline: 'Could not download the video'
-    },
-    'PLAYER_ERR_DOMAIN_RESTRICTED': {
-      headline: 'This video is restricted from playing on your current domain'
-    },
-    'PLAYER_ERR_IP_RESTRICTED': {
-      headline: 'This video is restricted at your current IP address'
-    },
-    'PLAYER_ERR_GEO_RESTRICTED': {
-      headline: 'This video is restricted from playing in your current geographic region'
-    },
-    'FLASHLS_ERR_CROSS_DOMAIN': {
-      headline: 'The video could not be loaded: crossdomain access denied.'
-    }
-  }
-};
-
-var initPlugin = function initPlugin(player, options) {
-  var monitor = void 0;
-  var waiting = void 0;
-  var isStalling = void 0;
-  var listeners = [];
-
-  var updateErrors = function updateErrors(updates) {
-    options.errors = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(options.errors, updates);
-
-    // Create `code`s from errors which don't have them (based on their keys).
-    Object.keys(options.errors).forEach(function (k) {
-      var err = options.errors[k];
-
-      if (!err.type) {
-        err.type = k;
-      }
-    });
-  };
-
-  // Make sure we flesh out initially-provided errors.
-  updateErrors();
-
-  // clears the previous monitor timeout and sets up a new one
-  var resetMonitor = function resetMonitor() {
-    // at this point the player has recovered
-    player.clearTimeout(waiting);
-    if (isStalling) {
-      isStalling = false;
-      player.removeClass('vjs-waiting');
-    }
-
-    // start the loading spinner if player has stalled
-    waiting = player.setTimeout(function () {
-      // player already has an error
-      // or is not playing under normal conditions
-      if (player.error() || player.paused() || player.ended()) {
-        return;
-      }
-
-      isStalling = true;
-      player.addClass('vjs-waiting');
-    }, 1000);
-
-    player.clearTimeout(monitor);
-    monitor = player.setTimeout(function () {
-      // player already has an error
-      // or is not playing under normal conditions
-      if (player.error() || player.paused() || player.ended()) {
-        return;
-      }
-
-      player.error({
-        code: -2,
-        type: 'PLAYER_ERR_TIMEOUT'
-      });
-    }, options.timeout);
-
-    // clear out any existing player timeout
-    // playback has recovered
-    if (player.error() && player.error().code === -2) {
-      player.error(null);
-    }
-  };
-
-  // clear any previously registered listeners
-  var cleanup = function cleanup() {
-    var listener = void 0;
-
-    while (listeners.length) {
-      listener = listeners.shift();
-      player.off(listener[0], listener[1]);
-    }
-    player.clearTimeout(monitor);
-    player.clearTimeout(waiting);
-  };
-
-  // creates and tracks a player listener if the player looks alive
-  var healthcheck = function healthcheck(type, fn) {
-    var check = function check() {
-      // if there's an error do not reset the monitor and
-      // clear the error unless time is progressing
-      if (!player.error()) {
-        // error if using Flash and its API is unavailable
-        var tech = player.$('.vjs-tech');
-
-        if (tech && tech.type === 'application/x-shockwave-flash' && !tech.vjs_getProperty) {
-          player.error({
-            code: -2,
-            type: 'PLAYER_ERR_TIMEOUT'
-          });
-          return;
-        }
-
-        // playback isn't expected if the player is paused
-        if (player.paused()) {
-          return resetMonitor();
-        }
-        // playback isn't expected once the video has ended
-        if (player.ended()) {
-          return resetMonitor();
-        }
-      }
-
-      fn.call(this);
-    };
-
-    player.on(type, check);
-    listeners.push([type, check]);
-  };
-
-  var onPlayStartMonitor = function onPlayStartMonitor() {
-    var lastTime = 0;
-
-    cleanup();
-
-    // if no playback is detected for long enough, trigger a timeout error
-    resetMonitor();
-    healthcheck(['timeupdate', 'adtimeupdate'], function () {
-      var currentTime = player.currentTime();
-
-      // playback is operating normally or has recovered
-      if (currentTime !== lastTime) {
-        lastTime = currentTime;
-        resetMonitor();
-      }
-    });
-
-    if (!options.progressDisabled) {
-      healthcheck('progress', resetMonitor);
-    }
-  };
-
-  var onPlayNoSource = function onPlayNoSource() {
-    if (!player.currentSrc()) {
-      player.error({
-        code: -1,
-        type: 'PLAYER_ERR_NO_SRC'
-      });
-    }
-  };
-
-  var onErrorHandler = function onErrorHandler() {
-    var details = '';
-    var error = player.error();
-    var content = global_document__WEBPACK_IMPORTED_MODULE_1___default.a.createElement('div');
-    var dialogContent = '';
-
-    // In the rare case when `error()` does not return an error object,
-    // defensively escape the handler function.
-    if (!error) {
-      return;
-    }
-
-    error = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(error, options.errors[error.code || error.type || 0]);
-
-    if (error.message) {
-      details = '<div class="vjs-errors-details">' + player.localize('Technical details') + '\n        : <div class="vjs-errors-message">' + player.localize(error.message) + '</div>\n        </div>';
-    }
-
-    if (error.code === 4 && FlashObj && !FlashObj.isSupported()) {
-      var flashMessage = player.localize('If you are using an older browser please try upgrading or installing Flash.');
-
-      details += '<span class="vjs-errors-flashmessage">' + flashMessage + '</span>';
-    }
-
-    var display = player.getChild('errorDisplay');
-
-    content.className = 'vjs-errors-dialog';
-    content.id = 'vjs-errors-dialog';
-    dialogContent = '<div class="vjs-errors-content-container">\n      <h2 class="vjs-errors-headline">' + this.localize(error.headline) + '</h2>\n        <div><b>' + this.localize('Error Code') + '</b>: ' + (error.type || error.code) + '</div>\n        ' + details + '\n      </div>';
-
-    var closeable = display.closeable(!('dismiss' in error) || error.dismiss);
-
-    // We should get a close button
-    if (closeable) {
-      dialogContent += '<div class="vjs-errors-ok-button-container">\n          <button class="vjs-errors-ok-button">' + this.localize('OK') + '</button>\n        </div>';
-      content.innerHTML = dialogContent;
-      display.fillWith(content);
-      // Get the close button inside the error display
-      display.contentEl().firstChild.appendChild(display.getChild('closeButton').el());
-
-      var okButton = display.el().querySelector('.vjs-errors-ok-button');
-
-      player.on(okButton, 'click', function () {
-        display.close();
-      });
-    } else {
-      content.innerHTML = dialogContent;
-      display.fillWith(content);
-    }
-
-    if (player.currentWidth() <= 600 || player.currentHeight() <= 250) {
-      display.addClass('vjs-xs');
-    }
-
-    display.one('modalclose', function () {
-      return player.error(null);
-    });
-  };
-
-  var onDisposeHandler = function onDisposeHandler() {
-    cleanup();
-
-    player.removeClass('vjs-errors');
-    player.off('play', onPlayStartMonitor);
-    player.off('play', onPlayNoSource);
-    player.off('dispose', onDisposeHandler);
-    player.off(['aderror', 'error'], onErrorHandler);
-  };
-
-  var reInitPlugin = function reInitPlugin(newOptions) {
-    onDisposeHandler();
-    initPlugin(player, video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, newOptions));
-  };
-
-  reInitPlugin.extend = function (errors) {
-    return updateErrors(errors);
-  };
-  reInitPlugin.getAll = function () {
-    return video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(options.errors);
-  };
-
-  // Get / set timeout value. Restart monitor if changed.
-  reInitPlugin.timeout = function (timeout) {
-    if (typeof timeout === 'undefined') {
-      return options.timeout;
-    }
-    if (timeout !== options.timeout) {
-      options.timeout = timeout;
-      if (!player.paused()) {
-        onPlayStartMonitor();
-      }
-    }
-  };
-
-  reInitPlugin.disableProgress = function (disabled) {
-    options.progressDisabled = disabled;
-    onPlayStartMonitor();
-  };
-
-  player.on('play', onPlayStartMonitor);
-  player.on('play', onPlayNoSource);
-  player.on('dispose', onDisposeHandler);
-  player.on(['aderror', 'error'], onErrorHandler);
-
-  player.ready(function () {
-    player.addClass('vjs-errors');
-  });
-
-  // if the plugin is re-initialised during playback, start the timeout handler.
-  if (!player.paused()) {
-    onPlayStartMonitor();
-  }
-
-  // Include the version number.
-  reInitPlugin.VERSION = version;
-
-  player.errors = reInitPlugin;
-};
-
-var errors = function errors(options) {
-  initPlugin(this, video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(defaults, options));
-};
-
-['extend', 'getAll', 'disableProgress'].forEach(function (k) {
-  errors[k] = function () {
-    video_js__WEBPACK_IMPORTED_MODULE_0___default.a.log.warn('The errors.' + k + '() method is not available until the plugin has been initialized!');
-  };
-});
-
-// Include the version number.
-errors.VERSION = version;
-
-// Register the plugin with video.js.
-registerPlugin('errors', errors);
-
-/* harmony default export */ __webpack_exports__["default"] = (errors);
-
-/***/ }),
-
 /***/ "./node_modules/webpack/buildin/global.js":
 /*!***********************************!*\
   !*** (webpack)/buildin/global.js ***!
@@ -3228,7 +2887,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.4","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"gulp build","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","version":"./scripts/version.sh","postversion":"git push && git push --tags","serve":"./scripts/serve.js","serve-watch":"npm run build && npm run serve"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","moment":"^2.22.2","node-sass":"^4.9.1","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","gulp-rm":"^1.0.5","jquery":"^3.3.1","js-string-escape":"^1.0.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.5-1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","jquery":"^3.3.1","moment":"^2.22.2","js-string-escape":"^1.0.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -3527,11 +3186,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../package.json */ "./package.json");
-var _package_json__WEBPACK_IMPORTED_MODULE_2___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../package.json */ "./package.json", 1);
-/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
-/* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/MqttConduitCollection.js");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
+/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
+/* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/MqttConduitCollection.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
+
+
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -3542,6 +3204,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 
 
+// This is configured as an external library by webpack, so the caller must
+// provide videojs on `window`
 
 
 
@@ -3550,69 +3214,118 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin');
 
-var DEBUG_PREFIX = 'skyline:clsp';
-
-var registered = false;
-
 /* harmony default export */ __webpack_exports__["default"] = (function () {
-  var defaults = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var _class, _temp;
 
-  var MseOverMqttPlugin = function (_Plugin) {
-    _inherits(MseOverMqttPlugin, _Plugin);
+  var defaultOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  return _temp = _class = function (_Plugin) {
+    _inherits(ClspPlugin, _Plugin);
 
-    _createClass(MseOverMqttPlugin, null, [{
+    _createClass(ClspPlugin, null, [{
       key: 'register',
       value: function register() {
-        if (registered) {
+        if (video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin(_utils__WEBPACK_IMPORTED_MODULE_4__["default"].name)) {
           throw new Error('You can only register the clsp plugin once, and it has already been registered.');
         }
 
-        // @todo - there is likely some way for videojs to tell us that the plugin has already
-        // been registered, or perhaps videojs itself will not let you register a plugin twice
-        // `videojs.getPlugin('clsp')`
-        registered = true;
+        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getTech('Html5').registerSourceHandler(Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__["default"])()('html5', _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__["default"].factory()), 0);
+        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.registerPlugin(_utils__WEBPACK_IMPORTED_MODULE_4__["default"].name, ClspPlugin);
 
-        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getTech('Html5').registerSourceHandler(Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_3__["default"])()('html5', _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_4__["default"].factory()), 0);
-        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.registerPlugin(MseOverMqttPlugin.pluginName, MseOverMqttPlugin);
-
-        return MseOverMqttPlugin;
+        return ClspPlugin;
+      }
+    }, {
+      key: 'getDefaultOptions',
+      value: function getDefaultOptions() {
+        return {
+          /**
+           * The number of times to retry playing the video when there is an error
+           * that we know we can recover from.
+           *
+           * If a negative number is passed, retry indefinitely
+           * If 0 is passed, never retry
+           * If a positive number is passed, retry that many times
+           */
+          maxRetriesOnError: -1,
+          tourDuration: 10 * 1000,
+          enableMetrics: false
+        };
       }
     }]);
 
-    function MseOverMqttPlugin(player, options) {
-      _classCallCheck(this, MseOverMqttPlugin);
+    function ClspPlugin(player, options) {
+      _classCallCheck(this, ClspPlugin);
 
-      var _this = _possibleConstructorReturn(this, (MseOverMqttPlugin.__proto__ || Object.getPrototypeOf(MseOverMqttPlugin)).call(this, player, options));
+      var _this = _possibleConstructorReturn(this, (ClspPlugin.__proto__ || Object.getPrototypeOf(ClspPlugin)).call(this, player, options));
 
-      _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MseOverMqttPlugin');
-      _this.debug('constructor');
+      _this.onMqttHandlerError = function () {
+        var mqttHandler = _this.player.tech(true).mqtt;
 
-      options = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(defaults, options);
+        mqttHandler.destroy();
+
+        _this.player.error({
+          code: 0,
+          type: 'INSUFFICIENT_RESOURCES',
+          headline: 'Insufficient Resources',
+          message: 'The current hardware cannot support the current number of playing streams.'
+        });
+      };
+
+      _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:plugin:ClspPlugin');
+      _this.debug('constructing...');
+
+      var playerOptions = player.options();
+
+      _this.options = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(_extends({}, _this.constructor.getDefaultOptions(), defaultOptions, playerOptions.clsp || {}), options);
+
+      _this._playerOptions = playerOptions;
+      _this.currentSourceIndex = 0;
 
       player.addClass('vjs-mse-over-mqtt');
 
-      if (options.customClass) {
-        player.addClass(options.customClass);
+      if (_this.options.customClass) {
+        player.addClass(_this.options.customClass);
       }
 
-      player.errors({
-        errors: {
-          PLAYER_ERR_NOT_COMPAT: {
-            headline: 'This browser is unsupported.',
-            message: 'Chrome 52+ is required.'
+      // Support for the videojs-errors library
+      if (player.errors) {
+        player.errors({
+          // @todo - make this configurable
+          // timeout: player.errors.options.timeout || 120 * 1000,
+          timeout: 120 * 1000,
+          errors: {
+            PLAYER_ERR_NOT_COMPAT: {
+              type: 'PLAYER_ERR_NOT_COMPAT',
+              headline: 'This browser is unsupported.',
+              message: 'Chrome 52+ is required.'
+            }
           }
-        },
-        timeout: 120 * 1000
-      });
+        });
+      }
 
-      if (!_utils__WEBPACK_IMPORTED_MODULE_5__["default"].supported()) {
+      // @todo - this error doesn't work or display the way it's intended to
+      if (!_utils__WEBPACK_IMPORTED_MODULE_4__["default"].supported()) {
         var _ret;
 
         return _ret = player.error({
           code: 'PLAYER_ERR_NOT_COMPAT',
+          type: 'PLAYER_ERR_NOT_COMPAT',
           dismiss: false
         }), _possibleConstructorReturn(_this, _ret);
       }
+
+      _this.autoplayEnabled = playerOptions.autoplay || player.getAttribute('autoplay') === 'true';
+
+      // for debugging...
+
+      // const oldTrigger = player.trigger.bind(player);
+      // player.trigger = (eventName, ...args) => {
+      //   console.log(eventName);
+      //   console.log(...args);
+      //   oldTrigger(eventName, ...args);
+      // };
+
+      // Track the number of times we've retried on error
+      player._errorRetriesCount = 0;
 
       // Needed to make videojs-errors think that the video is progressing
       // If we do not do this, videojs-errors will give us a timeout error
@@ -3621,36 +3334,108 @@ var registered = false;
         return player._currentTime++;
       };
 
-      player.on('firstplay', function (event) {
-        _this.debug('on firstplay');
-
-        // @todo - the use of the tech here is discouraged.  What is the "right" way to
-        // get the information from the mqttHandler?
-        var mqttHandler = player.tech(true).mqtt;
-
-        if (!mqttHandler) {
-          return console.error('src not in lookup table');
+      // @todo - are we not using videojs properly?
+      // @see - https://github.com/videojs/video.js/issues/5233
+      // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
+      // This is currently needed for autoplay.
+      player.on('ready', function () {
+        if (_this.autoplayEnabled) {
+          // Even though the "ready" event has fired, it's not actually ready
+          // until the "next tick"...
+          setTimeout(function () {
+            player.play();
+          });
         }
+      });
 
-        mqttHandler.createIOV(player);
+      // @todo - this seems like we aren't using videojs properly
+      player.on('error', function (event) {
+        var error = player.error();
 
-        mqttHandler.iov.player.on('metric', function (metric) {
-          // @see - https://docs.videojs.com/tutorial-plugins.html#events
-          _this.trigger('metric', { metric: metric });
-        });
+        switch (error.code) {
+          case 0:
+          case 4:
+          case 5:
+          case 'PLAYER_ERR_IOV':
+            {
+              break;
+            }
+          default:
+            {
+              if (_this.options.maxRetriesOnError === 0) {
+                break;
+              }
+
+              if (_this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= _this.options.maxRetriesOnError) {
+                // @todo - when can we reset this to zero?
+                player._errorRetriesCount++;
+
+                // @see - https://github.com/videojs/video.js/issues/4401
+                player.error(null);
+                player.errorDisplay.close();
+
+                var iov = player.tech(true).mqtt.iov;
+
+                // @todo - investigate how this can be called when the iov has been destroyed
+                if (!iov || iov.destroyed || !iov.player) {
+                  _this.initializeIOV(player);
+                } else {
+                  iov.player.restart();
+                }
+              }
+            }
+        }
+      });
+
+      // @todo - we are currently creating the IOV for this player on `firstplay`
+      // but we could do it on the `ready` event.  However, in order to support
+      // this, we need to make the IOV and its player able to be instantiated
+      // without automatically playing AND without automatically listening via
+      // a conduit
+      player.on('firstplay', function (event) {
+        _this.debug('on player firstplay');
+
+        _this.initializeIOV(player);
       });
       return _this;
     }
 
-    return MseOverMqttPlugin;
-  }(Plugin);
+    _createClass(ClspPlugin, [{
+      key: 'initializeIOV',
+      value: function initializeIOV(player) {
+        var mqttHandler = player.tech(true).mqtt;
 
-  MseOverMqttPlugin.pluginName = 'clsp';
-  MseOverMqttPlugin.VERSION = _package_json__WEBPACK_IMPORTED_MODULE_2__["version"];
-  MseOverMqttPlugin.utils = _utils__WEBPACK_IMPORTED_MODULE_5__["default"];
+        if (!mqttHandler) {
+          throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
+        }
 
-  return MseOverMqttPlugin;
-});;
+        mqttHandler.off('error', this.onMqttHandlerError);
+        mqttHandler.on('error', this.onMqttHandlerError);
+
+        mqttHandler.createIOV(player, {
+          enableMetrics: this.options.enableMetrics,
+          defaultNonSslPort: this.options.defaultNonSslPort,
+          defaultSslPort: this.options.defaultSslPort
+        });
+      }
+    }, {
+      key: 'destroy',
+      value: function destroy() {
+        this.debug('destroying...');
+
+        var mqttHandler = this.player.tech(true).mqtt;
+
+        mqttHandler.off('error', this.onMqttHandlerError);
+
+        this._playerOptions = null;
+        this.currentSourceIndex = null;
+        this.debug = null;
+      }
+    }]);
+
+    return ClspPlugin;
+  }(Plugin), _class.VERSION = _utils__WEBPACK_IMPORTED_MODULE_4__["default"].version, _class.utils = _utils__WEBPACK_IMPORTED_MODULE_4__["default"], _class.METRIC_TYPES = ['videojs.errorRetriesCount'], _temp;
+});
 
 /***/ }),
 
@@ -4105,7 +3890,9 @@ var IOV = function () {
 
       this.playerInstance.on('changesrc', this.playerInstanceEventListeners.changesrc);
 
-      this.player.play(this.videoElement.firstChild.id, this.config.streamName);
+      if (!document.hidden) {
+        this.player.play();
+      }
 
       this.videoElement.addEventListener('mse-error-event', function (e) {
         _this.player.restart();
@@ -4277,7 +4064,7 @@ var MSEWrapper = function () {
       bufferTruncateValue: null,
       driftThreshold: 2000,
       duration: 10,
-      enableMetrics: true
+      enableMetrics: false
     });
 
     this.segmentQueue = [];
@@ -4619,7 +4406,7 @@ var MSEWrapper = function () {
     value: function processNextInQueue() {
       silly('processNextInQueue');
 
-      if (document.visibilityState === 'hidden') {
+      if (document.hidden) {
         debug('Tab not in focus - dropping frame...');
         this.metric('frameDrop.hiddenTab', 1);
         this.metric('queue.cannotProcessNext', 1);
@@ -4860,11 +4647,10 @@ var MSEWrapper = function () {
       // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
       // }
 
-      if (this.isMediaSourceReady()) {
+      if (this.isMediaSourceReady() && this.isSourceBufferReady()) {
         this.mediaSource.endOfStream();
+        this.mediaSource.removeSourceBuffer(this.sourceBuffer);
       }
-
-      this.mediaSource.removeSourceBuffer(this.sourceBuffer);
 
       // @todo - is this happening at the right time, or should it happen
       // prior to removing the source buffers?
@@ -5100,7 +4886,22 @@ var IOVPlayer = function () {
   }]);
 
   function IOVPlayer(iov, playerInstance, options) {
+    var _this = this;
+
     _classCallCheck(this, IOVPlayer);
+
+    this.onVisibilityChange = function () {
+      var timeout = void 0;
+
+      if (document.hidden) {
+        timeout = setTimeout(function () {
+          _this.stop();
+        }, 1000);
+      } else {
+        clearTimeout(timeout);
+        _this.play();
+      }
+    };
 
     debug('constructor');
 
@@ -5123,11 +4924,13 @@ var IOVPlayer = function () {
 
     this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_2___default()({}, options, {
       segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
-      driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT
+      driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
+      enableMetrics: false
     });
 
     this.state = 'initializing';
     this.firstFrameShown = false;
+    this.stopped = false;
 
     // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
@@ -5144,6 +4947,8 @@ var IOVPlayer = function () {
     this.moovBox = null;
     this.guid = null;
     this.mimeCodec = null;
+
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   _createClass(IOVPlayer, [{
@@ -5185,9 +4990,9 @@ var IOVPlayer = function () {
   }, {
     key: 'metric',
     value: function metric(type, value) {
-      // if (!this.options.enableMetrics) {
-      //   return;
-      // }
+      if (!this.options.enableMetrics) {
+        return;
+      }
 
       if (!IOVPlayer.METRIC_TYPES.includes(type)) {
         // @todo - should this throw?
@@ -5219,7 +5024,7 @@ var IOVPlayer = function () {
   }, {
     key: '_onError',
     value: function _onError(type, message, error) {
-      console.error(message);
+      console.warn(type, ':', message);
       console.error(error);
     }
   }, {
@@ -5245,7 +5050,7 @@ var IOVPlayer = function () {
   }, {
     key: 'initializeVideoElement',
     value: function initializeVideoElement() {
-      var _this = this;
+      var _this2 = this;
 
       this.videoJsVideoElement = document.getElementById(this.eid);
 
@@ -5271,22 +5076,22 @@ var IOVPlayer = function () {
         // @todo - this may be overkill given the IOV changeSourceMaxWait...
         // When the video is ready to be displayed, swap out the video player if
         // the source has changed.  This is what allows tours to switch to the next
-        if (_this.videoElementParent !== null) {
+        if (_this2.videoElementParent !== null) {
           try {
-            _this.videoElementParent.insertBefore(_this.videoElement, _this.videoJsVideoElement);
+            _this2.videoElementParent.insertBefore(_this2.videoElement, _this2.videoJsVideoElement);
 
-            var videos = _this.videoElementParent.getElementsByTagName('video');
+            var videos = _this2.videoElementParent.getElementsByTagName('video');
 
             for (var i = 0; i < videos.length; i++) {
               var video = videos[i];
               var id = video.getAttribute('id');
 
-              if (id !== _this.eid && id !== videoId) {
+              if (id !== _this2.eid && id !== videoId) {
                 // video.pause();
                 // video.removeAttribute('src');
                 // video.load();
                 // video.style.display = 'none';
-                _this.videoElementParent.removeChild(video);
+                _this2.videoElementParent.removeChild(video);
                 video.remove();
                 video = null;
                 videos = null;
@@ -5306,7 +5111,7 @@ var IOVPlayer = function () {
   }, {
     key: 'reinitializeMseWrapper',
     value: function reinitializeMseWrapper(mimeCodec) {
-      var _this2 = this;
+      var _this3 = this;
 
       if (this.mseWrapper) {
         this.mseWrapper.destroy();
@@ -5318,7 +5123,7 @@ var IOVPlayer = function () {
         var type = _ref.type,
             value = _ref.value;
 
-        _this2.trigger('metric', { type: type, value: value });
+        _this3.trigger('metric', { type: type, value: value });
       });
 
       this.mseWrapper.initializeMediaSource({
@@ -5331,52 +5136,52 @@ var IOVPlayer = function () {
                     debug('on mediaSource sourceopen');
 
                     _context.next = 3;
-                    return _this2.mseWrapper.initializeSourceBuffer(mimeCodec, {
+                    return _this3.mseWrapper.initializeSourceBuffer(mimeCodec, {
                       onAppendStart: function onAppendStart(byteArray) {
                         silly('On Append Start...');
 
-                        if (_this2.LogSourceBuffer === true && _this2.LogSourceBufferTopic !== null) {
+                        if (_this3.LogSourceBuffer === true && _this3.LogSourceBufferTopic !== null) {
                           debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
 
                           var mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-                          mqtt_msg.destinationName = _this2.LogSourceBufferTopic;
+                          mqtt_msg.destinationName = _this3.LogSourceBufferTopic;
                           window.MQTTClient.send(mqtt_msg);
                         }
 
-                        _this2.iov.statsMsg.byteCount += byteArray.length;
+                        _this3.iov.statsMsg.byteCount += byteArray.length;
                       },
                       onAppendFinish: function onAppendFinish(info) {
                         silly('On Append Finish...');
 
-                        if (!_this2.firstFrameShown) {
-                          _this2.firstFrameShown = true;
-                          _this2.trigger('firstFrameShown');
+                        if (!_this3.firstFrameShown) {
+                          _this3.firstFrameShown = true;
+                          _this3.trigger('firstFrameShown');
                         }
 
-                        _this2.drift = info.bufferTimeEnd - _this2.videoElement.currentTime;
+                        _this3.drift = info.bufferTimeEnd - _this3.videoElement.currentTime;
 
-                        _this2.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
-                        _this2.metric('video.currentTime', _this2.videoElement.currentTime);
-                        _this2.metric('video.drift', _this2.drift);
+                        _this3.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+                        _this3.metric('video.currentTime', _this3.videoElement.currentTime);
+                        _this3.metric('video.drift', _this3.drift);
 
-                        if (_this2.drift > _this2.segmentIntervalAverage / 1000 + _this2.options.driftCorrectionConstant) {
-                          _this2.metric('video.driftCorrection', 1);
-                          _this2.videoElement.currentTime = info.bufferTimeEnd;
+                        if (_this3.drift > _this3.segmentIntervalAverage / 1000 + _this3.options.driftCorrectionConstant) {
+                          _this3.metric('video.driftCorrection', 1);
+                          _this3.videoElement.currentTime = info.bufferTimeEnd;
                         }
 
-                        if (_this2.videoElement.paused === true) {
+                        if (_this3.videoElement.paused === true) {
                           debug('Video is paused!');
 
                           try {
-                            var promise = _this2.videoElement.play();
+                            var promise = _this3.videoElement.play();
 
                             if (typeof promise !== 'undefined') {
                               promise.catch(function (error) {
-                                _this2._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                                _this3._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
                               });
                             }
                           } catch (error) {
-                            _this2._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+                            _this3._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
                           }
                         }
                       },
@@ -5388,9 +5193,9 @@ var IOVPlayer = function () {
                         // in the browser where this video player lives is hidden
                         // then reselected. 'ex' is undefined the error is bug
                         // within the MSE C++ implementation in the browser.
-                        _this2._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
-                        // this.videoPlayer.error({ code: 3 });
-                        _this2.reinitializeMseWrapper(mimeCodec);
+                        _this3._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
+
+                        _this3.reinitializeMseWrapper(mimeCodec);
                       },
                       onRemoveError: function onRemoveError(error) {
                         if (error.constructor.name === 'DOMException') {
@@ -5401,29 +5206,31 @@ var IOVPlayer = function () {
 
                         // observed this fail during a memry snapshot in chrome
                         // otherwise no observed failure, so ignore exception.
-                        _this2._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
+                        _this3._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
                       },
                       onStreamFrozen: function onStreamFrozen() {
                         debug('stream appears to be frozen - reinitializing...');
 
-                        _this2.reinitializeMseWrapper(mimeCodec);
+                        _this3.reinitializeMseWrapper(mimeCodec);
                       },
                       onError: function onError(error) {
-                        _this2._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+                        _this3._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+
+                        _this3.reinitializeMseWrapper(mimeCodec);
                       }
                     });
 
                   case 3:
 
-                    _this2.trigger('videoInfoReceived');
-                    _this2.mseWrapper.appendMoov(_this2.moovBox);
+                    _this3.trigger('videoInfoReceived');
+                    _this3.mseWrapper.appendMoov(_this3.moovBox);
 
                   case 5:
                   case 'end':
                     return _context.stop();
                 }
               }
-            }, _callee, _this2);
+            }, _callee, _this3);
           }));
 
           function onSourceOpen() {
@@ -5435,11 +5242,10 @@ var IOVPlayer = function () {
         onSourceEnded: function onSourceEnded() {
           debug('on mediaSource sourceended');
 
-          // @todo - do we need to clear the buffer manually?
-          _this2.stop();
+          _this3.stop();
         },
         onError: function onError(error) {
-          _this2._onError('mediaSource.generic', 'mediaSource error', error);
+          _this3._onError('mediaSource.generic', 'mediaSource error', error);
         }
       });
 
@@ -5452,7 +5258,7 @@ var IOVPlayer = function () {
   }, {
     key: 'resyncStream',
     value: function resyncStream(mimeCodec) {
-      var _this3 = this;
+      var _this4 = this;
 
       // subscribe to a sync topic that will be called if the stream that is feeding
       // the mse service dies and has to be restarted that this player should restart the stream
@@ -5460,7 +5266,7 @@ var IOVPlayer = function () {
 
       this.iov.conduit.subscribe('iov/video/' + this.guid + '/resync', function () {
         debug('sync received re-initialize media source buffer');
-        _this3.reinitializeMseWrapper(mimeCodec);
+        _this4.reinitializeMseWrapper(mimeCodec);
       });
     }
   }, {
@@ -5473,13 +5279,15 @@ var IOVPlayer = function () {
     }
   }, {
     key: 'play',
-    value: function play(streamName) {
-      var _this4 = this;
+    value: function play() {
+      var _this5 = this;
 
       debug('play');
 
+      this.stopped = false;
+
       this.iov.conduit.transaction('iov/video/' + window.btoa(this.iov.config.streamName) + '/request', function () {
-        return _this4.onIovPlayTransaction.apply(_this4, arguments);
+        return _this5.onIovPlayTransaction.apply(_this5, arguments);
       }, { clientId: this.iov.config.clientId });
     }
   }, {
@@ -5487,13 +5295,26 @@ var IOVPlayer = function () {
     value: function stop() {
       debug('stop');
 
+      this.stopped = true;
       this.moovBox = null;
 
-      if (this.guid !== undefined) {
+      if (this.guid) {
+        // Stop listening for moofs
         this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/live');
+
+        // Stop listening for resync events
+        this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/resync');
+
+        // Tell the server we've stopped
+        this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
       }
 
-      this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
+      // Don't wait until the next play event or the destruction of this player
+      // to clear the MSE
+      if (this.mseWrapper) {
+        this.mseWrapper.destroy();
+        this.mseWrapper = null;
+      }
     }
   }, {
     key: 'getSegmentIntervalMetrics',
@@ -5524,16 +5345,20 @@ var IOVPlayer = function () {
         this.metric('video.segmentIntervalAverage', this.segmentIntervalAverage);
       }
     }
-
-    // @todo - there is much shared between this and onChangeSourceTransaction
-
   }, {
     key: 'onIovPlayTransaction',
+
+
+    // @todo - there is much shared between this and onChangeSourceTransaction
     value: function onIovPlayTransaction(_ref3) {
-      var _this5 = this;
+      var _this6 = this;
 
       var mimeCodec = _ref3.mimeCodec,
           guid = _ref3.guid;
+
+      if (this.stopped) {
+        return;
+      }
 
       debug('onIovPlayTransaction');
 
@@ -5546,32 +5371,40 @@ var IOVPlayer = function () {
       this.iov.conduit.subscribe(initSegmentTopic, function (_ref4) {
         var payloadBytes = _ref4.payloadBytes;
 
+        if (_this6.stopped) {
+          return;
+        }
+
         debug('onIovPlayTransaction ' + initSegmentTopic + ' listener fired');
         debug('received moov of type "' + (typeof payloadBytes === 'undefined' ? 'undefined' : _typeof(payloadBytes)) + '" from server');
 
         var moov = payloadBytes;
 
-        _this5.state = 'waiting-for-first-moof';
+        _this6.state = 'waiting-for-first-moof';
 
-        _this5.iov.conduit.unsubscribe(initSegmentTopic);
+        _this6.iov.conduit.unsubscribe(initSegmentTopic);
 
         var newTopic = 'iov/video/' + guid + '/live';
 
         // subscribe to the live video topic.
-        _this5.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
-          _this5.trigger('videoReceived');
-          _this5.getSegmentIntervalMetrics();
-          _this5.mseWrapper.append(mqtt_msg.payloadBytes);
+        _this6.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
+          if (_this6.stopped) {
+            return;
+          }
+
+          _this6.trigger('videoReceived');
+          _this6.getSegmentIntervalMetrics();
+          _this6.mseWrapper.append(mqtt_msg.payloadBytes);
         });
 
-        _this5.guid = guid;
-        _this5.moovBox = moov;
-        _this5.mimeCodec = mimeCodec;
+        _this6.guid = guid;
+        _this6.moovBox = moov;
+        _this6.mimeCodec = mimeCodec;
 
         // this.trigger('firstChunk');
 
-        _this5.reinitializeMseWrapper(mimeCodec);
-        _this5.resyncStream(mimeCodec);
+        _this6.reinitializeMseWrapper(mimeCodec);
+        _this6.resyncStream(mimeCodec);
       });
 
       this.iov.conduit.publish('iov/video/' + guid + '/play', {
@@ -5589,6 +5422,8 @@ var IOVPlayer = function () {
       this.destroyed = true;
 
       this.stop();
+
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
       // Note you will need to destroy the iov yourself.  The child should
       // probably not destroy the parent
@@ -5616,8 +5451,10 @@ var IOVPlayer = function () {
       this.moovBox = null;
       this.mimeCodec = null;
 
-      this.mseWrapper.destroy();
-      this.mseWrapper = null;
+      if (this.mseWrapper) {
+        this.mseWrapper.destroy();
+        this.mseWrapper = null;
+      }
 
       // Setting the src of the video element to an empty string is
       // the only reliable way we have found to ensure that MediaSource,
@@ -5649,25 +5486,60 @@ IOVPlayer.DRIFT_CORRECTION_CONSTANT = 2;
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../package.json */ "./package.json");
+var _package_json__WEBPACK_IMPORTED_MODULE_0___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../../package.json */ "./package.json", 1);
+
+
+
+
+var PLUGIN_NAME = 'clsp';
 var MINIMUM_CHROME_VERSION = 52;
 
+// @todo - this mime type, though used in the videojs plugin, and
+// seemingly enforced, is not actually enforced.  The only enforcement
+// done is requiring the user provide this string on the video element
+// in the DOM.  The codecs that are supplied by the SFS's vary.  Here
+// are some "valid", though not enforced mimeCodec values I have come
+// across:
+// video/mp4; codecs="avc1.4DE016"
+// video/mp4; codecs="avc1.42E00C"
+// video/mp4; codecs="avc1.42E00D"
+var SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
+
 function browserIsCompatable() {
-  // Chrome 1+
   var isChrome = Boolean(window.chrome) && Boolean(window.chrome.webstore);
 
   if (!isChrome) {
     return false;
   }
 
+  // For the MAC
+  window.MediaSource = window.MediaSource || window.WebKitMediaSource;
+
+  if (!window.MediaSource) {
+    console.error('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
+
+    return false;
+  }
+
   try {
     return parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10) >= MINIMUM_CHROME_VERSION;
   } catch (error) {
+    console.error(error);
+
     return false;
   }
 }
 
+function isSupportedMimeType(mimeType) {
+  return mimeType === SUPPORTED_MIME_TYPE;
+}
+
 /* harmony default export */ __webpack_exports__["default"] = ({
-  supported: browserIsCompatable
+  version: _package_json__WEBPACK_IMPORTED_MODULE_0__["version"],
+  name: PLUGIN_NAME,
+  supported: browserIsCompatable,
+  isSupportedMimeType: isSupportedMimeType
 });
 
 /***/ }),
@@ -5681,19 +5553,17 @@ function browserIsCompatable() {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var videojs_errors__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! videojs-errors */ "./node_modules/videojs-errors/dist/videojs-errors.es.js");
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
-/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./conduit/clspConduit.generated.js */ "./src/js/conduit/clspConduit.generated.js");
-/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MseOverMqttPlugin */ "./src/js/MseOverMqttPlugin.js");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
+/* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./conduit/clspConduit.generated.js */ "./src/js/conduit/clspConduit.generated.js");
+/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MseOverMqttPlugin */ "./src/js/MseOverMqttPlugin.js");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3__);
 
 
 
 
-// import './conduit/clspConduit.generated.min.js';
 
 
 
@@ -5701,7 +5571,7 @@ __webpack_require__.r(__webpack_exports__);
 // @todo - do not initialize the plugin by default, since that is a side
 // effect.  make the caller call the initialize function.  also, is it
 // possible to unregister the plugin?
-var clspPlugin = Object(_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_3__["default"])();
+var clspPlugin = Object(_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_2__["default"])();
 
 clspPlugin.register();
 
@@ -5729,17 +5599,6 @@ clspPlugin.register();
 
 module.exports = __webpack_require__(/*! ./src/js/videojs-mse-over-clsp.js */"./src/js/videojs-mse-over-clsp.js");
 
-
-/***/ }),
-
-/***/ 1:
-/*!******************************!*\
-  !*** min-document (ignored) ***!
-  \******************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-/* (ignored) */
 
 /***/ }),
 
