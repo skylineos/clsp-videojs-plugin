@@ -3,7 +3,6 @@
 const gulp = require('gulp');
 const webpack = require('webpack');
 
-const rm = require('gulp-rm');
 const runSequence = require('run-sequence');
 const jsStringEscape = require('js-string-escape');
 const fs = require('fs');
@@ -28,23 +27,36 @@ function asPromise (fn, ...args) {
   });
 }
 
+// @see - https://webpack.js.org/api/node/#error-handling
 function webpackBuild (pathToConfig) {
-  const webpackConfig = require(pathToConfig);
+  const webpackConfig = require(pathToConfig)();
 
   return asPromise(webpack, webpackConfig)
     .then((stats) => {
+      const info = stats.toJson();
+
+      if (stats.hasWarnings()) {
+        console.warn(info.warnings);
+      }
+
+      if (stats.hasErrors()) {
+        console.error(info.errors);
+
+        throw new Error('Webpack build failed!');
+      }
+
       console.log(`${stats.toString()}\n`);
     })
     .catch((err) => {
+      console.error(err.stack || err);
+
+      if (err.details) {
+        console.error(err.details);
+      }
+
       throw err;
     });
 }
-
-gulp.task('pre-build', () => {
-  return gulp
-    .src('dist/**/*', { read: false })
-    .pipe(rm());
-});
 
 gulp.task('generate-clsp-conduit', async () => {
   // Construct the iframe contents
@@ -66,7 +78,6 @@ gulp.task('build-prod', () => webpackBuild('./webpack.config.prod'));
 
 gulp.task('build', () => asPromise(
   runSequence,
-  'pre-build',
   'generate-clsp-conduit',
   'build-dev',
   'build-prod'

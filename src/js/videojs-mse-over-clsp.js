@@ -1,8 +1,7 @@
-import 'videojs-errors';
+'use strict';
 
 import 'srcdoc-polyfill';
 import './conduit/clspConduit.generated.js';
-// import './conduit/clspConduit.generated.min.js';
 
 import MseOverMqttPlugin from './MseOverMqttPlugin';
 import '../styles/videojs-mse-over-clsp.scss';
