@@ -11,8 +11,9 @@
     "serve": "./scripts/serve.sh",
     "lint": "eslint ./ --cache --quiet --ext .jsx --ext .js",
     "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
+    "preversion": "echo '' && echo 'setting upstream...' && echo '' && git push --set-upstream origin $(git rev-parse --abbrev-ref HEAD)",
     "version": "./scripts/version.sh",
-    "postversion": "git push && git push --tags"
+    "postversion": "echo '' && echo 'updating branch with build...' && echo '' && git push && git push --tags"
   },
   "keywords": [
     "videojs",
