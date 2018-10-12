@@ -92,6 +92,7 @@ export default class IOVPlayer {
     this.mimeCodec = null;
 
     document.addEventListener('visibilitychange', this.onVisibilityChange);
+    this.playerInstance.on('changesrc', this.onChangeSource);
   }
 
   on (name, action) {
@@ -171,14 +172,14 @@ export default class IOVPlayer {
 
       const message = `Unsupported mime codec: ${mimeCodec}`;
 
-      this.videoPlayer.errors.extend({
+      this.playerInstance.errors.extend({
         PLAYER_ERR_IOV: {
           headline: 'Error Playing Stream',
           message,
         },
       });
 
-      this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
+      this.playerInstance.error({ code: 'PLAYER_ERR_IOV' });
 
       throw new Error(message);
     }
@@ -387,17 +388,6 @@ export default class IOVPlayer {
     this.mseWrapper.reinitializeVideoElementSrc();
   }
 
-  resyncStream (mimeCodec) {
-    // subscribe to a sync topic that will be called if the stream that is feeding
-    // the mse service dies and has to be restarted that this player should restart the stream
-    debug('Trying to resync stream...');
-
-    this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, () => {
-      debug('sync received re-initialize media source buffer');
-      this.reinitializeMseWrapper(mimeCodec);
-    });
-  }
-
   restart () {
     debug('restart');
 
@@ -412,7 +402,10 @@ export default class IOVPlayer {
 
     this.iov.conduit.transaction(
       `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
-      (...args) => this.onIovPlayTransaction(...args),
+      (mqtt_msg) => this.onIovPlayTransaction(mqtt_msg, {
+        iov: null,
+        isChanging: false,
+      }),
       { clientId: this.iov.config.clientId }
     );
   }
@@ -487,8 +480,65 @@ export default class IOVPlayer {
     }
   };
 
-  // @todo - there is much shared between this and onChangeSourceTransaction
-  onIovPlayTransaction ({ mimeCodec, guid }) {
+  change (iov, streamName) {
+    debug('change');
+
+    // @todo - if the player has been stopped, should change return early?
+    this.stopped = false;
+
+    (iov || this.iov).conduit.transaction(
+      `iov/video/${window.btoa(streamName)}/request`,
+      (mqtt_msg) => this.onIovPlayTransaction(mqtt_msg, {
+        iov,
+        isChanging: true,
+      }),
+      { clientId: this.iov.config.clientId }
+    );
+  }
+
+  onChangeSource = (event, { url }) => {
+    debug(`iov-change-src on id ${this.playerInstance.id()}`);
+
+    if (!url) {
+      throw new Error('Unable to process change event because there is no url!');
+    }
+
+    // parse url, extract the ip of the sfs and the port as well as useSSL
+    const new_cfg = this.iov.constructor.generateConfigFromUrl(url);
+
+    // If the new clsp url is from the same host, reuse the existing iov
+    if (new_cfg.wsbroker === this.iov.config.wsbroker) {
+      // don't do anything if it's the exact same stream
+      if (this.iov.constructor.configsEqual(new_cfg, this.iov.config)) {
+        return;
+      }
+
+      this.change(null, new_cfg.streamName);
+      return;
+    }
+
+    new_cfg.initialize = false;
+    new_cfg.videoElement = this.iov.config.videoElement;
+    new_cfg.appStart = (iov) => {
+      // conected to new mqtt
+      this.change(iov, new_cfg.streamName);
+    };
+
+    this.iov.clone(new_cfg);
+  };
+
+  onMoof = (mqtt_msg) => {
+    // on moof
+    if (this.stopped) {
+      return;
+    }
+
+    this.trigger('videoReceived');
+    this.getSegmentIntervalMetrics();
+    this.mseWrapper.append(mqtt_msg.payloadBytes);
+  };
+
+  onIovPlayTransaction ({ mimeCodec, guid }, { isChanging, iov }) {
     if (this.stopped) {
       return;
     }
@@ -501,7 +551,11 @@ export default class IOVPlayer {
 
     this.state = 'waiting-for-first-moov';
 
-    this.iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
+    const currentConduit = (iov === null)
+      ? this.iov.conduit
+      : iov.conduit;
+
+    currentConduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
       if (this.stopped) {
         return;
       }
@@ -513,21 +567,10 @@ export default class IOVPlayer {
 
       this.state = 'waiting-for-first-moof';
 
-      this.iov.conduit.unsubscribe(initSegmentTopic);
+      currentConduit.unsubscribe(initSegmentTopic);
 
+      const oldTopic = `iov/video/${this.guid}/live`;
       const newTopic = `iov/video/${guid}/live`;
-
-      // subscribe to the live video topic.
-      this.iov.conduit.subscribe(newTopic, (mqtt_msg) => {
-        if (this.stopped) {
-          return;
-        }
-
-
-        this.trigger('videoReceived');
-        this.getSegmentIntervalMetrics();
-        this.mseWrapper.append(mqtt_msg.payloadBytes);
-      });
 
       this.guid = guid;
       this.moovBox = moov;
@@ -536,12 +579,59 @@ export default class IOVPlayer {
       // this.trigger('firstChunk');
 
       this.reinitializeMseWrapper(mimeCodec);
-      this.resyncStream(mimeCodec);
+
+      // subscribe to the live video topic.
+      currentConduit.subscribe(newTopic, (mqtt_msg) => {
+        if (!isChanging) {
+          return this.onMoof(mqtt_msg);
+        }
+
+        // unsubscribe to existing live
+        // 1) unsubscribe to remove avoid callback
+        currentConduit.unsubscribe(newTopic);
+
+        // 2) unsubscribe to live callback for the old stream
+        this.iov.conduit.unsubscribe(oldTopic);
+
+        // @todo - Instead of doing multiple subscriptions to this same topic,
+        // just track whether or not the first moof was received
+        // 3) resubscribe with different callback
+        currentConduit.subscribe(newTopic, this.onMoof);
+
+        if (!iov) {
+          return;
+        }
+
+        // @todo - is this needed?
+        if (iov.config.parentNodeId !== null) {
+          var iframe_elm = document.getElementById(this.iov.config.clientId);
+          var parent = document.getElementById(iov.config.parentNodeId);
+
+          if (parent) {
+            parent.removeChild(iframe_elm);
+          }
+
+          // remove code from iframe.
+          iframe_elm.srcdoc = '';
+        }
+
+        // replace iov variable with the new one created.
+        this.iov = iov;
+      });
+
+      // subscribe to a sync topic that will be called if the stream that is feeding
+      // the mse service dies and has to be restarted that this player should restart the stream
+      this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, () => {
+        debug('sync received re-initialize media source buffer');
+        this.reinitializeMseWrapper(mimeCodec);
+      });
     });
 
-    this.iov.conduit.publish(`iov/video/${guid}/play`, {
+    currentConduit.publish(`iov/video/${guid}/play`, {
       initSegmentTopic,
-      clientId: this.iov.config.clientId,
+      clientId: (iov === null)
+        ? this.iov.config.clientId
+        : iov.config.clientId,
     });
   }
 
@@ -554,6 +644,7 @@ export default class IOVPlayer {
 
     this.stop();
 
+    this.playerInstance.off('changesrc', this.onChangeSource);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
     // Note you will need to destroy the iov yourself.  The child should

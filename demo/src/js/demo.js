@@ -292,6 +292,16 @@ function initializeTour () {
       $container.find('.video-stream .url').text(source.src);
     });
 
+    let counter = 0;
+
+    setInterval(() => {
+      const nextSource = playerOptions.sources[counter % playerOptions.sources.length];
+
+      counter++;
+
+      player.trigger('changesrc', { url: nextSource.src });
+    }, playerOptions.clsp.tourDuration);
+
     const tech = player.clsp();
 
     tech.on('metric', (event, { metric }) => {

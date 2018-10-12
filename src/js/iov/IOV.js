@@ -87,6 +87,37 @@ export default class IOV {
     };
   }
 
+  static configsEqual (configA, configB) {
+    if (typeof configA !== 'object' || configA === null || Array.isArray(configA)) {
+      return false;
+    }
+
+    if (typeof configB !== 'object' || configB === null || Array.isArray(configB)) {
+      return false;
+    }
+
+    const configAttributes = [
+      'wsbroker',
+      'wsport',
+      'streamName',
+      'useSSL',
+    ];
+
+    for (let i = 0; i < configAttributes.length; i++) {
+      const attributeName = configAttributes[i];
+
+      if (!configA.hasOwnProperty(attributeName) || !configB.hasOwnProperty(attributeName)) {
+        return false;
+      }
+
+      if (configA[attributeName] !== configB[attributeName]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   static factory (mqttConduitCollection, player, config = {}) {
     return new IOV(mqttConduitCollection, player, config);
   }
@@ -193,41 +224,6 @@ export default class IOV {
     this.conduit.transaction('iov/video/list', callback, {});
   }
 
-  onChangeSource (url) {
-    this.debug(`changeSource on player "${this.id}""`);
-
-    if (!url) {
-      throw new Error('Unable to change source because there is no url!');
-    }
-
-    const clone = this.cloneFromUrl(url);
-
-    clone.initialize();
-
-    // When the tab is not in focus, chrome doesn't handle things the same
-    // way as when the tab is in focus, and it seems that the result of that
-    // is that the "firstFrameShown" event never fires.  Having the IOV be
-    // updated on a delay in case the "firstFrameShown" takes too long will
-    // ensure that the old IOVs are destroyed, ensuring that unnecessary
-    // socket connections, etc. are not being used, as this can cause the
-    // browser to crash.
-    // Note that if there is a better way to do this, it would likely reduce
-    // the number of try/catch blocks and null checks in the IOVPlayer and
-    // MSEWrapper, but I don't think that is likely to happen until the MSE
-    // is standardized, and even then, we may be subject to non-intuitive
-    // behavior based on tab switching, etc.
-    setTimeout(() => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-    }, clone.config.changeSourceMaxWait);
-
-    // Under normal circumstances, meaning when the tab is in focus, we want
-    // to respond by switching the IOV when the new IOV Player has something
-    // to display
-    clone.player.on('firstFrameShown', () => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-    });
-  }
-
   onReady (event) {
     this.debug('onReady');
 
@@ -266,12 +262,6 @@ export default class IOV {
       // reset the timeout monitor from videojs-errors
       this.playerInstance.trigger('timeupdate');
     });
-
-    this.playerInstanceEventListeners = {
-      changesrc: (event, { url }) => this.onChangeSource(url),
-    };
-
-    this.playerInstance.on('changesrc', this.playerInstanceEventListeners.changesrc);
 
     if (!document.hidden) {
       this.player.play();
@@ -337,13 +327,13 @@ export default class IOV {
       return;
     }
 
+    console.log('destroying iov', this.id)
+
     this.destroyed = true;
 
     clearInterval(this._statsTimer);
 
     this.conduit.unsubscribe(`iov/video/${this.player.guid}/live`);
-
-    this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
 
     this.player.destroy();
 
