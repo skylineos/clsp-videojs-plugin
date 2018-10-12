@@ -9,10 +9,11 @@
   "scripts": {
     "build": "./scripts/build.sh",
     "serve": "./scripts/serve.sh",
-    "lint": "eslint ./ --cache --quiet --ext .js",
-    "lint-fix": "eslint ./ --cache --quiet --ext .js --fix",
+    "lint": "eslint ./ --cache --quiet --ext .jsx --ext .js",
+    "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
+    "preversion": "./scripts/version.sh --pre",
     "version": "./scripts/version.sh",
-    "postversion": "git push && git push --tags"
+    "postversion": "./scripts/version.sh --post"
   },
   "keywords": [
     "videojs",

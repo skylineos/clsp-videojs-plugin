@@ -36,6 +36,15 @@
 * decrease coupling between videojs and iovPlayer
 * update dependencies
 
+## v0.13.5 -  - Critical
+
+* update demo page
+* update build process
+* update serve process
+* restart on videojs errors where possible
+* improve tab switching logic/recovery
+* improve tab switching memory leak
+* restart on certain MSE errors
 
 ## v0.13.4 - 2018-08-27 - Critical
 
@@ -83,6 +92,13 @@
 * decrease coupling between videojs and iovPlayer
 * update dependencies
 
+## v0.10.4 -  - Optional
+
+* improve demo page
+
+## v0.10.3 -  - Optional
+
+* improve demo page
 
 ## v0.10.2 - 2018-08-27 - Optional
 

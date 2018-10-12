@@ -37,4 +37,4 @@ for (let i = 0; i < config.length; i++) {
   minifyConfig(config[i]);
 }
 
-module.exports = config;
+module.exports = () => config;
