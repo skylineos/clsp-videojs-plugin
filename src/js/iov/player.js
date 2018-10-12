@@ -60,8 +60,6 @@ export default class IOVPlayer {
     this._id = uuidv4();
     this.iov = iov;
     this.playerInstance = playerInstance;
-    this.eid = this.playerInstance.el().firstChild.id;
-    this.id = this.eid.replace('_html5_api', '');
 
     this.initializeVideoElement();
 
@@ -186,60 +184,58 @@ export default class IOVPlayer {
   }
 
   initializeVideoElement () {
-    this.videoJsVideoElement = document.getElementById(this.eid);
-
-    if (!this.videoJsVideoElement) {
-      throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
+    if (this.firstFrameShown) {
+      console.error('already displayed first frame!')
+      return;
     }
 
-    const videoId = `clsp-video-${this._id}`;
+    const newVideoElementId = uuidv4();
 
     // when videojs initializes the video element (or something like that),
     // it creates events and listeners on that element that it uses, however
     // these events interfere with our ability to play clsp streams.  Cloning
     // the element like this and reinserting it is a blunt instrument to remove
     // all of the videojs events so that we are in control of the player.
-    // this.videoElement = this.videoJsVideoElement.cloneNode();
-    this.videoElement = this.videoJsVideoElement.cloneNode();
-    this.videoElement.setAttribute('id', videoId);
+    this.videoElement = this.iov.videoJsElement.cloneNode();
+    this.videoElement.setAttribute('id', newVideoElementId);
     this.videoElement.classList.add('clsp-video');
 
-    this.videoElementParent = this.videoJsVideoElement.parentNode;
+    const previousVideoElement = document.getElementById(this.previousVideoId || this.iov.videoId);
+    const videoElementParent = previousVideoElement.parentNode;
 
+    videoElementParent.prepend(this.videoElement);
+
+    // @todo - since this only matters for clones in tours, move it to where
+    // the clone logic is
     this.on('firstFrameShown', () => {
+      console.log('firstFrameShown')
       // @todo - this may be overkill given the IOV changeSourceMaxWait...
       // When the video is ready to be displayed, swap out the video player if
       // the source has changed.  This is what allows tours to switch to the next
-      if (this.videoElementParent !== null) {
-        try {
-          this.videoElementParent.insertBefore(this.videoElement, this.videoJsVideoElement);
+      try {
+        const videos = videoElementParent.getElementsByTagName('video');
 
-          let videos = this.videoElementParent.getElementsByTagName('video');
+        for (let i = 0; i < videos.length; i++) {
+          const video = videos[i];
+          const id = video.getAttribute('id');
 
-          for (let i = 0; i < videos.length; i++) {
-            let video = videos[i];
-            const id = video.getAttribute('id');
-
-            if (id !== this.eid && id !== videoId) {
-              // video.pause();
-              // video.removeAttribute('src');
-              // video.load();
-              // video.style.display = 'none';
-              this.videoElementParent.removeChild(video);
-              video.remove();
-              video = null;
-              videos = null;
-              break;
-            }
+          // Do not process the current video or the videojs video DOM element
+          if (id === newVideoElementId || id === this.iov.videoId || id === this.previousVideoId) {
+            continue;
           }
 
-          // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
-          // is there still a reference to this element?
-          // this.videoJsVideoElement = null;
+          // Remove any other video elements, being sure to NEVER remove the
+          // original videojs video.  That shouldn't ever occur, but...
+          if (video.classList.contains('clsp-video')) {
+            videoElementParent.removeChild(video);
+            video.remove();
+          }
         }
-        catch (e) {
-          console.error(e);
-        }
+
+        this.previousVideoId = newVideoElementId;
+      }
+      catch (e) {
+        console.error(e);
       }
     });
   }
@@ -486,6 +482,11 @@ export default class IOVPlayer {
     // @todo - if the player has been stopped, should change return early?
     this.stopped = false;
 
+    // Reset this
+    this.firstFrameShown = false;
+
+    this.initializeVideoElement();
+
     (iov || this.iov).conduit.transaction(
       `iov/video/${window.btoa(streamName)}/request`,
       (mqtt_msg) => this.onIovPlayTransaction(mqtt_msg, {
@@ -517,8 +518,6 @@ export default class IOVPlayer {
       return;
     }
 
-    new_cfg.initialize = false;
-    new_cfg.videoElement = this.iov.config.videoElement;
     new_cfg.appStart = (iov) => {
       // conected to new mqtt
       this.change(iov, new_cfg.streamName);
@@ -598,25 +597,10 @@ export default class IOVPlayer {
         // 3) resubscribe with different callback
         currentConduit.subscribe(newTopic, this.onMoof);
 
-        if (!iov) {
-          return;
+        if (iov) {
+          // replace iov variable with the new one created.
+          this.iov = iov;
         }
-
-        // @todo - is this needed?
-        if (iov.config.parentNodeId !== null) {
-          var iframe_elm = document.getElementById(this.iov.config.clientId);
-          var parent = document.getElementById(iov.config.parentNodeId);
-
-          if (parent) {
-            parent.removeChild(iframe_elm);
-          }
-
-          // remove code from iframe.
-          iframe_elm.srcdoc = '';
-        }
-
-        // replace iov variable with the new one created.
-        this.iov = iov;
       });
 
       // subscribe to a sync topic that will be called if the stream that is feeding
@@ -655,8 +639,6 @@ export default class IOVPlayer {
     this.firstFrameShown = null;
 
     this.playerInstance = null;
-    this.videoJsVideoElement = null;
-    this.videoElementParent = null;
 
     this.events = null;
     this.metrics = null;

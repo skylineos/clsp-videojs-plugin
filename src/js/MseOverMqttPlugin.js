@@ -2,6 +2,7 @@
 'use strict';
 
 import Debug from 'debug';
+import Paho from 'paho-client';
 
 // This is configured as an external library by webpack, so the caller must
 // provide videojs on `window`
@@ -26,6 +27,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     if (videojs.getPlugin(utils.name)) {
       throw new Error('You can only register the clsp plugin once, and it has already been registered.');
     }
+
+    window.Paho = Paho;
 
     videojs.getTech('Html5').registerSourceHandler(MqttSourceHandler()('html5', MqttConduitCollection.factory()), 0);
     videojs.registerPlugin(utils.name, ClspPlugin);

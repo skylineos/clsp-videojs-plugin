@@ -24,7 +24,7 @@
   "dependencies": {
     "debug": "^3.1.0",
     "lodash": "^4.17.10",
-    "paho-mqtt": "^1.0.4",
+    "paho-client": "git+https://github.com/eclipse/paho.mqtt.javascript.git#v1.1.0",
     "videojs-errors": "^4.1.1"
   },
   "devDependencies": {

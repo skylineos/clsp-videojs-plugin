@@ -43,7 +43,7 @@ function _clspRouter() {
                     return;
                 }
 
-                var mqtt_msg = new Paho.MQTT.Message(mqtt_payload);
+                var mqtt_msg = new window.parent.Paho.Message(mqtt_payload);
                 mqtt_msg.destinationName = m.topic;
                 MQTTClient.send(mqtt_msg);
             }
@@ -92,7 +92,7 @@ function _clspRouter() {
       });
     }
 
-    MQTTClient = new Paho.MQTT.Client(
+    MQTTClient = new window.parent.Paho.Client(
         MqttIp,
         MqttPort,
         MqttClientId
@@ -142,7 +142,7 @@ function _clspRouter() {
             onFailure: AppFail
         };
         // last will message sent on disconnect
-        var willmsg = new Paho.MQTT.Message(JSON.stringify({
+        var willmsg = new window.parent.Paho.Message(JSON.stringify({
             clientId: MqttClientId
         }));
         willmsg.destinationName = "iov/clientDisconnect";

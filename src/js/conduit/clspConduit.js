@@ -12,8 +12,6 @@ uses cross document communication to route data to and from the iframe.
 // this code is filled in by the gulpfile.js
 var iframe_code = "__IFRAME_CODE__";
 
-
-
 function pframe_client(iframe, iov) {
     var self = {
         dispatch: {},
@@ -101,7 +99,6 @@ function pframe_client(iframe, iov) {
     return self;
 }
 
-
 window.mqttConduit = function (iov) {
     var iframe = document.createElement('iframe');
     var MqttUseSSL = (iov.config.useSSL || false) ? "true": "false";
@@ -121,8 +118,6 @@ window.mqttConduit = function (iov) {
         '</body></html>'
     ;
 
-
-
     // inject code into iframe
     iframe.srcdoc = markup;
 
@@ -131,24 +126,9 @@ window.mqttConduit = function (iov) {
     iframe.setAttribute('style','display:none;');
     iframe.setAttribute('id',iov.config.clientId);
 
-
     // attach hidden iframe to player
     //document.body.appendChild(iframe);
-    if (iov.config.videoElementParent !== null) {
-        iov.config.videoElementParent.appendChild(iframe);
-    } else if (iov.videoElement.parentNode !== null) {
-        iov.videoElement.parentNode.appendChild(iframe);
-        iov.config.videoElementParent = iov.videoElement.parentNode;
-    } else {
-        var t = setInterval(function(){
-            if (iov.videoElement.parentNode !== null) {
-                iov.videoElement.parentNode.appendChild(iframe);
-                iov.config.videoElementParent = iov.videoElement.parentNode;
-                clearInterval(t);
-            }
-        },1000);
-    }
-
+    iov.videoElement.parentNode.appendChild(iframe);
 
     return pframe_client(iframe, iov);
 }

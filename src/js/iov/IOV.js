@@ -140,6 +140,8 @@ export default class IOV {
     this.destroyed = false;
     this.onReadyAlreadyCalled = false;
     this.playerInstance = player;
+    this.videoId = `${player.id()}_html5_api`;
+    this.videoJsElement = document.getElementById(this.videoId);
     this.videoElement = this.playerInstance.el();
 
     this.config = {
@@ -149,7 +151,6 @@ export default class IOV {
       useSSL: config.useSSL,
       streamName: config.streamName,
       appStart: config.appStart,
-      videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
     };
 
@@ -192,19 +193,14 @@ export default class IOV {
     this.player = IOVPlayer.factory(this, this.playerInstance);
   }
 
-  clone (config) {
+  clone (config = {}) {
     this.debug('clone');
-
-    const cloneConfig = {
-      ...config,
-      videoElementParent: this.config.videoElementParent,
-    };
 
     // @todo - is it possible to reuse the iov player?
     return IOV.factory(
       this.mqttConduitCollection,
       this.playerInstance,
-      cloneConfig
+      config
     );
   }
 
@@ -226,11 +222,6 @@ export default class IOV {
 
   onReady (event) {
     this.debug('onReady');
-
-    // @todo - why is this necessary?
-    if (this.videoElement.parentNode !== null) {
-      this.config.videoElementParentId = this.videoElement.parentNode.id;
-    }
 
     const videoTag = this.playerInstance.children()[0];
 
