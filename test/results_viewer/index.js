@@ -24,7 +24,7 @@ async function generateResults (directory) {
           }
 
           if (context.index === 0) {
-            const timestamp = moment(value, 'MM/DD/YYYY HH:mm:ss.SSS').unix();
+            const timestamp = moment(value, 'MM/DD/YYYY HH:mm:ss.SSS').valueOf();
             timestamps.push(timestamp);
             return timestamp;
           }
