@@ -76,8 +76,16 @@ const server = http.createServer(async (req, res) => {
 
 <body>
 <div id="chart" class="c3"></div>
+
+
+<div class="targ1"> this is the target to click  on</div>
+<div class="targ2"> this is the target to click  on</div>
+<div class="targ3"> this is the target to click  on</div>
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <script>
 var chart = c3.generate({
     data: {
@@ -90,28 +98,73 @@ var chart = c3.generate({
     },
     axis: {
         x: {
-            type: 'timeseries',
-            tick: {
-                format: '%Y-%m-%d'
-            }
+             type: 'category',
+             tick: {
+               count: 5
+             }
         }
     }
 });
 
-setTimeout(function () {
-    chart.load({
+$('.targ1').on('click', function() {
+  setTimeout(function () {
+    let columnData3 = ['data3']
+      for (i=0;i<1000;i++) {
+        columnData3.push(i+1);
+      }
+      let columnData2 = ['data2']
+      for (i=0;i<1000;i = i+3) {
+        columnData2.push(i+1);
+      }
+      let columnData1 = ['data1']
+      for (i=0;i<1000;i = i+2) {
+        columnData1.push(i+1);
+      }
+      let timeSeries = ['x']
+      for (i=0;i<1000;i++) {
+        timeSeries.push(i+1);
+      }
+      chart.load({
         columns: [
-            ['data3', 400, 500, 450, 700, 600, 500]
+          timeSeries,
+          columnData1,
+          columnData2,
+          columnData3,
         ]
     });
-}, 1000);
+  }, 250);
+});
+
+$('.targ2').on('click', function() {
+  setTimeout(function () {
+    chart.load({
+      columns: [
+        ['data3', 800, 900, 1000, 1700, 1600, 1500]
+      ]
+    });
+  }, 250);
+});
+
+$('.targ3').on('click', function() {
+setTimeout(function () {
+  chart.load({
+    columns: [
+      ['data3', 40, 50, 45, 70, 60, 50]
+    ]
+  });
+}, 250);
+});
+
+
+
+
+
 </script>
 
 </body>
 </html>
 `
    res.end(send);
-  }
 });
 
 server.listen(port, hostname, () => {
