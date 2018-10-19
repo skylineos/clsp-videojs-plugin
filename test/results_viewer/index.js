@@ -51,20 +51,24 @@ async function generateResults (directory) {
       fs.createReadStream(path.join(directory, fileName)).pipe(parser);
     });
   }));
-
-  console.log(results);
-
   return results;
 }
 
 const server = http.createServer(async (req, res) => {
+
+if (req.url == "/data") {
+ res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const csvDirectory = path.join(__dirname, '..', 'soak');
+    const results = await generateResults(csvDirectory);
+    return res.end(JSON.stringify(results));
+}
+
   res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Access-Control-Allow-Origin', '*');
     const csvDirectory = path.join(__dirname, '..', 'soak');
-
-    const results = await generateResults(csvDirectory);
-
     const send = `
                                     <!DOCTYPE html>
                      <html>
@@ -75,18 +79,68 @@ const server = http.createServer(async (req, res) => {
 </header>
 
 <body>
-<div id="chart" class="c3"></div>
-
-
-<div class="targ1"> this is the target to click  on</div>
-<div class="targ2"> this is the target to click  on</div>
-<div class="targ3"> this is the target to click  on</div>
-
-
+<div id="chart" class="c3" style="height: 100%;"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <script>
+  let dataObj
+
+  const columnGenerator = (records, num) => {
+    return records.map((record) => {
+      if (typeof record[num] === "undefined") {
+        return null
+      }
+      return record[num];
+    })
+  }
+
+
+  const dataGenerator = (colGen, data) => {
+    let dataMatrix = [];
+    let records = data.records;
+    for (i=0;i<records[0].length;i++) {
+      let column = colGen(records, i);
+      dataMatrix.push(column);
+    }
+    return dataMatrix;
+  }
+
+
+
+  $.ajax('/data', {
+    success: (retData, status, req) => {
+      var chart = c3.generate({
+        chart: {
+          size: {
+            height: 480,
+            width: 480,
+          },
+        },
+        data: {
+          hide: true,
+          x: 'time',
+          columns: [
+            ['time'].concat(retData[0].timestamps.slice(1)),
+          ].concat(dataGenerator(columnGenerator, retData[0]))
+        },
+        axis: {
+          x: {
+             type: 'timestamp',
+             tick: {
+               count: 5
+             },
+             format: (d) => {
+               return new Date(d*1000).toLocaleTimeString(); 
+             }
+          }
+        }
+      });
+    }, 
+    error: (req, errType, excep) => {
+    },
+  })
+/**
 var chart = c3.generate({
     data: {
         x: 'x',
@@ -104,6 +158,15 @@ var chart = c3.generate({
              }
         }
     }
+});
+$('.targ2').on('click', function() {
+  $.ajax('/data', {
+    complete: (req, res) => {
+      console.log('this is the result of hitting the server');
+      console.log(JSON.parse(req.responseText));
+      console.log(res); 
+    }
+  })
 });
 
 $('.targ1').on('click', function() {
@@ -146,17 +209,27 @@ $('.targ2').on('click', function() {
 });
 
 $('.targ3').on('click', function() {
-setTimeout(function () {
-  chart.load({
-    columns: [
-      ['data3', 40, 50, 45, 70, 60, 50]
-    ]
-  });
-}, 250);
+  setTimeout(function () {
+    chart.load({
+      columns: [
+        ['data3', 40, 50, 45, 70, 60, 50]
+      ]
+    });
+  }, 250);
 });
-
-
-
+for (i=0;i<10;i++) {
+  if (i % 2 === 0) {
+    $('.targ' + i).on('click', function() {
+      console.log('evenssss');
+    });
+  }
+  else {
+    $('.targ' + i).on('click', function() {
+      console.log('oddsssss');
+    });
+  }
+};
+*/
 
 
 </script>
@@ -164,8 +237,11 @@ setTimeout(function () {
 </body>
 </html>
 `
-   res.end(send);
+  return res.end(send);
 });
+
+
+
 
 server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
