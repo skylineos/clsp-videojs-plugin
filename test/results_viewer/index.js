@@ -9,9 +9,12 @@ const parse = require('csv-parse');
 const hostname = '127.0.0.1';
 const port = 3000;
 
-async function generateResults (directory) {
+async function generateResults (directory, index) {
   let csvFileNames = fs.readdirSync(directory).filter((fileName) => fileName.endsWith('.csv'));
-  csvFileNames = [csvFileNames[0]];
+  if (csvFileNames[index] === null) {
+    throw new Error('No one here by that name');
+  }
+  csvFileNames = [csvFileNames[index]];
 
   const results = await Promise.all(csvFileNames.map((fileName) => {
     return new Promise((resolve, reject) => {
@@ -56,12 +59,13 @@ async function generateResults (directory) {
 
 const server = http.createServer(async (req, res) => {
 
-if (req.url == "/data") {
- res.statusCode = 200;
+if (req.url.slice(0,6) == "/data/") {
+    const index = req.url.slice(6)
+    res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Access-Control-Allow-Origin', '*');
     const csvDirectory = path.join(__dirname, '..', 'soak');
-    const results = await generateResults(csvDirectory);
+    const results = await generateResults(csvDirectory, index);
     return res.end(JSON.stringify(results));
 }
 
@@ -70,20 +74,35 @@ if (req.url == "/data") {
     res.setHeader('Access-Control-Allow-Origin', '*');
     const csvDirectory = path.join(__dirname, '..', 'soak');
     const send = `
-                                    <!DOCTYPE html>
-                     <html>
+                       <!DOCTYPE html>
+                     <html style="height: 100%">
 
 <header>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.css" rel="stylesheet" />
 
 </header>
 
-<body>
-<div id="chart" class="c3" style="height: 100%;"></div>
+<body style="height: 100%">
+<div id="chart" class="c3" style="height: 100%;, min-height: 100% !important"></div>
+
+<select id="selector">
+  <option onclick="switchData(0)" value="0" selected>0</option>
+  <option onclick="switchData(1)" value="1">1</option>
+  <option onclick="switchData(2)" value="2">2</option>
+  <option onclick="switchData(3)" value="3">3</option>
+  <option onclick="switchData(4)" value="4">4</option>
+  <option onclick="switchData(5)" value="5">5</option>
+</select>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <script>
+
+  function switchData(index) {
+
+  }
+
   let dataObj
 
   const columnGenerator = (records, num) => {
@@ -94,7 +113,6 @@ if (req.url == "/data") {
       return record[num];
     })
   }
-
 
   const dataGenerator = (colGen, data) => {
     let dataMatrix = [];
@@ -108,14 +126,11 @@ if (req.url == "/data") {
 
 
 
-  $.ajax('/data', {
+  $.ajax('/data/0', {
     success: (retData, status, req) => {
       var chart = c3.generate({
-        chart: {
-          size: {
-            height: 480,
-            width: 480,
-          },
+        padding: {
+          bottom: 30,
         },
         data: {
           hide: true,
@@ -126,13 +141,17 @@ if (req.url == "/data") {
         },
         axis: {
           x: {
-             type: 'timestamp',
+             type: 'timeseries',
              tick: {
-               count: 5
+               count: 5,
+               format: (d) => {
+                 let day = new Date(d*1000);
+                 return day.toDateString() + " " +
+                 day.getHours() + " : " +
+                 day.getMinutes() + " : " +
+                 day.getSeconds();
+               }
              },
-             format: (d) => {
-               return new Date(d*1000).toLocaleTimeString(); 
-             }
           }
         }
       });
@@ -140,97 +159,6 @@ if (req.url == "/data") {
     error: (req, errType, excep) => {
     },
   })
-/**
-var chart = c3.generate({
-    data: {
-        x: 'x',
-        columns: [
-            ['x', '2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04', '2013-01-05', '2013-01-06'],
-            ['data1', 30, 200, 100, 400, 150, 250],
-            ['data2', 130, 340, 200, 500, 250, 350]
-        ]
-    },
-    axis: {
-        x: {
-             type: 'category',
-             tick: {
-               count: 5
-             }
-        }
-    }
-});
-$('.targ2').on('click', function() {
-  $.ajax('/data', {
-    complete: (req, res) => {
-      console.log('this is the result of hitting the server');
-      console.log(JSON.parse(req.responseText));
-      console.log(res); 
-    }
-  })
-});
-
-$('.targ1').on('click', function() {
-  setTimeout(function () {
-    let columnData3 = ['data3']
-      for (i=0;i<1000;i++) {
-        columnData3.push(i+1);
-      }
-      let columnData2 = ['data2']
-      for (i=0;i<1000;i = i+3) {
-        columnData2.push(i+1);
-      }
-      let columnData1 = ['data1']
-      for (i=0;i<1000;i = i+2) {
-        columnData1.push(i+1);
-      }
-      let timeSeries = ['x']
-      for (i=0;i<1000;i++) {
-        timeSeries.push(i+1);
-      }
-      chart.load({
-        columns: [
-          timeSeries,
-          columnData1,
-          columnData2,
-          columnData3,
-        ]
-    });
-  }, 250);
-});
-
-$('.targ2').on('click', function() {
-  setTimeout(function () {
-    chart.load({
-      columns: [
-        ['data3', 800, 900, 1000, 1700, 1600, 1500]
-      ]
-    });
-  }, 250);
-});
-
-$('.targ3').on('click', function() {
-  setTimeout(function () {
-    chart.load({
-      columns: [
-        ['data3', 40, 50, 45, 70, 60, 50]
-      ]
-    });
-  }, 250);
-});
-for (i=0;i<10;i++) {
-  if (i % 2 === 0) {
-    $('.targ' + i).on('click', function() {
-      console.log('evenssss');
-    });
-  }
-  else {
-    $('.targ' + i).on('click', function() {
-      console.log('oddsssss');
-    });
-  }
-};
-*/
-
 
 </script>
 
