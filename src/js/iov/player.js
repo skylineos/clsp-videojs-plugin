@@ -277,6 +277,7 @@ export default class IOVPlayer {
 
             if (!this.firstFrameShown) {
               this.firstFrameShown = true;
+              this.playerInstance.trigger('firstFrameShown');
               this.trigger('firstFrameShown');
             }
 
