@@ -74,7 +74,7 @@ export default class MSEWrapper {
       bufferTruncateValue: null,
       driftThreshold: 2000,
       duration: 10,
-      enableMetrics: true,
+      enableMetrics: false,
     });
 
     this.segmentQueue = [];
@@ -369,7 +369,7 @@ export default class MSEWrapper {
   processNextInQueue () {
     silly('processNextInQueue');
 
-    if (document.visibilityState === 'hidden') {
+    if (document.hidden) {
       debug('Tab not in focus - dropping frame...');
       this.metric('frameDrop.hiddenTab', 1);
       this.metric('queue.cannotProcessNext', 1);
@@ -595,11 +595,10 @@ export default class MSEWrapper {
     // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
     // }
 
-    if (this.isMediaSourceReady()) {
+    if (this.isMediaSourceReady() && this.isSourceBufferReady()) {
       this.mediaSource.endOfStream();
+      this.mediaSource.removeSourceBuffer(this.sourceBuffer);
     }
-
-    this.mediaSource.removeSourceBuffer(this.sourceBuffer);
 
     // @todo - is this happening at the right time, or should it happen
     // prior to removing the source buffers?

@@ -2,19 +2,19 @@
 
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const WriteFilePlugin = require('write-file-webpack-plugin');
 
 const packageJson = require('./package.json');
 
 const pluginName = packageJson.name;
 const conduitName = 'clspConduit.generated';
-const demoName = 'demo';
 
 const extractSass = new ExtractTextPlugin({
   filename: '[name].css',
   disable: process.env.NODE_ENV === 'development',
 });
 
-module.exports = [
+module.exports = () => [
   {
     mode: 'development',
     devtool: 'source-map',
@@ -89,10 +89,10 @@ module.exports = [
   {
     mode: 'development',
     devtool: 'source-map',
-    name: demoName,
+    name: 'demo',
     entry: {
       // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
-      [demoName]: [`./demo/src/js/${demoName}.js`],
+      demo: [path.resolve(__dirname, 'demo', 'src', 'js', 'demo.js')],
     },
     output: {
       filename: '[name].js',
@@ -128,8 +128,16 @@ module.exports = [
         },
       ],
     },
+    resolve: {
+      alias: {
+        '~': path.resolve(__dirname, 'src', 'js'),
+        '~styles': path.resolve(__dirname, 'src', 'styles'),
+        '~root': __dirname,
+      },
+    },
     plugins: [
       extractSass,
+      new WriteFilePlugin(),
     ],
   },
 ];

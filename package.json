@@ -1,19 +1,19 @@
 {
   "name": "videojs-mse-over-clsp",
-  "version": "0.13.4",
+  "version": "0.13.5-2",
   "description": "Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ",
   "main": "dist/videojs-mse-over-clsp.js",
   "generator-videojs-plugin": {
     "version": "5.0.0"
   },
   "scripts": {
-    "build": "gulp build",
+    "build": "./scripts/build.sh",
+    "serve": "./scripts/serve.sh",
     "lint": "eslint ./ --cache --quiet --ext .jsx --ext .js",
     "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
+    "preversion": "./scripts/version.sh --pre",
     "version": "./scripts/version.sh",
-    "postversion": "git push && git push --tags",
-    "serve": "./scripts/serve.js",
-    "serve-watch": "npm run build && npm run serve"
+    "postversion": "./scripts/version.sh --post"
   },
   "keywords": [
     "videojs",
@@ -24,8 +24,6 @@
   "dependencies": {
     "debug": "^3.1.0",
     "lodash": "^4.17.10",
-    "moment": "^2.22.2",
-    "node-sass": "^4.9.1",
     "paho-mqtt": "^1.0.4",
     "videojs-errors": "^4.1.1"
   },
@@ -42,9 +40,10 @@
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "gulp": "^3.9.1",
     "gulp-load-plugins": "^1.5.0",
-    "gulp-rm": "^1.0.5",
     "jquery": "^3.3.1",
+    "moment": "^2.22.2",
     "js-string-escape": "^1.0.1",
+    "node-sass": "^4.9.1",
     "pre-commit": "^1.2.2",
     "run-sequence": "^2.2.0",
     "sass-loader": "^7.0.3",
@@ -55,6 +54,7 @@
     "url-loader": "^1.0.1",
     "video.js": "6.7.1",
     "webpack": "^4.15.1",
-    "webpack-serve": "^2.0.2"
+    "webpack-serve": "^2.0.2",
+    "write-file-webpack-plugin": "^4.3.2"
   }
 }
