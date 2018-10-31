@@ -475,6 +475,10 @@ export default class IOVPlayer {
   }
 
   onVisibilityChange = () => {
+    // @todo - the timeout value will be created every time this function is
+    // executed, which means that if you switch tabs and come back faster than
+    // one second, the timeout from the tab switch will never be cleared (because
+    // it is no longer in scope), and the video will be stopped and never re-played
     let timeout;
 
     if (document.hidden) {
