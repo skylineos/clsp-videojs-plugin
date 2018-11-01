@@ -78,6 +78,18 @@ jupyter nbconvert --to html [path to notebook file]
 ```
 This will dump out an html file with the report in it.
 
+Notes:
+* To open up the notebook in order to work on it, first navigate to the directory, then run
+```
+jupyter notebook
+```
+this will start the notebook server, after that paste in the url the server provides and open it up in your browser, click on the notebook.
+
+* If you decide to add new cells to the report you may need to install more python packages depending on what your doing. To do this you will most likely need to run
+```
+conda install [package name]
+```
+if you do this, be sure to add the new package to the install instructions.
 
 ## References
 
