@@ -2887,7 +2887,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.5","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","jquery":"^3.3.1","moment":"^2.22.2","js-string-escape":"^1.0.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.5","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","n":"^2.1.12","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -3437,6 +3437,149 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
     return ClspPlugin;
   }(Plugin), _class.VERSION = _utils__WEBPACK_IMPORTED_MODULE_4__["default"].version, _class.utils = _utils__WEBPACK_IMPORTED_MODULE_4__["default"], _class.METRIC_TYPES = ['videojs.errorRetriesCount'], _temp;
 });
+
+/***/ }),
+
+/***/ "./src/js/clspWebcam.js":
+/*!******************************!*\
+  !*** ./src/js/clspWebcam.js ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+Use the MediaRecorder object to publish h264 video to the SFS so that it can be
+broadcasted out to wowza and thus any customer using the SFS.
+
+Given: The user has an apiKey that allows them to publish, right now
+       this parameter is not checked
+
+*/
+
+var ClspWebcam = function () {
+    function ClspWebcam(conf) {
+        _classCallCheck(this, ClspWebcam);
+
+        this.video = document.getElementById(conf.video_eid);
+        this.apiKey = conf.apiKey;
+        this.streamName = conf.streamName;
+        this.sfsIp = conf.sfsIpAddr;
+        this.isSupported = false;
+        this.streaming = false;
+        this.mime = "video/webm;codecs=h264"; // most common supported codec
+
+        window.StreamName = conf.streamName;
+
+        // browser check 
+        try {
+            navigator.getMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || null;
+        } catch (e) {
+            navigator.getMedia = null;
+        }
+
+        if (navigator.getMedia === null) {
+            console.log("getMedia not supported");
+        } else if (typeof window.MediaRecorder === 'undefined') {
+            console.log("MediaRecorder not supported");
+        } else if (!MediaRecorder.isTypeSupported(this.mime)) {
+            console.log("Mime type " + this.mime + " not supported");
+        } else {
+            this.isSupported = true;
+        }
+
+        this._on_getMedia_success = this._on_getMedia_success.bind(this);
+        this.play = this.play.bind(this);
+    }
+
+    _createClass(ClspWebcam, [{
+        key: "_on_getMedia_success",
+        value: function _on_getMedia_success(mediaStream) {
+
+            console.log("_on_getMedia_success");
+
+            if (typeof this.video.srcObject !== 'undefined') {
+                this.video.srcObject = mediaStream;
+            } else {
+                // depricated as of July 2018
+                this.video.src = window.URL.createObjectURL(mediaStream);
+            }
+
+            this.mediaRecorder = new MediaRecorder(mediaStream, { mimeType: this.mime });
+
+            var fileReader = new FileReader();
+            var utf8Enc = new TextEncoder('utf-8');
+            var streaming = false;
+
+            fileReader.onload = function (x) {
+                var packet = this.result;
+                console.log(packet);
+
+                var mqtt_msg = new Paho.MQTT.Message(packet);
+
+                mqtt_msg.destinationName = "webcam/" + window.StreamName;
+                console.log("sending data to " + mqtt_msg.destinationName);
+                MQTTClient.send(mqtt_msg);
+            };
+
+            this.mediaRecorder.ondataavailable = function (e) {
+                console.log("ondataavailable");
+                // route to mqtt 
+                if (fileReader.readyState !== fileReader.LOADING) {
+                    fileReader.readAsArrayBuffer(e.data);
+                }
+            };
+
+            console.log("this.mediaRecorder");
+            this.mediaRecorder.start(500);
+            this.video.play();
+        }
+    }, {
+        key: "play",
+        value: function play() {
+            if (this.isSupported === false) {
+                throw new "Media Recorder not supported!"();
+            }
+
+            function fake_guid() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                    var r = Math.random() * 16 | 0,
+                        v = c == 'x' ? r : r & 0x3 | 0x8;
+                    return v.toString(16);
+                });
+            }
+            window.MQTTClient = new Paho.MQTT.Client(this.sfsIp, 9001, fake_guid());
+            window.MQTTClient.onConnectionLost = function (e) {
+                console.log("connected lost");
+            };
+            var mqtt_opts = {
+                timeout: 3,
+                useSSL: false,
+                onSuccess: function onSuccess() {
+                    navigator.getMedia(
+                    // constraints
+                    { video: true, audio: true },
+
+                    // success callback
+                    this._on_getMedia_success, function (err) {
+                        console.log(err);
+                    });
+                },
+                onFailure: function onFailure(err) {
+                    console.log(err);
+                }
+            };
+            window.MQTTClient.connect(mqtt_opts);
+        }
+    }]);
+
+    return ClspWebcam;
+}();
+
+window.videojs.clspWebcam = ClspWebcam;
 
 /***/ }),
 
@@ -5564,8 +5707,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./conduit/clspConduit.generated.js */ "./src/js/conduit/clspConduit.generated.js");
 /* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MseOverMqttPlugin */ "./src/js/MseOverMqttPlugin.js");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _clspWebcam__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./clspWebcam */ "./src/js/clspWebcam.js");
+/* harmony import */ var _clspWebcam__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_clspWebcam__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_4__);
+
 
 
 

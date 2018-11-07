@@ -109,6 +109,42 @@
 
       <div id="tourwall"></div>
     </section>
+
+    <div style="color: white;">
+     <hr> 
+     <h3>Webcam publishing</h3> 
+     
+     <table>
+      <tr>
+       <td>
+         <div id="webcam-status"></div>
+       </td> 
+      </tr>          
+
+      <tr>
+       <td>
+        <!-- web cam configuration -->
+        <table>
+         <tr><td>SFS IP:</td><td><input id="webcam-sfsip"></td></tr>
+         <tr><td>apiKey:</td><td><input id="webcam-apiKey" value="public"></td></tr>
+         <tr><td>Name  :</td><td><input id="webcam-name"></td></tr>
+        </table>
+
+       </td>  
+      </tr>
+
+      <tr>
+       <td>
+        <video controls id="webcam-preview" width="352" height="240"></video>
+       </td>
+      </tr>
+
+      <tr>   
+        <button id="webcam-stop">Stop</button>
+        <button id="webcam-play">Play</button>
+      </tr>  
+
+     </table> 
   </div>
 
   <template id="wall-video-template">
@@ -142,6 +178,9 @@
     </div>
   </template>
 
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.min.js"></script>
+  
   <script src="../dist/videojs-mse-over-clsp.js"></script>
 </body>
 </html>

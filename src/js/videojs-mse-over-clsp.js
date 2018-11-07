@@ -4,6 +4,7 @@ import 'srcdoc-polyfill';
 import './conduit/clspConduit.generated.js';
 
 import MseOverMqttPlugin from './MseOverMqttPlugin';
+import './clspWebcam';
 import '../styles/videojs-mse-over-clsp.scss';
 
 // @todo - do not initialize the plugin by default, since that is a side

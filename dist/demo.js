@@ -528,6 +528,54 @@ function initializeTour() {
   });
 }
 
+function initializeWebcam() {
+  var webcam = null;
+  setInterval(function () {
+    var eid = '#webcam-status';
+    if (webcam !== null) {
+      if (webcam.state === 'playing') {
+        jquery__WEBPACK_IMPORTED_MODULE_2___default()(eid).html('<div style="color:green;">' + webcam.state + ' kbps: ' + parseFloat(webcam.kbps) + '</div>');
+      } else {
+        jquery__WEBPACK_IMPORTED_MODULE_2___default()(eid).html(webcam.state);
+      }
+    }
+  }, 2000);
+
+  jquery__WEBPACK_IMPORTED_MODULE_2___default()('#webcam-play').click(function () {
+
+    var ip = jquery__WEBPACK_IMPORTED_MODULE_2___default()('#webcam-sfsip').val();
+    var sn = jquery__WEBPACK_IMPORTED_MODULE_2___default()('#webcam-name').val();
+
+    if (ip.length === 0) {
+      alert("Ip address is blank");
+      return;
+    }
+
+    if (sn.length === 0) {
+      alert("stream name is blank");
+      return;
+    }
+
+    webcam = new video_js__WEBPACK_IMPORTED_MODULE_3___default.a.clspWebcam({
+      video_eid: "webcam-preview",
+      apiKey: jquery__WEBPACK_IMPORTED_MODULE_2___default()('#webcam-apiKey').val(),
+      sfsIpAddr: ip,
+      streamName: sn
+    });
+
+    if (webcam.isSupported === true) {
+      console.log("playing webcam");
+      webcam.play();
+    }
+  });
+
+  jquery__WEBPACK_IMPORTED_MODULE_2___default()('#webcam-stop').click(function () {
+    if (webcam !== null) {
+      webcam.stop();
+    }
+  });
+}
+
 jquery__WEBPACK_IMPORTED_MODULE_2___default()(function () {
   var pageTitle = 'CLSP ' + window.CLSP_DEMO_VERSION + ' Demo Page';
   document.title = pageTitle;
@@ -537,6 +585,7 @@ jquery__WEBPACK_IMPORTED_MODULE_2___default()(function () {
 
   initializeWall();
   initializeTour();
+  initializeWebcam();
 });
 
 /***/ }),
@@ -61427,7 +61476,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var aes_decrypter__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! aes-decrypter */ "./node_modules/aes-decrypter/dist/aes-decrypter.es.js");
 var _typeof2=typeof Symbol==="function"&&typeof Symbol.iterator==="symbol"?function(obj){return typeof obj;}:function(obj){return obj&&typeof Symbol==="function"&&obj.constructor===Symbol&&obj!==Symbol.prototype?"symbol":typeof obj;};/**
  * @license
- * Video.js 7.2.3 <http://videojs.com/>
+ * Video.js 7.2.4 <http://videojs.com/>
  * Copyright Brightcove, Inc. <https://www.brightcove.com/>
  * Available under Apache License Version 2.0
  * <https://github.com/videojs/video.js/blob/master/LICENSE>
@@ -61435,7 +61484,7 @@ var _typeof2=typeof Symbol==="function"&&typeof Symbol.iterator==="symbol"?funct
  * Includes vtt.js <https://github.com/mozilla/vtt.js>
  * Available under Apache License Version 2.0
  * <https://github.com/mozilla/vtt.js/blob/master/LICENSE>
- */var version="7.2.3";/**
+ */var version="7.2.4";/**
  * @file log.js
  * @module log
  */var log=void 0;// This is the private tracking variable for logging level.
@@ -64434,7 +64483,7 @@ this.activeCues=this.activeCues;if(changed){this.trigger('cuechange');changed=fa
        * @instance
        *
        * @fires TextTrack#modechange
-       */mode:{get:function get$$1(){return mode;},set:function set$$1(newMode){var _this2=this;if(!TextTrackMode[newMode]){return;}mode=newMode;if(mode==='showing'){this.tech_.ready(function(){_this2.tech_.on('timeupdate',timeupdateHandler);},true);}/**
+       */mode:{get:function get$$1(){return mode;},set:function set$$1(newMode){var _this2=this;if(!TextTrackMode[newMode]){return;}mode=newMode;if(mode!=='disabled'){this.tech_.ready(function(){_this2.tech_.on('timeupdate',timeupdateHandler);},true);}else{this.tech_.off('timeupdate',timeupdateHandler);}/**
            * An event that fires when mode changes on this track. This allows
            * the TextTrackList that holds this track to act accordingly.
            *
@@ -65531,11 +65580,11 @@ return;}}/**
    *
    * @param {Component~ReadyCallback} [ready]
    *        The function to call when `TextTrackDisplay` is ready.
-   */function TextTrackDisplay(player,options,ready){classCallCheck(this,TextTrackDisplay);var _this=possibleConstructorReturn(this,_Component.call(this,player,options,ready));player.on('loadstart',bind(_this,_this.toggleDisplay));player.on('texttrackchange',bind(_this,_this.updateDisplay));player.on('loadstart',bind(_this,_this.preselectTrack));// This used to be called during player init, but was causing an error
+   */function TextTrackDisplay(player,options,ready){classCallCheck(this,TextTrackDisplay);var _this=possibleConstructorReturn(this,_Component.call(this,player,options,ready));var updateDisplayHandler=bind(_this,_this.updateDisplay);player.on('loadstart',bind(_this,_this.toggleDisplay));player.on('texttrackchange',updateDisplayHandler);player.on('loadstart',bind(_this,_this.preselectTrack));// This used to be called during player init, but was causing an error
 // if a track should show by default and the display hadn't loaded yet.
 // Should probably be moved to an external track loader when we support
 // tracks that don't need a display.
-player.ready(bind(_this,function(){if(player.tech_&&player.tech_.featuresNativeTextTracks){this.hide();return;}player.on('fullscreenchange',bind(this,this.updateDisplay));var tracks=this.options_.playerOptions.tracks||[];for(var i=0;i<tracks.length;i++){this.player_.addRemoteTextTrack(tracks[i],true);}this.preselectTrack();}));return _this;}/**
+player.ready(bind(_this,function(){if(player.tech_&&player.tech_.featuresNativeTextTracks){this.hide();return;}player.on('fullscreenchange',updateDisplayHandler);player.on('playerresize',updateDisplayHandler);global_window__WEBPACK_IMPORTED_MODULE_0___default.a.addEventListener('orientationchange',updateDisplayHandler);player.on('dispose',function(){return global_window__WEBPACK_IMPORTED_MODULE_0___default.a.removeEventListener('orientationchange',updateDisplayHandler);});var tracks=this.options_.playerOptions.tracks||[];for(var i=0;i<tracks.length;i++){this.player_.addRemoteTextTrack(tracks[i],true);}this.preselectTrack();}));return _this;}/**
   * Preselect a track following this precedence:
   * - matches the previously selected {@link TextTrack}'s language and kind
   * - matches the previously selected {@link TextTrack}'s language only
@@ -71455,7 +71504,7 @@ Object.keys(Player.players).map(function(k){return Player.players[k];}).filter(B
  * and Tech's
  */videojs$1.url=Url;/**
  * @videojs/http-streaming
- * @version 1.2.5
+ * @version 1.2.6
  * @copyright 2018 Brightcove, Inc
  * @license Apache-2.0
  *//**
@@ -75606,13 +75655,15 @@ _this3.tech_.trigger({type:'hls-segment-time-mapping',mapping:event.mapping});})
      * playlist quickly. This is good for manual quality changes
      *
      * @private
-     */},{key:'fastQualityChange_',value:function fastQualityChange_(){var _this4=this;var media=this.selectPlaylist();if(media===this.masterPlaylistLoader_.media()){return;}this.masterPlaylistLoader_.media(media);// delete all buffered data to allow an immediate quality switch, then seek
-// in place to give the browser a kick to remove any cached frames from the
-// previous rendition
-this.mainSegmentLoader_.resetEverything(function(){// Since this is not a typical seek, we avoid the seekTo method which can cause
-// segments from the previously enabled rendition to load before the new playlist
-// has finished loading
-_this4.tech_.setCurrentTime(_this4.tech_.currentTime());});// don't need to reset audio as it is reset when media changes
+     */},{key:'fastQualityChange_',value:function fastQualityChange_(){var _this4=this;var media=this.selectPlaylist();if(media===this.masterPlaylistLoader_.media()){return;}this.masterPlaylistLoader_.media(media);// Delete all buffered data to allow an immediate quality switch, then seek to give
+// the browser a kick to remove any cached frames from the previous rendtion (.04 seconds
+// ahead is roughly the minimum that will accomplish this across a variety of content
+// in IE and Edge, but seeking in place is sufficient on all other browsers)
+// Edge/IE bug: https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/14600375/
+// Chrome bug: https://bugs.chromium.org/p/chromium/issues/detail?id=651904
+this.mainSegmentLoader_.resetEverything(function(){// Since this is not a typical seek, we avoid the seekTo method which can cause segments
+// from the previously enabled rendition to load before the new playlist has finished loading
+if(videojs$1.browser.IE_VERSION||videojs$1.browser.IS_EDGE){_this4.tech_.setCurrentTime(_this4.tech_.currentTime()+0.04);}else{_this4.tech_.setCurrentTime(_this4.tech_.currentTime());}});// don't need to reset audio as it is reset when media changes
 }/**
      * Begin playback.
      */},{key:'play',value:function play(){if(this.setupFirstPlay()){return;}if(this.tech_.ended()){this.seekTo_(0);}if(this.hasPlayed_()){this.load();}var seekable$$1=this.tech_.seekable();// if the viewer has paused and we fell out of the live window,
@@ -75954,7 +76005,7 @@ player.reloadSourceOnError=reinitPlugin;};/**
  * wasn't an error previously within the last 30 seconds
  *
  * @param {Object} [options] an object with plugin options
- */var reloadSourceOnError=function reloadSourceOnError(options){initPlugin(this,options);};var version$1="1.2.5";// since VHS handles HLS and DASH (and in the future, more types), use * to capture all
+ */var reloadSourceOnError=function reloadSourceOnError(options){initPlugin(this,options);};var version$1="1.2.6";// since VHS handles HLS and DASH (and in the future, more types), use * to capture all
 videojs$1.use('*',function(player){return{setSource:function setSource(srcObj,next){// pass null as the first argument to indicate that the source is not rejected
 next(null,srcObj);},// VHS needs to know when seeks happen. For external seeks (generated at the player
 // level), this middleware will capture the action. For internal seeks (generated at
@@ -78203,7 +78254,7 @@ function extend() {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.5","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","jquery":"^3.3.1","moment":"^2.22.2","js-string-escape":"^1.0.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.5","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","n":"^2.1.12","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.9.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -78214,7 +78265,7 @@ module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.5","description
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! /home/user/vagrant/clsp/clsp-videojs-plugin/demo/src/js/demo.js */"./demo/src/js/demo.js");
+module.exports = __webpack_require__(/*! /home/skyline/proj/clsp-videojs-plugin/demo/src/js/demo.js */"./demo/src/js/demo.js");
 
 
 /***/ }),

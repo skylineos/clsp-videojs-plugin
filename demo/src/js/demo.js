@@ -438,6 +438,59 @@ function initializeTour () {
   });
 }
 
+
+
+function initializeWebcam() {
+   var webcam = null;
+   setInterval(function(){
+       var eid = '#webcam-status';
+       if (webcam !== null) {
+           if (webcam.state === 'playing') {
+              $(eid).html('<div style="color:green;">'+webcam.state+' kbps: '+parseFloat(webcam.kbps)+'</div>'); 
+           } else {
+              $(eid).html(webcam.state);
+           }   
+       }  
+   }, 2000); 
+
+   $('#webcam-play').click(function(){
+
+        var ip = $('#webcam-sfsip').val();  
+        var sn = $('#webcam-name').val();
+
+        if (ip.length === 0) {
+            alert("Ip address is blank");
+            return;
+        } 
+        
+        if (sn.length === 0) {
+            alert("stream name is blank");
+            return;
+        } 
+
+        webcam = new videojs.clspWebcam({
+            video_eid: "webcam-preview",
+            apiKey: $('#webcam-apiKey').val(),
+            sfsIpAddr: ip,
+            streamName: sn,
+        });
+
+        if (webcam.isSupported === true) {
+            console.log("playing webcam");
+            webcam.play();
+        } 
+        
+   });
+
+   $('#webcam-stop').click(function(){
+       if (webcam !== null) {
+           webcam.stop();
+       }   
+   });
+}
+
+
+
 $(() => {
   const pageTitle = `CLSP ${window.CLSP_DEMO_VERSION} Demo Page`;
   document.title = pageTitle;
@@ -447,4 +500,5 @@ $(() => {
 
   initializeWall();
   initializeTour();
+  initializeWebcam()
 });
