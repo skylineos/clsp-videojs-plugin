@@ -534,9 +534,9 @@ function initializeWebcam() {
     var eid = '#webcam-status';
     if (webcam !== null) {
       if (webcam.state === 'playing') {
-        jquery__WEBPACK_IMPORTED_MODULE_2___default()(eid).html('<div style="color:green;">' + webcam.state + ' kbps: ' + parseFloat(webcam.kbps) + '</div>');
+        jquery__WEBPACK_IMPORTED_MODULE_2___default()(eid).html('Status: <div style="color:green;">' + webcam.state + ' kbps: ' + parseFloat(webcam.kbps) + '</div>');
       } else {
-        jquery__WEBPACK_IMPORTED_MODULE_2___default()(eid).html(webcam.state);
+        jquery__WEBPACK_IMPORTED_MODULE_2___default()(eid).html('Status: ' + webcam.state);
       }
     }
   }, 2000);

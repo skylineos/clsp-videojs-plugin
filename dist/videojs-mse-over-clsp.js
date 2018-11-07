@@ -3468,9 +3468,17 @@ var ClspWebcam = function () {
         this.apiKey = conf.apiKey;
         this.streamName = conf.streamName;
         this.sfsIp = conf.sfsIpAddr;
+        this.mqttPort = 9001;
         this.isSupported = false;
         this.streaming = false;
+        this.reconnect = -1;
         this.mime = "video/webm;codecs=h264"; // most common supported codec
+        this.state = "idle";
+        this.mediaRecorder = null;
+        this.kbps = 0;
+        this.bytecount = 0;
+        this.statTimer = -1;
+        this.statTimerInterval = 2000;
 
         window.StreamName = conf.streamName;
 
@@ -3498,8 +3506,20 @@ var ClspWebcam = function () {
     _createClass(ClspWebcam, [{
         key: "_on_getMedia_success",
         value: function _on_getMedia_success(mediaStream) {
+            var webcam = this;
 
-            console.log("_on_getMedia_success");
+            if (webcam.statTimer === -1) {
+                webcam.statTimer = setInterval(function () {
+                    //Note: time interval in milliseconds 
+                    webcam.kbps = 8 * webcam.bytecount / webcam.statTimerInterval;
+                    webcam.bytecount = 0;
+                    //console.log(webcam.streamName + " kbps: " + parseFloat(webcam.kbps));
+                }, webcam.statTimerInterval);
+            }
+
+            console.log("now playing");
+            this.state = 'playing';
+            this.bytecount = 0;
 
             if (typeof this.video.srcObject !== 'undefined') {
                 this.video.srcObject = mediaStream;
@@ -3516,17 +3536,17 @@ var ClspWebcam = function () {
 
             fileReader.onload = function (x) {
                 var packet = this.result;
-                console.log(packet);
-
                 var mqtt_msg = new Paho.MQTT.Message(packet);
 
+                webcam.bytecount += mqtt_msg.payloadBytes.byteLength;
                 mqtt_msg.destinationName = "webcam/" + window.StreamName;
-                console.log("sending data to " + mqtt_msg.destinationName);
+                //console.log("sending data to " +  mqtt_msg.destinationName);
                 MQTTClient.send(mqtt_msg);
             };
 
             this.mediaRecorder.ondataavailable = function (e) {
-                console.log("ondataavailable");
+                //console.log("ondataavailable"); 
+
                 // route to mqtt 
                 if (fileReader.readyState !== fileReader.LOADING) {
                     fileReader.readAsArrayBuffer(e.data);
@@ -3538,10 +3558,46 @@ var ClspWebcam = function () {
             this.video.play();
         }
     }, {
+        key: "stop",
+        value: function stop() {
+            if (this.state === 'playing') {
+                if (this.mediaRecorder !== null) {
+                    this.mediaRecorder.stop();
+                    this.mediaRecorder = null;
+                }
+                if (this.statTimer === -1) {
+                    clearInterval(this.statTimer);
+                    this.bytecount = 0;
+                }
+                this.state = 'stopped';
+            }
+        }
+    }, {
         key: "play",
         value: function play() {
+            var _this = this;
+
+            if (this.state === 'playing') {
+                console.log("Ignore play, we are already playing camcorder");
+                return;
+            }
+
             if (this.isSupported === false) {
                 throw new "Media Recorder not supported!"();
+            }
+
+            if (typeof window.MQTTClient !== 'undefined') {
+
+                // already connected to MQTT, go directly to accessing camera
+                navigator.getMedia(
+                // constraints
+                { video: true, audio: true },
+
+                // success callback
+                this._on_getMedia_success, function (err) {
+                    console.log(err);
+                });
+                return;
             }
 
             function fake_guid() {
@@ -3551,20 +3607,27 @@ var ClspWebcam = function () {
                     return v.toString(16);
                 });
             }
-            window.MQTTClient = new Paho.MQTT.Client(this.sfsIp, 9001, fake_guid());
-            window.MQTTClient.onConnectionLost = function (e) {
-                console.log("connected lost");
-            };
+            window.MQTTClient = new Paho.MQTT.Client(this.sfsIp, this.mqttPort, fake_guid());
+
             var mqtt_opts = {
-                timeout: 3,
+                timeout: 120,
                 useSSL: false,
                 onSuccess: function onSuccess() {
+                    _this.state = 'connected';
+
+                    // if we have reconnected stop connect timer and return
+                    if (_this.reconnect !== -1) {
+                        clearInterval(_this.reconnect);
+                        _this.reconnect = -1;
+                        return;
+                    }
+
                     navigator.getMedia(
                     // constraints
                     { video: true, audio: true },
 
                     // success callback
-                    this._on_getMedia_success, function (err) {
+                    _this._on_getMedia_success, function (err) {
                         console.log(err);
                     });
                 },
@@ -3573,6 +3636,15 @@ var ClspWebcam = function () {
                 }
             };
             window.MQTTClient.connect(mqtt_opts);
+            window.MQTTClient.onConnectionLost = function (e) {
+                if (_this.reconnect === -1) {
+                    _this.state = 'reconnecting';
+                    _this.reconnect = setInterval(function () {
+                        window.MQTTClient.connect(mqtt_opts);
+                    }, 2000);
+                }
+            };
+            this.state = 'connecting';
         }
     }]);
 

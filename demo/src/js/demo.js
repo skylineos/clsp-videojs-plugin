@@ -446,9 +446,9 @@ function initializeWebcam() {
        var eid = '#webcam-status';
        if (webcam !== null) {
            if (webcam.state === 'playing') {
-              $(eid).html('<div style="color:green;">'+webcam.state+' kbps: '+parseFloat(webcam.kbps)+'</div>'); 
+              $(eid).html('Status: <div style="color:green;">'+webcam.state+' kbps: '+parseFloat(webcam.kbps)+'</div>'); 
            } else {
-              $(eid).html(webcam.state);
+              $(eid).html('Status: ' + webcam.state);
            }   
        }  
    }, 2000); 
