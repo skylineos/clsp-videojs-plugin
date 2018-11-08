@@ -8,7 +8,7 @@ const devConfig = require('../webpack.config')();
 
 const host = process.env.hasOwnProperty('HOST')
   ? process.env.HOST
-  : 'localhost';
+  : '0.0.0.0';
 
 const port = process.env.hasOwnProperty('PORT')
   ? parseInt(process.env.PORT, 10)
