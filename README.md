@@ -83,7 +83,7 @@ The generated files will be available in the `dist` directory.
 
 ## Run test server
 
-1. `npm run start-dev`
+1. `npm run serve`
 1. navigate to [http://localhost:9999](http://localhost:9999) in Chrome
 1. add a `clsp` url to any of the inputs, then click submit
 1. click play on the video element (if not using an autoplay player)
@@ -92,7 +92,7 @@ Note that this dev server will NOT re-generate the `clspConduit.generated.js` fi
 If you make changes to this file, you will need to run `npm run build` and then
 restart the dev server to get your changes to be recognized:
 
-`npm run build && npm run start-dev`
+`npm run build && npm run serve`
 
 This is expected to be fixed in an upcoming release.
 

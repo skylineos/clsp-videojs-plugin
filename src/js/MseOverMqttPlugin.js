@@ -189,6 +189,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     mqttHandler.destroy();
 
     this.player.error({
+      // @todo - change the code to 'INSUFFICIENT_RESOURCES'
       code: 0,
       type: 'INSUFFICIENT_RESOURCES',
       headline: 'Insufficient Resources',
