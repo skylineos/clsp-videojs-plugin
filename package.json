@@ -13,7 +13,8 @@
     "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
     "preversion": "./scripts/version.sh --pre",
     "version": "./scripts/version.sh",
-    "postversion": "./scripts/version.sh --post"
+    "postversion": "./scripts/version.sh --post",
+    "monitor": "./test/results_viewer/index.js"
   },
   "keywords": [
     "videojs",

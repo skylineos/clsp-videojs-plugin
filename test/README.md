@@ -34,6 +34,63 @@ See the "Chrome Remote Debugger Address" output when the script runs.  It will t
 
 The monitoring output will be a csv file that gets created in the directory in which the `soak_monitor.bat` script is run.  Each new monitoring output csv file has a timestamp on it.  The output of the running script will tell you which file corresponds to the currently-running monitoring session.
 
+### Data Visualization
+
+Info:
+* For our visualization solution we are using a Jupyter Notebook to parse the data and export it.
+* Installation of Jupyter occurs through Miniconda.
+* Visualiztion tools coming from pandas.
+* Data visualization can be exported to HTML, PDF, Markdown, etc.
+* New visualizations can be added to the report by adding new cells.
+
+Steps:
+1. Go to [Anacondas Website](https://www.anaconda.com/) and determine the most up to date, stable version of miniconda.
+1. Locate the version of Miniconda that you need in their distribution page [here](https://repo.anaconda.com/miniconda/).
+	* As of writing this the correct version to use is Miniconda3-4.5.11-Linux-x86_64.sh.
+1. Navigate to the root of this project.
+1. Run the following commands, interpolating the file name that you located in step two.
+```
+wget -c https://repo.continuum.io/miniconda/[file name here]
+```
+1. Before you run the installer run
+```
+md5sum [file name here]
+```
+and compare the resulting hash with the one from the distro page. If they are different then the file has been tampered with in some way, don't run it.
+1. Run this command to start the installer.
+```
+bash [file name here]
+```
+1. This should drop you in an installer script. Correct responses as follows:
+	1. Script will ask you to review the license, hit enter to review then type `Yes` to accept.
+	1. Hit enter to accept default install location.
+	1. Installer asks whether or not you would like to add the install location to PATH in your .bashrc. Enter `Yes`
+	1. Installation will not take effect until you launch a new bash instance, either close and reopen your terminal or run `bash` to start up a new instance inside the first one.
+1. Run the following commands to install Jupyter, matplotlib, and pandas.
+```
+conda install -c anaconda jupyter
+conda install matplotlib
+conda install pandas
+```
+1. From here you can run your reports with the following command:
+```
+jupyter nbconvert --to html [path to notebook file] 
+```
+This will dump out an html file with the report in it.
+
+Notes:
+* To open up the notebook in order to work on it, first navigate to the directory, then run
+```
+jupyter notebook
+```
+this will start the notebook server, after that paste in the url the server provides and open it up in your browser, click on the notebook.
+
+* If you decide to add new cells to the report you may need to install more python packages depending on what your doing. To do this you will most likely need to run
+```
+conda install [package name]
+```
+if you do this, be sure to add the new package to the install instructions.
+
 ## References
 
 * [https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/typeperf#BKMK_EXAMPLES](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/typeperf#BKMK_EXAMPLES)
