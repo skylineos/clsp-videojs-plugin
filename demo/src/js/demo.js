@@ -445,10 +445,19 @@ function initializeWebcam() {
    setInterval(function(){
        var eid = '#webcam-status';
        if (webcam !== null) {
+           var loc = "";
+
+           if (webcam.location.lat !== null) {
+               loc = ' Location lat='+parseFloat(webcam.location.lat)+
+                              ' lng='+parseFloat(webcam.location.lng);
+           }   
+
            if (webcam.state === 'playing') {
-              $(eid).html('Status: <div style="color:green;">'+webcam.state+' kbps: '+parseFloat(webcam.kbps)+'</div>'); 
+              $(eid).html('Status: <div style="color:green;">'+webcam.state+
+                  ' kbps: '+parseFloat(webcam.kbps)+
+                  loc+'</div>'); 
            } else {
-              $(eid).html('Status: ' + webcam.state);
+              $(eid).html('Status: ' + webcam.state + loc);
            }   
        }  
    }, 2000); 

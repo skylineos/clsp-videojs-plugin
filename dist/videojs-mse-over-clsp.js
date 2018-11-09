@@ -3479,6 +3479,11 @@ var ClspWebcam = function () {
         this.bytecount = 0;
         this.statTimer = -1;
         this.statTimerInterval = 2000;
+        this.location = {
+            timer: null,
+            lat: null,
+            lng: null
+        };
 
         window.StreamName = conf.streamName;
 
@@ -3504,6 +3509,11 @@ var ClspWebcam = function () {
     }
 
     _createClass(ClspWebcam, [{
+        key: "getLatLong",
+        value: function getLatLong() {
+            return { 'lat': this.location.lat, 'lng': this.location.lng };
+        }
+    }, {
         key: "_on_getMedia_success",
         value: function _on_getMedia_success(mediaStream) {
             var webcam = this;
@@ -3577,6 +3587,8 @@ var ClspWebcam = function () {
         value: function play() {
             var _this = this;
 
+            var self = this;
+
             if (this.state === 'playing') {
                 console.log("Ignore play, we are already playing camcorder");
                 return;
@@ -3584,6 +3596,23 @@ var ClspWebcam = function () {
 
             if (this.isSupported === false) {
                 throw new "Media Recorder not supported!"();
+            }
+
+            if (this.location.timer === null && navigator.geolocation) {
+                var getLocation = function getLocation() {
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        self.location.lat = position.coords.latitude;
+                        self.location.lng = position.coords.longitude;
+                    });
+                };
+
+                getLocation();
+
+                this.location.timer = setInterval(function () {
+                    if (self.state === 'playing') {
+                        getLocation();
+                    }
+                }, 30000);
             }
 
             if (typeof window.MQTTClient !== 'undefined') {
