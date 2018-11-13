@@ -133,6 +133,7 @@ module.exports = () => [
         '~': path.resolve(__dirname, 'src', 'js'),
         '~styles': path.resolve(__dirname, 'src', 'styles'),
         '~root': __dirname,
+        'video.js$': path.resolve(__dirname, 'node_modules', 'video.js'),
       },
     },
     plugins: [

@@ -80,6 +80,12 @@ function pframe_client(iframe, iov) {
       });
     };
 
+    self.connect = function () {
+        command({
+            method: "connect"
+        });
+    };
+
     self.disconnect = function () {
         command({
             method: "disconnect"

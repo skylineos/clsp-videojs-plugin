@@ -46,6 +46,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       maxRetriesOnError: -1,
       tourDuration: 10 * 1000,
       enableMetrics: false,
+      videojsErrorsOptions: {},
     };
   }
 
@@ -72,21 +73,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       player.addClass(this.options.customClass);
     }
 
-    // Support for the videojs-errors library
-    if (player.errors) {
-      player.errors({
-        // @todo - make this configurable
-        // timeout: player.errors.options.timeout || 120 * 1000,
-        timeout: 120 * 1000,
-        errors: {
-          PLAYER_ERR_NOT_COMPAT: {
-            type: 'PLAYER_ERR_NOT_COMPAT',
-            headline: 'This browser is unsupported.',
-            message: 'Chrome 52+ is required.',
-          },
-        },
-      });
-    }
+    this.resetErrors(player);
 
     // @todo - this error doesn't work or display the way it's intended to
     if (!utils.supported()) {
@@ -150,9 +137,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
             // @todo - when can we reset this to zero?
             player._errorRetriesCount++;
 
-            // @see - https://github.com/videojs/video.js/issues/4401
-            player.error(null);
-            player.errorDisplay.close();
+            this.resetErrors(player);
 
             const iov = player.tech(true).mqtt.iov;
 
@@ -189,6 +174,33 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
         console.error(error)
       }
     });
+  }
+
+  getVideojsErrorsOptions () {
+    return {
+      timeout: 20 * 1000,
+      errors: {
+        PLAYER_ERR_NOT_COMPAT: {
+          type: 'PLAYER_ERR_NOT_COMPAT',
+          headline: 'This browser is unsupported.',
+          message: 'Chrome 52+ is required.',
+        },
+      },
+      ...this.options.videojsErrorsOptions,
+    };
+  }
+
+  resetErrors (player) {
+    // @see - https://github.com/videojs/video.js/issues/4401
+    player.error(null);
+    player.errorDisplay.close();
+
+    // Support for the videojs-errors library
+    // After an error occurs, and then we clear the error and its message
+    // above, we must re-enable videojs-errors on the player
+    if (player.errors) {
+      player.errors(this.getVideojsErrorsOptions());
+    }
   }
 
   onMqttHandlerError = () => {

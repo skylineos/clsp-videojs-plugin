@@ -411,6 +411,9 @@ export default class IOVPlayer {
 
     this.stopped = false;
 
+    // @todo - why doesn't this play/stop connect/disconnect work?
+    // this.iov.conduit.connect();
+
     this.iov.conduit.transaction(
       `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
       (...args) => this.onIovPlayTransaction(...args),
@@ -437,7 +440,8 @@ export default class IOVPlayer {
         { clientId: this.iov.config.clientId }
       );
 
-      this.iov.conduit.disconnect();
+      // @todo - why doesn't this play/stop connect/disconnect work?
+      // this.iov.conduit.disconnect();
     }
 
     // Don't wait until the next play event or the destruction of this player
@@ -559,6 +563,8 @@ export default class IOVPlayer {
     this.destroyed = true;
 
     await this.stop();
+
+    this.iov.conduit.disconnect();
 
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
 

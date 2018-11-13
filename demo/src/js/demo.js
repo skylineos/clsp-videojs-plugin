@@ -19,6 +19,7 @@ import packageJson from '~root/package.json';
 // import SourceBufferWrapper from '~/mse/SourceBufferWrapper';
 
 window.videojs = videojs;
+
 window.CLSP_DEMO_VERSION = packageJson.version;
 
 const defaultWallUrls = [

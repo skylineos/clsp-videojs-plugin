@@ -296,6 +296,10 @@ export default class IOV {
   onFail (event) {
     this.debug('onFail');
 
+    // when a stream fails, it no longer needs to send stats to the
+    // server, and it may not even be connected to the server
+    clearInterval(this._statsTimer);
+
     this.debug('network error', event.data.reason);
     this.playerInstance.trigger('network-error', event.data.reason);
   }
