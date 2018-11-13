@@ -425,7 +425,6 @@ export default class IOVPlayer {
     this.moovBox = null;
 
     if (this.guid) {
-      console.log('about to unsubscribe')
       // Stop listening for moofs
       this.iov.conduit.unsubscribe(`iov/video/${this.guid}/live`);
 
@@ -439,8 +438,6 @@ export default class IOVPlayer {
       );
 
       this.iov.conduit.disconnect();
-
-      console.log('unsubscribed')
     }
 
     // Don't wait until the next play event or the destruction of this player

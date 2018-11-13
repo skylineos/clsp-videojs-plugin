@@ -3,7 +3,6 @@ function _clspRouter() {
         // route message to parent which will in turn route to the correct
         // player based on clientId.
         m.clientId = MqttClientId;
-        // console.log(m);
         window.parent.postMessage(m,"*");
     }// end send
 
@@ -47,7 +46,6 @@ function _clspRouter() {
                 mqtt_msg.destinationName = m.topic;
                 MQTTClient.send(mqtt_msg);
             } else if (m.method === 'disconnect') {
-                console.log('tryna disconnect')
                 try {
                     MQTTClient.disconnect();
                 } catch (e) {
@@ -61,7 +59,6 @@ function _clspRouter() {
                reason: "network failure"
             });
             try {
-                console.log('disconnecting from error')
                 MQTTClient.disconnect();
             } catch(e) {
                 console.error(e);
@@ -115,6 +112,10 @@ function _clspRouter() {
      * Callback which gets called when the connection is lost
      */
     function onConnectionLost(message){
+        if (message.errorCode === 0) {
+            return;
+        }
+
         send({
             event: 'fail',
             reason: "connection lost error code " + parseInt(message.errorCode)
@@ -128,7 +129,6 @@ function _clspRouter() {
 
     // perhaps the busiest function in this module ;)
     MQTTClient.onMessageArrived = function(message) {
-        // console.log(message);
         try {
              routeInbound(message);
         }catch(e) {
@@ -186,7 +186,6 @@ function clspRouter() {
 function onunload()
 {
     if (typeof MQTTClient !== 'undefined') {
-        console.log('disconnecting onunload')
         MQTTClient.disconnect();
     }
 }
