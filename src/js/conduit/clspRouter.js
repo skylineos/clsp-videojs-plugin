@@ -46,6 +46,13 @@ function _clspRouter() {
                 var mqtt_msg = new Paho.MQTT.Message(mqtt_payload);
                 mqtt_msg.destinationName = m.topic;
                 MQTTClient.send(mqtt_msg);
+            } else if (m.method === 'disconnect') {
+                console.log('tryna disconnect')
+                try {
+                    MQTTClient.disconnect();
+                } catch (e) {
+                    console.error(e);
+                }
             }
         } catch(e) {
             // we are dead!
@@ -54,6 +61,7 @@ function _clspRouter() {
                reason: "network failure"
             });
             try {
+                console.log('disconnecting from error')
                 MQTTClient.disconnect();
             } catch(e) {
                 console.error(e);
@@ -178,6 +186,7 @@ function clspRouter() {
 function onunload()
 {
     if (typeof MQTTClient !== 'undefined') {
+        console.log('disconnecting onunload')
         MQTTClient.disconnect();
     }
 }

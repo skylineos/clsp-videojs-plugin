@@ -216,15 +216,15 @@ export default class IOV {
     // MSEWrapper, but I don't think that is likely to happen until the MSE
     // is standardized, and even then, we may be subject to non-intuitive
     // behavior based on tab switching, etc.
-    setTimeout(() => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+    setTimeout(async () => {
+      await clone.playerInstance.tech(true).mqtt.updateIOV(clone);
     }, clone.config.changeSourceMaxWait);
 
     // Under normal circumstances, meaning when the tab is in focus, we want
     // to respond by switching the IOV when the new IOV Player has something
     // to display
-    clone.player.on('firstFrameShown', () => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+    clone.player.on('firstFrameShown', async () => {
+      await clone.playerInstance.tech(true).mqtt.updateIOV(clone);
     });
   }
 
@@ -277,8 +277,8 @@ export default class IOV {
       this.player.play();
     }
 
-    this.videoElement.addEventListener('mse-error-event', (e) => {
-      this.player.restart();
+    this.videoElement.addEventListener('mse-error-event', async (e) => {
+      await this.player.restart();
     }, false);
 
     // the mse service will stop streaming to us if we don't send
@@ -330,7 +330,7 @@ export default class IOV {
     }
   }
 
-  destroy () {
+  async destroy () {
     this.debug('destroy');
 
     if (this.destroyed) {
@@ -341,11 +341,13 @@ export default class IOV {
 
     clearInterval(this._statsTimer);
 
-    this.conduit.unsubscribe(`iov/video/${this.player.guid}/live`);
+    // this.playerInstanceEventListeners will not be defined if the iov is
+    // destroyed too early
+    if (this.playerInstanceEventListeners) {
+      this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
+    }
 
-    this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
-
-    this.player.destroy();
+    await this.player.destroy();
 
     this.playerInstance = null;
     this.player = null;

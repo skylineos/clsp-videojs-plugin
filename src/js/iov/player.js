@@ -243,9 +243,9 @@ export default class IOVPlayer {
     });
   }
 
-  reinitializeMseWrapper (mimeCodec) {
+  async reinitializeMseWrapper (mimeCodec) {
     if (this.mseWrapper) {
-      this.mseWrapper.destroy();
+      await this.mseWrapper.destroy();
     }
 
     this.mseWrapper = MSEWrapper.factory(this.videoElement);
@@ -320,7 +320,7 @@ export default class IOVPlayer {
           onRemoveFinish: (info) => {
             debug('onRemoveFinish');
           },
-          onAppendError: (error) => {
+          onAppendError: async (error) => {
             // internal error, this has been observed to happen the tab
             // in the browser where this video player lives is hidden
             // then reselected. 'ex' is undefined the error is bug
@@ -331,7 +331,7 @@ export default class IOVPlayer {
               error
             );
 
-            this.reinitializeMseWrapper(mimeCodec);
+            await this.reinitializeMseWrapper(mimeCodec);
           },
           onRemoveError: (error) => {
             if (error.constructor.name === 'DOMException') {
@@ -348,29 +348,29 @@ export default class IOVPlayer {
               error
             );
           },
-          onStreamFrozen: () => {
+          onStreamFrozen: async () => {
             debug('stream appears to be frozen - reinitializing...');
 
-            this.reinitializeMseWrapper(mimeCodec);
+            await this.reinitializeMseWrapper(mimeCodec);
           },
-          onError: (error) => {
+          onError: async (error) => {
             this._onError(
               'mediaSource.sourceBuffer.generic',
               'mediaSource sourceBuffer error',
               error
             );
 
-            this.reinitializeMseWrapper(mimeCodec);
+            await this.reinitializeMseWrapper(mimeCodec);
           },
         });
 
         this.trigger('videoInfoReceived');
         this.mseWrapper.appendMoov(this.moovBox);
       },
-      onSourceEnded: () => {
+      onSourceEnded: async () => {
         debug('on mediaSource sourceended');
 
-        this.stop();
+        await this.stop();
       },
       onError: (error) => {
         this._onError(
@@ -393,16 +393,16 @@ export default class IOVPlayer {
     // the mse service dies and has to be restarted that this player should restart the stream
     debug('Trying to resync stream...');
 
-    this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, () => {
+    this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, async () => {
       debug('sync received re-initialize media source buffer');
-      this.reinitializeMseWrapper(mimeCodec);
+      await this.reinitializeMseWrapper(mimeCodec);
     });
   }
 
-  restart () {
+  async restart () {
     debug('restart');
 
-    this.stop();
+    await this.stop();
     this.play();
   }
 
@@ -418,13 +418,14 @@ export default class IOVPlayer {
     );
   }
 
-  stop () {
+  async stop () {
     debug('stop');
 
     this.stopped = true;
     this.moovBox = null;
 
     if (this.guid) {
+      console.log('about to unsubscribe')
       // Stop listening for moofs
       this.iov.conduit.unsubscribe(`iov/video/${this.guid}/live`);
 
@@ -436,12 +437,16 @@ export default class IOVPlayer {
         `iov/video/${this.guid}/stop`,
         { clientId: this.iov.config.clientId }
       );
+
+      this.iov.conduit.disconnect();
+
+      console.log('unsubscribed')
     }
 
     // Don't wait until the next play event or the destruction of this player
     // to clear the MSE
     if (this.mseWrapper) {
-      this.mseWrapper.destroy();
+      await this.mseWrapper.destroy();
       this.mseWrapper = null;
     }
   }
@@ -482,8 +487,8 @@ export default class IOVPlayer {
     let timeout;
 
     if (document.hidden) {
-      timeout = setTimeout(() => {
-        this.stop();
+      timeout = setTimeout(async () => {
+        await this.stop();
       }, 1000);
     }
     else {
@@ -506,7 +511,7 @@ export default class IOVPlayer {
 
     this.state = 'waiting-for-first-moov';
 
-    this.iov.conduit.subscribe(initSegmentTopic, ({ payloadBytes }) => {
+    this.iov.conduit.subscribe(initSegmentTopic, async ({ payloadBytes }) => {
       if (this.stopped) {
         return;
       }
@@ -528,7 +533,6 @@ export default class IOVPlayer {
           return;
         }
 
-
         this.trigger('videoReceived');
         this.getSegmentIntervalMetrics();
         this.mseWrapper.append(mqtt_msg.payloadBytes);
@@ -540,7 +544,7 @@ export default class IOVPlayer {
 
       // this.trigger('firstChunk');
 
-      this.reinitializeMseWrapper(mimeCodec);
+      await this.reinitializeMseWrapper(mimeCodec);
       this.resyncStream(mimeCodec);
     });
 
@@ -550,14 +554,14 @@ export default class IOVPlayer {
     });
   }
 
-  destroy () {
+  async destroy () {
     if (this.destroyed) {
       return;
     }
 
     this.destroyed = true;
 
-    this.stop();
+    await this.stop();
 
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
@@ -588,7 +592,7 @@ export default class IOVPlayer {
     this.mimeCodec = null;
 
     if (this.mseWrapper) {
-      this.mseWrapper.destroy();
+      await this.mseWrapper.destroy();
       this.mseWrapper = null;
     }
 
