@@ -19,6 +19,7 @@ import packageJson from '~root/package.json';
 // import SourceBufferWrapper from '~/mse/SourceBufferWrapper';
 
 window.videojs = videojs;
+
 window.CLSP_DEMO_VERSION = packageJson.version;
 
 const defaultWallUrls = [
@@ -36,8 +37,8 @@ const defaultTourUrls = [
 let wallInterval = null;
 let tourInterval = null;
 
-const wallPlayers = [];
-const tourPlayers = [];
+let wallPlayers = [];
+let tourPlayers = [];
 
 function destroyAllWallPlayers () {
   for (let i = 0; i < wallPlayers.length; i++) {
@@ -45,6 +46,8 @@ function destroyAllWallPlayers () {
 
     player.dispose();
   }
+
+  wallPlayers = [];
 }
 
 function destroyAllTourPlayers () {
@@ -53,6 +56,8 @@ function destroyAllTourPlayers () {
 
     player.dispose();
   }
+
+  tourPlayers = [];
 }
 
 function initializeWall () {
@@ -106,6 +111,14 @@ function initializeWall () {
     }
 
     const player = window.videojs(videoId, playerOptions);
+
+    player.on('dispose', () => {
+      for (let i = 0; i < wallPlayers.length; i++) {
+        if (player === wallPlayers[i]) {
+          wallPlayers.splice(i, 1);
+        }
+      }
+    });
 
     wallPlayers.push(player);
 
@@ -285,6 +298,14 @@ function initializeTour () {
     }
 
     const player = window.videojs(videoId, playerOptions);
+
+    player.on('dispose', () => {
+      for (let i = 0; i < wallPlayers.length; i++) {
+        if (player === wallPlayers[i]) {
+          wallPlayers.splice(i, 1);
+        }
+      }
+    });
 
     tourPlayers.push(player);
 

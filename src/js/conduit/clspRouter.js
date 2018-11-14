@@ -3,7 +3,6 @@ function _clspRouter() {
         // route message to parent which will in turn route to the correct
         // player based on clientId.
         m.clientId = MqttClientId;
-        // console.log(m);
         window.parent.postMessage(m,"*");
     }// end send
 
@@ -25,6 +24,17 @@ function _clspRouter() {
         });
     }// end route inbound
 
+    function disconnect () {
+        var ERROR_CODE_NOT_CONNECTED = 'AMQJS0011E';
+
+        try {
+            MQTTClient.disconnect();
+        } catch (e) {
+            if (!e.message.startsWith(ERROR_CODE_NOT_CONNECTED)) {
+                console.error(e);
+            }
+        }
+    }
 
     function eventHandler(evt){
         var m = evt.data;
@@ -46,6 +56,10 @@ function _clspRouter() {
                 var mqtt_msg = new Paho.MQTT.Message(mqtt_payload);
                 mqtt_msg.destinationName = m.topic;
                 MQTTClient.send(mqtt_msg);
+            } else if (m.method === 'connect') {
+                connect();
+            } else if (m.method === 'disconnect') {
+                disconnect();
             }
         } catch(e) {
             // we are dead!
@@ -53,22 +67,15 @@ function _clspRouter() {
                event: 'fail',
                reason: "network failure"
             });
-            try {
-                MQTTClient.disconnect();
-            } catch(e) {
-                console.error(e);
-            }
+
+            disconnect();
         }
 
     }
 
     function AppReady() {
-
-        if (window.addEventListener) {
-            window.addEventListener("message", eventHandler, false);
-        } else if (window.attachEvent) {
-            window.attachEvent('onmessage', eventHandler);
-        }
+        window.removeEventListener("message", eventHandler);
+        window.addEventListener("message", eventHandler, false);
 
         send({
           event: 'ready'
@@ -107,12 +114,18 @@ function _clspRouter() {
      * Callback which gets called when the connection is lost
      */
     function onConnectionLost(message){
+        if (message.errorCode === 0) {
+            return;
+        }
+
         send({
             event: 'fail',
             reason: "connection lost error code " + parseInt(message.errorCode)
         });
         if (Reconnect === -1) {
-            Reconnect = setInterval(() => connect(), 2000);
+            Reconnect = setInterval(function () {
+                connect();
+            }, 2000);
         }
     }
 
@@ -120,7 +133,6 @@ function _clspRouter() {
 
     // perhaps the busiest function in this module ;)
     MQTTClient.onMessageArrived = function(message) {
-        // console.log(message);
         try {
              routeInbound(message);
         }catch(e) {
@@ -155,11 +167,15 @@ function _clspRouter() {
         try {
             MQTTClient.connect(options);
         } catch(e) {
-            console.error("connect failed", e);
-            send({
-                event: 'fail',
-                reason: "connect failed"
-            });
+            var ERROR_CODE_ALREADY_CONNECTED = 'AMQJS0011E';
+
+            if (!e.message.startsWith(ERROR_CODE_ALREADY_CONNECTED)) {
+                console.error("connect failed", e);
+                send({
+                    event: 'fail',
+                    reason: "connect failed"
+                });
+            }
         }
     }
 
@@ -178,6 +194,12 @@ function clspRouter() {
 function onunload()
 {
     if (typeof MQTTClient !== 'undefined') {
-        MQTTClient.disconnect();
+        try {
+            MQTTClient.disconnect();
+        } catch (e) {
+            if (!e.message.startsWith('AMQJS0011E')) {
+                console.error(e);
+            }
+        }
     }
 }

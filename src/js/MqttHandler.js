@@ -23,10 +23,10 @@ export default class MqttHandler extends Component {
     this.mqttConduitCollection = mqttConduitCollection;
   }
 
-  createIOV (player) {
+  async createIOV (player) {
     this.debug('createIOV');
 
-    this.updateIOV(IOV.fromUrl(
+    await this.updateIOV(IOV.fromUrl(
       this.source_.src,
       this.mqttConduitCollection,
       player
@@ -35,7 +35,7 @@ export default class MqttHandler extends Component {
     this.iov.initialize();
   }
 
-  updateIOV (iov) {
+  async updateIOV (iov) {
     this.debug('updateIOV');
 
     if (this.iov) {
@@ -44,7 +44,7 @@ export default class MqttHandler extends Component {
         return;
       }
 
-      this.iov.destroy();
+      await this.iov.destroy();
     }
 
     this.iov = iov;
