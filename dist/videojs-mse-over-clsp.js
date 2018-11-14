@@ -2887,7 +2887,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.5","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","jquery":"^3.3.1","moment":"^2.22.2","js-string-escape":"^1.0.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.6","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4","videojs-errors":"^4.1.1"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","jquery":"^3.3.1","moment":"^2.22.2","js-string-escape":"^1.0.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -3020,6 +3020,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -3058,29 +3060,79 @@ var MqttHandler = function (_Component) {
 
   _createClass(MqttHandler, [{
     key: 'createIOV',
-    value: function createIOV(player) {
-      this.debug('createIOV');
+    value: function () {
+      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(player) {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                this.debug('createIOV');
 
-      this.updateIOV(_iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(this.source_.src, this.mqttConduitCollection, player));
+                _context.next = 3;
+                return this.updateIOV(_iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(this.source_.src, this.mqttConduitCollection, player));
 
-      this.iov.initialize();
-    }
-  }, {
-    key: 'updateIOV',
-    value: function updateIOV(iov) {
-      this.debug('updateIOV');
+              case 3:
 
-      if (this.iov) {
-        // If the IOV is the same, do nothing
-        if (this.iov.id === iov.id) {
-          return;
-        }
+                this.iov.initialize();
 
-        this.iov.destroy();
+              case 4:
+              case 'end':
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function createIOV(_x) {
+        return _ref.apply(this, arguments);
       }
 
-      this.iov = iov;
-    }
+      return createIOV;
+    }()
+  }, {
+    key: 'updateIOV',
+    value: function () {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(iov) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                this.debug('updateIOV');
+
+                if (!this.iov) {
+                  _context2.next = 6;
+                  break;
+                }
+
+                if (!(this.iov.id === iov.id)) {
+                  _context2.next = 4;
+                  break;
+                }
+
+                return _context2.abrupt('return');
+
+              case 4:
+                _context2.next = 6;
+                return this.iov.destroy();
+
+              case 6:
+
+                this.iov = iov;
+
+              case 7:
+              case 'end':
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function updateIOV(_x2) {
+        return _ref2.apply(this, arguments);
+      }
+
+      return updateIOV;
+    }()
   }]);
 
   return MqttHandler;
@@ -3196,6 +3248,8 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -3247,12 +3301,15 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
            */
           maxRetriesOnError: -1,
           tourDuration: 10 * 1000,
-          enableMetrics: false
+          enableMetrics: false,
+          videojsErrorsOptions: {}
         };
       }
     }]);
 
     function ClspPlugin(player, options) {
+      var _this2 = this;
+
       _classCallCheck(this, ClspPlugin);
 
       var _this = _possibleConstructorReturn(this, (ClspPlugin.__proto__ || Object.getPrototypeOf(ClspPlugin)).call(this, player, options));
@@ -3287,21 +3344,7 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
         player.addClass(_this.options.customClass);
       }
 
-      // Support for the videojs-errors library
-      if (player.errors) {
-        player.errors({
-          // @todo - make this configurable
-          // timeout: player.errors.options.timeout || 120 * 1000,
-          timeout: 120 * 1000,
-          errors: {
-            PLAYER_ERR_NOT_COMPAT: {
-              type: 'PLAYER_ERR_NOT_COMPAT',
-              headline: 'This browser is unsupported.',
-              message: 'Chrome 52+ is required.'
-            }
-          }
-        });
-      }
+      _this.resetErrors(player);
 
       // @todo - this error doesn't work or display the way it's intended to
       if (!_utils__WEBPACK_IMPORTED_MODULE_4__["default"].supported()) {
@@ -3350,75 +3393,204 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
       });
 
       // @todo - this seems like we aren't using videojs properly
-      player.on('error', function (event) {
-        var error = player.error();
+      player.on('error', function () {
+        var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(event) {
+          var error, iov;
+          return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  error = player.error();
+                  _context.t0 = error.code;
+                  _context.next = _context.t0 === 0 ? 4 : _context.t0 === 4 ? 4 : _context.t0 === 5 ? 4 : _context.t0 === 'PLAYER_ERR_IOV' ? 4 : 5;
+                  break;
 
-        switch (error.code) {
-          case 0:
-          case 4:
-          case 5:
-          case 'PLAYER_ERR_IOV':
-            {
-              break;
-            }
-          default:
-            {
-              if (_this.options.maxRetriesOnError === 0) {
-                break;
+                case 4:
+                  return _context.abrupt('break', 18);
+
+                case 5:
+                  if (!(_this.options.maxRetriesOnError === 0)) {
+                    _context.next = 7;
+                    break;
+                  }
+
+                  return _context.abrupt('break', 18);
+
+                case 7:
+                  if (!(_this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= _this.options.maxRetriesOnError)) {
+                    _context.next = 18;
+                    break;
+                  }
+
+                  // @todo - when can we reset this to zero?
+                  player._errorRetriesCount++;
+
+                  _this.resetErrors(player);
+
+                  iov = player.tech(true).mqtt.iov;
+
+                  // @todo - investigate how this can be called when the iov has been destroyed
+
+                  if (!(!iov || iov.destroyed || !iov.player)) {
+                    _context.next = 16;
+                    break;
+                  }
+
+                  _context.next = 14;
+                  return _this.initializeIOV(player);
+
+                case 14:
+                  _context.next = 18;
+                  break;
+
+                case 16:
+                  _context.next = 18;
+                  return iov.player.restart();
+
+                case 18:
+                case 'end':
+                  return _context.stop();
               }
-
-              if (_this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= _this.options.maxRetriesOnError) {
-                // @todo - when can we reset this to zero?
-                player._errorRetriesCount++;
-
-                // @see - https://github.com/videojs/video.js/issues/4401
-                player.error(null);
-                player.errorDisplay.close();
-
-                var iov = player.tech(true).mqtt.iov;
-
-                // @todo - investigate how this can be called when the iov has been destroyed
-                if (!iov || iov.destroyed || !iov.player) {
-                  _this.initializeIOV(player);
-                } else {
-                  iov.player.restart();
-                }
-              }
             }
-        }
-      });
+          }, _callee, _this2);
+        }));
+
+        return function (_x2) {
+          return _ref.apply(this, arguments);
+        };
+      }());
 
       // @todo - we are currently creating the IOV for this player on `firstplay`
       // but we could do it on the `ready` event.  However, in order to support
       // this, we need to make the IOV and its player able to be instantiated
       // without automatically playing AND without automatically listening via
       // a conduit
-      player.on('firstplay', function (event) {
-        _this.debug('on player firstplay');
+      player.on('firstplay', function () {
+        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(event) {
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  _this.debug('on player firstplay');
 
-        _this.initializeIOV(player);
-      });
+                  _context2.next = 3;
+                  return _this.initializeIOV(player);
+
+                case 3:
+                case 'end':
+                  return _context2.stop();
+              }
+            }
+          }, _callee2, _this2);
+        }));
+
+        return function (_x3) {
+          return _ref2.apply(this, arguments);
+        };
+      }());
+
+      player.on('dispose', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.prev = 0;
+                _context3.next = 3;
+                return player.tech(true).mqtt.iov.destroy();
+
+              case 3:
+                _context3.next = 8;
+                break;
+
+              case 5:
+                _context3.prev = 5;
+                _context3.t0 = _context3['catch'](0);
+
+                // @todo - need to improve iov destroy logic...
+                console.error(_context3.t0);
+
+              case 8:
+              case 'end':
+                return _context3.stop();
+            }
+          }
+        }, _callee3, _this2, [[0, 5]]);
+      })));
       return _this;
     }
 
     _createClass(ClspPlugin, [{
-      key: 'initializeIOV',
-      value: function initializeIOV(player) {
-        var mqttHandler = player.tech(true).mqtt;
+      key: 'getVideojsErrorsOptions',
+      value: function getVideojsErrorsOptions() {
+        return _extends({
+          timeout: 20 * 1000,
+          errors: {
+            PLAYER_ERR_NOT_COMPAT: {
+              type: 'PLAYER_ERR_NOT_COMPAT',
+              headline: 'This browser is unsupported.',
+              message: 'Chrome 52+ is required.'
+            }
+          }
+        }, this.options.videojsErrorsOptions);
+      }
+    }, {
+      key: 'resetErrors',
+      value: function resetErrors(player) {
+        // @see - https://github.com/videojs/video.js/issues/4401
+        player.error(null);
+        player.errorDisplay.close();
 
-        if (!mqttHandler) {
-          throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
+        // Support for the videojs-errors library
+        // After an error occurs, and then we clear the error and its message
+        // above, we must re-enable videojs-errors on the player
+        if (player.errors) {
+          player.errors(this.getVideojsErrorsOptions());
+        }
+      }
+    }, {
+      key: 'initializeIOV',
+      value: function () {
+        var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(player) {
+          var mqttHandler;
+          return regeneratorRuntime.wrap(function _callee4$(_context4) {
+            while (1) {
+              switch (_context4.prev = _context4.next) {
+                case 0:
+                  mqttHandler = player.tech(true).mqtt;
+
+                  if (mqttHandler) {
+                    _context4.next = 3;
+                    break;
+                  }
+
+                  throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
+
+                case 3:
+
+                  mqttHandler.off('error', this.onMqttHandlerError);
+                  mqttHandler.on('error', this.onMqttHandlerError);
+
+                  _context4.next = 7;
+                  return mqttHandler.createIOV(player, {
+                    enableMetrics: this.options.enableMetrics,
+                    defaultNonSslPort: this.options.defaultNonSslPort,
+                    defaultSslPort: this.options.defaultSslPort
+                  });
+
+                case 7:
+                case 'end':
+                  return _context4.stop();
+              }
+            }
+          }, _callee4, this);
+        }));
+
+        function initializeIOV(_x4) {
+          return _ref4.apply(this, arguments);
         }
 
-        mqttHandler.off('error', this.onMqttHandlerError);
-        mqttHandler.on('error', this.onMqttHandlerError);
-
-        mqttHandler.createIOV(player, {
-          enableMetrics: this.options.enableMetrics,
-          defaultNonSslPort: this.options.defaultNonSslPort,
-          defaultSslPort: this.options.defaultSslPort
-        });
-      }
+        return initializeIOV;
+      }()
     }, {
       key: 'destroy',
       value: function destroy() {
@@ -3458,7 +3630,7 @@ uses cross document communication to route data to and from the iframe.
 
 
 // this code is filled in by the gulpfile.js
-var iframe_code = "/*******************************************************************************\n * Copyright (c) 2013, 2016 IBM Corp.\n *\n * All rights reserved. This program and the accompanying materials\n * are made available under the terms of the Eclipse Public License v1.0\n * and Eclipse Distribution License v1.0 which accompany this distribution.\n *\n * The Eclipse Public License is available at\n *    http://www.eclipse.org/legal/epl-v10.html\n * and the Eclipse Distribution License is available at\n *   http://www.eclipse.org/org/documents/edl-v10.php.\n *\n *******************************************************************************/\n(function(p,s){\"object\"===typeof exports&&\"object\"===typeof module?module.exports=s():\"function\"===typeof define&&define.amd?define(s):\"object\"===typeof exports?exports=s():(\"undefined\"===typeof p.Paho&&(p.Paho={}),p.Paho.MQTT=s())})(this,function(){return function(p){function s(a,b,c){b[c++]=a>>8;b[c++]=a%256;return c}function u(a,b,c,k){k=s(b,c,k);D(a,c,k);return k+b}function n(a){for(var b=0,c=0;c<a.length;c++){var k=a.charCodeAt(c);2047<k?(55296<=k&&56319>=k&&(c++,b++),b+=3):127<k?b+=2:b++}return b}\nfunction D(a,b,c){for(var k=0;k<a.length;k++){var e=a.charCodeAt(k);if(55296<=e&&56319>=e){var g=a.charCodeAt(++k);if(isNaN(g))throw Error(f(h.MALFORMED_UNICODE,[e,g]));e=(e-55296<<10)+(g-56320)+65536}127>=e?b[c++]=e:(2047>=e?b[c++]=e>>6&31|192:(65535>=e?b[c++]=e>>12&15|224:(b[c++]=e>>18&7|240,b[c++]=e>>12&63|128),b[c++]=e>>6&63|128),b[c++]=e&63|128)}return b}function E(a,b,c){for(var k=\"\",e,g=b;g<b+c;){e=a[g++];if(!(128>e)){var m=a[g++]-128;if(0>m)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),\n\"\"]));if(224>e)e=64*(e-192)+m;else{var d=a[g++]-128;if(0>d)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16)]));if(240>e)e=4096*(e-224)+64*m+d;else{var l=a[g++]-128;if(0>l)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16),l.toString(16)]));if(248>e)e=262144*(e-240)+4096*m+64*d+l;else throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16),l.toString(16)]));}}}65535<e&&(e-=65536,k+=String.fromCharCode(55296+(e>>10)),e=56320+(e&\n1023));k+=String.fromCharCode(e)}return k}var z=function(a,b){for(var c in a)if(a.hasOwnProperty(c))if(b.hasOwnProperty(c)){if(typeof a[c]!==b[c])throw Error(f(h.INVALID_TYPE,[typeof a[c],c]));}else{c=\"Unknown property, \"+c+\". Valid properties are:\";for(var k in b)b.hasOwnProperty(k)&&(c=c+\" \"+k);throw Error(c);}},v=function(a,b){return function(){return a.apply(b,arguments)}},h={OK:{code:0,text:\"AMQJSC0000I OK.\"},CONNECT_TIMEOUT:{code:1,text:\"AMQJSC0001E Connect timed out.\"},SUBSCRIBE_TIMEOUT:{code:2,\ntext:\"AMQJS0002E Subscribe timed out.\"},UNSUBSCRIBE_TIMEOUT:{code:3,text:\"AMQJS0003E Unsubscribe timed out.\"},PING_TIMEOUT:{code:4,text:\"AMQJS0004E Ping timed out.\"},INTERNAL_ERROR:{code:5,text:\"AMQJS0005E Internal error. Error Message: {0}, Stack trace: {1}\"},CONNACK_RETURNCODE:{code:6,text:\"AMQJS0006E Bad Connack return code:{0} {1}.\"},SOCKET_ERROR:{code:7,text:\"AMQJS0007E Socket error:{0}.\"},SOCKET_CLOSE:{code:8,text:\"AMQJS0008I Socket closed.\"},MALFORMED_UTF:{code:9,text:\"AMQJS0009E Malformed UTF data:{0} {1} {2}.\"},\nUNSUPPORTED:{code:10,text:\"AMQJS0010E {0} is not supported by this browser.\"},INVALID_STATE:{code:11,text:\"AMQJS0011E Invalid state {0}.\"},INVALID_TYPE:{code:12,text:\"AMQJS0012E Invalid type {0} for {1}.\"},INVALID_ARGUMENT:{code:13,text:\"AMQJS0013E Invalid argument {0} for {1}.\"},UNSUPPORTED_OPERATION:{code:14,text:\"AMQJS0014E Unsupported operation.\"},INVALID_STORED_DATA:{code:15,text:\"AMQJS0015E Invalid data in local storage key\\x3d{0} value\\x3d{1}.\"},INVALID_MQTT_MESSAGE_TYPE:{code:16,text:\"AMQJS0016E Invalid MQTT message type {0}.\"},\nMALFORMED_UNICODE:{code:17,text:\"AMQJS0017E Malformed Unicode string:{0} {1}.\"},BUFFER_FULL:{code:18,text:\"AMQJS0018E Message buffer is full, maximum buffer size: {0}.\"}},H={0:\"Connection Accepted\",1:\"Connection Refused: unacceptable protocol version\",2:\"Connection Refused: identifier rejected\",3:\"Connection Refused: server unavailable\",4:\"Connection Refused: bad user name or password\",5:\"Connection Refused: not authorized\"},f=function(a,b){var c=a.text;if(b)for(var k,e,g=0;g<b.length;g++)if(k=\"{\"+\ng+\"}\",e=c.indexOf(k),0<e)var h=c.substring(0,e),c=c.substring(e+k.length),c=h+b[g]+c;return c},A=[0,6,77,81,73,115,100,112,3],B=[0,4,77,81,84,84,4],q=function(a,b){this.type=a;for(var c in b)b.hasOwnProperty(c)&&(this[c]=b[c])};q.prototype.encode=function(){var a=(this.type&15)<<4,b=0,c=[],k=0,e;void 0!==this.messageIdentifier&&(b+=2);switch(this.type){case 1:switch(this.mqttVersion){case 3:b+=A.length+3;break;case 4:b+=B.length+3}b+=n(this.clientId)+2;void 0!==this.willMessage&&(b+=n(this.willMessage.destinationName)+\n2,e=this.willMessage.payloadBytes,e instanceof Uint8Array||(e=new Uint8Array(h)),b+=e.byteLength+2);void 0!==this.userName&&(b+=n(this.userName)+2);void 0!==this.password&&(b+=n(this.password)+2);break;case 8:for(var a=a|2,g=0;g<this.topics.length;g++)c[g]=n(this.topics[g]),b+=c[g]+2;b+=this.requestedQos.length;break;case 10:a|=2;for(g=0;g<this.topics.length;g++)c[g]=n(this.topics[g]),b+=c[g]+2;break;case 6:a|=2;break;case 3:this.payloadMessage.duplicate&&(a|=8);a=a|=this.payloadMessage.qos<<1;this.payloadMessage.retained&&\n(a|=1);var k=n(this.payloadMessage.destinationName),h=this.payloadMessage.payloadBytes,b=b+(k+2)+h.byteLength;h instanceof ArrayBuffer?h=new Uint8Array(h):h instanceof Uint8Array||(h=new Uint8Array(h.buffer))}var f=b,g=Array(1),d=0;do{var t=f%128,f=f>>7;0<f&&(t|=128);g[d++]=t}while(0<f&&4>d);f=g.length+1;b=new ArrayBuffer(b+f);d=new Uint8Array(b);d[0]=a;d.set(g,1);if(3==this.type)f=u(this.payloadMessage.destinationName,k,d,f);else if(1==this.type){switch(this.mqttVersion){case 3:d.set(A,f);f+=A.length;\nbreak;case 4:d.set(B,f),f+=B.length}a=0;this.cleanSession&&(a=2);void 0!==this.willMessage&&(a=a|4|this.willMessage.qos<<3,this.willMessage.retained&&(a|=32));void 0!==this.userName&&(a|=128);void 0!==this.password&&(a|=64);d[f++]=a;f=s(this.keepAliveInterval,d,f)}void 0!==this.messageIdentifier&&(f=s(this.messageIdentifier,d,f));switch(this.type){case 1:f=u(this.clientId,n(this.clientId),d,f);void 0!==this.willMessage&&(f=u(this.willMessage.destinationName,n(this.willMessage.destinationName),d,f),\nf=s(e.byteLength,d,f),d.set(e,f),f+=e.byteLength);void 0!==this.userName&&(f=u(this.userName,n(this.userName),d,f));void 0!==this.password&&u(this.password,n(this.password),d,f);break;case 3:d.set(h,f);break;case 8:for(g=0;g<this.topics.length;g++)f=u(this.topics[g],c[g],d,f),d[f++]=this.requestedQos[g];break;case 10:for(g=0;g<this.topics.length;g++)f=u(this.topics[g],c[g],d,f)}return b};var F=function(a,b,c){this._client=a;this._window=b;this._keepAliveInterval=1E3*c;this.isReset=!1;var k=(new q(12)).encode(),\ne=function(a){return function(){return g.apply(a)}},g=function(){this.isReset?(this.isReset=!1,this._client._trace(\"Pinger.doPing\",\"send PINGREQ\"),this._client.socket.send(k),this.timeout=this._window.setTimeout(e(this),this._keepAliveInterval)):(this._client._trace(\"Pinger.doPing\",\"Timed out\"),this._client._disconnected(h.PING_TIMEOUT.code,f(h.PING_TIMEOUT)))};this.reset=function(){this.isReset=!0;this._window.clearTimeout(this.timeout);0<this._keepAliveInterval&&(this.timeout=setTimeout(e(this),\nthis._keepAliveInterval))};this.cancel=function(){this._window.clearTimeout(this.timeout)}},w=function(a,b,c,f,e){this._window=b;c||(c=30);this.timeout=setTimeout(function(a,b,c){return function(){return a.apply(b,c)}}(f,a,e),1E3*c);this.cancel=function(){this._window.clearTimeout(this.timeout)}},d=function(a,b,c,d,e){if(!(\"WebSocket\"in p&&null!==p.WebSocket))throw Error(f(h.UNSUPPORTED,[\"WebSocket\"]));if(!(\"localStorage\"in p&&null!==p.localStorage))throw Error(f(h.UNSUPPORTED,[\"localStorage\"]));\nif(!(\"ArrayBuffer\"in p&&null!==p.ArrayBuffer))throw Error(f(h.UNSUPPORTED,[\"ArrayBuffer\"]));this._trace(\"Paho.MQTT.Client\",a,b,c,d,e);this.host=b;this.port=c;this.path=d;this.uri=a;this.clientId=e;this._wsuri=null;this._localKey=b+\":\"+c+(\"/mqtt\"!=d?\":\"+d:\"\")+\":\"+e+\":\";this._msg_queue=[];this._buffered_msg_queue=[];this._sentMessages={};this._receivedMessages={};this._notify_msg_sent={};this._message_identifier=1;this._sequence=0;for(var g in localStorage)0!==g.indexOf(\"Sent:\"+this._localKey)&&0!==\ng.indexOf(\"Received:\"+this._localKey)||this.restore(g)};d.prototype.host=null;d.prototype.port=null;d.prototype.path=null;d.prototype.uri=null;d.prototype.clientId=null;d.prototype.socket=null;d.prototype.connected=!1;d.prototype.maxMessageIdentifier=65536;d.prototype.connectOptions=null;d.prototype.hostIndex=null;d.prototype.onConnected=null;d.prototype.onConnectionLost=null;d.prototype.onMessageDelivered=null;d.prototype.onMessageArrived=null;d.prototype.traceFunction=null;d.prototype._msg_queue=\nnull;d.prototype._buffered_msg_queue=null;d.prototype._connectTimeout=null;d.prototype.sendPinger=null;d.prototype.receivePinger=null;d.prototype._reconnectInterval=1;d.prototype._reconnecting=!1;d.prototype._reconnectTimeout=null;d.prototype.disconnectedPublishing=!1;d.prototype.disconnectedBufferSize=5E3;d.prototype.receiveBuffer=null;d.prototype._traceBuffer=null;d.prototype._MAX_TRACE_ENTRIES=100;d.prototype.connect=function(a){var b=this._traceMask(a,\"password\");this._trace(\"Client.connect\",\nb,this.socket,this.connected);if(this.connected)throw Error(f(h.INVALID_STATE,[\"already connected\"]));if(this.socket)throw Error(f(h.INVALID_STATE,[\"already connected\"]));this._reconnecting&&(this._reconnectTimeout.cancel(),this._reconnectTimeout=null,this._reconnecting=!1);this.connectOptions=a;this._reconnectInterval=1;this._reconnecting=!1;a.uris?(this.hostIndex=0,this._doConnect(a.uris[0])):this._doConnect(this.uri)};d.prototype.subscribe=function(a,b){this._trace(\"Client.subscribe\",a,b);if(!this.connected)throw Error(f(h.INVALID_STATE,\n[\"not connected\"]));var c=new q(8);c.topics=[a];c.requestedQos=void 0!==b.qos?[b.qos]:[0];b.onSuccess&&(c.onSuccess=function(a){b.onSuccess({invocationContext:b.invocationContext,grantedQos:a})});b.onFailure&&(c.onFailure=function(a){b.onFailure({invocationContext:b.invocationContext,errorCode:a,errorMessage:f(a)})});b.timeout&&(c.timeOut=new w(this,window,b.timeout,b.onFailure,[{invocationContext:b.invocationContext,errorCode:h.SUBSCRIBE_TIMEOUT.code,errorMessage:f(h.SUBSCRIBE_TIMEOUT)}]));this._requires_ack(c);\nthis._schedule_message(c)};d.prototype.unsubscribe=function(a,b){this._trace(\"Client.unsubscribe\",a,b);if(!this.connected)throw Error(f(h.INVALID_STATE,[\"not connected\"]));var c=new q(10);c.topics=[a];b.onSuccess&&(c.callback=function(){b.onSuccess({invocationContext:b.invocationContext})});b.timeout&&(c.timeOut=new w(this,window,b.timeout,b.onFailure,[{invocationContext:b.invocationContext,errorCode:h.UNSUBSCRIBE_TIMEOUT.code,errorMessage:f(h.UNSUBSCRIBE_TIMEOUT)}]));this._requires_ack(c);this._schedule_message(c)};\nd.prototype.send=function(a){this._trace(\"Client.send\",a);wireMessage=new q(3);wireMessage.payloadMessage=a;if(this.connected)0<a.qos?this._requires_ack(wireMessage):this.onMessageDelivered&&(this._notify_msg_sent[wireMessage]=this.onMessageDelivered(wireMessage.payloadMessage)),this._schedule_message(wireMessage);else if(this._reconnecting&&this.disconnectedPublishing){if(Object.keys(this._sentMessages).length+this._buffered_msg_queue.length>this.disconnectedBufferSize)throw Error(f(h.BUFFER_FULL,\n[this.disconnectedBufferSize]));0<a.qos?this._requires_ack(wireMessage):(wireMessage.sequence=++this._sequence,this._buffered_msg_queue.push(wireMessage))}else throw Error(f(h.INVALID_STATE,[\"not connected\"]));};d.prototype.disconnect=function(){this._trace(\"Client.disconnect\");this._reconnecting&&(this._reconnectTimeout.cancel(),this._reconnectTimeout=null,this._reconnecting=!1);if(!this.socket)throw Error(f(h.INVALID_STATE,[\"not connecting or connected\"]));wireMessage=new q(14);this._notify_msg_sent[wireMessage]=\nv(this._disconnected,this);this._schedule_message(wireMessage)};d.prototype.getTraceLog=function(){if(null!==this._traceBuffer){this._trace(\"Client.getTraceLog\",new Date);this._trace(\"Client.getTraceLog in flight messages\",this._sentMessages.length);for(var a in this._sentMessages)this._trace(\"_sentMessages \",a,this._sentMessages[a]);for(a in this._receivedMessages)this._trace(\"_receivedMessages \",a,this._receivedMessages[a]);return this._traceBuffer}};d.prototype.startTrace=function(){null===this._traceBuffer&&\n(this._traceBuffer=[]);this._trace(\"Client.startTrace\",new Date,\"1.0.3\")};d.prototype.stopTrace=function(){delete this._traceBuffer};d.prototype._doConnect=function(a){this.connectOptions.useSSL&&(a=a.split(\":\"),a[0]=\"wss\",a=a.join(\":\"));this._wsuri=a;this.connected=!1;this.socket=4>this.connectOptions.mqttVersion?new WebSocket(a,[\"mqttv3.1\"]):new WebSocket(a,[\"mqtt\"]);this.socket.binaryType=\"arraybuffer\";this.socket.onopen=v(this._on_socket_open,this);this.socket.onmessage=v(this._on_socket_message,\nthis);this.socket.onerror=v(this._on_socket_error,this);this.socket.onclose=v(this._on_socket_close,this);this.sendPinger=new F(this,window,this.connectOptions.keepAliveInterval);this.receivePinger=new F(this,window,this.connectOptions.keepAliveInterval);this._connectTimeout&&(this._connectTimeout.cancel(),this._connectTimeout=null);this._connectTimeout=new w(this,window,this.connectOptions.timeout,this._disconnected,[h.CONNECT_TIMEOUT.code,f(h.CONNECT_TIMEOUT)])};d.prototype._schedule_message=function(a){this._msg_queue.push(a);\nthis.connected&&this._process_queue()};d.prototype.store=function(a,b){var c={type:b.type,messageIdentifier:b.messageIdentifier,version:1};switch(b.type){case 3:b.pubRecReceived&&(c.pubRecReceived=!0);c.payloadMessage={};for(var d=\"\",e=b.payloadMessage.payloadBytes,g=0;g<e.length;g++)d=15>=e[g]?d+\"0\"+e[g].toString(16):d+e[g].toString(16);c.payloadMessage.payloadHex=d;c.payloadMessage.qos=b.payloadMessage.qos;c.payloadMessage.destinationName=b.payloadMessage.destinationName;b.payloadMessage.duplicate&&\n(c.payloadMessage.duplicate=!0);b.payloadMessage.retained&&(c.payloadMessage.retained=!0);0===a.indexOf(\"Sent:\")&&(void 0===b.sequence&&(b.sequence=++this._sequence),c.sequence=b.sequence);break;default:throw Error(f(h.INVALID_STORED_DATA,[key,c]));}localStorage.setItem(a+this._localKey+b.messageIdentifier,JSON.stringify(c))};d.prototype.restore=function(a){var b=localStorage.getItem(a),c=JSON.parse(b),d=new q(c.type,c);switch(c.type){case 3:for(var b=c.payloadMessage.payloadHex,e=new ArrayBuffer(b.length/\n2),e=new Uint8Array(e),g=0;2<=b.length;){var m=parseInt(b.substring(0,2),16),b=b.substring(2,b.length);e[g++]=m}b=new Paho.MQTT.Message(e);b.qos=c.payloadMessage.qos;b.destinationName=c.payloadMessage.destinationName;c.payloadMessage.duplicate&&(b.duplicate=!0);c.payloadMessage.retained&&(b.retained=!0);d.payloadMessage=b;break;default:throw Error(f(h.INVALID_STORED_DATA,[a,b]));}0===a.indexOf(\"Sent:\"+this._localKey)?(d.payloadMessage.duplicate=!0,this._sentMessages[d.messageIdentifier]=d):0===a.indexOf(\"Received:\"+\nthis._localKey)&&(this._receivedMessages[d.messageIdentifier]=d)};d.prototype._process_queue=function(){for(var a=null,b=this._msg_queue.reverse();a=b.pop();)this._socket_send(a),this._notify_msg_sent[a]&&(this._notify_msg_sent[a](),delete this._notify_msg_sent[a])};d.prototype._requires_ack=function(a){var b=Object.keys(this._sentMessages).length;if(b>this.maxMessageIdentifier)throw Error(\"Too many messages:\"+b);for(;void 0!==this._sentMessages[this._message_identifier];)this._message_identifier++;\na.messageIdentifier=this._message_identifier;this._sentMessages[a.messageIdentifier]=a;3===a.type&&this.store(\"Sent:\",a);this._message_identifier===this.maxMessageIdentifier&&(this._message_identifier=1)};d.prototype._on_socket_open=function(){var a=new q(1,this.connectOptions);a.clientId=this.clientId;this._socket_send(a)};d.prototype._on_socket_message=function(a){this._trace(\"Client._on_socket_message\",a.data);a=this._deframeMessages(a.data);for(var b=0;b<a.length;b+=1)this._handleMessage(a[b])};\nd.prototype._deframeMessages=function(a){a=new Uint8Array(a);var b=[];if(this.receiveBuffer){var c=new Uint8Array(this.receiveBuffer.length+a.length);c.set(this.receiveBuffer);c.set(a,this.receiveBuffer.length);a=c;delete this.receiveBuffer}try{for(c=0;c<a.length;){var d;a:{var e=a,g=c,m=g,n=e[g],l=n>>4,t=n&15,g=g+1,x=void 0,C=0,p=1;do{if(g==e.length){d=[null,m];break a}x=e[g++];C+=(x&127)*p;p*=128}while(0!==(x&128));x=g+C;if(x>e.length)d=[null,m];else{var y=new q(l);switch(l){case 2:e[g++]&1&&(y.sessionPresent=\n!0);y.returnCode=e[g++];break;case 3:var m=t>>1&3,s=256*e[g]+e[g+1],g=g+2,u=E(e,g,s),g=g+s;0<m&&(y.messageIdentifier=256*e[g]+e[g+1],g+=2);var r=new Paho.MQTT.Message(e.subarray(g,x));1==(t&1)&&(r.retained=!0);8==(t&8)&&(r.duplicate=!0);r.qos=m;r.destinationName=u;y.payloadMessage=r;break;case 4:case 5:case 6:case 7:case 11:y.messageIdentifier=256*e[g]+e[g+1];break;case 9:y.messageIdentifier=256*e[g]+e[g+1],g+=2,y.returnCode=e.subarray(g,x)}d=[y,x]}}var v=d[0],c=d[1];if(null!==v)b.push(v);else break}c<\na.length&&(this.receiveBuffer=a.subarray(c))}catch(w){d=\"undefined\"==w.hasOwnProperty(\"stack\")?w.stack.toString():\"No Error Stack Available\";this._disconnected(h.INTERNAL_ERROR.code,f(h.INTERNAL_ERROR,[w.message,d]));return}return b};d.prototype._handleMessage=function(a){this._trace(\"Client._handleMessage\",a);try{switch(a.type){case 2:this._connectTimeout.cancel();this._reconnectTimeout&&this._reconnectTimeout.cancel();if(this.connectOptions.cleanSession){for(var b in this._sentMessages){var c=this._sentMessages[b];\nlocalStorage.removeItem(\"Sent:\"+this._localKey+c.messageIdentifier)}this._sentMessages={};for(b in this._receivedMessages){var d=this._receivedMessages[b];localStorage.removeItem(\"Received:\"+this._localKey+d.messageIdentifier)}this._receivedMessages={}}if(0===a.returnCode)this.connected=!0,this.connectOptions.uris&&(this.hostIndex=this.connectOptions.uris.length);else{this._disconnected(h.CONNACK_RETURNCODE.code,f(h.CONNACK_RETURNCODE,[a.returnCode,H[a.returnCode]]));break}a=[];for(var e in this._sentMessages)this._sentMessages.hasOwnProperty(e)&&\na.push(this._sentMessages[e]);if(0<this._buffered_msg_queue.length){e=null;for(var g=this._buffered_msg_queue.reverse();e=g.pop();)a.push(e),this.onMessageDelivered&&(this._notify_msg_sent[e]=this.onMessageDelivered(e.payloadMessage))}a=a.sort(function(a,b){return a.sequence-b.sequence});for(var g=0,m=a.length;g<m;g++)if(c=a[g],3==c.type&&c.pubRecReceived){var n=new q(6,{messageIdentifier:c.messageIdentifier});this._schedule_message(n)}else this._schedule_message(c);if(this.connectOptions.onSuccess)this.connectOptions.onSuccess({invocationContext:this.connectOptions.invocationContext});\nc=!1;this._reconnecting&&(c=!0,this._reconnectInterval=1,this._reconnecting=!1);this._connected(c,this._wsuri);this._process_queue();break;case 3:this._receivePublish(a);break;case 4:if(c=this._sentMessages[a.messageIdentifier])if(delete this._sentMessages[a.messageIdentifier],localStorage.removeItem(\"Sent:\"+this._localKey+a.messageIdentifier),this.onMessageDelivered)this.onMessageDelivered(c.payloadMessage);break;case 5:if(c=this._sentMessages[a.messageIdentifier])c.pubRecReceived=!0,n=new q(6,{messageIdentifier:a.messageIdentifier}),\nthis.store(\"Sent:\",c),this._schedule_message(n);break;case 6:d=this._receivedMessages[a.messageIdentifier];localStorage.removeItem(\"Received:\"+this._localKey+a.messageIdentifier);d&&(this._receiveMessage(d),delete this._receivedMessages[a.messageIdentifier]);var l=new q(7,{messageIdentifier:a.messageIdentifier});this._schedule_message(l);break;case 7:c=this._sentMessages[a.messageIdentifier];delete this._sentMessages[a.messageIdentifier];localStorage.removeItem(\"Sent:\"+this._localKey+a.messageIdentifier);\nif(this.onMessageDelivered)this.onMessageDelivered(c.payloadMessage);break;case 9:if(c=this._sentMessages[a.messageIdentifier]){c.timeOut&&c.timeOut.cancel();if(128===a.returnCode[0]){if(c.onFailure)c.onFailure(a.returnCode)}else if(c.onSuccess)c.onSuccess(a.returnCode);delete this._sentMessages[a.messageIdentifier]}break;case 11:if(c=this._sentMessages[a.messageIdentifier])c.timeOut&&c.timeOut.cancel(),c.callback&&c.callback(),delete this._sentMessages[a.messageIdentifier];break;case 13:this.sendPinger.reset();\nbreak;case 14:this._disconnected(h.INVALID_MQTT_MESSAGE_TYPE.code,f(h.INVALID_MQTT_MESSAGE_TYPE,[a.type]));break;default:this._disconnected(h.INVALID_MQTT_MESSAGE_TYPE.code,f(h.INVALID_MQTT_MESSAGE_TYPE,[a.type]))}}catch(t){c=\"undefined\"==t.hasOwnProperty(\"stack\")?t.stack.toString():\"No Error Stack Available\",this._disconnected(h.INTERNAL_ERROR.code,f(h.INTERNAL_ERROR,[t.message,c]))}};d.prototype._on_socket_error=function(a){this._reconnecting||this._disconnected(h.SOCKET_ERROR.code,f(h.SOCKET_ERROR,\n[a.data]))};d.prototype._on_socket_close=function(){this._reconnecting||this._disconnected(h.SOCKET_CLOSE.code,f(h.SOCKET_CLOSE))};d.prototype._socket_send=function(a){if(1==a.type){var b=this._traceMask(a,\"password\");this._trace(\"Client._socket_send\",b)}else this._trace(\"Client._socket_send\",a);this.socket.send(a.encode());this.sendPinger.reset()};d.prototype._receivePublish=function(a){switch(a.payloadMessage.qos){case \"undefined\":case 0:this._receiveMessage(a);break;case 1:var b=new q(4,{messageIdentifier:a.messageIdentifier});\nthis._schedule_message(b);this._receiveMessage(a);break;case 2:this._receivedMessages[a.messageIdentifier]=a;this.store(\"Received:\",a);a=new q(5,{messageIdentifier:a.messageIdentifier});this._schedule_message(a);break;default:throw Error(\"Invaild qos\\x3d\"+wireMmessage.payloadMessage.qos);}};d.prototype._receiveMessage=function(a){if(this.onMessageArrived)this.onMessageArrived(a.payloadMessage)};d.prototype._connected=function(a,b){if(this.onConnected)this.onConnected(a,b)};d.prototype._reconnect=\nfunction(){this._trace(\"Client._reconnect\");this.connected||(this._reconnecting=!0,this.sendPinger.cancel(),this.receivePinger.cancel(),128>this._reconnectInterval&&(this._reconnectInterval*=2),this.connectOptions.uris?(this.hostIndex=0,this._doConnect(this.connectOptions.uris[0])):this._doConnect(this.uri))};d.prototype._disconnected=function(a,b){this._trace(\"Client._disconnected\",a,b);if(void 0!==a&&this._reconnecting)this._reconnectTimeout=new w(this,window,this._reconnectInterval,this._reconnect);\nelse if(this.sendPinger.cancel(),this.receivePinger.cancel(),this._connectTimeout&&(this._connectTimeout.cancel(),this._connectTimeout=null),this._msg_queue=[],this._buffered_msg_queue=[],this._notify_msg_sent={},this.socket&&(this.socket.onopen=null,this.socket.onmessage=null,this.socket.onerror=null,this.socket.onclose=null,1===this.socket.readyState&&this.socket.close(),delete this.socket),this.connectOptions.uris&&this.hostIndex<this.connectOptions.uris.length-1)this.hostIndex++,this._doConnect(this.connectOptions.uris[this.hostIndex]);\nelse if(void 0===a&&(a=h.OK.code,b=f(h.OK)),this.connected){this.connected=!1;if(this.onConnectionLost)this.onConnectionLost({errorCode:a,errorMessage:b,reconnect:this.connectOptions.reconnect,uri:this._wsuri});a!==h.OK.code&&this.connectOptions.reconnect&&(this._reconnectInterval=1,this._reconnect())}else if(4===this.connectOptions.mqttVersion&&!1===this.connectOptions.mqttVersionExplicit)this._trace(\"Failed to connect V4, dropping back to V3\"),this.connectOptions.mqttVersion=3,this.connectOptions.uris?\n(this.hostIndex=0,this._doConnect(this.connectOptions.uris[0])):this._doConnect(this.uri);else if(this.connectOptions.onFailure)this.connectOptions.onFailure({invocationContext:this.connectOptions.invocationContext,errorCode:a,errorMessage:b})};d.prototype._trace=function(){if(this.traceFunction){for(var a in arguments)\"undefined\"!==typeof arguments[a]&&arguments.splice(a,1,JSON.stringify(arguments[a]));a=Array.prototype.slice.call(arguments).join(\"\");this.traceFunction({severity:\"Debug\",message:a})}if(null!==\nthis._traceBuffer){a=0;for(var b=arguments.length;a<b;a++)this._traceBuffer.length==this._MAX_TRACE_ENTRIES&&this._traceBuffer.shift(),0===a?this._traceBuffer.push(arguments[a]):\"undefined\"===typeof arguments[a]?this._traceBuffer.push(arguments[a]):this._traceBuffer.push(\"  \"+JSON.stringify(arguments[a]))}};d.prototype._traceMask=function(a,b){var c={},d;for(d in a)a.hasOwnProperty(d)&&(c[d]=d==b?\"******\":a[d]);return c};var G=function(a,b,c,k){var e;if(\"string\"!==typeof a)throw Error(f(h.INVALID_TYPE,\n[typeof a,\"host\"]));if(2==arguments.length){k=b;e=a;var g=e.match(/^(wss?):\\/\\/((\\[(.+)\\])|([^\\/]+?))(:(\\d+))?(\\/.*)$/);if(g)a=g[4]||g[2],b=parseInt(g[7]),c=g[8];else throw Error(f(h.INVALID_ARGUMENT,[a,\"host\"]));}else{3==arguments.length&&(k=c,c=\"/mqtt\");if(\"number\"!==typeof b||0>b)throw Error(f(h.INVALID_TYPE,[typeof b,\"port\"]));if(\"string\"!==typeof c)throw Error(f(h.INVALID_TYPE,[typeof c,\"path\"]));e=\"ws://\"+(-1!==a.indexOf(\":\")&&\"[\"!==a.slice(0,1)&&\"]\"!==a.slice(-1)?\"[\"+a+\"]\":a)+\":\"+b+c}for(var m=\ng=0;m<k.length;m++){var n=k.charCodeAt(m);55296<=n&&56319>=n&&m++;g++}if(\"string\"!==typeof k||65535<g)throw Error(f(h.INVALID_ARGUMENT,[k,\"clientId\"]));var l=new d(e,a,b,c,k);this._getHost=function(){return a};this._setHost=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getPort=function(){return b};this._setPort=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getPath=function(){return c};this._setPath=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getURI=function(){return e};\nthis._setURI=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getClientId=function(){return l.clientId};this._setClientId=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getOnConnected=function(){return l.onConnected};this._setOnConnected=function(a){if(\"function\"===typeof a)l.onConnected=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onConnected\"]));};this._getDisconnectedPublishing=function(){return l.disconnectedPublishing};this._setDisconnectedPublishing=function(a){l.disconnectedPublishing=\na};this._getDisconnectedBufferSize=function(){return l.disconnectedBufferSize};this._setDisconnectedBufferSize=function(a){l.disconnectedBufferSize=a};this._getOnConnectionLost=function(){return l.onConnectionLost};this._setOnConnectionLost=function(a){if(\"function\"===typeof a)l.onConnectionLost=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onConnectionLost\"]));};this._getOnMessageDelivered=function(){return l.onMessageDelivered};this._setOnMessageDelivered=function(a){if(\"function\"===typeof a)l.onMessageDelivered=\na;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onMessageDelivered\"]));};this._getOnMessageArrived=function(){return l.onMessageArrived};this._setOnMessageArrived=function(a){if(\"function\"===typeof a)l.onMessageArrived=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onMessageArrived\"]));};this._getTrace=function(){return l.traceFunction};this._setTrace=function(a){if(\"function\"===typeof a)l.traceFunction=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onTrace\"]));};this.connect=function(a){a=a||{};z(a,\n{timeout:\"number\",userName:\"string\",password:\"string\",willMessage:\"object\",keepAliveInterval:\"number\",cleanSession:\"boolean\",useSSL:\"boolean\",invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",hosts:\"object\",ports:\"object\",reconnect:\"boolean\",mqttVersion:\"number\",mqttVersionExplicit:\"boolean\",uris:\"object\"});void 0===a.keepAliveInterval&&(a.keepAliveInterval=60);if(4<a.mqttVersion||3>a.mqttVersion)throw Error(f(h.INVALID_ARGUMENT,[a.mqttVersion,\"connectOptions.mqttVersion\"]));void 0===\na.mqttVersion?(a.mqttVersionExplicit=!1,a.mqttVersion=4):a.mqttVersionExplicit=!0;if(void 0!==a.password&&void 0===a.userName)throw Error(f(h.INVALID_ARGUMENT,[a.password,\"connectOptions.password\"]));if(a.willMessage){if(!(a.willMessage instanceof r))throw Error(f(h.INVALID_TYPE,[a.willMessage,\"connectOptions.willMessage\"]));a.willMessage.stringPayload=null;if(\"undefined\"===typeof a.willMessage.destinationName)throw Error(f(h.INVALID_TYPE,[typeof a.willMessage.destinationName,\"connectOptions.willMessage.destinationName\"]));\n}\"undefined\"===typeof a.cleanSession&&(a.cleanSession=!0);if(a.hosts){if(!(a.hosts instanceof Array))throw Error(f(h.INVALID_ARGUMENT,[a.hosts,\"connectOptions.hosts\"]));if(1>a.hosts.length)throw Error(f(h.INVALID_ARGUMENT,[a.hosts,\"connectOptions.hosts\"]));for(var b=!1,d=0;d<a.hosts.length;d++){if(\"string\"!==typeof a.hosts[d])throw Error(f(h.INVALID_TYPE,[typeof a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));if(/^(wss?):\\/\\/((\\[(.+)\\])|([^\\/]+?))(:(\\d+))?(\\/.*)$/.test(a.hosts[d]))if(0===d)b=!0;else{if(!b)throw Error(f(h.INVALID_ARGUMENT,\n[a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));}else if(b)throw Error(f(h.INVALID_ARGUMENT,[a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));}if(b)a.uris=a.hosts;else{if(!a.ports)throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));if(!(a.ports instanceof Array))throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));if(a.hosts.length!==a.ports.length)throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));a.uris=[];for(d=0;d<a.hosts.length;d++){if(\"number\"!==typeof a.ports[d]||\n0>a.ports[d])throw Error(f(h.INVALID_TYPE,[typeof a.ports[d],\"connectOptions.ports[\"+d+\"]\"]));var b=a.hosts[d],g=a.ports[d];e=\"ws://\"+(-1!==b.indexOf(\":\")?\"[\"+b+\"]\":b)+\":\"+g+c;a.uris.push(e)}}}l.connect(a)};this.subscribe=function(a,b){if(\"string\"!==typeof a)throw Error(\"Invalid argument:\"+a);b=b||{};z(b,{qos:\"number\",invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",timeout:\"number\"});if(b.timeout&&!b.onFailure)throw Error(\"subscribeOptions.timeout specified with no onFailure callback.\");\nif(\"undefined\"!==typeof b.qos&&0!==b.qos&&1!==b.qos&&2!==b.qos)throw Error(f(h.INVALID_ARGUMENT,[b.qos,\"subscribeOptions.qos\"]));l.subscribe(a,b)};this.unsubscribe=function(a,b){if(\"string\"!==typeof a)throw Error(\"Invalid argument:\"+a);b=b||{};z(b,{invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",timeout:\"number\"});if(b.timeout&&!b.onFailure)throw Error(\"unsubscribeOptions.timeout specified with no onFailure callback.\");l.unsubscribe(a,b)};this.send=function(a,b,c,d){var e;if(0===\narguments.length)throw Error(\"Invalid argument.length\");if(1==arguments.length){if(!(a instanceof r)&&\"string\"!==typeof a)throw Error(\"Invalid argument:\"+typeof a);e=a;if(\"undefined\"===typeof e.destinationName)throw Error(f(h.INVALID_ARGUMENT,[e.destinationName,\"Message.destinationName\"]));}else e=new r(b),e.destinationName=a,3<=arguments.length&&(e.qos=c),4<=arguments.length&&(e.retained=d);l.send(e)};this.publish=function(a,b,c,d){console.log(\"Publising message to: \",a);var e;if(0===arguments.length)throw Error(\"Invalid argument.length\");\nif(1==arguments.length){if(!(a instanceof r)&&\"string\"!==typeof a)throw Error(\"Invalid argument:\"+typeof a);e=a;if(\"undefined\"===typeof e.destinationName)throw Error(f(h.INVALID_ARGUMENT,[e.destinationName,\"Message.destinationName\"]));}else e=new r(b),e.destinationName=a,3<=arguments.length&&(e.qos=c),4<=arguments.length&&(e.retained=d);l.send(e)};this.disconnect=function(){l.disconnect()};this.getTraceLog=function(){return l.getTraceLog()};this.startTrace=function(){l.startTrace()};this.stopTrace=\nfunction(){l.stopTrace()};this.isConnected=function(){return l.connected}};G.prototype={get host(){return this._getHost()},set host(a){this._setHost(a)},get port(){return this._getPort()},set port(a){this._setPort(a)},get path(){return this._getPath()},set path(a){this._setPath(a)},get clientId(){return this._getClientId()},set clientId(a){this._setClientId(a)},get onConnected(){return this._getOnConnected()},set onConnected(a){this._setOnConnected(a)},get disconnectedPublishing(){return this._getDisconnectedPublishing()},\nset disconnectedPublishing(a){this._setDisconnectedPublishing(a)},get disconnectedBufferSize(){return this._getDisconnectedBufferSize()},set disconnectedBufferSize(a){this._setDisconnectedBufferSize(a)},get onConnectionLost(){return this._getOnConnectionLost()},set onConnectionLost(a){this._setOnConnectionLost(a)},get onMessageDelivered(){return this._getOnMessageDelivered()},set onMessageDelivered(a){this._setOnMessageDelivered(a)},get onMessageArrived(){return this._getOnMessageArrived()},set onMessageArrived(a){this._setOnMessageArrived(a)},\nget trace(){return this._getTrace()},set trace(a){this._setTrace(a)}};var r=function(a){var b;if(\"string\"===typeof a||a instanceof ArrayBuffer||a instanceof Int8Array||a instanceof Uint8Array||a instanceof Int16Array||a instanceof Uint16Array||a instanceof Int32Array||a instanceof Uint32Array||a instanceof Float32Array||a instanceof Float64Array)b=a;else throw f(h.INVALID_ARGUMENT,[a,\"newPayload\"]);this._getPayloadString=function(){return\"string\"===typeof b?b:E(b,0,b.length)};this._getPayloadBytes=\nfunction(){if(\"string\"===typeof b){var a=new ArrayBuffer(n(b)),a=new Uint8Array(a);D(b,a,0);return a}return b};var c;this._getDestinationName=function(){return c};this._setDestinationName=function(a){if(\"string\"===typeof a)c=a;else throw Error(f(h.INVALID_ARGUMENT,[a,\"newDestinationName\"]));};var d=0;this._getQos=function(){return d};this._setQos=function(a){if(0===a||1===a||2===a)d=a;else throw Error(\"Invalid argument:\"+a);};var e=!1;this._getRetained=function(){return e};this._setRetained=function(a){if(\"boolean\"===\ntypeof a)e=a;else throw Error(f(h.INVALID_ARGUMENT,[a,\"newRetained\"]));};var g=!1;this._getDuplicate=function(){return g};this._setDuplicate=function(a){g=a}};r.prototype={get payloadString(){return this._getPayloadString()},get payloadBytes(){return this._getPayloadBytes()},get destinationName(){return this._getDestinationName()},set destinationName(a){this._setDestinationName(a)},get topic(){return this._getDestinationName()},set topic(a){this._setDestinationName(a)},get qos(){return this._getQos()},\nset qos(a){this._setQos(a)},get retained(){return this._getRetained()},set retained(a){this._setRetained(a)},get duplicate(){return this._getDuplicate()},set duplicate(a){this._setDuplicate(a)}};return{Client:G,Message:r}}(window)});\nfunction _clspRouter() {\n    function send(m){\n        // route message to parent which will in turn route to the correct\n        // player based on clientId.\n        m.clientId = MqttClientId;\n        // console.log(m);\n        window.parent.postMessage(m,\"*\");\n    }// end send\n\n\n    function routeInbound(message){\n        var pstring = \"\";\n\n        try {\n            pstring = message.payloadString;\n        } catch(e) {\n            //bogus excepton?\n        }\n\n        send({\n          event: \'data\',\n          destinationName: message.destinationName,\n          payloadString: pstring,\n          payloadBytes: message.payloadBytes || null\n        });\n    }// end route inbound\n\n\n    function eventHandler(evt){\n        var m = evt.data;\n\n        try {\n            if (m.method === \'subscribe\') {\n                MQTTClient.subscribe(m.topic);\n            } else if (m.method === \'unsubscribe\') {\n                MQTTClient.unsubscribe(m.topic);\n            } else if (m.method === \'publish\') {\n                var mqtt_payload = null;\n                try {\n                    mqtt_payload = JSON.stringify(m.data);\n                } catch( json_error ) {\n                    console.error(\"json stringify error: \" + m.data);\n                    return;\n                }\n\n                var mqtt_msg = new Paho.MQTT.Message(mqtt_payload);\n                mqtt_msg.destinationName = m.topic;\n                MQTTClient.send(mqtt_msg);\n            }\n        } catch(e) {\n            // we are dead!\n           send({\n               event: \'fail\',\n               reason: \"network failure\"\n            });\n            try {\n                MQTTClient.disconnect();\n            } catch(e) {\n                console.error(e);\n            }\n        }\n\n    }\n\n    function AppReady() {\n\n        if (window.addEventListener) {\n            window.addEventListener(\"message\", eventHandler, false);\n        } else if (window.attachEvent) {\n            window.attachEvent(\'onmessage\', eventHandler);\n        }\n\n        send({\n          event: \'ready\'\n        });\n\n        if (Reconnect !== -1)\n        {\n            clearInterval(Reconnect);\n            Reconnect = -1;\n        }\n\n    }// application ready\n\n\n    function AppFail(message) {\n      var e = \"Error code \" +\n          parseInt(message.errorCode) + \": \" + message.errorMessage;\n      send({\n        event: \'fail\',\n        reason: e\n      });\n    }\n\n    MQTTClient = new Paho.MQTT.Client(\n        MqttIp,\n        MqttPort,\n        MqttClientId\n    );\n\n    /*\n     * Hold the id of the reconnect interval task\n     */\n    var Reconnect = -1;\n\n    /*\n     * Callback which gets called when the connection is lost\n     */\n    function onConnectionLost(message){\n        send({\n            event: \'fail\',\n            reason: \"connection lost error code \" + parseInt(message.errorCode)\n        });\n        if (Reconnect === -1) {\n            Reconnect = setInterval(() => connect(), 2000);\n        }\n    }\n\n    MQTTClient.onConnectionLost = onConnectionLost;\n\n    // perhaps the busiest function in this module ;)\n    MQTTClient.onMessageArrived = function(message) {\n        // console.log(message);\n        try {\n             routeInbound(message);\n        }catch(e) {\n            if (e) {\n                console.error(e);\n            }\n        }\n    };\n\n    /**\n     * Connect to MQTT...\n     */\n    function connect()\n    {\n        // setup connection options\n        var options = {\n            timeout: 120,\n            onSuccess:  AppReady,\n            onFailure: AppFail\n        };\n        // last will message sent on disconnect\n        var willmsg = new Paho.MQTT.Message(JSON.stringify({\n            clientId: MqttClientId\n        }));\n        willmsg.destinationName = \"iov/clientDisconnect\";\n        options.willMessage = willmsg;\n\n        if (MqttUseSSL === true) {\n            options.useSSL = true;\n        }\n\n        try {\n            MQTTClient.connect(options);\n        } catch(e) {\n            console.error(\"connect failed\", e);\n            send({\n                event: \'fail\',\n                reason: \"connect failed\"\n            });\n        }\n    }\n\n    connect();\n}\n\nfunction clspRouter() {\n    try {\n        _clspRouter();\n    } catch(e) {\n        console.error(\"IFRAME error\");\n        console.error(e);\n    }\n}\n\nfunction onunload()\n{\n    if (typeof MQTTClient !== \'undefined\') {\n        MQTTClient.disconnect();\n    }\n}\n";
+var iframe_code = "/*******************************************************************************\n * Copyright (c) 2013, 2016 IBM Corp.\n *\n * All rights reserved. This program and the accompanying materials\n * are made available under the terms of the Eclipse Public License v1.0\n * and Eclipse Distribution License v1.0 which accompany this distribution.\n *\n * The Eclipse Public License is available at\n *    http://www.eclipse.org/legal/epl-v10.html\n * and the Eclipse Distribution License is available at\n *   http://www.eclipse.org/org/documents/edl-v10.php.\n *\n *******************************************************************************/\n(function(p,s){\"object\"===typeof exports&&\"object\"===typeof module?module.exports=s():\"function\"===typeof define&&define.amd?define(s):\"object\"===typeof exports?exports=s():(\"undefined\"===typeof p.Paho&&(p.Paho={}),p.Paho.MQTT=s())})(this,function(){return function(p){function s(a,b,c){b[c++]=a>>8;b[c++]=a%256;return c}function u(a,b,c,k){k=s(b,c,k);D(a,c,k);return k+b}function n(a){for(var b=0,c=0;c<a.length;c++){var k=a.charCodeAt(c);2047<k?(55296<=k&&56319>=k&&(c++,b++),b+=3):127<k?b+=2:b++}return b}\nfunction D(a,b,c){for(var k=0;k<a.length;k++){var e=a.charCodeAt(k);if(55296<=e&&56319>=e){var g=a.charCodeAt(++k);if(isNaN(g))throw Error(f(h.MALFORMED_UNICODE,[e,g]));e=(e-55296<<10)+(g-56320)+65536}127>=e?b[c++]=e:(2047>=e?b[c++]=e>>6&31|192:(65535>=e?b[c++]=e>>12&15|224:(b[c++]=e>>18&7|240,b[c++]=e>>12&63|128),b[c++]=e>>6&63|128),b[c++]=e&63|128)}return b}function E(a,b,c){for(var k=\"\",e,g=b;g<b+c;){e=a[g++];if(!(128>e)){var m=a[g++]-128;if(0>m)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),\n\"\"]));if(224>e)e=64*(e-192)+m;else{var d=a[g++]-128;if(0>d)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16)]));if(240>e)e=4096*(e-224)+64*m+d;else{var l=a[g++]-128;if(0>l)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16),l.toString(16)]));if(248>e)e=262144*(e-240)+4096*m+64*d+l;else throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16),l.toString(16)]));}}}65535<e&&(e-=65536,k+=String.fromCharCode(55296+(e>>10)),e=56320+(e&\n1023));k+=String.fromCharCode(e)}return k}var z=function(a,b){for(var c in a)if(a.hasOwnProperty(c))if(b.hasOwnProperty(c)){if(typeof a[c]!==b[c])throw Error(f(h.INVALID_TYPE,[typeof a[c],c]));}else{c=\"Unknown property, \"+c+\". Valid properties are:\";for(var k in b)b.hasOwnProperty(k)&&(c=c+\" \"+k);throw Error(c);}},v=function(a,b){return function(){return a.apply(b,arguments)}},h={OK:{code:0,text:\"AMQJSC0000I OK.\"},CONNECT_TIMEOUT:{code:1,text:\"AMQJSC0001E Connect timed out.\"},SUBSCRIBE_TIMEOUT:{code:2,\ntext:\"AMQJS0002E Subscribe timed out.\"},UNSUBSCRIBE_TIMEOUT:{code:3,text:\"AMQJS0003E Unsubscribe timed out.\"},PING_TIMEOUT:{code:4,text:\"AMQJS0004E Ping timed out.\"},INTERNAL_ERROR:{code:5,text:\"AMQJS0005E Internal error. Error Message: {0}, Stack trace: {1}\"},CONNACK_RETURNCODE:{code:6,text:\"AMQJS0006E Bad Connack return code:{0} {1}.\"},SOCKET_ERROR:{code:7,text:\"AMQJS0007E Socket error:{0}.\"},SOCKET_CLOSE:{code:8,text:\"AMQJS0008I Socket closed.\"},MALFORMED_UTF:{code:9,text:\"AMQJS0009E Malformed UTF data:{0} {1} {2}.\"},\nUNSUPPORTED:{code:10,text:\"AMQJS0010E {0} is not supported by this browser.\"},INVALID_STATE:{code:11,text:\"AMQJS0011E Invalid state {0}.\"},INVALID_TYPE:{code:12,text:\"AMQJS0012E Invalid type {0} for {1}.\"},INVALID_ARGUMENT:{code:13,text:\"AMQJS0013E Invalid argument {0} for {1}.\"},UNSUPPORTED_OPERATION:{code:14,text:\"AMQJS0014E Unsupported operation.\"},INVALID_STORED_DATA:{code:15,text:\"AMQJS0015E Invalid data in local storage key\\x3d{0} value\\x3d{1}.\"},INVALID_MQTT_MESSAGE_TYPE:{code:16,text:\"AMQJS0016E Invalid MQTT message type {0}.\"},\nMALFORMED_UNICODE:{code:17,text:\"AMQJS0017E Malformed Unicode string:{0} {1}.\"},BUFFER_FULL:{code:18,text:\"AMQJS0018E Message buffer is full, maximum buffer size: {0}.\"}},H={0:\"Connection Accepted\",1:\"Connection Refused: unacceptable protocol version\",2:\"Connection Refused: identifier rejected\",3:\"Connection Refused: server unavailable\",4:\"Connection Refused: bad user name or password\",5:\"Connection Refused: not authorized\"},f=function(a,b){var c=a.text;if(b)for(var k,e,g=0;g<b.length;g++)if(k=\"{\"+\ng+\"}\",e=c.indexOf(k),0<e)var h=c.substring(0,e),c=c.substring(e+k.length),c=h+b[g]+c;return c},A=[0,6,77,81,73,115,100,112,3],B=[0,4,77,81,84,84,4],q=function(a,b){this.type=a;for(var c in b)b.hasOwnProperty(c)&&(this[c]=b[c])};q.prototype.encode=function(){var a=(this.type&15)<<4,b=0,c=[],k=0,e;void 0!==this.messageIdentifier&&(b+=2);switch(this.type){case 1:switch(this.mqttVersion){case 3:b+=A.length+3;break;case 4:b+=B.length+3}b+=n(this.clientId)+2;void 0!==this.willMessage&&(b+=n(this.willMessage.destinationName)+\n2,e=this.willMessage.payloadBytes,e instanceof Uint8Array||(e=new Uint8Array(h)),b+=e.byteLength+2);void 0!==this.userName&&(b+=n(this.userName)+2);void 0!==this.password&&(b+=n(this.password)+2);break;case 8:for(var a=a|2,g=0;g<this.topics.length;g++)c[g]=n(this.topics[g]),b+=c[g]+2;b+=this.requestedQos.length;break;case 10:a|=2;for(g=0;g<this.topics.length;g++)c[g]=n(this.topics[g]),b+=c[g]+2;break;case 6:a|=2;break;case 3:this.payloadMessage.duplicate&&(a|=8);a=a|=this.payloadMessage.qos<<1;this.payloadMessage.retained&&\n(a|=1);var k=n(this.payloadMessage.destinationName),h=this.payloadMessage.payloadBytes,b=b+(k+2)+h.byteLength;h instanceof ArrayBuffer?h=new Uint8Array(h):h instanceof Uint8Array||(h=new Uint8Array(h.buffer))}var f=b,g=Array(1),d=0;do{var t=f%128,f=f>>7;0<f&&(t|=128);g[d++]=t}while(0<f&&4>d);f=g.length+1;b=new ArrayBuffer(b+f);d=new Uint8Array(b);d[0]=a;d.set(g,1);if(3==this.type)f=u(this.payloadMessage.destinationName,k,d,f);else if(1==this.type){switch(this.mqttVersion){case 3:d.set(A,f);f+=A.length;\nbreak;case 4:d.set(B,f),f+=B.length}a=0;this.cleanSession&&(a=2);void 0!==this.willMessage&&(a=a|4|this.willMessage.qos<<3,this.willMessage.retained&&(a|=32));void 0!==this.userName&&(a|=128);void 0!==this.password&&(a|=64);d[f++]=a;f=s(this.keepAliveInterval,d,f)}void 0!==this.messageIdentifier&&(f=s(this.messageIdentifier,d,f));switch(this.type){case 1:f=u(this.clientId,n(this.clientId),d,f);void 0!==this.willMessage&&(f=u(this.willMessage.destinationName,n(this.willMessage.destinationName),d,f),\nf=s(e.byteLength,d,f),d.set(e,f),f+=e.byteLength);void 0!==this.userName&&(f=u(this.userName,n(this.userName),d,f));void 0!==this.password&&u(this.password,n(this.password),d,f);break;case 3:d.set(h,f);break;case 8:for(g=0;g<this.topics.length;g++)f=u(this.topics[g],c[g],d,f),d[f++]=this.requestedQos[g];break;case 10:for(g=0;g<this.topics.length;g++)f=u(this.topics[g],c[g],d,f)}return b};var F=function(a,b,c){this._client=a;this._window=b;this._keepAliveInterval=1E3*c;this.isReset=!1;var k=(new q(12)).encode(),\ne=function(a){return function(){return g.apply(a)}},g=function(){this.isReset?(this.isReset=!1,this._client._trace(\"Pinger.doPing\",\"send PINGREQ\"),this._client.socket.send(k),this.timeout=this._window.setTimeout(e(this),this._keepAliveInterval)):(this._client._trace(\"Pinger.doPing\",\"Timed out\"),this._client._disconnected(h.PING_TIMEOUT.code,f(h.PING_TIMEOUT)))};this.reset=function(){this.isReset=!0;this._window.clearTimeout(this.timeout);0<this._keepAliveInterval&&(this.timeout=setTimeout(e(this),\nthis._keepAliveInterval))};this.cancel=function(){this._window.clearTimeout(this.timeout)}},w=function(a,b,c,f,e){this._window=b;c||(c=30);this.timeout=setTimeout(function(a,b,c){return function(){return a.apply(b,c)}}(f,a,e),1E3*c);this.cancel=function(){this._window.clearTimeout(this.timeout)}},d=function(a,b,c,d,e){if(!(\"WebSocket\"in p&&null!==p.WebSocket))throw Error(f(h.UNSUPPORTED,[\"WebSocket\"]));if(!(\"localStorage\"in p&&null!==p.localStorage))throw Error(f(h.UNSUPPORTED,[\"localStorage\"]));\nif(!(\"ArrayBuffer\"in p&&null!==p.ArrayBuffer))throw Error(f(h.UNSUPPORTED,[\"ArrayBuffer\"]));this._trace(\"Paho.MQTT.Client\",a,b,c,d,e);this.host=b;this.port=c;this.path=d;this.uri=a;this.clientId=e;this._wsuri=null;this._localKey=b+\":\"+c+(\"/mqtt\"!=d?\":\"+d:\"\")+\":\"+e+\":\";this._msg_queue=[];this._buffered_msg_queue=[];this._sentMessages={};this._receivedMessages={};this._notify_msg_sent={};this._message_identifier=1;this._sequence=0;for(var g in localStorage)0!==g.indexOf(\"Sent:\"+this._localKey)&&0!==\ng.indexOf(\"Received:\"+this._localKey)||this.restore(g)};d.prototype.host=null;d.prototype.port=null;d.prototype.path=null;d.prototype.uri=null;d.prototype.clientId=null;d.prototype.socket=null;d.prototype.connected=!1;d.prototype.maxMessageIdentifier=65536;d.prototype.connectOptions=null;d.prototype.hostIndex=null;d.prototype.onConnected=null;d.prototype.onConnectionLost=null;d.prototype.onMessageDelivered=null;d.prototype.onMessageArrived=null;d.prototype.traceFunction=null;d.prototype._msg_queue=\nnull;d.prototype._buffered_msg_queue=null;d.prototype._connectTimeout=null;d.prototype.sendPinger=null;d.prototype.receivePinger=null;d.prototype._reconnectInterval=1;d.prototype._reconnecting=!1;d.prototype._reconnectTimeout=null;d.prototype.disconnectedPublishing=!1;d.prototype.disconnectedBufferSize=5E3;d.prototype.receiveBuffer=null;d.prototype._traceBuffer=null;d.prototype._MAX_TRACE_ENTRIES=100;d.prototype.connect=function(a){var b=this._traceMask(a,\"password\");this._trace(\"Client.connect\",\nb,this.socket,this.connected);if(this.connected)throw Error(f(h.INVALID_STATE,[\"already connected\"]));if(this.socket)throw Error(f(h.INVALID_STATE,[\"already connected\"]));this._reconnecting&&(this._reconnectTimeout.cancel(),this._reconnectTimeout=null,this._reconnecting=!1);this.connectOptions=a;this._reconnectInterval=1;this._reconnecting=!1;a.uris?(this.hostIndex=0,this._doConnect(a.uris[0])):this._doConnect(this.uri)};d.prototype.subscribe=function(a,b){this._trace(\"Client.subscribe\",a,b);if(!this.connected)throw Error(f(h.INVALID_STATE,\n[\"not connected\"]));var c=new q(8);c.topics=[a];c.requestedQos=void 0!==b.qos?[b.qos]:[0];b.onSuccess&&(c.onSuccess=function(a){b.onSuccess({invocationContext:b.invocationContext,grantedQos:a})});b.onFailure&&(c.onFailure=function(a){b.onFailure({invocationContext:b.invocationContext,errorCode:a,errorMessage:f(a)})});b.timeout&&(c.timeOut=new w(this,window,b.timeout,b.onFailure,[{invocationContext:b.invocationContext,errorCode:h.SUBSCRIBE_TIMEOUT.code,errorMessage:f(h.SUBSCRIBE_TIMEOUT)}]));this._requires_ack(c);\nthis._schedule_message(c)};d.prototype.unsubscribe=function(a,b){this._trace(\"Client.unsubscribe\",a,b);if(!this.connected)throw Error(f(h.INVALID_STATE,[\"not connected\"]));var c=new q(10);c.topics=[a];b.onSuccess&&(c.callback=function(){b.onSuccess({invocationContext:b.invocationContext})});b.timeout&&(c.timeOut=new w(this,window,b.timeout,b.onFailure,[{invocationContext:b.invocationContext,errorCode:h.UNSUBSCRIBE_TIMEOUT.code,errorMessage:f(h.UNSUBSCRIBE_TIMEOUT)}]));this._requires_ack(c);this._schedule_message(c)};\nd.prototype.send=function(a){this._trace(\"Client.send\",a);wireMessage=new q(3);wireMessage.payloadMessage=a;if(this.connected)0<a.qos?this._requires_ack(wireMessage):this.onMessageDelivered&&(this._notify_msg_sent[wireMessage]=this.onMessageDelivered(wireMessage.payloadMessage)),this._schedule_message(wireMessage);else if(this._reconnecting&&this.disconnectedPublishing){if(Object.keys(this._sentMessages).length+this._buffered_msg_queue.length>this.disconnectedBufferSize)throw Error(f(h.BUFFER_FULL,\n[this.disconnectedBufferSize]));0<a.qos?this._requires_ack(wireMessage):(wireMessage.sequence=++this._sequence,this._buffered_msg_queue.push(wireMessage))}else throw Error(f(h.INVALID_STATE,[\"not connected\"]));};d.prototype.disconnect=function(){this._trace(\"Client.disconnect\");this._reconnecting&&(this._reconnectTimeout.cancel(),this._reconnectTimeout=null,this._reconnecting=!1);if(!this.socket)throw Error(f(h.INVALID_STATE,[\"not connecting or connected\"]));wireMessage=new q(14);this._notify_msg_sent[wireMessage]=\nv(this._disconnected,this);this._schedule_message(wireMessage)};d.prototype.getTraceLog=function(){if(null!==this._traceBuffer){this._trace(\"Client.getTraceLog\",new Date);this._trace(\"Client.getTraceLog in flight messages\",this._sentMessages.length);for(var a in this._sentMessages)this._trace(\"_sentMessages \",a,this._sentMessages[a]);for(a in this._receivedMessages)this._trace(\"_receivedMessages \",a,this._receivedMessages[a]);return this._traceBuffer}};d.prototype.startTrace=function(){null===this._traceBuffer&&\n(this._traceBuffer=[]);this._trace(\"Client.startTrace\",new Date,\"1.0.3\")};d.prototype.stopTrace=function(){delete this._traceBuffer};d.prototype._doConnect=function(a){this.connectOptions.useSSL&&(a=a.split(\":\"),a[0]=\"wss\",a=a.join(\":\"));this._wsuri=a;this.connected=!1;this.socket=4>this.connectOptions.mqttVersion?new WebSocket(a,[\"mqttv3.1\"]):new WebSocket(a,[\"mqtt\"]);this.socket.binaryType=\"arraybuffer\";this.socket.onopen=v(this._on_socket_open,this);this.socket.onmessage=v(this._on_socket_message,\nthis);this.socket.onerror=v(this._on_socket_error,this);this.socket.onclose=v(this._on_socket_close,this);this.sendPinger=new F(this,window,this.connectOptions.keepAliveInterval);this.receivePinger=new F(this,window,this.connectOptions.keepAliveInterval);this._connectTimeout&&(this._connectTimeout.cancel(),this._connectTimeout=null);this._connectTimeout=new w(this,window,this.connectOptions.timeout,this._disconnected,[h.CONNECT_TIMEOUT.code,f(h.CONNECT_TIMEOUT)])};d.prototype._schedule_message=function(a){this._msg_queue.push(a);\nthis.connected&&this._process_queue()};d.prototype.store=function(a,b){var c={type:b.type,messageIdentifier:b.messageIdentifier,version:1};switch(b.type){case 3:b.pubRecReceived&&(c.pubRecReceived=!0);c.payloadMessage={};for(var d=\"\",e=b.payloadMessage.payloadBytes,g=0;g<e.length;g++)d=15>=e[g]?d+\"0\"+e[g].toString(16):d+e[g].toString(16);c.payloadMessage.payloadHex=d;c.payloadMessage.qos=b.payloadMessage.qos;c.payloadMessage.destinationName=b.payloadMessage.destinationName;b.payloadMessage.duplicate&&\n(c.payloadMessage.duplicate=!0);b.payloadMessage.retained&&(c.payloadMessage.retained=!0);0===a.indexOf(\"Sent:\")&&(void 0===b.sequence&&(b.sequence=++this._sequence),c.sequence=b.sequence);break;default:throw Error(f(h.INVALID_STORED_DATA,[key,c]));}localStorage.setItem(a+this._localKey+b.messageIdentifier,JSON.stringify(c))};d.prototype.restore=function(a){var b=localStorage.getItem(a),c=JSON.parse(b),d=new q(c.type,c);switch(c.type){case 3:for(var b=c.payloadMessage.payloadHex,e=new ArrayBuffer(b.length/\n2),e=new Uint8Array(e),g=0;2<=b.length;){var m=parseInt(b.substring(0,2),16),b=b.substring(2,b.length);e[g++]=m}b=new Paho.MQTT.Message(e);b.qos=c.payloadMessage.qos;b.destinationName=c.payloadMessage.destinationName;c.payloadMessage.duplicate&&(b.duplicate=!0);c.payloadMessage.retained&&(b.retained=!0);d.payloadMessage=b;break;default:throw Error(f(h.INVALID_STORED_DATA,[a,b]));}0===a.indexOf(\"Sent:\"+this._localKey)?(d.payloadMessage.duplicate=!0,this._sentMessages[d.messageIdentifier]=d):0===a.indexOf(\"Received:\"+\nthis._localKey)&&(this._receivedMessages[d.messageIdentifier]=d)};d.prototype._process_queue=function(){for(var a=null,b=this._msg_queue.reverse();a=b.pop();)this._socket_send(a),this._notify_msg_sent[a]&&(this._notify_msg_sent[a](),delete this._notify_msg_sent[a])};d.prototype._requires_ack=function(a){var b=Object.keys(this._sentMessages).length;if(b>this.maxMessageIdentifier)throw Error(\"Too many messages:\"+b);for(;void 0!==this._sentMessages[this._message_identifier];)this._message_identifier++;\na.messageIdentifier=this._message_identifier;this._sentMessages[a.messageIdentifier]=a;3===a.type&&this.store(\"Sent:\",a);this._message_identifier===this.maxMessageIdentifier&&(this._message_identifier=1)};d.prototype._on_socket_open=function(){var a=new q(1,this.connectOptions);a.clientId=this.clientId;this._socket_send(a)};d.prototype._on_socket_message=function(a){this._trace(\"Client._on_socket_message\",a.data);a=this._deframeMessages(a.data);for(var b=0;b<a.length;b+=1)this._handleMessage(a[b])};\nd.prototype._deframeMessages=function(a){a=new Uint8Array(a);var b=[];if(this.receiveBuffer){var c=new Uint8Array(this.receiveBuffer.length+a.length);c.set(this.receiveBuffer);c.set(a,this.receiveBuffer.length);a=c;delete this.receiveBuffer}try{for(c=0;c<a.length;){var d;a:{var e=a,g=c,m=g,n=e[g],l=n>>4,t=n&15,g=g+1,x=void 0,C=0,p=1;do{if(g==e.length){d=[null,m];break a}x=e[g++];C+=(x&127)*p;p*=128}while(0!==(x&128));x=g+C;if(x>e.length)d=[null,m];else{var y=new q(l);switch(l){case 2:e[g++]&1&&(y.sessionPresent=\n!0);y.returnCode=e[g++];break;case 3:var m=t>>1&3,s=256*e[g]+e[g+1],g=g+2,u=E(e,g,s),g=g+s;0<m&&(y.messageIdentifier=256*e[g]+e[g+1],g+=2);var r=new Paho.MQTT.Message(e.subarray(g,x));1==(t&1)&&(r.retained=!0);8==(t&8)&&(r.duplicate=!0);r.qos=m;r.destinationName=u;y.payloadMessage=r;break;case 4:case 5:case 6:case 7:case 11:y.messageIdentifier=256*e[g]+e[g+1];break;case 9:y.messageIdentifier=256*e[g]+e[g+1],g+=2,y.returnCode=e.subarray(g,x)}d=[y,x]}}var v=d[0],c=d[1];if(null!==v)b.push(v);else break}c<\na.length&&(this.receiveBuffer=a.subarray(c))}catch(w){d=\"undefined\"==w.hasOwnProperty(\"stack\")?w.stack.toString():\"No Error Stack Available\";this._disconnected(h.INTERNAL_ERROR.code,f(h.INTERNAL_ERROR,[w.message,d]));return}return b};d.prototype._handleMessage=function(a){this._trace(\"Client._handleMessage\",a);try{switch(a.type){case 2:this._connectTimeout.cancel();this._reconnectTimeout&&this._reconnectTimeout.cancel();if(this.connectOptions.cleanSession){for(var b in this._sentMessages){var c=this._sentMessages[b];\nlocalStorage.removeItem(\"Sent:\"+this._localKey+c.messageIdentifier)}this._sentMessages={};for(b in this._receivedMessages){var d=this._receivedMessages[b];localStorage.removeItem(\"Received:\"+this._localKey+d.messageIdentifier)}this._receivedMessages={}}if(0===a.returnCode)this.connected=!0,this.connectOptions.uris&&(this.hostIndex=this.connectOptions.uris.length);else{this._disconnected(h.CONNACK_RETURNCODE.code,f(h.CONNACK_RETURNCODE,[a.returnCode,H[a.returnCode]]));break}a=[];for(var e in this._sentMessages)this._sentMessages.hasOwnProperty(e)&&\na.push(this._sentMessages[e]);if(0<this._buffered_msg_queue.length){e=null;for(var g=this._buffered_msg_queue.reverse();e=g.pop();)a.push(e),this.onMessageDelivered&&(this._notify_msg_sent[e]=this.onMessageDelivered(e.payloadMessage))}a=a.sort(function(a,b){return a.sequence-b.sequence});for(var g=0,m=a.length;g<m;g++)if(c=a[g],3==c.type&&c.pubRecReceived){var n=new q(6,{messageIdentifier:c.messageIdentifier});this._schedule_message(n)}else this._schedule_message(c);if(this.connectOptions.onSuccess)this.connectOptions.onSuccess({invocationContext:this.connectOptions.invocationContext});\nc=!1;this._reconnecting&&(c=!0,this._reconnectInterval=1,this._reconnecting=!1);this._connected(c,this._wsuri);this._process_queue();break;case 3:this._receivePublish(a);break;case 4:if(c=this._sentMessages[a.messageIdentifier])if(delete this._sentMessages[a.messageIdentifier],localStorage.removeItem(\"Sent:\"+this._localKey+a.messageIdentifier),this.onMessageDelivered)this.onMessageDelivered(c.payloadMessage);break;case 5:if(c=this._sentMessages[a.messageIdentifier])c.pubRecReceived=!0,n=new q(6,{messageIdentifier:a.messageIdentifier}),\nthis.store(\"Sent:\",c),this._schedule_message(n);break;case 6:d=this._receivedMessages[a.messageIdentifier];localStorage.removeItem(\"Received:\"+this._localKey+a.messageIdentifier);d&&(this._receiveMessage(d),delete this._receivedMessages[a.messageIdentifier]);var l=new q(7,{messageIdentifier:a.messageIdentifier});this._schedule_message(l);break;case 7:c=this._sentMessages[a.messageIdentifier];delete this._sentMessages[a.messageIdentifier];localStorage.removeItem(\"Sent:\"+this._localKey+a.messageIdentifier);\nif(this.onMessageDelivered)this.onMessageDelivered(c.payloadMessage);break;case 9:if(c=this._sentMessages[a.messageIdentifier]){c.timeOut&&c.timeOut.cancel();if(128===a.returnCode[0]){if(c.onFailure)c.onFailure(a.returnCode)}else if(c.onSuccess)c.onSuccess(a.returnCode);delete this._sentMessages[a.messageIdentifier]}break;case 11:if(c=this._sentMessages[a.messageIdentifier])c.timeOut&&c.timeOut.cancel(),c.callback&&c.callback(),delete this._sentMessages[a.messageIdentifier];break;case 13:this.sendPinger.reset();\nbreak;case 14:this._disconnected(h.INVALID_MQTT_MESSAGE_TYPE.code,f(h.INVALID_MQTT_MESSAGE_TYPE,[a.type]));break;default:this._disconnected(h.INVALID_MQTT_MESSAGE_TYPE.code,f(h.INVALID_MQTT_MESSAGE_TYPE,[a.type]))}}catch(t){c=\"undefined\"==t.hasOwnProperty(\"stack\")?t.stack.toString():\"No Error Stack Available\",this._disconnected(h.INTERNAL_ERROR.code,f(h.INTERNAL_ERROR,[t.message,c]))}};d.prototype._on_socket_error=function(a){this._reconnecting||this._disconnected(h.SOCKET_ERROR.code,f(h.SOCKET_ERROR,\n[a.data]))};d.prototype._on_socket_close=function(){this._reconnecting||this._disconnected(h.SOCKET_CLOSE.code,f(h.SOCKET_CLOSE))};d.prototype._socket_send=function(a){if(1==a.type){var b=this._traceMask(a,\"password\");this._trace(\"Client._socket_send\",b)}else this._trace(\"Client._socket_send\",a);this.socket.send(a.encode());this.sendPinger.reset()};d.prototype._receivePublish=function(a){switch(a.payloadMessage.qos){case \"undefined\":case 0:this._receiveMessage(a);break;case 1:var b=new q(4,{messageIdentifier:a.messageIdentifier});\nthis._schedule_message(b);this._receiveMessage(a);break;case 2:this._receivedMessages[a.messageIdentifier]=a;this.store(\"Received:\",a);a=new q(5,{messageIdentifier:a.messageIdentifier});this._schedule_message(a);break;default:throw Error(\"Invaild qos\\x3d\"+wireMmessage.payloadMessage.qos);}};d.prototype._receiveMessage=function(a){if(this.onMessageArrived)this.onMessageArrived(a.payloadMessage)};d.prototype._connected=function(a,b){if(this.onConnected)this.onConnected(a,b)};d.prototype._reconnect=\nfunction(){this._trace(\"Client._reconnect\");this.connected||(this._reconnecting=!0,this.sendPinger.cancel(),this.receivePinger.cancel(),128>this._reconnectInterval&&(this._reconnectInterval*=2),this.connectOptions.uris?(this.hostIndex=0,this._doConnect(this.connectOptions.uris[0])):this._doConnect(this.uri))};d.prototype._disconnected=function(a,b){this._trace(\"Client._disconnected\",a,b);if(void 0!==a&&this._reconnecting)this._reconnectTimeout=new w(this,window,this._reconnectInterval,this._reconnect);\nelse if(this.sendPinger.cancel(),this.receivePinger.cancel(),this._connectTimeout&&(this._connectTimeout.cancel(),this._connectTimeout=null),this._msg_queue=[],this._buffered_msg_queue=[],this._notify_msg_sent={},this.socket&&(this.socket.onopen=null,this.socket.onmessage=null,this.socket.onerror=null,this.socket.onclose=null,1===this.socket.readyState&&this.socket.close(),delete this.socket),this.connectOptions.uris&&this.hostIndex<this.connectOptions.uris.length-1)this.hostIndex++,this._doConnect(this.connectOptions.uris[this.hostIndex]);\nelse if(void 0===a&&(a=h.OK.code,b=f(h.OK)),this.connected){this.connected=!1;if(this.onConnectionLost)this.onConnectionLost({errorCode:a,errorMessage:b,reconnect:this.connectOptions.reconnect,uri:this._wsuri});a!==h.OK.code&&this.connectOptions.reconnect&&(this._reconnectInterval=1,this._reconnect())}else if(4===this.connectOptions.mqttVersion&&!1===this.connectOptions.mqttVersionExplicit)this._trace(\"Failed to connect V4, dropping back to V3\"),this.connectOptions.mqttVersion=3,this.connectOptions.uris?\n(this.hostIndex=0,this._doConnect(this.connectOptions.uris[0])):this._doConnect(this.uri);else if(this.connectOptions.onFailure)this.connectOptions.onFailure({invocationContext:this.connectOptions.invocationContext,errorCode:a,errorMessage:b})};d.prototype._trace=function(){if(this.traceFunction){for(var a in arguments)\"undefined\"!==typeof arguments[a]&&arguments.splice(a,1,JSON.stringify(arguments[a]));a=Array.prototype.slice.call(arguments).join(\"\");this.traceFunction({severity:\"Debug\",message:a})}if(null!==\nthis._traceBuffer){a=0;for(var b=arguments.length;a<b;a++)this._traceBuffer.length==this._MAX_TRACE_ENTRIES&&this._traceBuffer.shift(),0===a?this._traceBuffer.push(arguments[a]):\"undefined\"===typeof arguments[a]?this._traceBuffer.push(arguments[a]):this._traceBuffer.push(\"  \"+JSON.stringify(arguments[a]))}};d.prototype._traceMask=function(a,b){var c={},d;for(d in a)a.hasOwnProperty(d)&&(c[d]=d==b?\"******\":a[d]);return c};var G=function(a,b,c,k){var e;if(\"string\"!==typeof a)throw Error(f(h.INVALID_TYPE,\n[typeof a,\"host\"]));if(2==arguments.length){k=b;e=a;var g=e.match(/^(wss?):\\/\\/((\\[(.+)\\])|([^\\/]+?))(:(\\d+))?(\\/.*)$/);if(g)a=g[4]||g[2],b=parseInt(g[7]),c=g[8];else throw Error(f(h.INVALID_ARGUMENT,[a,\"host\"]));}else{3==arguments.length&&(k=c,c=\"/mqtt\");if(\"number\"!==typeof b||0>b)throw Error(f(h.INVALID_TYPE,[typeof b,\"port\"]));if(\"string\"!==typeof c)throw Error(f(h.INVALID_TYPE,[typeof c,\"path\"]));e=\"ws://\"+(-1!==a.indexOf(\":\")&&\"[\"!==a.slice(0,1)&&\"]\"!==a.slice(-1)?\"[\"+a+\"]\":a)+\":\"+b+c}for(var m=\ng=0;m<k.length;m++){var n=k.charCodeAt(m);55296<=n&&56319>=n&&m++;g++}if(\"string\"!==typeof k||65535<g)throw Error(f(h.INVALID_ARGUMENT,[k,\"clientId\"]));var l=new d(e,a,b,c,k);this._getHost=function(){return a};this._setHost=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getPort=function(){return b};this._setPort=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getPath=function(){return c};this._setPath=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getURI=function(){return e};\nthis._setURI=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getClientId=function(){return l.clientId};this._setClientId=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getOnConnected=function(){return l.onConnected};this._setOnConnected=function(a){if(\"function\"===typeof a)l.onConnected=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onConnected\"]));};this._getDisconnectedPublishing=function(){return l.disconnectedPublishing};this._setDisconnectedPublishing=function(a){l.disconnectedPublishing=\na};this._getDisconnectedBufferSize=function(){return l.disconnectedBufferSize};this._setDisconnectedBufferSize=function(a){l.disconnectedBufferSize=a};this._getOnConnectionLost=function(){return l.onConnectionLost};this._setOnConnectionLost=function(a){if(\"function\"===typeof a)l.onConnectionLost=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onConnectionLost\"]));};this._getOnMessageDelivered=function(){return l.onMessageDelivered};this._setOnMessageDelivered=function(a){if(\"function\"===typeof a)l.onMessageDelivered=\na;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onMessageDelivered\"]));};this._getOnMessageArrived=function(){return l.onMessageArrived};this._setOnMessageArrived=function(a){if(\"function\"===typeof a)l.onMessageArrived=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onMessageArrived\"]));};this._getTrace=function(){return l.traceFunction};this._setTrace=function(a){if(\"function\"===typeof a)l.traceFunction=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onTrace\"]));};this.connect=function(a){a=a||{};z(a,\n{timeout:\"number\",userName:\"string\",password:\"string\",willMessage:\"object\",keepAliveInterval:\"number\",cleanSession:\"boolean\",useSSL:\"boolean\",invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",hosts:\"object\",ports:\"object\",reconnect:\"boolean\",mqttVersion:\"number\",mqttVersionExplicit:\"boolean\",uris:\"object\"});void 0===a.keepAliveInterval&&(a.keepAliveInterval=60);if(4<a.mqttVersion||3>a.mqttVersion)throw Error(f(h.INVALID_ARGUMENT,[a.mqttVersion,\"connectOptions.mqttVersion\"]));void 0===\na.mqttVersion?(a.mqttVersionExplicit=!1,a.mqttVersion=4):a.mqttVersionExplicit=!0;if(void 0!==a.password&&void 0===a.userName)throw Error(f(h.INVALID_ARGUMENT,[a.password,\"connectOptions.password\"]));if(a.willMessage){if(!(a.willMessage instanceof r))throw Error(f(h.INVALID_TYPE,[a.willMessage,\"connectOptions.willMessage\"]));a.willMessage.stringPayload=null;if(\"undefined\"===typeof a.willMessage.destinationName)throw Error(f(h.INVALID_TYPE,[typeof a.willMessage.destinationName,\"connectOptions.willMessage.destinationName\"]));\n}\"undefined\"===typeof a.cleanSession&&(a.cleanSession=!0);if(a.hosts){if(!(a.hosts instanceof Array))throw Error(f(h.INVALID_ARGUMENT,[a.hosts,\"connectOptions.hosts\"]));if(1>a.hosts.length)throw Error(f(h.INVALID_ARGUMENT,[a.hosts,\"connectOptions.hosts\"]));for(var b=!1,d=0;d<a.hosts.length;d++){if(\"string\"!==typeof a.hosts[d])throw Error(f(h.INVALID_TYPE,[typeof a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));if(/^(wss?):\\/\\/((\\[(.+)\\])|([^\\/]+?))(:(\\d+))?(\\/.*)$/.test(a.hosts[d]))if(0===d)b=!0;else{if(!b)throw Error(f(h.INVALID_ARGUMENT,\n[a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));}else if(b)throw Error(f(h.INVALID_ARGUMENT,[a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));}if(b)a.uris=a.hosts;else{if(!a.ports)throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));if(!(a.ports instanceof Array))throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));if(a.hosts.length!==a.ports.length)throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));a.uris=[];for(d=0;d<a.hosts.length;d++){if(\"number\"!==typeof a.ports[d]||\n0>a.ports[d])throw Error(f(h.INVALID_TYPE,[typeof a.ports[d],\"connectOptions.ports[\"+d+\"]\"]));var b=a.hosts[d],g=a.ports[d];e=\"ws://\"+(-1!==b.indexOf(\":\")?\"[\"+b+\"]\":b)+\":\"+g+c;a.uris.push(e)}}}l.connect(a)};this.subscribe=function(a,b){if(\"string\"!==typeof a)throw Error(\"Invalid argument:\"+a);b=b||{};z(b,{qos:\"number\",invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",timeout:\"number\"});if(b.timeout&&!b.onFailure)throw Error(\"subscribeOptions.timeout specified with no onFailure callback.\");\nif(\"undefined\"!==typeof b.qos&&0!==b.qos&&1!==b.qos&&2!==b.qos)throw Error(f(h.INVALID_ARGUMENT,[b.qos,\"subscribeOptions.qos\"]));l.subscribe(a,b)};this.unsubscribe=function(a,b){if(\"string\"!==typeof a)throw Error(\"Invalid argument:\"+a);b=b||{};z(b,{invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",timeout:\"number\"});if(b.timeout&&!b.onFailure)throw Error(\"unsubscribeOptions.timeout specified with no onFailure callback.\");l.unsubscribe(a,b)};this.send=function(a,b,c,d){var e;if(0===\narguments.length)throw Error(\"Invalid argument.length\");if(1==arguments.length){if(!(a instanceof r)&&\"string\"!==typeof a)throw Error(\"Invalid argument:\"+typeof a);e=a;if(\"undefined\"===typeof e.destinationName)throw Error(f(h.INVALID_ARGUMENT,[e.destinationName,\"Message.destinationName\"]));}else e=new r(b),e.destinationName=a,3<=arguments.length&&(e.qos=c),4<=arguments.length&&(e.retained=d);l.send(e)};this.publish=function(a,b,c,d){console.log(\"Publising message to: \",a);var e;if(0===arguments.length)throw Error(\"Invalid argument.length\");\nif(1==arguments.length){if(!(a instanceof r)&&\"string\"!==typeof a)throw Error(\"Invalid argument:\"+typeof a);e=a;if(\"undefined\"===typeof e.destinationName)throw Error(f(h.INVALID_ARGUMENT,[e.destinationName,\"Message.destinationName\"]));}else e=new r(b),e.destinationName=a,3<=arguments.length&&(e.qos=c),4<=arguments.length&&(e.retained=d);l.send(e)};this.disconnect=function(){l.disconnect()};this.getTraceLog=function(){return l.getTraceLog()};this.startTrace=function(){l.startTrace()};this.stopTrace=\nfunction(){l.stopTrace()};this.isConnected=function(){return l.connected}};G.prototype={get host(){return this._getHost()},set host(a){this._setHost(a)},get port(){return this._getPort()},set port(a){this._setPort(a)},get path(){return this._getPath()},set path(a){this._setPath(a)},get clientId(){return this._getClientId()},set clientId(a){this._setClientId(a)},get onConnected(){return this._getOnConnected()},set onConnected(a){this._setOnConnected(a)},get disconnectedPublishing(){return this._getDisconnectedPublishing()},\nset disconnectedPublishing(a){this._setDisconnectedPublishing(a)},get disconnectedBufferSize(){return this._getDisconnectedBufferSize()},set disconnectedBufferSize(a){this._setDisconnectedBufferSize(a)},get onConnectionLost(){return this._getOnConnectionLost()},set onConnectionLost(a){this._setOnConnectionLost(a)},get onMessageDelivered(){return this._getOnMessageDelivered()},set onMessageDelivered(a){this._setOnMessageDelivered(a)},get onMessageArrived(){return this._getOnMessageArrived()},set onMessageArrived(a){this._setOnMessageArrived(a)},\nget trace(){return this._getTrace()},set trace(a){this._setTrace(a)}};var r=function(a){var b;if(\"string\"===typeof a||a instanceof ArrayBuffer||a instanceof Int8Array||a instanceof Uint8Array||a instanceof Int16Array||a instanceof Uint16Array||a instanceof Int32Array||a instanceof Uint32Array||a instanceof Float32Array||a instanceof Float64Array)b=a;else throw f(h.INVALID_ARGUMENT,[a,\"newPayload\"]);this._getPayloadString=function(){return\"string\"===typeof b?b:E(b,0,b.length)};this._getPayloadBytes=\nfunction(){if(\"string\"===typeof b){var a=new ArrayBuffer(n(b)),a=new Uint8Array(a);D(b,a,0);return a}return b};var c;this._getDestinationName=function(){return c};this._setDestinationName=function(a){if(\"string\"===typeof a)c=a;else throw Error(f(h.INVALID_ARGUMENT,[a,\"newDestinationName\"]));};var d=0;this._getQos=function(){return d};this._setQos=function(a){if(0===a||1===a||2===a)d=a;else throw Error(\"Invalid argument:\"+a);};var e=!1;this._getRetained=function(){return e};this._setRetained=function(a){if(\"boolean\"===\ntypeof a)e=a;else throw Error(f(h.INVALID_ARGUMENT,[a,\"newRetained\"]));};var g=!1;this._getDuplicate=function(){return g};this._setDuplicate=function(a){g=a}};r.prototype={get payloadString(){return this._getPayloadString()},get payloadBytes(){return this._getPayloadBytes()},get destinationName(){return this._getDestinationName()},set destinationName(a){this._setDestinationName(a)},get topic(){return this._getDestinationName()},set topic(a){this._setDestinationName(a)},get qos(){return this._getQos()},\nset qos(a){this._setQos(a)},get retained(){return this._getRetained()},set retained(a){this._setRetained(a)},get duplicate(){return this._getDuplicate()},set duplicate(a){this._setDuplicate(a)}};return{Client:G,Message:r}}(window)});\nfunction _clspRouter() {\n    function send(m){\n        // route message to parent which will in turn route to the correct\n        // player based on clientId.\n        m.clientId = MqttClientId;\n        window.parent.postMessage(m,\"*\");\n    }// end send\n\n\n    function routeInbound(message){\n        var pstring = \"\";\n\n        try {\n            pstring = message.payloadString;\n        } catch(e) {\n            //bogus excepton?\n        }\n\n        send({\n          event: \'data\',\n          destinationName: message.destinationName,\n          payloadString: pstring,\n          payloadBytes: message.payloadBytes || null\n        });\n    }// end route inbound\n\n    function disconnect () {\n        var ERROR_CODE_NOT_CONNECTED = \'AMQJS0011E\';\n\n        try {\n            MQTTClient.disconnect();\n        } catch (e) {\n            if (!e.message.startsWith(ERROR_CODE_NOT_CONNECTED)) {\n                console.error(e);\n            }\n        }\n    }\n\n    function eventHandler(evt){\n        var m = evt.data;\n\n        try {\n            if (m.method === \'subscribe\') {\n                MQTTClient.subscribe(m.topic);\n            } else if (m.method === \'unsubscribe\') {\n                MQTTClient.unsubscribe(m.topic);\n            } else if (m.method === \'publish\') {\n                var mqtt_payload = null;\n                try {\n                    mqtt_payload = JSON.stringify(m.data);\n                } catch( json_error ) {\n                    console.error(\"json stringify error: \" + m.data);\n                    return;\n                }\n\n                var mqtt_msg = new Paho.MQTT.Message(mqtt_payload);\n                mqtt_msg.destinationName = m.topic;\n                MQTTClient.send(mqtt_msg);\n            } else if (m.method === \'connect\') {\n                connect();\n            } else if (m.method === \'disconnect\') {\n                disconnect();\n            }\n        } catch(e) {\n            // we are dead!\n           send({\n               event: \'fail\',\n               reason: \"network failure\"\n            });\n\n            disconnect();\n        }\n\n    }\n\n    function AppReady() {\n        window.removeEventListener(\"message\", eventHandler);\n        window.addEventListener(\"message\", eventHandler, false);\n\n        send({\n          event: \'ready\'\n        });\n\n        if (Reconnect !== -1)\n        {\n            clearInterval(Reconnect);\n            Reconnect = -1;\n        }\n\n    }// application ready\n\n\n    function AppFail(message) {\n      var e = \"Error code \" +\n          parseInt(message.errorCode) + \": \" + message.errorMessage;\n      send({\n        event: \'fail\',\n        reason: e\n      });\n    }\n\n    MQTTClient = new Paho.MQTT.Client(\n        MqttIp,\n        MqttPort,\n        MqttClientId\n    );\n\n    /*\n     * Hold the id of the reconnect interval task\n     */\n    var Reconnect = -1;\n\n    /*\n     * Callback which gets called when the connection is lost\n     */\n    function onConnectionLost(message){\n        if (message.errorCode === 0) {\n            return;\n        }\n\n        send({\n            event: \'fail\',\n            reason: \"connection lost error code \" + parseInt(message.errorCode)\n        });\n        if (Reconnect === -1) {\n            Reconnect = setInterval(function () {\n                connect();\n            }, 2000);\n        }\n    }\n\n    MQTTClient.onConnectionLost = onConnectionLost;\n\n    // perhaps the busiest function in this module ;)\n    MQTTClient.onMessageArrived = function(message) {\n        try {\n             routeInbound(message);\n        }catch(e) {\n            if (e) {\n                console.error(e);\n            }\n        }\n    };\n\n    /**\n     * Connect to MQTT...\n     */\n    function connect()\n    {\n        // setup connection options\n        var options = {\n            timeout: 120,\n            onSuccess:  AppReady,\n            onFailure: AppFail\n        };\n        // last will message sent on disconnect\n        var willmsg = new Paho.MQTT.Message(JSON.stringify({\n            clientId: MqttClientId\n        }));\n        willmsg.destinationName = \"iov/clientDisconnect\";\n        options.willMessage = willmsg;\n\n        if (MqttUseSSL === true) {\n            options.useSSL = true;\n        }\n\n        try {\n            MQTTClient.connect(options);\n        } catch(e) {\n            var ERROR_CODE_ALREADY_CONNECTED = \'AMQJS0011E\';\n\n            if (!e.message.startsWith(ERROR_CODE_ALREADY_CONNECTED)) {\n                console.error(\"connect failed\", e);\n                send({\n                    event: \'fail\',\n                    reason: \"connect failed\"\n                });\n            }\n        }\n    }\n\n    connect();\n}\n\nfunction clspRouter() {\n    try {\n        _clspRouter();\n    } catch(e) {\n        console.error(\"IFRAME error\");\n        console.error(e);\n    }\n}\n\nfunction onunload()\n{\n    if (typeof MQTTClient !== \'undefined\') {\n        try {\n            MQTTClient.disconnect();\n        } catch (e) {\n            if (!e.message.startsWith(\'AMQJS0011E\')) {\n                console.error(e);\n            }\n        }\n    }\n}\n";
 
 function pframe_client(iframe, iov) {
     var self = {
@@ -3522,6 +3694,18 @@ function pframe_client(iframe, iov) {
             method: "publish",
             topic: topic,
             data: data
+        });
+    };
+
+    self.connect = function () {
+        command({
+            method: "connect"
+        });
+    };
+
+    self.disconnect = function () {
+        command({
+            method: "disconnect"
         });
     };
 
@@ -3599,6 +3783,8 @@ __webpack_require__.r(__webpack_exports__);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -3806,6 +3992,8 @@ var IOV = function () {
   }, {
     key: 'onChangeSource',
     value: function onChangeSource(url) {
+      var _this = this;
+
       this.debug('changeSource on player "' + this.id + '""');
 
       if (!url) {
@@ -3828,21 +4016,45 @@ var IOV = function () {
       // MSEWrapper, but I don't think that is likely to happen until the MSE
       // is standardized, and even then, we may be subject to non-intuitive
       // behavior based on tab switching, etc.
-      setTimeout(function () {
-        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-      }, clone.config.changeSourceMaxWait);
+      setTimeout(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+
+              case 2:
+              case 'end':
+                return _context.stop();
+            }
+          }
+        }, _callee, _this);
+      })), clone.config.changeSourceMaxWait);
 
       // Under normal circumstances, meaning when the tab is in focus, we want
       // to respond by switching the IOV when the new IOV Player has something
       // to display
-      clone.player.on('firstFrameShown', function () {
-        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-      });
+      clone.player.on('firstFrameShown', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.next = 2;
+                return clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+
+              case 2:
+              case 'end':
+                return _context2.stop();
+            }
+          }
+        }, _callee2, _this);
+      })));
     }
   }, {
     key: 'onReady',
     value: function onReady(event) {
-      var _this = this;
+      var _this2 = this;
 
       this.debug('onReady');
 
@@ -3867,25 +4079,25 @@ var IOV = function () {
       this.onReadyAlreadyCalled = true;
 
       this.player.on('firstFrameShown', function () {
-        _this.playerInstance.loadingSpinner.hide();
+        _this2.playerInstance.loadingSpinner.hide();
 
         videoTag.style.display = 'none';
       });
 
       this.player.on('videoReceived', function () {
         // reset the timeout monitor from videojs-errors
-        _this.playerInstance.trigger('timeupdate');
+        _this2.playerInstance.trigger('timeupdate');
       });
 
       this.player.on('videoInfoReceived', function () {
         // reset the timeout monitor from videojs-errors
-        _this.playerInstance.trigger('timeupdate');
+        _this2.playerInstance.trigger('timeupdate');
       });
 
       this.playerInstanceEventListeners = {
-        changesrc: function changesrc(event, _ref) {
-          var url = _ref.url;
-          return _this.onChangeSource(url);
+        changesrc: function changesrc(event, _ref3) {
+          var url = _ref3.url;
+          return _this2.onChangeSource(url);
         }
       };
 
@@ -3895,25 +4107,47 @@ var IOV = function () {
         this.player.play();
       }
 
-      this.videoElement.addEventListener('mse-error-event', function (e) {
-        _this.player.restart();
-      }, false);
+      this.videoElement.addEventListener('mse-error-event', function () {
+        var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
+          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+            while (1) {
+              switch (_context3.prev = _context3.next) {
+                case 0:
+                  _context3.next = 2;
+                  return _this2.player.restart();
+
+                case 2:
+                case 'end':
+                  return _context3.stop();
+              }
+            }
+          }, _callee3, _this2);
+        }));
+
+        return function (_x4) {
+          return _ref4.apply(this, arguments);
+        };
+      }(), false);
 
       // the mse service will stop streaming to us if we don't send
       // a message to iov/stats within 1 minute.
       this._statsTimer = setInterval(function () {
-        _this.statsMsg.inkbps = _this.statsMsg.byteCount * 8 / 30000.0;
-        _this.statsMsg.byteCount = 0;
+        _this2.statsMsg.inkbps = _this2.statsMsg.byteCount * 8 / 30000.0;
+        _this2.statsMsg.byteCount = 0;
 
-        _this.conduit.publish('iov/stats', _this.statsMsg);
+        _this2.conduit.publish('iov/stats', _this2.statsMsg);
 
-        _this.debug('iov status', _this.statsMsg);
+        _this2.debug('iov status', _this2.statsMsg);
       }, 5000);
     }
   }, {
     key: 'onFail',
     value: function onFail(event) {
       this.debug('onFail');
+
+      // when a stream fails, it no longer needs to send stats to the
+      // server, and it may not even be connected to the server
+      clearInterval(this._statsTimer);
 
       this.debug('network error', event.data.reason);
       this.playerInstance.trigger('network-error', event.data.reason);
@@ -3956,32 +4190,63 @@ var IOV = function () {
     }
   }, {
     key: 'destroy',
-    value: function destroy() {
-      this.debug('destroy');
+    value: function () {
+      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+        var iframe;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                this.debug('destroy');
 
-      if (this.destroyed) {
-        return;
+                if (!this.destroyed) {
+                  _context4.next = 3;
+                  break;
+                }
+
+                return _context4.abrupt('return');
+
+              case 3:
+
+                this.destroyed = true;
+
+                clearInterval(this._statsTimer);
+
+                // this.playerInstanceEventListeners will not be defined if the iov is
+                // destroyed too early
+                if (this.playerInstanceEventListeners) {
+                  this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
+                }
+
+                _context4.next = 8;
+                return this.player.destroy();
+
+              case 8:
+
+                this.playerInstance = null;
+                this.player = null;
+
+                this.mqttConduitCollection.remove(this.id);
+
+                iframe = document.getElementById(this.config.clientId);
+
+                iframe.parentNode.removeChild(iframe);
+                iframe.srcdoc = '';
+
+              case 14:
+              case 'end':
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function destroy() {
+        return _ref5.apply(this, arguments);
       }
 
-      this.destroyed = true;
-
-      clearInterval(this._statsTimer);
-
-      this.conduit.unsubscribe('iov/video/' + this.player.guid + '/live');
-
-      this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
-
-      this.player.destroy();
-
-      this.playerInstance = null;
-      this.player = null;
-
-      this.mqttConduitCollection.remove(this.id);
-
-      var iframe = document.getElementById(this.config.clientId);
-      iframe.parentNode.removeChild(iframe);
-      iframe.srcdoc = '';
-    }
+      return destroy;
+    }()
   }]);
 
   return IOV;
@@ -4899,9 +5164,21 @@ var IOVPlayer = function () {
       var timeout = void 0;
 
       if (document.hidden) {
-        timeout = setTimeout(function () {
-          _this.stop();
-        }, 1000);
+        timeout = setTimeout(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+          return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _context.next = 2;
+                  return _this.stop();
+
+                case 2:
+                case 'end':
+                  return _context.stop();
+              }
+            }
+          }, _callee, _this);
+        })), 1000);
       } else {
         clearTimeout(timeout);
         _this.play();
@@ -5115,152 +5392,262 @@ var IOVPlayer = function () {
     }
   }, {
     key: 'reinitializeMseWrapper',
-    value: function reinitializeMseWrapper(mimeCodec) {
-      var _this3 = this;
+    value: function () {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(mimeCodec) {
+        var _this3 = this;
 
-      if (this.mseWrapper) {
-        this.mseWrapper.destroy();
-      }
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                if (!this.mseWrapper) {
+                  _context7.next = 3;
+                  break;
+                }
 
-      this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this.videoElement);
+                _context7.next = 3;
+                return this.mseWrapper.destroy();
 
-      this.mseWrapper.on('metric', function (_ref) {
-        var type = _ref.type,
-            value = _ref.value;
+              case 3:
 
-        _this3.trigger('metric', { type: type, value: value });
-      });
+                this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this.videoElement);
 
-      this.mseWrapper.initializeMediaSource({
-        onSourceOpen: function () {
-          var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-            return regeneratorRuntime.wrap(function _callee$(_context) {
-              while (1) {
-                switch (_context.prev = _context.next) {
-                  case 0:
-                    debug('on mediaSource sourceopen');
+                this.mseWrapper.on('metric', function (_ref3) {
+                  var type = _ref3.type,
+                      value = _ref3.value;
 
-                    _context.next = 3;
-                    return _this3.mseWrapper.initializeSourceBuffer(mimeCodec, {
-                      onAppendStart: function onAppendStart(byteArray) {
-                        silly('On Append Start...');
+                  _this3.trigger('metric', { type: type, value: value });
+                });
 
-                        if (_this3.LogSourceBuffer === true && _this3.LogSourceBufferTopic !== null) {
-                          debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
+                this.mseWrapper.initializeMediaSource({
+                  onSourceOpen: function () {
+                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                        while (1) {
+                          switch (_context5.prev = _context5.next) {
+                            case 0:
+                              debug('on mediaSource sourceopen');
 
-                          var mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-                          mqtt_msg.destinationName = _this3.LogSourceBufferTopic;
-                          window.MQTTClient.send(mqtt_msg);
-                        }
+                              _context5.next = 3;
+                              return _this3.mseWrapper.initializeSourceBuffer(mimeCodec, {
+                                onAppendStart: function onAppendStart(byteArray) {
+                                  silly('On Append Start...');
 
-                        _this3.iov.statsMsg.byteCount += byteArray.length;
-                      },
-                      onAppendFinish: function onAppendFinish(info) {
-                        silly('On Append Finish...');
+                                  if (_this3.LogSourceBuffer === true && _this3.LogSourceBufferTopic !== null) {
+                                    debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
 
-                        if (!_this3.firstFrameShown) {
-                          _this3.firstFrameShown = true;
-                          _this3.playerInstance.trigger('firstFrameShown');
-                          _this3.trigger('firstFrameShown');
-                        }
+                                    var mqtt_msg = new window.Paho.MQTT.Message(byteArray);
+                                    mqtt_msg.destinationName = _this3.LogSourceBufferTopic;
+                                    window.MQTTClient.send(mqtt_msg);
+                                  }
 
-                        _this3.drift = info.bufferTimeEnd - _this3.videoElement.currentTime;
+                                  _this3.iov.statsMsg.byteCount += byteArray.length;
+                                },
+                                onAppendFinish: function onAppendFinish(info) {
+                                  silly('On Append Finish...');
 
-                        _this3.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
-                        _this3.metric('video.currentTime', _this3.videoElement.currentTime);
-                        _this3.metric('video.drift', _this3.drift);
+                                  if (!_this3.firstFrameShown) {
+                                    _this3.firstFrameShown = true;
+                                    _this3.playerInstance.trigger('firstFrameShown');
+                                    _this3.trigger('firstFrameShown');
+                                  }
 
-                        if (_this3.drift > _this3.segmentIntervalAverage / 1000 + _this3.options.driftCorrectionConstant) {
-                          _this3.metric('video.driftCorrection', 1);
-                          _this3.videoElement.currentTime = info.bufferTimeEnd;
-                        }
+                                  _this3.drift = info.bufferTimeEnd - _this3.videoElement.currentTime;
 
-                        if (_this3.videoElement.paused === true) {
-                          debug('Video is paused!');
+                                  _this3.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+                                  _this3.metric('video.currentTime', _this3.videoElement.currentTime);
+                                  _this3.metric('video.drift', _this3.drift);
 
-                          try {
-                            var promise = _this3.videoElement.play();
+                                  if (_this3.drift > _this3.segmentIntervalAverage / 1000 + _this3.options.driftCorrectionConstant) {
+                                    _this3.metric('video.driftCorrection', 1);
+                                    _this3.videoElement.currentTime = info.bufferTimeEnd;
+                                  }
 
-                            if (typeof promise !== 'undefined') {
-                              promise.catch(function (error) {
-                                _this3._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                                  if (_this3.videoElement.paused === true) {
+                                    debug('Video is paused!');
+
+                                    try {
+                                      var promise = _this3.videoElement.play();
+
+                                      if (typeof promise !== 'undefined') {
+                                        promise.catch(function (error) {
+                                          _this3._onError('videojs.play.promise', 'Error while trying to play videojs player', error);
+                                        });
+                                      }
+                                    } catch (error) {
+                                      _this3._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+                                    }
+                                  }
+                                },
+                                onRemoveFinish: function onRemoveFinish(info) {
+                                  debug('onRemoveFinish');
+                                },
+                                onAppendError: function () {
+                                  var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(error) {
+                                    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                                      while (1) {
+                                        switch (_context2.prev = _context2.next) {
+                                          case 0:
+                                            // internal error, this has been observed to happen the tab
+                                            // in the browser where this video player lives is hidden
+                                            // then reselected. 'ex' is undefined the error is bug
+                                            // within the MSE C++ implementation in the browser.
+                                            _this3._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
+
+                                            _context2.next = 3;
+                                            return _this3.reinitializeMseWrapper(mimeCodec);
+
+                                          case 3:
+                                          case 'end':
+                                            return _context2.stop();
+                                        }
+                                      }
+                                    }, _callee2, _this3);
+                                  }));
+
+                                  function onAppendError(_x3) {
+                                    return _ref5.apply(this, arguments);
+                                  }
+
+                                  return onAppendError;
+                                }(),
+                                onRemoveError: function onRemoveError(error) {
+                                  if (error.constructor.name === 'DOMException') {
+                                    // @todo - every time the mseWrapper is destroyed, there is a
+                                    // sourceBuffer error.  No need to log that, but you should fix it
+                                    return;
+                                  }
+
+                                  // observed this fail during a memry snapshot in chrome
+                                  // otherwise no observed failure, so ignore exception.
+                                  _this3._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
+                                },
+                                onStreamFrozen: function () {
+                                  var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+                                    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                                      while (1) {
+                                        switch (_context3.prev = _context3.next) {
+                                          case 0:
+                                            debug('stream appears to be frozen - reinitializing...');
+
+                                            _context3.next = 3;
+                                            return _this3.reinitializeMseWrapper(mimeCodec);
+
+                                          case 3:
+                                          case 'end':
+                                            return _context3.stop();
+                                        }
+                                      }
+                                    }, _callee3, _this3);
+                                  }));
+
+                                  function onStreamFrozen() {
+                                    return _ref6.apply(this, arguments);
+                                  }
+
+                                  return onStreamFrozen;
+                                }(),
+                                onError: function () {
+                                  var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(error) {
+                                    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+                                      while (1) {
+                                        switch (_context4.prev = _context4.next) {
+                                          case 0:
+                                            _this3._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+
+                                            _context4.next = 3;
+                                            return _this3.reinitializeMseWrapper(mimeCodec);
+
+                                          case 3:
+                                          case 'end':
+                                            return _context4.stop();
+                                        }
+                                      }
+                                    }, _callee4, _this3);
+                                  }));
+
+                                  function onError(_x4) {
+                                    return _ref7.apply(this, arguments);
+                                  }
+
+                                  return onError;
+                                }()
                               });
-                            }
-                          } catch (error) {
-                            _this3._onError('videojs.play.notPromise', 'Error while trying to play videojs player', error);
+
+                            case 3:
+
+                              _this3.trigger('videoInfoReceived');
+                              _this3.mseWrapper.appendMoov(_this3.moovBox);
+
+                            case 5:
+                            case 'end':
+                              return _context5.stop();
                           }
                         }
-                      },
-                      onRemoveFinish: function onRemoveFinish(info) {
-                        debug('onRemoveFinish');
-                      },
-                      onAppendError: function onAppendError(error) {
-                        // internal error, this has been observed to happen the tab
-                        // in the browser where this video player lives is hidden
-                        // then reselected. 'ex' is undefined the error is bug
-                        // within the MSE C++ implementation in the browser.
-                        _this3._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
+                      }, _callee5, _this3);
+                    }));
 
-                        _this3.reinitializeMseWrapper(mimeCodec);
-                      },
-                      onRemoveError: function onRemoveError(error) {
-                        if (error.constructor.name === 'DOMException') {
-                          // @todo - every time the mseWrapper is destroyed, there is a
-                          // sourceBuffer error.  No need to log that, but you should fix it
-                          return;
+                    function onSourceOpen() {
+                      return _ref4.apply(this, arguments);
+                    }
+
+                    return onSourceOpen;
+                  }(),
+                  onSourceEnded: function () {
+                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
+                        while (1) {
+                          switch (_context6.prev = _context6.next) {
+                            case 0:
+                              debug('on mediaSource sourceended');
+
+                              _context6.next = 3;
+                              return _this3.stop();
+
+                            case 3:
+                            case 'end':
+                              return _context6.stop();
+                          }
                         }
+                      }, _callee6, _this3);
+                    }));
 
-                        // observed this fail during a memry snapshot in chrome
-                        // otherwise no observed failure, so ignore exception.
-                        _this3._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
-                      },
-                      onStreamFrozen: function onStreamFrozen() {
-                        debug('stream appears to be frozen - reinitializing...');
+                    function onSourceEnded() {
+                      return _ref8.apply(this, arguments);
+                    }
 
-                        _this3.reinitializeMseWrapper(mimeCodec);
-                      },
-                      onError: function onError(error) {
-                        _this3._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
+                    return onSourceEnded;
+                  }(),
+                  onError: function onError(error) {
+                    _this3._onError('mediaSource.generic', 'mediaSource error', error);
+                  }
+                });
 
-                        _this3.reinitializeMseWrapper(mimeCodec);
-                      }
-                    });
-
-                  case 3:
-
-                    _this3.trigger('videoInfoReceived');
-                    _this3.mseWrapper.appendMoov(_this3.moovBox);
-
-                  case 5:
-                  case 'end':
-                    return _context.stop();
+                if (!(!this.mseWrapper.mediaSource || !this.videoElement)) {
+                  _context7.next = 8;
+                  break;
                 }
-              }
-            }, _callee, _this3);
-          }));
 
-          function onSourceOpen() {
-            return _ref2.apply(this, arguments);
+                throw new Error('The video element or mediaSource is not ready!');
+
+              case 8:
+
+                this.mseWrapper.reinitializeVideoElementSrc();
+
+              case 9:
+              case 'end':
+                return _context7.stop();
+            }
           }
+        }, _callee7, this);
+      }));
 
-          return onSourceOpen;
-        }(),
-        onSourceEnded: function onSourceEnded() {
-          debug('on mediaSource sourceended');
-
-          _this3.stop();
-        },
-        onError: function onError(error) {
-          _this3._onError('mediaSource.generic', 'mediaSource error', error);
-        }
-      });
-
-      if (!this.mseWrapper.mediaSource || !this.videoElement) {
-        throw new Error('The video element or mediaSource is not ready!');
+      function reinitializeMseWrapper(_x2) {
+        return _ref2.apply(this, arguments);
       }
 
-      this.mseWrapper.reinitializeVideoElementSrc();
-    }
+      return reinitializeMseWrapper;
+    }()
   }, {
     key: 'resyncStream',
     value: function resyncStream(mimeCodec) {
@@ -5270,19 +5657,53 @@ var IOVPlayer = function () {
       // the mse service dies and has to be restarted that this player should restart the stream
       debug('Trying to resync stream...');
 
-      this.iov.conduit.subscribe('iov/video/' + this.guid + '/resync', function () {
-        debug('sync received re-initialize media source buffer');
-        _this4.reinitializeMseWrapper(mimeCodec);
-      });
+      this.iov.conduit.subscribe('iov/video/' + this.guid + '/resync', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                debug('sync received re-initialize media source buffer');
+                _context8.next = 3;
+                return _this4.reinitializeMseWrapper(mimeCodec);
+
+              case 3:
+              case 'end':
+                return _context8.stop();
+            }
+          }
+        }, _callee8, _this4);
+      })));
     }
   }, {
     key: 'restart',
-    value: function restart() {
-      debug('restart');
+    value: function () {
+      var _ref10 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                debug('restart');
 
-      this.stop();
-      this.play();
-    }
+                _context9.next = 3;
+                return this.stop();
+
+              case 3:
+                this.play();
+
+              case 4:
+              case 'end':
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function restart() {
+        return _ref10.apply(this, arguments);
+      }
+
+      return restart;
+    }()
   }, {
     key: 'play',
     value: function play() {
@@ -5292,36 +5713,68 @@ var IOVPlayer = function () {
 
       this.stopped = false;
 
+      // @todo - why doesn't this play/stop connect/disconnect work?
+      // this.iov.conduit.connect();
+
       this.iov.conduit.transaction('iov/video/' + window.btoa(this.iov.config.streamName) + '/request', function () {
         return _this5.onIovPlayTransaction.apply(_this5, arguments);
       }, { clientId: this.iov.config.clientId });
     }
   }, {
     key: 'stop',
-    value: function stop() {
-      debug('stop');
+    value: function () {
+      var _ref11 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                debug('stop');
 
-      this.stopped = true;
-      this.moovBox = null;
+                this.stopped = true;
+                this.moovBox = null;
 
-      if (this.guid) {
-        // Stop listening for moofs
-        this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/live');
+                if (this.guid) {
+                  // Stop listening for moofs
+                  this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/live');
 
-        // Stop listening for resync events
-        this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/resync');
+                  // Stop listening for resync events
+                  this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/resync');
 
-        // Tell the server we've stopped
-        this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
+                  // Tell the server we've stopped
+                  this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
+
+                  // @todo - why doesn't this play/stop connect/disconnect work?
+                  // this.iov.conduit.disconnect();
+                }
+
+                // Don't wait until the next play event or the destruction of this player
+                // to clear the MSE
+
+                if (!this.mseWrapper) {
+                  _context10.next = 8;
+                  break;
+                }
+
+                _context10.next = 7;
+                return this.mseWrapper.destroy();
+
+              case 7:
+                this.mseWrapper = null;
+
+              case 8:
+              case 'end':
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
+      }));
+
+      function stop() {
+        return _ref11.apply(this, arguments);
       }
 
-      // Don't wait until the next play event or the destruction of this player
-      // to clear the MSE
-      if (this.mseWrapper) {
-        this.mseWrapper.destroy();
-        this.mseWrapper = null;
-      }
-    }
+      return stop;
+    }()
   }, {
     key: 'getSegmentIntervalMetrics',
     value: function getSegmentIntervalMetrics() {
@@ -5356,11 +5809,11 @@ var IOVPlayer = function () {
 
 
     // @todo - there is much shared between this and onChangeSourceTransaction
-    value: function onIovPlayTransaction(_ref3) {
+    value: function onIovPlayTransaction(_ref12) {
       var _this6 = this;
 
-      var mimeCodec = _ref3.mimeCodec,
-          guid = _ref3.guid;
+      var mimeCodec = _ref12.mimeCodec,
+          guid = _ref12.guid;
 
       if (this.stopped) {
         return;
@@ -5374,44 +5827,71 @@ var IOVPlayer = function () {
 
       this.state = 'waiting-for-first-moov';
 
-      this.iov.conduit.subscribe(initSegmentTopic, function (_ref4) {
-        var payloadBytes = _ref4.payloadBytes;
+      this.iov.conduit.subscribe(initSegmentTopic, function () {
+        var _ref14 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(_ref13) {
+          var payloadBytes = _ref13.payloadBytes;
+          var moov, newTopic;
+          return regeneratorRuntime.wrap(function _callee11$(_context11) {
+            while (1) {
+              switch (_context11.prev = _context11.next) {
+                case 0:
+                  if (!_this6.stopped) {
+                    _context11.next = 2;
+                    break;
+                  }
 
-        if (_this6.stopped) {
-          return;
-        }
+                  return _context11.abrupt('return');
 
-        debug('onIovPlayTransaction ' + initSegmentTopic + ' listener fired');
-        debug('received moov of type "' + (typeof payloadBytes === 'undefined' ? 'undefined' : _typeof(payloadBytes)) + '" from server');
+                case 2:
 
-        var moov = payloadBytes;
+                  debug('onIovPlayTransaction ' + initSegmentTopic + ' listener fired');
+                  debug('received moov of type "' + (typeof payloadBytes === 'undefined' ? 'undefined' : _typeof(payloadBytes)) + '" from server');
 
-        _this6.state = 'waiting-for-first-moof';
+                  moov = payloadBytes;
 
-        _this6.iov.conduit.unsubscribe(initSegmentTopic);
 
-        var newTopic = 'iov/video/' + guid + '/live';
+                  _this6.state = 'waiting-for-first-moof';
 
-        // subscribe to the live video topic.
-        _this6.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
-          if (_this6.stopped) {
-            return;
-          }
+                  _this6.iov.conduit.unsubscribe(initSegmentTopic);
 
-          _this6.trigger('videoReceived');
-          _this6.getSegmentIntervalMetrics();
-          _this6.mseWrapper.append(mqtt_msg.payloadBytes);
-        });
+                  newTopic = 'iov/video/' + guid + '/live';
 
-        _this6.guid = guid;
-        _this6.moovBox = moov;
-        _this6.mimeCodec = mimeCodec;
+                  // subscribe to the live video topic.
 
-        // this.trigger('firstChunk');
+                  _this6.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
+                    if (_this6.stopped) {
+                      return;
+                    }
 
-        _this6.reinitializeMseWrapper(mimeCodec);
-        _this6.resyncStream(mimeCodec);
-      });
+                    _this6.trigger('videoReceived');
+                    _this6.getSegmentIntervalMetrics();
+                    _this6.mseWrapper.append(mqtt_msg.payloadBytes);
+                  });
+
+                  _this6.guid = guid;
+                  _this6.moovBox = moov;
+                  _this6.mimeCodec = mimeCodec;
+
+                  // this.trigger('firstChunk');
+
+                  _context11.next = 14;
+                  return _this6.reinitializeMseWrapper(mimeCodec);
+
+                case 14:
+                  _this6.resyncStream(mimeCodec);
+
+                case 15:
+                case 'end':
+                  return _context11.stop();
+              }
+            }
+          }, _callee11, _this6);
+        }));
+
+        return function (_x5) {
+          return _ref14.apply(this, arguments);
+        };
+      }());
 
       this.iov.conduit.publish('iov/video/' + guid + '/play', {
         initSegmentTopic: initSegmentTopic,
@@ -5420,55 +5900,92 @@ var IOVPlayer = function () {
     }
   }, {
     key: 'destroy',
-    value: function destroy() {
-      if (this.destroyed) {
-        return;
+    value: function () {
+      var _ref15 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+          while (1) {
+            switch (_context12.prev = _context12.next) {
+              case 0:
+                if (!this.destroyed) {
+                  _context12.next = 2;
+                  break;
+                }
+
+                return _context12.abrupt('return');
+
+              case 2:
+
+                this.destroyed = true;
+
+                _context12.next = 5;
+                return this.stop();
+
+              case 5:
+
+                this.iov.conduit.disconnect();
+
+                document.removeEventListener('visibilitychange', this.onVisibilityChange);
+
+                // Note you will need to destroy the iov yourself.  The child should
+                // probably not destroy the parent
+                this.iov = null;
+
+                this.state = null;
+                this.firstFrameShown = null;
+
+                this.playerInstance = null;
+                this.videoJsVideoElement = null;
+                this.videoElementParent = null;
+
+                this.events = null;
+                this.metrics = null;
+
+                this.LogSourceBuffer = null;
+                this.LogSourceBufferTopic = null;
+
+                this.latestSegmentReceived = null;
+                this.segmentIntervalAverage = null;
+                this.segmentInterval = null;
+                this.segmentIntervals = null;
+
+                this.guid = null;
+                this.moovBox = null;
+                this.mimeCodec = null;
+
+                if (!this.mseWrapper) {
+                  _context12.next = 28;
+                  break;
+                }
+
+                _context12.next = 27;
+                return this.mseWrapper.destroy();
+
+              case 27:
+                this.mseWrapper = null;
+
+              case 28:
+
+                // Setting the src of the video element to an empty string is
+                // the only reliable way we have found to ensure that MediaSource,
+                // SourceBuffer, and various Video elements are properly dereferenced
+                // to avoid memory leaks
+                this.videoElement.src = '';
+                this.videoElement = null;
+
+              case 30:
+              case 'end':
+                return _context12.stop();
+            }
+          }
+        }, _callee12, this);
+      }));
+
+      function destroy() {
+        return _ref15.apply(this, arguments);
       }
 
-      this.destroyed = true;
-
-      this.stop();
-
-      document.removeEventListener('visibilitychange', this.onVisibilityChange);
-
-      // Note you will need to destroy the iov yourself.  The child should
-      // probably not destroy the parent
-      this.iov = null;
-
-      this.state = null;
-      this.firstFrameShown = null;
-
-      this.playerInstance = null;
-      this.videoJsVideoElement = null;
-      this.videoElementParent = null;
-
-      this.events = null;
-      this.metrics = null;
-
-      this.LogSourceBuffer = null;
-      this.LogSourceBufferTopic = null;
-
-      this.latestSegmentReceived = null;
-      this.segmentIntervalAverage = null;
-      this.segmentInterval = null;
-      this.segmentIntervals = null;
-
-      this.guid = null;
-      this.moovBox = null;
-      this.mimeCodec = null;
-
-      if (this.mseWrapper) {
-        this.mseWrapper.destroy();
-        this.mseWrapper = null;
-      }
-
-      // Setting the src of the video element to an empty string is
-      // the only reliable way we have found to ensure that MediaSource,
-      // SourceBuffer, and various Video elements are properly dereferenced
-      // to avoid memory leaks
-      this.videoElement.src = '';
-      this.videoElement = null;
-    }
+      return destroy;
+    }()
   }]);
 
   return IOVPlayer;
