@@ -24,8 +24,7 @@
   "dependencies": {
     "debug": "^3.1.0",
     "lodash": "^4.17.10",
-    "paho-mqtt": "^1.0.4",
-    "videojs-errors": "^4.1.1"
+    "paho-mqtt": "^1.0.4"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
@@ -53,6 +52,7 @@
     "uglifyjs-webpack-plugin": "^1.2.7",
     "url-loader": "^1.0.1",
     "video.js": "6.7.1",
+    "videojs-errors": "^4.1.1",
     "webpack": "^4.15.1",
     "webpack-serve": "^2.0.2",
     "write-file-webpack-plugin": "^4.3.2"
