@@ -178,7 +178,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
   getVideojsErrorsOptions () {
     return {
-      timeout: 20 * 1000,
+      timeout: 120 * 1000,
       errors: {
         PLAYER_ERR_NOT_COMPAT: {
           type: 'PLAYER_ERR_NOT_COMPAT',
