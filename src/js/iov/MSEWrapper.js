@@ -554,8 +554,16 @@ export default class MSEWrapper {
 
   destroySourceBuffer () {
     return new Promise((resolve, reject) => {
+      const finish = () => {
+        if (this.sourceBuffer) {
+          this.sourceBuffer.removeEventListener('updateend', finish);
+        }
+
+        resolve();
+      };
+
       if (!this.sourceBuffer) {
-        return resolve();
+        return finish();
       }
 
       this.sourceBufferAbort();
@@ -563,11 +571,14 @@ export default class MSEWrapper {
       this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
       this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
 
-      this.sourceBuffer.addEventListener('updateend', () => {
-        resolve();
-      });
+      this.sourceBuffer.addEventListener('updateend', finish);
 
       this.trimBuffer(undefined, true);
+
+      // @todo - this is a hack - sometimes, the trimBuffer operation does not cause an update
+      // on the sourceBuffer.  This acts as a timeout to ensure the destruction of this mseWrapper
+      // instance can complete.
+      setTimeout(finish, 1000);
     });
   }
 

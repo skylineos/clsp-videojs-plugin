@@ -164,16 +164,27 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       await this.initializeIOV(player);
     });
 
-    player.on('dispose', async () => {
-      // @todo - destroy the tech, since it is a player-specific instance
+    // @todo - is there a better way to enforce an asynchronous dispose listener
+    // than hijacking the dispose method on the player?
+    const originalDispose = player.dispose.bind(player);
+
+    player.dispose = async function (...args) {
+      // @todo - destroy the tech also, since it is a player-specific instance
+      // @todo - if the iframe is destroyed prematurely, the iov player destroy
+      // method never finishes (or perhaps it waits for a timeout) because the
+      // conduit can no longer communicate with the server via the iframe (because
+      // it no longer exists).  The iov, conduit, and player destruction methods
+      // need to be able to handle this scenario
       try {
         await player.tech(true).mqtt.iov.destroy();
       }
       catch (error) {
-        // @todo - need to improve iov destroy logic...
-        console.error(error)
+        console.error('Error while destroying clsp plugin instance!');
+        console.error(error);
       }
-    });
+
+      originalDispose(...args);
+    };
   }
 
   getVideojsErrorsOptions () {
