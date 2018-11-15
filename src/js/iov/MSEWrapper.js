@@ -425,6 +425,12 @@ export default class MSEWrapper {
   appendMoov (moov) {
     debug('appendMoov');
 
+    if (!moov) {
+      // @todo - do we need to throw here or something?  Under what
+      // circumstance would this be called with no moov?
+      return;
+    }
+
     this.metric('sourceBuffer.lastMoovSize', moov.length);
 
     // Sometimes this can get hit after destroy is called
@@ -696,7 +702,7 @@ export default class MSEWrapper {
     debug('destroy...');
 
     if (this.destroyed) {
-      return;
+      return Promise.resolve();
     }
 
     this.destroyed = true;
