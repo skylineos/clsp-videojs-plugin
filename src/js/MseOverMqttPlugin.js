@@ -56,7 +56,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     this.debug = Debug('skyline:clsp:plugin:ClspPlugin');
     this.debug('constructing...');
 
-    const playerOptions = player.options();
+    const playerOptions = player.options_;
 
     this.options = videojs.mergeOptions({
       ...this.constructor.getDefaultOptions(),

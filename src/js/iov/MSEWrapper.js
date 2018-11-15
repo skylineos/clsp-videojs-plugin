@@ -102,8 +102,6 @@ export default class MSEWrapper {
       mediaSource: {},
       sourceBuffer: {},
     };
-
-    this.onSourceBufferUpdateEnd = this.onSourceBufferUpdateEnd.bind(this);
   }
 
   on (name, action) {
@@ -240,7 +238,7 @@ export default class MSEWrapper {
     this.objectURL = null;
 
     if (this.sourceBuffer) {
-      this.sourceBufferAbort();
+      this.shouldAbort = true;
     }
 
     // free the resource
@@ -309,7 +307,12 @@ export default class MSEWrapper {
   }
 
   queueSegment (segment) {
-    debug(`Queueing segment.  The queue now has ${this.segmentQueue.length} segments.`);
+    if (this.segmentQueue.length) {
+      debug(`Queueing segment.  The queue currently has ${this.segmentQueue.length} segments.`);
+    }
+    else {
+      silly(`Queueing segment.  The queue is currently empty.`);
+    }
 
     this.metric('queue.added', 1);
 
@@ -325,7 +328,10 @@ export default class MSEWrapper {
     try {
       this.metric('sourceBuffer.abort', 1);
 
-      this.sourceBuffer.abort();
+      if (this.sourceBuffer) {
+        this.sourceBuffer.abort();
+        this.shouldAbort = false;
+      }
     }
     catch (error) {
       this.metric('error.sourceBuffer.abort', 1);
@@ -353,7 +359,7 @@ export default class MSEWrapper {
         return;
       }
 
-      debug(`Appending to the buffer with an estimated drift of ${estimatedDrift}`);
+      silly(`Appending to the buffer with an estimated drift of ${estimatedDrift}`);
 
       this.metric('sourceBuffer.append', 1);
 
@@ -368,6 +374,10 @@ export default class MSEWrapper {
 
   processNextInQueue () {
     silly('processNextInQueue');
+
+    if (this.destroyed) {
+      return;
+    }
 
     if (document.hidden) {
       debug('Tab not in focus - dropping frame...');
@@ -431,6 +441,10 @@ export default class MSEWrapper {
   append (byteArray) {
     silly('Append');
 
+    if (this.destroyed) {
+      return;
+    }
+
     this.metric('sourceBuffer.lastMoofSize', byteArray.length);
 
     // console.log(mp4toJSON(byteArray));
@@ -451,43 +465,64 @@ export default class MSEWrapper {
   }
 
   getBufferTimes () {
-    const previousBufferSize = this.timeBuffered;
-    const bufferTimeStart = this.sourceBuffer.buffered.start(0);
-    const bufferTimeEnd = this.sourceBuffer.buffered.end(0);
-    const currentBufferSize = bufferTimeEnd - bufferTimeStart;
+    silly('getBufferTimes...');
 
-    const info = {
-      previousBufferSize,
-      currentBufferSize,
-      bufferTimeStart,
-      bufferTimeEnd,
-    };
+    try {
+      const previousBufferSize = this.timeBuffered;
+      const bufferTimeStart = this.sourceBuffer.buffered.start(0);
+      const bufferTimeEnd = this.sourceBuffer.buffered.end(0);
+      const currentBufferSize = bufferTimeEnd - bufferTimeStart;
 
-    return info;
+      const info = {
+        previousBufferSize,
+        currentBufferSize,
+        bufferTimeStart,
+        bufferTimeEnd,
+      };
+
+      silly('getBufferTimes finished successfully...');
+
+      return info;
+    }
+    catch (error) {
+      debug('getBufferTimes finished unsuccessfully...');
+
+      return null;
+    }
   }
 
-  trimBuffer (info, force = false) {
+  trimBuffer (info = this.getBufferTimes(), clearBuffer = false) {
+    silly('trimBuffer...');
+
     this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
     try {
-      if (!info) {
-        info = this.getBufferTimes();
-      }
-
-      if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
+      if (info && (clearBuffer || (this.timeBuffered > this.options.bufferSizeLimit)) && this.isSourceBufferReady()) {
         debug('Removing old stuff from sourceBuffer...');
 
         // @todo - this is the biggest performance problem we have with this player.
         // Can you figure out how to manage the memory usage without causing the streams
         // to stutter?
         this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
-        this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
+
+        const trimEndTime = clearBuffer
+          ? Infinity
+          : info.bufferTimeStart + this.options.bufferTruncateValue;
+
+        debug('trimming buffer...');
+        this.sourceBuffer.remove(info.bufferTimeStart, trimEndTime);
+
+        debug('finished trimming buffer...');
       }
     }
     catch (error) {
+      debug('trimBuffer failure!');
       this.metric('sourceBuffer.trim.error', 1);
       this.eventListeners.sourceBuffer.onRemoveError(error);
+      console.error(error);
     }
+
+    silly('trimBuffer finished...');
   }
 
   onRemoveFinish (info = this.getBufferTimes()) {
@@ -516,10 +551,14 @@ export default class MSEWrapper {
     this.trimBuffer(info);
   }
 
-  onSourceBufferUpdateEnd () {
+  onSourceBufferUpdateEnd = () => {
     silly('onUpdateEnd');
 
     this.metric('sourceBuffer.updateEnd', 1);
+
+    if (this.shouldAbort) {
+      this.sourceBufferAbort();
+    }
 
     try {
       // Sometimes the mediaSource is removed while an update is being
@@ -553,12 +592,20 @@ export default class MSEWrapper {
   }
 
   destroySourceBuffer () {
+    debug('destroySourceBuffer...');
+
     return new Promise((resolve, reject) => {
       const finish = () => {
         if (this.sourceBuffer) {
           this.sourceBuffer.removeEventListener('updateend', finish);
         }
 
+        // We must abort in the final updateend listener to ensure that
+        // any operations, especially the remove operation, finish first,
+        // as aborting while removing is deprecated.
+        this.sourceBufferAbort();
+
+        debug('destroySourceBuffer finished...');
         resolve();
       };
 
@@ -566,18 +613,15 @@ export default class MSEWrapper {
         return finish();
       }
 
-      this.sourceBufferAbort();
-
       this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
       this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
 
       this.sourceBuffer.addEventListener('updateend', finish);
 
-      this.trimBuffer(undefined, true);
-
       // @todo - this is a hack - sometimes, the trimBuffer operation does not cause an update
       // on the sourceBuffer.  This acts as a timeout to ensure the destruction of this mseWrapper
       // instance can complete.
+      debug('giving sourceBuffer some time to finish updating itself...');
       setTimeout(finish, 1000);
     });
   }
@@ -590,6 +634,11 @@ export default class MSEWrapper {
     if (!this.mediaSource) {
       return;
     }
+
+    // We must do this PRIOR to the sourceBuffer being destroyed, to ensure that the
+    // 'buffered' property is still available, which is necessary for completely
+    // emptying the sourceBuffer.
+    this.trimBuffer(undefined, true);
 
     this.mediaSource.removeEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
     this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
@@ -607,6 +656,7 @@ export default class MSEWrapper {
     // }
 
     if (this.isMediaSourceReady() && this.isSourceBufferReady()) {
+      debug('media source was ready for endOfStream and removeSourceBuffer');
       this.mediaSource.endOfStream();
       this.mediaSource.removeSourceBuffer(this.sourceBuffer);
     }
@@ -619,6 +669,8 @@ export default class MSEWrapper {
   }
 
   _freeAllResources () {
+    debug('_freeAllResources...');
+
     // We make NO assumptions here about what instance properties are
     // needed during the asynchronous destruction of the source buffer,
     // therefore we wait until it is finished to free all of these
@@ -636,7 +688,8 @@ export default class MSEWrapper {
     this.metrics = null;
     this.events = null;
     this.eventListeners = null;
-    this.onSourceBufferUpdateEnd = null;
+
+    debug('_freeAllResources finished...');
   }
 
   destroy () {
@@ -670,16 +723,22 @@ export default class MSEWrapper {
     // of time, such as 24 hours.
     // Note that we still return the promise, so that the caller has the
     // option of waiting if they choose.
-    return this.destroySourceBuffer()
+    const destroyPromise = this.destroySourceBuffer()
       .then(() => {
+        debug('destroySourceBuffer successfully finished...');
         this._freeAllResources();
       })
       .catch((error) => {
+        debug('destroySourceBuffer failed...');
         console.error('Error while destroying the source buffer!');
         console.error(error);
 
         // Do our best at memory management, even on failure
         this._freeAllResources();
       });
+
+    debug('destroy finished...');
+
+    return destroyPromise;
   }
 }

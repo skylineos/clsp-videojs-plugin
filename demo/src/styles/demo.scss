@@ -19,6 +19,11 @@ html, body {
   background-color: black;
 }
 
+.dependency-versions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
 .video-js {
   width: 100%;
 }

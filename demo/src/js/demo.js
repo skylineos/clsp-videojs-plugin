@@ -9,6 +9,7 @@ import moment from 'moment';
 import humanize from 'humanize';
 import videojs from 'video.js';
 import 'videojs-errors';
+import { version as videojsErrorsVersion } from 'videojs-errors/package.json';
 
 import packageJson from '~root/package.json';
 
@@ -470,6 +471,8 @@ $(() => {
   const pageTitle = `CLSP ${window.CLSP_DEMO_VERSION} Demo Page`;
   document.title = pageTitle;
   $('#page-title-version').html(window.CLSP_DEMO_VERSION);
+  $('#page-title-videojs-version').html(window.videojs.VERSION);
+  $('#page-title-videojs-error-version').html(videojsErrorsVersion);
 
   window.HELP_IMPROVE_VIDEOJS = false;
 
