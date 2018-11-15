@@ -107,8 +107,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var humanize__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(humanize__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! video.js */ "./node_modules/video.js/dist/video.es.js");
 /* harmony import */ var videojs_errors__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! videojs-errors */ "./node_modules/videojs-errors/dist/videojs-errors.es.js");
-/* harmony import */ var _root_package_json__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ~root/package.json */ "./package.json");
-var _root_package_json__WEBPACK_IMPORTED_MODULE_7___namespace = /*#__PURE__*/__webpack_require__.t(/*! ~root/package.json */ "./package.json", 1);
+/* harmony import */ var videojs_errors_package_json__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! videojs-errors/package.json */ "./node_modules/videojs-errors/package.json");
+var videojs_errors_package_json__WEBPACK_IMPORTED_MODULE_7___namespace = /*#__PURE__*/__webpack_require__.t(/*! videojs-errors/package.json */ "./node_modules/videojs-errors/package.json", 1);
+/* harmony import */ var _root_package_json__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ~root/package.json */ "./package.json");
+var _root_package_json__WEBPACK_IMPORTED_MODULE_8___namespace = /*#__PURE__*/__webpack_require__.t(/*! ~root/package.json */ "./package.json", 1);
+
 
 
 
@@ -132,7 +135,7 @@ var _root_package_json__WEBPACK_IMPORTED_MODULE_7___namespace = /*#__PURE__*/__w
 
 window.videojs = video_js__WEBPACK_IMPORTED_MODULE_5__["default"];
 
-window.CLSP_DEMO_VERSION = _root_package_json__WEBPACK_IMPORTED_MODULE_7__.version;
+window.CLSP_DEMO_VERSION = _root_package_json__WEBPACK_IMPORTED_MODULE_8__.version;
 
 var defaultWallUrls = ['clsp://172.28.12.248/testpattern', 'clsp://172.28.12.247/testpattern', 'clsps://sky-qa-dionysus.qa.skyline.local/testpattern', 'clsp://172.28.12.57:9001/FairfaxVideo0520', 'clsp://172.28.12.57:9001/40004'];
 
@@ -561,6 +564,8 @@ jquery__WEBPACK_IMPORTED_MODULE_2___default()(function () {
   var pageTitle = 'CLSP ' + window.CLSP_DEMO_VERSION + ' Demo Page';
   document.title = pageTitle;
   jquery__WEBPACK_IMPORTED_MODULE_2___default()('#page-title-version').html(window.CLSP_DEMO_VERSION);
+  jquery__WEBPACK_IMPORTED_MODULE_2___default()('#page-title-videojs-version').html(window.videojs.VERSION);
+  jquery__WEBPACK_IMPORTED_MODULE_2___default()('#page-title-videojs-error-version').html(videojs_errors_package_json__WEBPACK_IMPORTED_MODULE_7__["version"]);
 
   window.HELP_IMPROVE_VIDEOJS = false;
 
@@ -65465,6 +65470,17 @@ registerPlugin('errors', errors);
 
 /***/ }),
 
+/***/ "./node_modules/videojs-errors/package.json":
+/*!**************************************************!*\
+  !*** ./node_modules/videojs-errors/package.json ***!
+  \**************************************************/
+/*! exports provided: _from, _id, _inBundle, _integrity, _location, _phantomChildren, _requested, _requiredBy, _resolved, _shasum, _spec, _where, author, browserslist, bugs, bundleDependencies, dependencies, deprecated, description, devDependencies, files, generator-videojs-plugin, homepage, husky, keywords, license, lint-staged, main, module, name, repository, scripts, version, vjsstandard, default */
+/***/ (function(module) {
+
+module.exports = {"_from":"videojs-errors@^4.1.1","_id":"videojs-errors@4.2.0","_inBundle":false,"_integrity":"sha512-F1dLIeLukET7ywJwmvIS5YXDBidtU3OVBraaXZkPAHhXJtD5AoQlvUyY4FLAIH9Qh1x4wi65/xrhUWq0LxW/Vg==","_location":"/videojs-errors","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"videojs-errors@^4.1.1","name":"videojs-errors","escapedName":"videojs-errors","rawSpec":"^4.1.1","saveSpec":null,"fetchSpec":"^4.1.1"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/videojs-errors/-/videojs-errors-4.2.0.tgz","_shasum":"2466bedbb39466c1c24b1a2de86c3edf225d4e6b","_spec":"videojs-errors@^4.1.1","_where":"/home/user/vagrant/clsp/clsp-videojs-plugin","author":{"name":"Brightcove, Inc."},"browserslist":["defaults","ie 11"],"bugs":{"url":"https://github.com/brightcove/videojs-errors/issues"},"bundleDependencies":false,"dependencies":{"global":"^4.3.2","video.js":"^6 || ^7"},"deprecated":false,"description":"A Video.js plugin for custom error reporting","devDependencies":{"conventional-changelog-cli":"^2.0.1","conventional-changelog-videojs":"^3.0.0","doctoc":"^1.3.1","husky":"^1.0.0-rc.13","jsdoc":"git+https://github.com/BrandonOCasey/jsdoc.git#feat/plugin-from-cli","karma":"^3.0.0","lint-staged":"^7.2.2","node-sass":"^4.5.3","not-prerelease":"^1.0.1","npm-merge-driver-install":"^1.0.0","npm-run-all":"^4.1.3","pkg-ok":"^2.2.0","postcss-cli":"^6.0.0","rollup":"^0.66.0","shx":"^0.3.2","sinon":"^6.1.5","videojs-generate-karma-config":"~3.0.0","videojs-generate-postcss-config":"~2.0.1","videojs-generate-rollup-config":"~2.2.0","videojs-generator-verify":"~1.0.3","videojs-languages":"^1.0.0","videojs-standard":"~7.1.0"},"files":["CONTRIBUTING.md","dist/","docs/","index.html","scripts/","src/","test/"],"generator-videojs-plugin":{"version":"7.3.2"},"homepage":"https://github.com/brightcove/videojs-errors#readme","husky":{"hooks":{"pre-commit":"lint-staged"}},"keywords":["videojs","videojs-plugin"],"license":"Apache-2.0","lint-staged":{"*.js":["vjsstandard --fix","git add"],"README.md":["npm run docs:toc","git add"]},"main":"dist/videojs-errors.cjs.js","module":"dist/videojs-errors.es.js","name":"videojs-errors","repository":{"type":"git","url":"git+https://github.com/brightcove/videojs-errors.git"},"scripts":{"build":"npm-run-all -p build:*","build:css":"node-sass src/plugin.scss dist/videojs-errors.css --output-style=compressed --linefeed=lf","build:js":"rollup -c scripts/rollup.config.js","build:lang":"vjslang --dir dist/lang","clean":"shx rm -rf ./dist ./test/dist","docs":"npm-run-all docs:*","docs:api":"jsdoc src -g plugins/markdown -r -d docs/api","docs:toc":"doctoc README.md","lint":"vjsstandard","postclean":"shx mkdir -p ./dist ./test/dist","posttest":"shx cat test/dist/coverage/text.txt","prebuild":"npm run clean","prepublishOnly":"npm run build && vjsverify","pretest":"npm-run-all lint build","preversion":"npm test","server":"karma start scripts/karma.conf.js --singleRun=false --auto-watch","start":"npm-run-all -p server watch","test":"karma start scripts/karma.conf.js","update-changelog":"conventional-changelog -p videojs -i CHANGELOG.md -s","version":"is-prerelease || npm run update-changelog && git add CHANGELOG.md","watch":"npm-run-all -p watch:*","watch:css":"npm run build:css -- -w","watch:js":"npm run build:js -- -w"},"version":"4.2.0","vjsstandard":{"ignore":["dist","docs","test/dist"]}};
+
+/***/ }),
+
 /***/ "./node_modules/videojs-vtt.js/lib/browser-index.js":
 /*!**********************************************************!*\
   !*** ./node_modules/videojs-vtt.js/lib/browser-index.js ***!
@@ -67582,7 +67598,7 @@ function extend() {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.9-0","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^4.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^1.0.1","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","humanize":"0.0.9","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.10.0","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^12.0.1","style-loader":"^0.23.1","uglifyjs-webpack-plugin":"^2.0.1","url-loader":"^1.0.1","video.js":"^7.3.0","videojs-errors":"^4.1.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.9-1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^4.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^1.0.1","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","humanize":"0.0.9","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.10.0","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^12.0.1","style-loader":"^0.23.1","uglifyjs-webpack-plugin":"^2.0.1","url-loader":"^1.0.1","video.js":"^7.3.0","videojs-errors":"^4.1.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 

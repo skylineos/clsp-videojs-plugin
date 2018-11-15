@@ -2904,7 +2904,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.9-0","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^4.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^1.0.1","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","humanize":"0.0.9","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.10.0","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^12.0.1","style-loader":"^0.23.1","uglifyjs-webpack-plugin":"^2.0.1","url-loader":"^1.0.1","video.js":"^7.3.0","videojs-errors":"^4.1.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.9-1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^4.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^1.0.1","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","humanize":"0.0.9","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.10.0","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^12.0.1","style-loader":"^0.23.1","uglifyjs-webpack-plugin":"^2.0.1","url-loader":"^1.0.1","video.js":"^7.3.0","videojs-errors":"^4.1.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -3296,7 +3296,7 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
       _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:plugin:ClspPlugin');
       _this.debug('constructing...');
 
-      var playerOptions = player.options();
+      var playerOptions = player.options_;
 
       _this.options = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(_extends({}, _this.constructor.getDefaultOptions(), defaultOptions, playerOptions.clsp || {}), options);
 
@@ -4153,9 +4153,49 @@ var MSEWrapper = function () {
   }]);
 
   function MSEWrapper(videoElement) {
+    var _this = this;
+
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck(this, MSEWrapper);
+
+    this.onSourceBufferUpdateEnd = function () {
+      silly('onUpdateEnd');
+
+      _this.metric('sourceBuffer.updateEnd', 1);
+
+      if (_this.shouldAbort) {
+        _this.sourceBufferAbort();
+      }
+
+      try {
+        // Sometimes the mediaSource is removed while an update is being
+        // processed, resulting in an error when trying to read the
+        // "buffered" property.
+        if (_this.sourceBuffer.buffered.length <= 0) {
+          _this.metric('sourceBuffer.updateEnd.bufferLength.empty', 1);
+          debug('After updating, the sourceBuffer has no length!');
+          return;
+        }
+      } catch (error) {
+        // @todo - do we need to handle this?
+        _this.metric('sourceBuffer.updateEnd.bufferLength.error', 1);
+        debug('The mediaSource was removed while an update operation was occurring.');
+        return;
+      }
+
+      var info = _this.getBufferTimes();
+
+      _this.timeBuffered = info.currentBufferSize;
+
+      if (info.previousBufferSize !== null && info.previousBufferSize > _this.timeBuffered) {
+        _this.onRemoveFinish(info);
+      } else {
+        _this.onAppendFinish(info);
+      }
+
+      _this.processNextInQueue();
+    };
 
     debug('Constructing...');
 
@@ -4204,8 +4244,6 @@ var MSEWrapper = function () {
       mediaSource: {},
       sourceBuffer: {}
     };
-
-    this.onSourceBufferUpdateEnd = this.onSourceBufferUpdateEnd.bind(this);
   }
 
   _createClass(MSEWrapper, [{
@@ -4273,7 +4311,7 @@ var MSEWrapper = function () {
   }, {
     key: 'initializeMediaSource',
     value: function initializeMediaSource() {
-      var _this = this;
+      var _this2 = this;
 
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
@@ -4297,7 +4335,7 @@ var MSEWrapper = function () {
         // @todo - does this do memory management for us so we don't have
         // to call remove on the buffer, which is expensive?  It seems
         // like it...
-        _this.mediaSource.duration = _this.options.duration;
+        _this2.mediaSource.duration = _this2.options.duration;
 
         options.onSourceOpen();
       };
@@ -4354,7 +4392,7 @@ var MSEWrapper = function () {
       this.objectURL = null;
 
       if (this.sourceBuffer) {
-        this.sourceBufferAbort();
+        this.shouldAbort = true;
       }
 
       // free the resource
@@ -4454,7 +4492,11 @@ var MSEWrapper = function () {
   }, {
     key: 'queueSegment',
     value: function queueSegment(segment) {
-      debug('Queueing segment.  The queue now has ' + this.segmentQueue.length + ' segments.');
+      if (this.segmentQueue.length) {
+        debug('Queueing segment.  The queue currently has ' + this.segmentQueue.length + ' segments.');
+      } else {
+        silly('Queueing segment.  The queue is currently empty.');
+      }
 
       this.metric('queue.added', 1);
 
@@ -4471,7 +4513,10 @@ var MSEWrapper = function () {
       try {
         this.metric('sourceBuffer.abort', 1);
 
-        this.sourceBuffer.abort();
+        if (this.sourceBuffer) {
+          this.sourceBuffer.abort();
+          this.shouldAbort = false;
+        }
       } catch (error) {
         this.metric('error.sourceBuffer.abort', 1);
 
@@ -4502,7 +4547,7 @@ var MSEWrapper = function () {
           return;
         }
 
-        debug('Appending to the buffer with an estimated drift of ' + estimatedDrift);
+        silly('Appending to the buffer with an estimated drift of ' + estimatedDrift);
 
         this.metric('sourceBuffer.append', 1);
 
@@ -4517,6 +4562,10 @@ var MSEWrapper = function () {
     key: 'processNextInQueue',
     value: function processNextInQueue() {
       silly('processNextInQueue');
+
+      if (this.destroyed) {
+        return;
+      }
 
       if (document.hidden) {
         debug('Tab not in focus - dropping frame...');
@@ -4583,6 +4632,10 @@ var MSEWrapper = function () {
     value: function append(byteArray) {
       silly('Append');
 
+      if (this.destroyed) {
+        return;
+      }
+
       this.metric('sourceBuffer.lastMoofSize', byteArray.length);
 
       // console.log(mp4toJSON(byteArray));
@@ -4604,45 +4657,64 @@ var MSEWrapper = function () {
   }, {
     key: 'getBufferTimes',
     value: function getBufferTimes() {
-      var previousBufferSize = this.timeBuffered;
-      var bufferTimeStart = this.sourceBuffer.buffered.start(0);
-      var bufferTimeEnd = this.sourceBuffer.buffered.end(0);
-      var currentBufferSize = bufferTimeEnd - bufferTimeStart;
+      silly('getBufferTimes...');
 
-      var info = {
-        previousBufferSize: previousBufferSize,
-        currentBufferSize: currentBufferSize,
-        bufferTimeStart: bufferTimeStart,
-        bufferTimeEnd: bufferTimeEnd
-      };
+      try {
+        var previousBufferSize = this.timeBuffered;
+        var bufferTimeStart = this.sourceBuffer.buffered.start(0);
+        var bufferTimeEnd = this.sourceBuffer.buffered.end(0);
+        var currentBufferSize = bufferTimeEnd - bufferTimeStart;
 
-      return info;
+        var info = {
+          previousBufferSize: previousBufferSize,
+          currentBufferSize: currentBufferSize,
+          bufferTimeStart: bufferTimeStart,
+          bufferTimeEnd: bufferTimeEnd
+        };
+
+        silly('getBufferTimes finished successfully...');
+
+        return info;
+      } catch (error) {
+        debug('getBufferTimes finished unsuccessfully...');
+
+        return null;
+      }
     }
   }, {
     key: 'trimBuffer',
-    value: function trimBuffer(info) {
-      var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+    value: function trimBuffer() {
+      var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
+      var clearBuffer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+      silly('trimBuffer...');
 
       this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
       try {
-        if (!info) {
-          info = this.getBufferTimes();
-        }
-
-        if (force || this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady()) {
+        if (info && (clearBuffer || this.timeBuffered > this.options.bufferSizeLimit) && this.isSourceBufferReady()) {
           debug('Removing old stuff from sourceBuffer...');
 
           // @todo - this is the biggest performance problem we have with this player.
           // Can you figure out how to manage the memory usage without causing the streams
           // to stutter?
           this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
-          this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
+
+          var trimEndTime = clearBuffer ? Infinity : info.bufferTimeStart + this.options.bufferTruncateValue;
+
+          debug('trimming buffer...');
+          this.sourceBuffer.remove(info.bufferTimeStart, trimEndTime);
+
+          debug('finished trimming buffer...');
         }
       } catch (error) {
+        debug('trimBuffer failure!');
         this.metric('sourceBuffer.trim.error', 1);
         this.eventListeners.sourceBuffer.onRemoveError(error);
+        console.error(error);
       }
+
+      silly('trimBuffer finished...');
     }
   }, {
     key: 'onRemoveFinish',
@@ -4677,70 +4749,40 @@ var MSEWrapper = function () {
       this.trimBuffer(info);
     }
   }, {
-    key: 'onSourceBufferUpdateEnd',
-    value: function onSourceBufferUpdateEnd() {
-      silly('onUpdateEnd');
-
-      this.metric('sourceBuffer.updateEnd', 1);
-
-      try {
-        // Sometimes the mediaSource is removed while an update is being
-        // processed, resulting in an error when trying to read the
-        // "buffered" property.
-        if (this.sourceBuffer.buffered.length <= 0) {
-          this.metric('sourceBuffer.updateEnd.bufferLength.empty', 1);
-          debug('After updating, the sourceBuffer has no length!');
-          return;
-        }
-      } catch (error) {
-        // @todo - do we need to handle this?
-        this.metric('sourceBuffer.updateEnd.bufferLength.error', 1);
-        debug('The mediaSource was removed while an update operation was occurring.');
-        return;
-      }
-
-      var info = this.getBufferTimes();
-
-      this.timeBuffered = info.currentBufferSize;
-
-      if (info.previousBufferSize !== null && info.previousBufferSize > this.timeBuffered) {
-        this.onRemoveFinish(info);
-      } else {
-        this.onAppendFinish(info);
-      }
-
-      this.processNextInQueue();
-    }
-  }, {
     key: 'destroySourceBuffer',
     value: function destroySourceBuffer() {
-      var _this2 = this;
+      var _this3 = this;
+
+      debug('destroySourceBuffer...');
 
       return new Promise(function (resolve, reject) {
         var finish = function finish() {
-          if (_this2.sourceBuffer) {
-            _this2.sourceBuffer.removeEventListener('updateend', finish);
+          if (_this3.sourceBuffer) {
+            _this3.sourceBuffer.removeEventListener('updateend', finish);
           }
 
+          // We must abort in the final updateend listener to ensure that
+          // any operations, especially the remove operation, finish first,
+          // as aborting while removing is deprecated.
+          _this3.sourceBufferAbort();
+
+          debug('destroySourceBuffer finished...');
           resolve();
         };
 
-        if (!_this2.sourceBuffer) {
+        if (!_this3.sourceBuffer) {
           return finish();
         }
 
-        _this2.sourceBufferAbort();
+        _this3.sourceBuffer.removeEventListener('updateend', _this3.onSourceBufferUpdateEnd);
+        _this3.sourceBuffer.removeEventListener('error', _this3.eventListeners.sourceBuffer.onError);
 
-        _this2.sourceBuffer.removeEventListener('updateend', _this2.onSourceBufferUpdateEnd);
-        _this2.sourceBuffer.removeEventListener('error', _this2.eventListeners.sourceBuffer.onError);
-
-        _this2.sourceBuffer.addEventListener('updateend', finish);
-
-        _this2.trimBuffer(undefined, true);
+        _this3.sourceBuffer.addEventListener('updateend', finish);
 
         // @todo - this is a hack - sometimes, the trimBuffer operation does not cause an update
         // on the sourceBuffer.  This acts as a timeout to ensure the destruction of this mseWrapper
         // instance can complete.
+        debug('giving sourceBuffer some time to finish updating itself...');
         setTimeout(finish, 1000);
       });
     }
@@ -4754,6 +4796,11 @@ var MSEWrapper = function () {
       if (!this.mediaSource) {
         return;
       }
+
+      // We must do this PRIOR to the sourceBuffer being destroyed, to ensure that the
+      // 'buffered' property is still available, which is necessary for completely
+      // emptying the sourceBuffer.
+      this.trimBuffer(undefined, true);
 
       this.mediaSource.removeEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
       this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
@@ -4771,6 +4818,7 @@ var MSEWrapper = function () {
       // }
 
       if (this.isMediaSourceReady() && this.isSourceBufferReady()) {
+        debug('media source was ready for endOfStream and removeSourceBuffer');
         this.mediaSource.endOfStream();
         this.mediaSource.removeSourceBuffer(this.sourceBuffer);
       }
@@ -4784,6 +4832,8 @@ var MSEWrapper = function () {
   }, {
     key: '_freeAllResources',
     value: function _freeAllResources() {
+      debug('_freeAllResources...');
+
       // We make NO assumptions here about what instance properties are
       // needed during the asynchronous destruction of the source buffer,
       // therefore we wait until it is finished to free all of these
@@ -4801,12 +4851,13 @@ var MSEWrapper = function () {
       this.metrics = null;
       this.events = null;
       this.eventListeners = null;
-      this.onSourceBufferUpdateEnd = null;
+
+      debug('_freeAllResources finished...');
     }
   }, {
     key: 'destroy',
     value: function destroy() {
-      var _this3 = this;
+      var _this4 = this;
 
       debug('destroy...');
 
@@ -4838,15 +4889,21 @@ var MSEWrapper = function () {
       // of time, such as 24 hours.
       // Note that we still return the promise, so that the caller has the
       // option of waiting if they choose.
-      return this.destroySourceBuffer().then(function () {
-        _this3._freeAllResources();
+      var destroyPromise = this.destroySourceBuffer().then(function () {
+        debug('destroySourceBuffer successfully finished...');
+        _this4._freeAllResources();
       }).catch(function (error) {
+        debug('destroySourceBuffer failed...');
         console.error('Error while destroying the source buffer!');
         console.error(error);
 
         // Do our best at memory management, even on failure
-        _this3._freeAllResources();
+        _this4._freeAllResources();
       });
+
+      debug('destroy finished...');
+
+      return destroyPromise;
     }
   }]);
 
@@ -5120,7 +5177,9 @@ var IOVPlayer = function () {
   }, {
     key: 'trigger',
     value: function trigger(name, value) {
-      if (name === 'metric') {
+      var sillyMetrics = ['metric', 'videoReceived'];
+
+      if (sillyMetrics.includes(name)) {
         silly('Triggering ' + name + ' event...');
       } else {
         debug('Triggering ' + name + ' event...');
@@ -5592,59 +5651,53 @@ var IOVPlayer = function () {
     }
   }, {
     key: 'stop',
-    value: function () {
-      var _ref11 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
-        return regeneratorRuntime.wrap(function _callee10$(_context10) {
-          while (1) {
-            switch (_context10.prev = _context10.next) {
-              case 0:
-                debug('stop');
+    value: function stop() {
+      var _this6 = this;
 
-                this.stopped = true;
-                this.moovBox = null;
+      debug('stop...');
 
-                if (this.guid) {
-                  // Stop listening for moofs
-                  this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/live');
+      this.stopped = true;
+      this.moovBox = null;
 
-                  // Stop listening for resync events
-                  this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/resync');
+      if (this.guid) {
+        // Stop listening for moofs
+        this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/live');
 
-                  // Tell the server we've stopped
-                  this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
+        // Stop listening for resync events
+        this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/resync');
 
-                  // @todo - why doesn't this play/stop connect/disconnect work?
-                  // this.iov.conduit.disconnect();
-                }
+        // Tell the server we've stopped
+        this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
 
-                // Don't wait until the next play event or the destruction of this player
-                // to clear the MSE
-
-                if (!this.mseWrapper) {
-                  _context10.next = 8;
-                  break;
-                }
-
-                _context10.next = 7;
-                return this.mseWrapper.destroy();
-
-              case 7:
-                this.mseWrapper = null;
-
-              case 8:
-              case 'end':
-                return _context10.stop();
-            }
-          }
-        }, _callee10, this);
-      }));
-
-      function stop() {
-        return _ref11.apply(this, arguments);
+        // @todo - why doesn't this play/stop connect/disconnect work?
+        // this.iov.conduit.disconnect();
       }
 
-      return stop;
-    }()
+      debug('stop about to finish synchronously...');
+
+      // The logic above MUST be run synchronously when called, therefore,
+      // we cannot use async to define the stop method, and must return a
+      // promise here rather than using await.  We return this promise so
+      // that the caller has the option of waiting, but is not forced to
+      // wait.
+      return new Promise(function (resolve, reject) {
+        // Don't wait until the next play event or the destruction of this player
+        // to clear the MSE
+        if (_this6.mseWrapper) {
+          _this6.mseWrapper.destroy().then(function () {
+            _this6.mseWrapper = null;
+            debug('stop succeeded asynchronously...');
+            resolve();
+          }).catch(function (error) {
+            _this6.mseWrapper = null;
+            debug('stop failed asynchronously...');
+            reject(error);
+          });
+        } else {
+          resolve();
+        }
+      });
+    }
   }, {
     key: 'getSegmentIntervalMetrics',
     value: function getSegmentIntervalMetrics() {
@@ -5679,11 +5732,11 @@ var IOVPlayer = function () {
 
 
     // @todo - there is much shared between this and onChangeSourceTransaction
-    value: function onIovPlayTransaction(_ref12) {
-      var _this6 = this;
+    value: function onIovPlayTransaction(_ref11) {
+      var _this7 = this;
 
-      var mimeCodec = _ref12.mimeCodec,
-          guid = _ref12.guid;
+      var mimeCodec = _ref11.mimeCodec,
+          guid = _ref11.guid;
 
       if (this.stopped) {
         return;
@@ -5698,19 +5751,19 @@ var IOVPlayer = function () {
       this.state = 'waiting-for-first-moov';
 
       this.iov.conduit.subscribe(initSegmentTopic, function () {
-        var _ref14 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(_ref13) {
-          var payloadBytes = _ref13.payloadBytes;
+        var _ref13 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(_ref12) {
+          var payloadBytes = _ref12.payloadBytes;
           var moov, newTopic;
-          return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
-              switch (_context11.prev = _context11.next) {
+              switch (_context10.prev = _context10.next) {
                 case 0:
-                  if (!_this6.stopped) {
-                    _context11.next = 2;
+                  if (!_this7.stopped) {
+                    _context10.next = 2;
                     break;
                   }
 
-                  return _context11.abrupt('return');
+                  return _context10.abrupt('return');
 
                 case 2:
 
@@ -5720,46 +5773,46 @@ var IOVPlayer = function () {
                   moov = payloadBytes;
 
 
-                  _this6.state = 'waiting-for-first-moof';
+                  _this7.state = 'waiting-for-first-moof';
 
-                  _this6.iov.conduit.unsubscribe(initSegmentTopic);
+                  _this7.iov.conduit.unsubscribe(initSegmentTopic);
 
                   newTopic = 'iov/video/' + guid + '/live';
 
                   // subscribe to the live video topic.
 
-                  _this6.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
-                    if (_this6.stopped) {
+                  _this7.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
+                    if (_this7.stopped) {
                       return;
                     }
 
-                    _this6.trigger('videoReceived');
-                    _this6.getSegmentIntervalMetrics();
-                    _this6.mseWrapper.append(mqtt_msg.payloadBytes);
+                    _this7.trigger('videoReceived');
+                    _this7.getSegmentIntervalMetrics();
+                    _this7.mseWrapper.append(mqtt_msg.payloadBytes);
                   });
 
-                  _this6.guid = guid;
-                  _this6.moovBox = moov;
-                  _this6.mimeCodec = mimeCodec;
+                  _this7.guid = guid;
+                  _this7.moovBox = moov;
+                  _this7.mimeCodec = mimeCodec;
 
                   // this.trigger('firstChunk');
 
-                  _context11.next = 14;
-                  return _this6.reinitializeMseWrapper(mimeCodec);
+                  _context10.next = 14;
+                  return _this7.reinitializeMseWrapper(mimeCodec);
 
                 case 14:
-                  _this6.resyncStream(mimeCodec);
+                  _this7.resyncStream(mimeCodec);
 
                 case 15:
                 case 'end':
-                  return _context11.stop();
+                  return _context10.stop();
               }
             }
-          }, _callee11, _this6);
+          }, _callee10, _this7);
         }));
 
         return function (_x5) {
-          return _ref14.apply(this, arguments);
+          return _ref13.apply(this, arguments);
         };
       }());
 
@@ -5771,6 +5824,8 @@ var IOVPlayer = function () {
   }, {
     key: '_freeAllResources',
     value: function _freeAllResources() {
+      debug('_freeAllResources...');
+
       // Note you will need to destroy the iov yourself.  The child should
       // probably not destroy the parent
       this.iov = null;
@@ -5796,11 +5851,15 @@ var IOVPlayer = function () {
       this.guid = null;
       this.moovBox = null;
       this.mimeCodec = null;
+
+      debug('_freeAllResources finished...');
     }
   }, {
     key: 'destroy',
     value: function destroy() {
-      var _this7 = this;
+      var _this8 = this;
+
+      debug('destroy...');
 
       if (this.destroyed) {
         return;
@@ -5814,18 +5873,22 @@ var IOVPlayer = function () {
       // allows us to properly support client side libraries and frameworks that
       // do not support asynchronous destruction.  See the comments in the destroy
       // method on the MSEWrapper for a more detailed explanation.
+      debug('about to stop...');
       this.stop().then(function () {
-        _this7._freeAllResources();
+        debug('stopped successfully...');
+        _this8._freeAllResources();
       }).catch(function (error) {
+        debug('stopped unsuccessfully...');
         console.error('Error while destroying the iov player!');
         console.error(error);
-        _this7._freeAllResources();
+        _this8._freeAllResources();
       });
 
       // This MUST be executed immediately after the stop command issues its
       // conduit commands.  If it is not, meaning the stop operation was waited
       // for, then we run the risk of the iframe being destroyed by the caller
       // before we can properly disconnect from the server.
+      debug('disconnecting from server...');
       this.iov.conduit.disconnect();
 
       document.removeEventListener('visibilitychange', this.onVisibilityChange);
@@ -5836,6 +5899,8 @@ var IOVPlayer = function () {
       // to avoid memory leaks
       this.videoElement.src = '';
       this.videoElement = null;
+
+      debug('destroy finished...');
     }
   }]);
 
