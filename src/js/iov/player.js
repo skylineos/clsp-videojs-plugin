@@ -403,6 +403,7 @@ export default class IOVPlayer {
     debug('restart');
 
     await this.stop();
+
     this.play();
   }
 
@@ -555,19 +556,7 @@ export default class IOVPlayer {
     });
   }
 
-  async destroy () {
-    if (this.destroyed) {
-      return;
-    }
-
-    this.destroyed = true;
-
-    await this.stop();
-
-    this.iov.conduit.disconnect();
-
-    document.removeEventListener('visibilitychange', this.onVisibilityChange);
-
+  _freeAllResources () {
     // Note you will need to destroy the iov yourself.  The child should
     // probably not destroy the parent
     this.iov = null;
@@ -593,11 +582,38 @@ export default class IOVPlayer {
     this.guid = null;
     this.moovBox = null;
     this.mimeCodec = null;
+  }
 
-    if (this.mseWrapper) {
-      await this.mseWrapper.destroy();
-      this.mseWrapper = null;
+  destroy () {
+    if (this.destroyed) {
+      return;
     }
+
+    this.destroyed = true;
+
+    // Note that we DO NOT wait for the stop command to finish execution,
+    // because this destroy method MUST be treated as a synchronous operation
+    // to ensure that the caller is not forced to wait on destruction.  This
+    // allows us to properly support client side libraries and frameworks that
+    // do not support asynchronous destruction.  See the comments in the destroy
+    // method on the MSEWrapper for a more detailed explanation.
+    this.stop()
+      .then(() => {
+        this._freeAllResources();
+      })
+      .catch((error) => {
+        console.error('Error while destroying the iov player!');
+        console.error(error);
+        this._freeAllResources();
+      });
+
+    // This MUST be executed immediately after the stop command issues its
+    // conduit commands.  If it is not, meaning the stop operation was waited
+    // for, then we run the risk of the iframe being destroyed by the caller
+    // before we can properly disconnect from the server.
+    this.iov.conduit.disconnect();
+
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,

@@ -58,7 +58,7 @@ function webpackBuild (pathToConfig) {
     });
 }
 
-gulp.task('generate-clsp-conduit', async () => {
+gulp.task('generate-clsp-conduit', () => {
   // Construct the iframe contents
   const mqttLibrary = fs.readFileSync('./node_modules/paho-mqtt/paho-mqtt-min.js', { encoding: 'utf8' });
   const clspRouterLibrary = fs.readFileSync('./src/js/conduit/clspRouter.js', { encoding: 'utf8' });

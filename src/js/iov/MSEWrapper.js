@@ -618,20 +618,14 @@ export default class MSEWrapper {
     this.metric('mediaSource.destroyed', 1);
   }
 
-  async destroy () {
-    debug('destroySourceBuffer...');
-
-    if (this.destroyed) {
-      return;
-    }
-
-    this.destroyed = true;
-
-    this.destroyMediaSource();
-    await this.destroySourceBuffer();
-
+  _freeAllResources () {
+    // We make NO assumptions here about what instance properties are
+    // needed during the asynchronous destruction of the source buffer,
+    // therefore we wait until it is finished to free all of these
+    // resources.
     this.mediaSource = null;
     this.sourceBuffer = null;
+
     this.videoElement = null;
 
     this.timeBuffered = null;
@@ -643,5 +637,49 @@ export default class MSEWrapper {
     this.events = null;
     this.eventListeners = null;
     this.onSourceBufferUpdateEnd = null;
+  }
+
+  destroy () {
+    debug('destroy...');
+
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    this.destroyMediaSource();
+
+    // We MUST not force the destroy method here to be asynchronous, even
+    // though it "should" be.  This is because we cannot assume that the
+    // caller has control over whether or not its destroy method can be
+    // properly run asynchronously.  The specific use case here is that
+    // many client side libraries (angular, marionette, react, etc.) do
+    // not all give pre-destruction methods or events that can wait for
+    // an asynchronous operation.  If angular decides it is going to
+    // destroy a DOM element when a user navigates, we have no way of
+    // ensuring that it supports asynchronous operations, or that the
+    // caller is properly using them, if they exist.  Therefore, this
+    // destroy method will clean up the source buffer later, allowing the
+    // rest of the clsp destruction logic to continue.  The use case for
+    // needing that functionality is that the conduit needs to use the its
+    // iframe to contact the server, and if the iframe is destroyed before
+    // the conduit talks to the server, errors will be thrown during
+    // destruction, which will lead to resources not being free / memory
+    // leaks, which may cause the browser to crash after extended periods
+    // of time, such as 24 hours.
+    // Note that we still return the promise, so that the caller has the
+    // option of waiting if they choose.
+    return this.destroySourceBuffer()
+      .then(() => {
+        this._freeAllResources();
+      })
+      .catch((error) => {
+        console.error('Error while destroying the source buffer!');
+        console.error(error);
+
+        // Do our best at memory management, even on failure
+        this._freeAllResources();
+      });
   }
 }
