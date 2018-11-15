@@ -5,8 +5,9 @@ import '../styles/demo.scss';
 import 'babel-polyfill';
 
 import $ from 'jquery';
-import videojs from 'video.js';
 import moment from 'moment';
+import humanize from 'humanize';
+import videojs from 'video.js';
 import 'videojs-errors';
 
 import packageJson from '~root/package.json';
@@ -212,6 +213,9 @@ function initializeWall () {
       const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
 
       $('#wallDuration').text(`${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+      $('#wallHeapSizeLimit').text(humanize.filesize(window.performance.memory.jsHeapSizeLimit));
+      $('#wallTotalHeapSize').text(humanize.filesize(window.performance.memory.totalJSHeapSize));
+      $('#wallUsedHeapSize').text(humanize.filesize(window.performance.memory.usedJSHeapSize));
     }, 1000);
 
     hideControls();
@@ -412,6 +416,9 @@ function initializeTour () {
       const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
 
       $('#tourDuration').text(`${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+      $('#tourHeapSizeLimit').text(humanize.filesize(window.performance.memory.jsHeapSizeLimit));
+      $('#tourTotalHeapSize').text(humanize.filesize(window.performance.memory.totalJSHeapSize));
+      $('#tourUsedHeapSize').text(humanize.filesize(window.performance.memory.usedJSHeapSize));
     }, 1000);
 
     hideControls();

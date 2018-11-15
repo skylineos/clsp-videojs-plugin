@@ -48,7 +48,7 @@ Chrome 52+ is required to run this videojs extension.  All other browsers are cu
 
 ### VideoJS
 
-`video.js` `6.7.1` is required.  This is the last version that correctly implements autoplay.  This plugin is compatible with the 7.x version of videojs, but due to the missing autoplay feature, its use is not recommended.
+`video.js` `7.3.0` is the recommended version required.  Version `6.x` is not recommended due to it being less performant over time.
 
 If using `videojs-errors`, which is recommended, `4.2.0` is the recommended version, as it allows us to re-register successive errors to respond to successfive failures as necessary to support stream recovery.
 
