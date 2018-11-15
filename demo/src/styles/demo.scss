@@ -25,7 +25,7 @@ html, body {
 
 .tour,
 .headless {
-  display: none;
+  display: none !important;
 }
 
 .vjs-poster {
