@@ -93,39 +93,27 @@
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process) {
-
-var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-function _typeof(obj) {
-  if (typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol") {
-    _typeof = function _typeof(obj) {
-      return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-    };
-  } else {
-    _typeof = function _typeof(obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-    };
-  }return _typeof(obj);
-}
+/* WEBPACK VAR INJECTION */(function(process) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 /* eslint-env browser */
 
 /**
  * This is the web browser implementation of `debug()`.
  */
+
 exports.log = log;
 exports.formatArgs = formatArgs;
 exports.save = save;
 exports.load = load;
 exports.useColors = useColors;
 exports.storage = localstorage();
+
 /**
  * Colors.
  */
 
 exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066FF', '#0099CC', '#0099FF', '#00CC00', '#00CC33', '#00CC66', '#00CC99', '#00CCCC', '#00CCFF', '#3300CC', '#3300FF', '#3333CC', '#3333FF', '#3366CC', '#3366FF', '#3399CC', '#3399FF', '#33CC00', '#33CC33', '#33CC66', '#33CC99', '#33CCCC', '#33CCFF', '#6600CC', '#6600FF', '#6633CC', '#6633FF', '#66CC00', '#66CC33', '#9900CC', '#9900FF', '#9933CC', '#9933FF', '#99CC00', '#99CC33', '#CC0000', '#CC0033', '#CC0066', '#CC0099', '#CC00CC', '#CC00FF', '#CC3300', '#CC3333', '#CC3366', '#CC3399', '#CC33CC', '#CC33FF', '#CC6600', '#CC6633', '#CC9900', '#CC9933', '#CCCC00', '#CCCC33', '#FF0000', '#FF0033', '#FF0066', '#FF0099', '#FF00CC', '#FF00FF', '#FF3300', '#FF3333', '#FF3366', '#FF3399', '#FF33CC', '#FF33FF', '#FF6600', '#FF6633', '#FF9900', '#FF9933', '#FFCC00', '#FFCC33'];
+
 /**
  * Currently only WebKit-based Web Inspectors, Firefox >= v31,
  * and the Firebug extension (any Firefox version) are known
@@ -133,29 +121,33 @@ exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066F
  *
  * TODO: add a `localStorage` variable to explicitly enable/disable colors
  */
+
 // eslint-disable-next-line complexity
-
 function useColors() {
-  // NB: In an Electron preload script, document will be defined but not fully
-  // initialized. Since we know we're in Chrome, we'll just detect this case
-  // explicitly
-  if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
-    return true;
-  } // Internet Explorer and Edge do not support colors.
+	// NB: In an Electron preload script, document will be defined but not fully
+	// initialized. Since we know we're in Chrome, we'll just detect this case
+	// explicitly
+	if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
+		return true;
+	}
 
+	// Internet Explorer and Edge do not support colors.
+	if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
+		return false;
+	}
 
-  if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
-    return false;
-  } // Is webkit? http://stackoverflow.com/a/16459606/376773
-  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-
-
-  return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance || // Is firebug? http://stackoverflow.com/a/398120/376773
-  typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) || // Is firefox >= v31?
-  // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 || // Double check webkit in userAgent just in case we are in a worker
-  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
+	// Is webkit? http://stackoverflow.com/a/16459606/376773
+	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+	return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance ||
+	// Is firebug? http://stackoverflow.com/a/398120/376773
+	typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) ||
+	// Is firefox >= v31?
+	// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+	typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 ||
+	// Double check webkit in userAgent just in case we are in a worker
+	typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
 }
+
 /**
  * Colorize log arguments if enabled.
  *
@@ -163,89 +155,91 @@ function useColors() {
  */
 
 function formatArgs(args) {
-  args[0] = (this.useColors ? '%c' : '') + this.namespace + (this.useColors ? ' %c' : ' ') + args[0] + (this.useColors ? '%c ' : ' ') + '+' + module.exports.humanize(this.diff);
+	args[0] = (this.useColors ? '%c' : '') + this.namespace + (this.useColors ? ' %c' : ' ') + args[0] + (this.useColors ? '%c ' : ' ') + '+' + module.exports.humanize(this.diff);
 
-  if (!this.useColors) {
-    return;
-  }
+	if (!this.useColors) {
+		return;
+	}
 
-  var c = 'color: ' + this.color;
-  args.splice(1, 0, c, 'color: inherit'); // The final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
+	var c = 'color: ' + this.color;
+	args.splice(1, 0, c, 'color: inherit');
 
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-zA-Z%]/g, function (match) {
-    if (match === '%%') {
-      return;
-    }
+	// The final "%c" is somewhat tricky, because there could be other
+	// arguments passed either before or after the %c, so we need to
+	// figure out the correct index to insert the CSS into
+	var index = 0;
+	var lastC = 0;
+	args[0].replace(/%[a-zA-Z%]/g, function (match) {
+		if (match === '%%') {
+			return;
+		}
+		index++;
+		if (match === '%c') {
+			// We only are interested in the *last* %c
+			// (the user may have provided their own)
+			lastC = index;
+		}
+	});
 
-    index++;
-
-    if (match === '%c') {
-      // We only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-  args.splice(lastC, 0, c);
+	args.splice(lastC, 0, c);
 }
+
 /**
  * Invokes `console.log()` when available.
  * No-op when `console.log` is not a "function".
  *
  * @api public
  */
-
 function log() {
-  var _console;
+	var _console;
 
-  // This hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return (typeof console === "undefined" ? "undefined" : _typeof(console)) === 'object' && console.log && (_console = console).log.apply(_console, arguments);
+	// This hackery is required for IE8/9, where
+	// the `console.log` function doesn't have 'apply'
+	return (typeof console === 'undefined' ? 'undefined' : _typeof(console)) === 'object' && console.log && (_console = console).log.apply(_console, arguments);
 }
+
 /**
  * Save `namespaces`.
  *
  * @param {String} namespaces
  * @api private
  */
-
 function save(namespaces) {
-  try {
-    if (namespaces) {
-      exports.storage.setItem('debug', namespaces);
-    } else {
-      exports.storage.removeItem('debug');
-    }
-  } catch (error) {// Swallow
-    // XXX (@Qix-) should we be logging these?
-  }
+	try {
+		if (namespaces) {
+			exports.storage.setItem('debug', namespaces);
+		} else {
+			exports.storage.removeItem('debug');
+		}
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
 }
+
 /**
  * Load `namespaces`.
  *
  * @return {String} returns the previously persisted debug modes
  * @api private
  */
-
 function load() {
-  var r;
+	var r = void 0;
+	try {
+		r = exports.storage.getItem('debug');
+	} catch (error) {}
+	// Swallow
+	// XXX (@Qix-) should we be logging these?
 
-  try {
-    r = exports.storage.getItem('debug');
-  } catch (error) {} // Swallow
-  // XXX (@Qix-) should we be logging these?
-  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
 
+	// If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+	if (!r && typeof process !== 'undefined' && 'env' in process) {
+		r = process.env.DEBUG;
+	}
 
-  if (!r && typeof process !== 'undefined' && 'env' in process) {
-    r = process.env.DEBUG;
-  }
-
-  return r;
+	return r;
 }
+
 /**
  * Localstorage attempts to return the localstorage.
  *
@@ -258,27 +252,30 @@ function load() {
  */
 
 function localstorage() {
-  try {
-    // TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
-    // The Browser also has localStorage in the global context.
-    return localStorage;
-  } catch (error) {// Swallow
-    // XXX (@Qix-) should we be logging these?
-  }
+	try {
+		// TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+		// The Browser also has localStorage in the global context.
+		return localStorage;
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
 }
 
 module.exports = __webpack_require__(/*! ./common */ "./node_modules/debug/src/common.js")(exports);
+
 var formatters = module.exports.formatters;
+
 /**
  * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
  */
 
 formatters.j = function (v) {
-  try {
-    return JSON.stringify(v);
-  } catch (error) {
-    return '[UnexpectedJSONParseError]: ' + error.message;
-  }
+	try {
+		return JSON.stringify(v);
+	} catch (error) {
+		return '[UnexpectedJSONParseError]: ' + error.message;
+	}
 };
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../node-libs-browser/node_modules/process/browser.js */ "./node_modules/node-libs-browser/node_modules/process/browser.js")))
 
@@ -291,8 +288,7 @@ formatters.j = function (v) {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -300,240 +296,261 @@ formatters.j = function (v) {
  */
 
 function setup(env) {
-  createDebug.debug = createDebug;
-  createDebug.default = createDebug;
-  createDebug.coerce = coerce;
-  createDebug.disable = disable;
-  createDebug.enable = enable;
-  createDebug.enabled = enabled;
-  createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
-  Object.keys(env).forEach(function (key) {
-    createDebug[key] = env[key];
-  });
-  /**
-  * Active `debug` instances.
-  */
+	createDebug.debug = createDebug;
+	createDebug.default = createDebug;
+	createDebug.coerce = coerce;
+	createDebug.disable = disable;
+	createDebug.enable = enable;
+	createDebug.enabled = enabled;
+	createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
 
-  createDebug.instances = [];
-  /**
-  * The currently active debug mode names, and names to skip.
-  */
+	Object.keys(env).forEach(function (key) {
+		createDebug[key] = env[key];
+	});
 
-  createDebug.names = [];
-  createDebug.skips = [];
-  /**
-  * Map of special "%n" handling functions, for the debug "format" argument.
-  *
-  * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
-  */
+	/**
+ * Active `debug` instances.
+ */
+	createDebug.instances = [];
 
-  createDebug.formatters = {};
-  /**
-  * Selects a color for a debug namespace
-  * @param {String} namespace The namespace string for the for the debug instance to be colored
-  * @return {Number|String} An ANSI color code for the given namespace
-  * @api private
-  */
+	/**
+ * The currently active debug mode names, and names to skip.
+ */
 
-  function selectColor(namespace) {
-    var hash = 0;
+	createDebug.names = [];
+	createDebug.skips = [];
 
-    for (var i = 0; i < namespace.length; i++) {
-      hash = (hash << 5) - hash + namespace.charCodeAt(i);
-      hash |= 0; // Convert to 32bit integer
-    }
+	/**
+ * Map of special "%n" handling functions, for the debug "format" argument.
+ *
+ * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+ */
+	createDebug.formatters = {};
 
-    return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
-  }
+	/**
+ * Selects a color for a debug namespace
+ * @param {String} namespace The namespace string for the for the debug instance to be colored
+ * @return {Number|String} An ANSI color code for the given namespace
+ * @api private
+ */
+	function selectColor(namespace) {
+		var hash = 0;
 
-  createDebug.selectColor = selectColor;
-  /**
-  * Create a debugger with the given `namespace`.
-  *
-  * @param {String} namespace
-  * @return {Function}
-  * @api public
-  */
+		for (var i = 0; i < namespace.length; i++) {
+			hash = (hash << 5) - hash + namespace.charCodeAt(i);
+			hash |= 0; // Convert to 32bit integer
+		}
 
-  function createDebug(namespace) {
-    var prevTime;
+		return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
+	}
+	createDebug.selectColor = selectColor;
 
-    function debug() {
-      // Disabled?
-      if (!debug.enabled) {
-        return;
-      }
+	/**
+ * Create a debugger with the given `namespace`.
+ *
+ * @param {String} namespace
+ * @return {Function}
+ * @api public
+ */
+	function createDebug(namespace) {
+		var prevTime = void 0;
 
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-      }
+		function debug() {
+			for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+				args[_key] = arguments[_key];
+			}
 
-      var self = debug; // Set `diff` timestamp
+			// Disabled?
+			if (!debug.enabled) {
+				return;
+			}
 
-      var curr = Number(new Date());
-      var ms = curr - (prevTime || curr);
-      self.diff = ms;
-      self.prev = prevTime;
-      self.curr = curr;
-      prevTime = curr;
-      args[0] = createDebug.coerce(args[0]);
+			var self = debug;
 
-      if (typeof args[0] !== 'string') {
-        // Anything else let's inspect with %O
-        args.unshift('%O');
-      } // Apply any `formatters` transformations
+			// Set `diff` timestamp
+			var curr = Number(new Date());
+			var ms = curr - (prevTime || curr);
+			self.diff = ms;
+			self.prev = prevTime;
+			self.curr = curr;
+			prevTime = curr;
 
+			args[0] = createDebug.coerce(args[0]);
 
-      var index = 0;
-      args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
-        // If we encounter an escaped % then don't increase the array index
-        if (match === '%%') {
-          return match;
-        }
+			if (typeof args[0] !== 'string') {
+				// Anything else let's inspect with %O
+				args.unshift('%O');
+			}
 
-        index++;
-        var formatter = createDebug.formatters[format];
+			// Apply any `formatters` transformations
+			var index = 0;
+			args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
+				// If we encounter an escaped % then don't increase the array index
+				if (match === '%%') {
+					return match;
+				}
+				index++;
+				var formatter = createDebug.formatters[format];
+				if (typeof formatter === 'function') {
+					var val = args[index];
+					match = formatter.call(self, val);
 
-        if (typeof formatter === 'function') {
-          var val = args[index];
-          match = formatter.call(self, val); // Now we need to remove `args[index]` since it's inlined in the `format`
+					// Now we need to remove `args[index]` since it's inlined in the `format`
+					args.splice(index, 1);
+					index--;
+				}
+				return match;
+			});
 
-          args.splice(index, 1);
-          index--;
-        }
+			// Apply env-specific formatting (colors, etc.)
+			createDebug.formatArgs.call(self, args);
 
-        return match;
-      }); // Apply env-specific formatting (colors, etc.)
+			var logFn = self.log || createDebug.log;
+			logFn.apply(self, args);
+		}
 
-      createDebug.formatArgs.call(self, args);
-      var logFn = self.log || createDebug.log;
-      logFn.apply(self, args);
-    }
+		debug.namespace = namespace;
+		debug.enabled = createDebug.enabled(namespace);
+		debug.useColors = createDebug.useColors();
+		debug.color = selectColor(namespace);
+		debug.destroy = destroy;
+		debug.extend = extend;
+		// Debug.formatArgs = formatArgs;
+		// debug.rawLog = rawLog;
 
-    debug.namespace = namespace;
-    debug.enabled = createDebug.enabled(namespace);
-    debug.useColors = createDebug.useColors();
-    debug.color = selectColor(namespace);
-    debug.destroy = destroy;
-    debug.extend = extend; // Debug.formatArgs = formatArgs;
-    // debug.rawLog = rawLog;
-    // env-specific initialization logic for debug instances
+		// env-specific initialization logic for debug instances
+		if (typeof createDebug.init === 'function') {
+			createDebug.init(debug);
+		}
 
-    if (typeof createDebug.init === 'function') {
-      createDebug.init(debug);
-    }
+		createDebug.instances.push(debug);
 
-    createDebug.instances.push(debug);
-    return debug;
-  }
+		return debug;
+	}
 
-  function destroy() {
-    var index = createDebug.instances.indexOf(this);
+	function destroy() {
+		var index = createDebug.instances.indexOf(this);
+		if (index !== -1) {
+			createDebug.instances.splice(index, 1);
+			return true;
+		}
+		return false;
+	}
 
-    if (index !== -1) {
-      createDebug.instances.splice(index, 1);
-      return true;
-    }
+	function extend(namespace, delimiter) {
+		return createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+	}
 
-    return false;
-  }
+	/**
+ * Enables a debug mode by namespaces. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} namespaces
+ * @api public
+ */
+	function enable(namespaces) {
+		createDebug.save(namespaces);
 
-  function extend(namespace, delimiter) {
-    return createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
-  }
-  /**
-  * Enables a debug mode by namespaces. This can include modes
-  * separated by a colon and wildcards.
-  *
-  * @param {String} namespaces
-  * @api public
-  */
+		createDebug.names = [];
+		createDebug.skips = [];
 
-  function enable(namespaces) {
-    createDebug.save(namespaces);
-    createDebug.names = [];
-    createDebug.skips = [];
-    var i;
-    var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-    var len = split.length;
+		var i = void 0;
+		var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+		var len = split.length;
 
-    for (i = 0; i < len; i++) {
-      if (!split[i]) {
-        // ignore empty strings
-        continue;
-      }
+		for (i = 0; i < len; i++) {
+			if (!split[i]) {
+				// ignore empty strings
+				continue;
+			}
 
-      namespaces = split[i].replace(/\*/g, '.*?');
+			namespaces = split[i].replace(/\*/g, '.*?');
 
-      if (namespaces[0] === '-') {
-        createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-      } else {
-        createDebug.names.push(new RegExp('^' + namespaces + '$'));
-      }
-    }
+			if (namespaces[0] === '-') {
+				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+			} else {
+				createDebug.names.push(new RegExp('^' + namespaces + '$'));
+			}
+		}
 
-    for (i = 0; i < createDebug.instances.length; i++) {
-      var instance = createDebug.instances[i];
-      instance.enabled = createDebug.enabled(instance.namespace);
-    }
-  }
-  /**
-  * Disable debug output.
-  *
-  * @api public
-  */
+		for (i = 0; i < createDebug.instances.length; i++) {
+			var instance = createDebug.instances[i];
+			instance.enabled = createDebug.enabled(instance.namespace);
+		}
+	}
 
-  function disable() {
-    createDebug.enable('');
-  }
-  /**
-  * Returns true if the given mode name is enabled, false otherwise.
-  *
-  * @param {String} name
-  * @return {Boolean}
-  * @api public
-  */
+	/**
+ * Disable debug output.
+ *
+ * @return {String} namespaces
+ * @api public
+ */
+	function disable() {
+		var namespaces = [].concat(_toConsumableArray(createDebug.names.map(toNamespace)), _toConsumableArray(createDebug.skips.map(toNamespace).map(function (namespace) {
+			return '-' + namespace;
+		}))).join(',');
+		createDebug.enable('');
+		return namespaces;
+	}
 
-  function enabled(name) {
-    if (name[name.length - 1] === '*') {
-      return true;
-    }
+	/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+	function enabled(name) {
+		if (name[name.length - 1] === '*') {
+			return true;
+		}
 
-    var i;
-    var len;
+		var i = void 0;
+		var len = void 0;
 
-    for (i = 0, len = createDebug.skips.length; i < len; i++) {
-      if (createDebug.skips[i].test(name)) {
-        return false;
-      }
-    }
+		for (i = 0, len = createDebug.skips.length; i < len; i++) {
+			if (createDebug.skips[i].test(name)) {
+				return false;
+			}
+		}
 
-    for (i = 0, len = createDebug.names.length; i < len; i++) {
-      if (createDebug.names[i].test(name)) {
-        return true;
-      }
-    }
+		for (i = 0, len = createDebug.names.length; i < len; i++) {
+			if (createDebug.names[i].test(name)) {
+				return true;
+			}
+		}
 
-    return false;
-  }
-  /**
-  * Coerce `val`.
-  *
-  * @param {Mixed} val
-  * @return {Mixed}
-  * @api private
-  */
+		return false;
+	}
 
-  function coerce(val) {
-    if (val instanceof Error) {
-      return val.stack || val.message;
-    }
+	/**
+ * Convert regexp to namespace
+ *
+ * @param {RegExp} regxep
+ * @return {String} namespace
+ * @api private
+ */
+	function toNamespace(regexp) {
+		return regexp.toString().substring(2, regexp.toString().length - 2).replace(/\.\*\?$/, '*');
+	}
 
-    return val;
-  }
+	/**
+ * Coerce `val`.
+ *
+ * @param {Mixed} val
+ * @return {Mixed}
+ * @api private
+ */
+	function coerce(val) {
+		if (val instanceof Error) {
+			return val.stack || val.message;
+		}
+		return val;
+	}
 
-  createDebug.enable(createDebug.load());
-  return createDebug;
+	createDebug.enable(createDebug.load());
+
+	return createDebug;
 }
 
 module.exports = setup;
@@ -2887,7 +2904,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.8","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^3.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^0.28.11","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","jquery":"^3.3.1","moment":"^2.22.2","js-string-escape":"^1.0.1","node-sass":"^4.9.1","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^11.0.1","style-loader":"^0.21.0","uglifyjs-webpack-plugin":"^1.2.7","url-loader":"^1.0.1","video.js":"6.7.1","videojs-errors":"^4.1.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.9-0","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^4.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^1.0.1","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","humanize":"0.0.9","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.10.0","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^12.0.1","style-loader":"^0.23.1","uglifyjs-webpack-plugin":"^2.0.1","url-loader":"^1.0.1","video.js":"^7.3.0","videojs-errors":"^4.1.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -3020,8 +3037,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -3060,79 +3075,29 @@ var MqttHandler = function (_Component) {
 
   _createClass(MqttHandler, [{
     key: 'createIOV',
-    value: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(player) {
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                this.debug('createIOV');
+    value: function createIOV(player) {
+      this.debug('createIOV');
 
-                _context.next = 3;
-                return this.updateIOV(_iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(this.source_.src, this.mqttConduitCollection, player));
+      this.updateIOV(_iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(this.source_.src, this.mqttConduitCollection, player));
 
-              case 3:
-
-                this.iov.initialize();
-
-              case 4:
-              case 'end':
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function createIOV(_x) {
-        return _ref.apply(this, arguments);
-      }
-
-      return createIOV;
-    }()
+      this.iov.initialize();
+    }
   }, {
     key: 'updateIOV',
-    value: function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(iov) {
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                this.debug('updateIOV');
+    value: function updateIOV(iov) {
+      this.debug('updateIOV');
 
-                if (!this.iov) {
-                  _context2.next = 6;
-                  break;
-                }
+      if (this.iov) {
+        // If the IOV is the same, do nothing
+        if (this.iov.id === iov.id) {
+          return;
+        }
 
-                if (!(this.iov.id === iov.id)) {
-                  _context2.next = 4;
-                  break;
-                }
-
-                return _context2.abrupt('return');
-
-              case 4:
-                _context2.next = 6;
-                return this.iov.destroy();
-
-              case 6:
-
-                this.iov = iov;
-
-              case 7:
-              case 'end':
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function updateIOV(_x2) {
-        return _ref2.apply(this, arguments);
+        this.iov.destroy();
       }
 
-      return updateIOV;
-    }()
+      this.iov = iov;
+    }
   }]);
 
   return MqttHandler;
@@ -3406,7 +3371,7 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
                   break;
 
                 case 4:
-                  return _context.abrupt('break', 18);
+                  return _context.abrupt('break', 17);
 
                 case 5:
                   if (!(_this.options.maxRetriesOnError === 0)) {
@@ -3414,11 +3379,11 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
                     break;
                   }
 
-                  return _context.abrupt('break', 18);
+                  return _context.abrupt('break', 17);
 
                 case 7:
                   if (!(_this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= _this.options.maxRetriesOnError)) {
-                    _context.next = 18;
+                    _context.next = 17;
                     break;
                   }
 
@@ -3432,22 +3397,19 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
                   // @todo - investigate how this can be called when the iov has been destroyed
 
                   if (!(!iov || iov.destroyed || !iov.player)) {
-                    _context.next = 16;
+                    _context.next = 15;
                     break;
                   }
 
-                  _context.next = 14;
-                  return _this.initializeIOV(player);
-
-                case 14:
-                  _context.next = 18;
+                  _this.initializeIOV(player);
+                  _context.next = 17;
                   break;
 
-                case 16:
-                  _context.next = 18;
+                case 15:
+                  _context.next = 17;
                   return iov.player.restart();
 
-                case 18:
+                case 17:
                 case 'end':
                   return _context.stop();
               }
@@ -3465,66 +3427,22 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
       // this, we need to make the IOV and its player able to be instantiated
       // without automatically playing AND without automatically listening via
       // a conduit
-      player.on('firstplay', function () {
-        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(event) {
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-            while (1) {
-              switch (_context2.prev = _context2.next) {
-                case 0:
-                  _this.debug('on player firstplay');
+      player.on('firstplay', function (event) {
+        _this.debug('on player firstplay');
 
-                  _context2.next = 3;
-                  return _this.initializeIOV(player);
+        _this.initializeIOV(player);
+      });
 
-                case 3:
-                case 'end':
-                  return _context2.stop();
-              }
-            }
-          }, _callee2, _this2);
-        }));
-
-        return function (_x3) {
-          return _ref2.apply(this, arguments);
-        };
-      }());
-
-      // @todo - is there a better way to enforce an asynchronous dispose listener
-      // than hijacking the dispose method on the player?
-      var originalDispose = player.dispose.bind(player);
-
-      player.dispose = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-        var _args3 = arguments;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                _context3.prev = 0;
-                _context3.next = 3;
-                return player.tech(true).mqtt.iov.destroy();
-
-              case 3:
-                _context3.next = 9;
-                break;
-
-              case 5:
-                _context3.prev = 5;
-                _context3.t0 = _context3['catch'](0);
-
-                console.error('Error while destroying clsp plugin instance!');
-                console.error(_context3.t0);
-
-              case 9:
-
-                originalDispose.apply(undefined, _args3);
-
-              case 10:
-              case 'end':
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this, [[0, 5]]);
-      }));
+      player.on('dispose', function () {
+        // @todo - destroy the tech, since it is a player-specific instance
+        try {
+          player.tech(true).mqtt.iov.destroy();
+        } catch (error) {
+          // @todo - need to improve iov destroy logic...
+          console.error('Error while destroying clsp plugin instance!');
+          console.error(error);
+        }
+      });
       return _this;
     }
 
@@ -3558,48 +3476,22 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
       }
     }, {
       key: 'initializeIOV',
-      value: function () {
-        var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(player) {
-          var mqttHandler;
-          return regeneratorRuntime.wrap(function _callee4$(_context4) {
-            while (1) {
-              switch (_context4.prev = _context4.next) {
-                case 0:
-                  mqttHandler = player.tech(true).mqtt;
+      value: function initializeIOV(player) {
+        var mqttHandler = player.tech(true).mqtt;
 
-                  if (mqttHandler) {
-                    _context4.next = 3;
-                    break;
-                  }
-
-                  throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
-
-                case 3:
-
-                  mqttHandler.off('error', this.onMqttHandlerError);
-                  mqttHandler.on('error', this.onMqttHandlerError);
-
-                  _context4.next = 7;
-                  return mqttHandler.createIOV(player, {
-                    enableMetrics: this.options.enableMetrics,
-                    defaultNonSslPort: this.options.defaultNonSslPort,
-                    defaultSslPort: this.options.defaultSslPort
-                  });
-
-                case 7:
-                case 'end':
-                  return _context4.stop();
-              }
-            }
-          }, _callee4, this);
-        }));
-
-        function initializeIOV(_x4) {
-          return _ref4.apply(this, arguments);
+        if (!mqttHandler) {
+          throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
         }
 
-        return initializeIOV;
-      }()
+        mqttHandler.off('error', this.onMqttHandlerError);
+        mqttHandler.on('error', this.onMqttHandlerError);
+
+        mqttHandler.createIOV(player, {
+          enableMetrics: this.options.enableMetrics,
+          defaultNonSslPort: this.options.defaultNonSslPort,
+          defaultSslPort: this.options.defaultSslPort
+        });
+      }
     }, {
       key: 'destroy',
       value: function destroy() {
@@ -4001,8 +3893,6 @@ var IOV = function () {
   }, {
     key: 'onChangeSource',
     value: function onChangeSource(url) {
-      var _this = this;
-
       this.debug('changeSource on player "' + this.id + '""');
 
       if (!url) {
@@ -4025,45 +3915,21 @@ var IOV = function () {
       // MSEWrapper, but I don't think that is likely to happen until the MSE
       // is standardized, and even then, we may be subject to non-intuitive
       // behavior based on tab switching, etc.
-      setTimeout(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                _context.next = 2;
-                return clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-
-              case 2:
-              case 'end':
-                return _context.stop();
-            }
-          }
-        }, _callee, _this);
-      })), clone.config.changeSourceMaxWait);
+      setTimeout(function () {
+        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+      }, clone.config.changeSourceMaxWait);
 
       // Under normal circumstances, meaning when the tab is in focus, we want
       // to respond by switching the IOV when the new IOV Player has something
       // to display
-      clone.player.on('firstFrameShown', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                _context2.next = 2;
-                return clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-
-              case 2:
-              case 'end':
-                return _context2.stop();
-            }
-          }
-        }, _callee2, _this);
-      })));
+      clone.player.on('firstFrameShown', function () {
+        clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+      });
     }
   }, {
     key: 'onReady',
     value: function onReady(event) {
-      var _this2 = this;
+      var _this = this;
 
       this.debug('onReady');
 
@@ -4088,25 +3954,25 @@ var IOV = function () {
       this.onReadyAlreadyCalled = true;
 
       this.player.on('firstFrameShown', function () {
-        _this2.playerInstance.loadingSpinner.hide();
+        _this.playerInstance.loadingSpinner.hide();
 
         videoTag.style.display = 'none';
       });
 
       this.player.on('videoReceived', function () {
         // reset the timeout monitor from videojs-errors
-        _this2.playerInstance.trigger('timeupdate');
+        _this.playerInstance.trigger('timeupdate');
       });
 
       this.player.on('videoInfoReceived', function () {
         // reset the timeout monitor from videojs-errors
-        _this2.playerInstance.trigger('timeupdate');
+        _this.playerInstance.trigger('timeupdate');
       });
 
       this.playerInstanceEventListeners = {
-        changesrc: function changesrc(event, _ref3) {
-          var url = _ref3.url;
-          return _this2.onChangeSource(url);
+        changesrc: function changesrc(event, _ref) {
+          var url = _ref.url;
+          return _this.onChangeSource(url);
         }
       };
 
@@ -4117,36 +3983,36 @@ var IOV = function () {
       }
 
       this.videoElement.addEventListener('mse-error-event', function () {
-        var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(e) {
-          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+          return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
-              switch (_context3.prev = _context3.next) {
+              switch (_context.prev = _context.next) {
                 case 0:
-                  _context3.next = 2;
-                  return _this2.player.restart();
+                  _context.next = 2;
+                  return _this.player.restart();
 
                 case 2:
                 case 'end':
-                  return _context3.stop();
+                  return _context.stop();
               }
             }
-          }, _callee3, _this2);
+          }, _callee, _this);
         }));
 
         return function (_x4) {
-          return _ref4.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         };
       }(), false);
 
       // the mse service will stop streaming to us if we don't send
       // a message to iov/stats within 1 minute.
       this._statsTimer = setInterval(function () {
-        _this2.statsMsg.inkbps = _this2.statsMsg.byteCount * 8 / 30000.0;
-        _this2.statsMsg.byteCount = 0;
+        _this.statsMsg.inkbps = _this.statsMsg.byteCount * 8 / 30000.0;
+        _this.statsMsg.byteCount = 0;
 
-        _this2.conduit.publish('iov/stats', _this2.statsMsg);
+        _this.conduit.publish('iov/stats', _this.statsMsg);
 
-        _this2.debug('iov status', _this2.statsMsg);
+        _this.debug('iov status', _this.statsMsg);
       }, 5000);
     }
   }, {
@@ -4199,63 +4065,34 @@ var IOV = function () {
     }
   }, {
     key: 'destroy',
-    value: function () {
-      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-        var iframe;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                this.debug('destroy');
+    value: function destroy() {
+      this.debug('destroy');
 
-                if (!this.destroyed) {
-                  _context4.next = 3;
-                  break;
-                }
-
-                return _context4.abrupt('return');
-
-              case 3:
-
-                this.destroyed = true;
-
-                clearInterval(this._statsTimer);
-
-                // this.playerInstanceEventListeners will not be defined if the iov is
-                // destroyed too early
-                if (this.playerInstanceEventListeners) {
-                  this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
-                }
-
-                _context4.next = 8;
-                return this.player.destroy();
-
-              case 8:
-
-                this.playerInstance = null;
-                this.player = null;
-
-                this.mqttConduitCollection.remove(this.id);
-
-                iframe = document.getElementById(this.config.clientId);
-
-                iframe.parentNode.removeChild(iframe);
-                iframe.srcdoc = '';
-
-              case 14:
-              case 'end':
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this);
-      }));
-
-      function destroy() {
-        return _ref5.apply(this, arguments);
+      if (this.destroyed) {
+        return;
       }
 
-      return destroy;
-    }()
+      this.destroyed = true;
+
+      clearInterval(this._statsTimer);
+
+      // this.playerInstanceEventListeners will not be defined if the iov is
+      // destroyed too early
+      if (this.playerInstanceEventListeners) {
+        this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
+      }
+
+      this.player.destroy();
+
+      this.playerInstance = null;
+      this.player = null;
+
+      this.mqttConduitCollection.remove(this.id);
+
+      var iframe = document.getElementById(this.config.clientId);
+      iframe.parentNode.removeChild(iframe);
+      iframe.srcdoc = '';
+    }
   }]);
 
   return IOV;
@@ -4945,60 +4782,72 @@ var MSEWrapper = function () {
       this.metric('mediaSource.destroyed', 1);
     }
   }, {
+    key: '_freeAllResources',
+    value: function _freeAllResources() {
+      // We make NO assumptions here about what instance properties are
+      // needed during the asynchronous destruction of the source buffer,
+      // therefore we wait until it is finished to free all of these
+      // resources.
+      this.mediaSource = null;
+      this.sourceBuffer = null;
+
+      this.videoElement = null;
+
+      this.timeBuffered = null;
+      this.previousTimeEnd = null;
+      this.segmentQueue = null;
+
+      this.options = null;
+      this.metrics = null;
+      this.events = null;
+      this.eventListeners = null;
+      this.onSourceBufferUpdateEnd = null;
+    }
+  }, {
     key: 'destroy',
-    value: function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                debug('destroySourceBuffer...');
+    value: function destroy() {
+      var _this3 = this;
 
-                if (!this.destroyed) {
-                  _context2.next = 3;
-                  break;
-                }
+      debug('destroy...');
 
-                return _context2.abrupt('return');
-
-              case 3:
-
-                this.destroyed = true;
-
-                this.destroyMediaSource();
-                _context2.next = 7;
-                return this.destroySourceBuffer();
-
-              case 7:
-
-                this.mediaSource = null;
-                this.sourceBuffer = null;
-                this.videoElement = null;
-
-                this.timeBuffered = null;
-                this.previousTimeEnd = null;
-                this.segmentQueue = null;
-
-                this.options = null;
-                this.metrics = null;
-                this.events = null;
-                this.eventListeners = null;
-                this.onSourceBufferUpdateEnd = null;
-
-              case 18:
-              case 'end':
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function destroy() {
-        return _ref3.apply(this, arguments);
+      if (this.destroyed) {
+        return;
       }
 
-      return destroy;
-    }()
+      this.destroyed = true;
+
+      this.destroyMediaSource();
+
+      // We MUST not force the destroy method here to be asynchronous, even
+      // though it "should" be.  This is because we cannot assume that the
+      // caller has control over whether or not its destroy method can be
+      // properly run asynchronously.  The specific use case here is that
+      // many client side libraries (angular, marionette, react, etc.) do
+      // not all give pre-destruction methods or events that can wait for
+      // an asynchronous operation.  If angular decides it is going to
+      // destroy a DOM element when a user navigates, we have no way of
+      // ensuring that it supports asynchronous operations, or that the
+      // caller is properly using them, if they exist.  Therefore, this
+      // destroy method will clean up the source buffer later, allowing the
+      // rest of the clsp destruction logic to continue.  The use case for
+      // needing that functionality is that the conduit needs to use the its
+      // iframe to contact the server, and if the iframe is destroyed before
+      // the conduit talks to the server, errors will be thrown during
+      // destruction, which will lead to resources not being free / memory
+      // leaks, which may cause the browser to crash after extended periods
+      // of time, such as 24 hours.
+      // Note that we still return the promise, so that the caller has the
+      // option of waiting if they choose.
+      return this.destroySourceBuffer().then(function () {
+        _this3._freeAllResources();
+      }).catch(function (error) {
+        console.error('Error while destroying the source buffer!');
+        console.error(error);
+
+        // Do our best at memory management, even on failure
+        _this3._freeAllResources();
+      });
+    }
   }]);
 
   return MSEWrapper;
@@ -5708,6 +5557,7 @@ var IOVPlayer = function () {
                 return this.stop();
 
               case 3:
+
                 this.play();
 
               case 4:
@@ -5919,93 +5769,74 @@ var IOVPlayer = function () {
       });
     }
   }, {
+    key: '_freeAllResources',
+    value: function _freeAllResources() {
+      // Note you will need to destroy the iov yourself.  The child should
+      // probably not destroy the parent
+      this.iov = null;
+
+      this.state = null;
+      this.firstFrameShown = null;
+
+      this.playerInstance = null;
+      this.videoJsVideoElement = null;
+      this.videoElementParent = null;
+
+      this.events = null;
+      this.metrics = null;
+
+      this.LogSourceBuffer = null;
+      this.LogSourceBufferTopic = null;
+
+      this.latestSegmentReceived = null;
+      this.segmentIntervalAverage = null;
+      this.segmentInterval = null;
+      this.segmentIntervals = null;
+
+      this.guid = null;
+      this.moovBox = null;
+      this.mimeCodec = null;
+    }
+  }, {
     key: 'destroy',
-    value: function () {
-      var _ref15 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
-        return regeneratorRuntime.wrap(function _callee12$(_context12) {
-          while (1) {
-            switch (_context12.prev = _context12.next) {
-              case 0:
-                if (!this.destroyed) {
-                  _context12.next = 2;
-                  break;
-                }
+    value: function destroy() {
+      var _this7 = this;
 
-                return _context12.abrupt('return');
-
-              case 2:
-
-                this.destroyed = true;
-
-                _context12.next = 5;
-                return this.stop();
-
-              case 5:
-
-                this.iov.conduit.disconnect();
-
-                document.removeEventListener('visibilitychange', this.onVisibilityChange);
-
-                // Note you will need to destroy the iov yourself.  The child should
-                // probably not destroy the parent
-                this.iov = null;
-
-                this.state = null;
-                this.firstFrameShown = null;
-
-                this.playerInstance = null;
-                this.videoJsVideoElement = null;
-                this.videoElementParent = null;
-
-                this.events = null;
-                this.metrics = null;
-
-                this.LogSourceBuffer = null;
-                this.LogSourceBufferTopic = null;
-
-                this.latestSegmentReceived = null;
-                this.segmentIntervalAverage = null;
-                this.segmentInterval = null;
-                this.segmentIntervals = null;
-
-                this.guid = null;
-                this.moovBox = null;
-                this.mimeCodec = null;
-
-                if (!this.mseWrapper) {
-                  _context12.next = 28;
-                  break;
-                }
-
-                _context12.next = 27;
-                return this.mseWrapper.destroy();
-
-              case 27:
-                this.mseWrapper = null;
-
-              case 28:
-
-                // Setting the src of the video element to an empty string is
-                // the only reliable way we have found to ensure that MediaSource,
-                // SourceBuffer, and various Video elements are properly dereferenced
-                // to avoid memory leaks
-                this.videoElement.src = '';
-                this.videoElement = null;
-
-              case 30:
-              case 'end':
-                return _context12.stop();
-            }
-          }
-        }, _callee12, this);
-      }));
-
-      function destroy() {
-        return _ref15.apply(this, arguments);
+      if (this.destroyed) {
+        return;
       }
 
-      return destroy;
-    }()
+      this.destroyed = true;
+
+      // Note that we DO NOT wait for the stop command to finish execution,
+      // because this destroy method MUST be treated as a synchronous operation
+      // to ensure that the caller is not forced to wait on destruction.  This
+      // allows us to properly support client side libraries and frameworks that
+      // do not support asynchronous destruction.  See the comments in the destroy
+      // method on the MSEWrapper for a more detailed explanation.
+      this.stop().then(function () {
+        _this7._freeAllResources();
+      }).catch(function (error) {
+        console.error('Error while destroying the iov player!');
+        console.error(error);
+        _this7._freeAllResources();
+      });
+
+      // This MUST be executed immediately after the stop command issues its
+      // conduit commands.  If it is not, meaning the stop operation was waited
+      // for, then we run the risk of the iframe being destroyed by the caller
+      // before we can properly disconnect from the server.
+      this.iov.conduit.disconnect();
+
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
+
+      // Setting the src of the video element to an empty string is
+      // the only reliable way we have found to ensure that MediaSource,
+      // SourceBuffer, and various Video elements are properly dereferenced
+      // to avoid memory leaks
+      this.videoElement.src = '';
+      this.videoElement = null;
+    }
   }]);
 
   return IOVPlayer;
