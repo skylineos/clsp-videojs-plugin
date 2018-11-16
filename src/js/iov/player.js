@@ -109,7 +109,12 @@ export default class IOVPlayer {
   }
 
   trigger (name, value) {
-    if (name === 'metric') {
+    const sillyMetrics = [
+      'metric',
+      'videoReceived',
+    ];
+
+    if (sillyMetrics.includes(name)) {
       silly(`Triggering ${name} event...`);
     }
     else {
@@ -403,6 +408,7 @@ export default class IOVPlayer {
     debug('restart');
 
     await this.stop();
+
     this.play();
   }
 
@@ -421,8 +427,8 @@ export default class IOVPlayer {
     );
   }
 
-  async stop () {
-    debug('stop');
+  stop () {
+    debug('stop...');
 
     this.stopped = true;
     this.moovBox = null;
@@ -444,12 +450,33 @@ export default class IOVPlayer {
       // this.iov.conduit.disconnect();
     }
 
-    // Don't wait until the next play event or the destruction of this player
-    // to clear the MSE
-    if (this.mseWrapper) {
-      await this.mseWrapper.destroy();
-      this.mseWrapper = null;
-    }
+    debug('stop about to finish synchronous operations and return promise...');
+
+    // The logic above MUST be run synchronously when called, therefore,
+    // we cannot use async to define the stop method, and must return a
+    // promise here rather than using await.  We return this promise so
+    // that the caller has the option of waiting, but is not forced to
+    // wait.
+    return new Promise((resolve, reject) => {
+      // Don't wait until the next play event or the destruction of this player
+      // to clear the MSE
+      if (this.mseWrapper) {
+        this.mseWrapper.destroy()
+          .then(() => {
+            this.mseWrapper = null;
+            debug('stop succeeded asynchronously...');
+            resolve();
+          })
+          .catch((error) => {
+            this.mseWrapper = null;
+            debug('stop failed asynchronously...');
+            reject(error);
+          });
+      }
+      else {
+        resolve();
+      }
+    });
   }
 
   getSegmentIntervalMetrics () {
@@ -555,18 +582,8 @@ export default class IOVPlayer {
     });
   }
 
-  async destroy () {
-    if (this.destroyed) {
-      return;
-    }
-
-    this.destroyed = true;
-
-    await this.stop();
-
-    this.iov.conduit.disconnect();
-
-    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+  _freeAllResources () {
+    debug('_freeAllResources...');
 
     // Note you will need to destroy the iov yourself.  The child should
     // probably not destroy the parent
@@ -594,10 +611,47 @@ export default class IOVPlayer {
     this.moovBox = null;
     this.mimeCodec = null;
 
-    if (this.mseWrapper) {
-      await this.mseWrapper.destroy();
-      this.mseWrapper = null;
+    debug('_freeAllResources finished...');
+  }
+
+  destroy () {
+    debug('destroy...');
+
+    if (this.destroyed) {
+      return;
     }
+
+    this.destroyed = true;
+
+    // Note that we DO NOT wait for the stop command to finish execution,
+    // because this destroy method MUST be treated as a synchronous operation
+    // to ensure that the caller is not forced to wait on destruction.  This
+    // allows us to properly support client side libraries and frameworks that
+    // do not support asynchronous destruction.  See the comments in the destroy
+    // method on the MSEWrapper for a more detailed explanation.
+    debug('about to stop...');
+    this.stop()
+      .then(() => {
+        debug('stopped successfully...');
+        this._freeAllResources();
+        debug('destroy successfully finished...');
+      })
+      .catch((error) => {
+        debug('stopped unsuccessfully...');
+        console.error('Error while destroying the iov player!');
+        console.error(error);
+        this._freeAllResources();
+        debug('destroy unsuccessfully finished...');
+      });
+
+    // This MUST be executed immediately after the stop command issues its
+    // conduit commands.  If it is not, meaning the stop operation was waited
+    // for, then we run the risk of the iframe being destroyed by the caller
+    // before we can properly disconnect from the server.
+    debug('disconnecting from server...');
+    this.iov.conduit.disconnect();
+
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,
@@ -605,5 +659,7 @@ export default class IOVPlayer {
     // to avoid memory leaks
     this.videoElement.src = '';
     this.videoElement = null;
+
+    debug('exiting destroy, asynchronous destroy logic in progress...');
   }
 };

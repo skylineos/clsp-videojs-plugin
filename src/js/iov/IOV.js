@@ -216,15 +216,15 @@ export default class IOV {
     // MSEWrapper, but I don't think that is likely to happen until the MSE
     // is standardized, and even then, we may be subject to non-intuitive
     // behavior based on tab switching, etc.
-    setTimeout(async () => {
-      await clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+    setTimeout(() => {
+      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
     }, clone.config.changeSourceMaxWait);
 
     // Under normal circumstances, meaning when the tab is in focus, we want
     // to respond by switching the IOV when the new IOV Player has something
     // to display
-    clone.player.on('firstFrameShown', async () => {
-      await clone.playerInstance.tech(true).mqtt.updateIOV(clone);
+    clone.player.on('firstFrameShown', () => {
+      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
     });
   }
 
@@ -334,7 +334,7 @@ export default class IOV {
     }
   }
 
-  async destroy () {
+  destroy () {
     this.debug('destroy');
 
     if (this.destroyed) {
@@ -351,7 +351,7 @@ export default class IOV {
       this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
     }
 
-    await this.player.destroy();
+    this.player.destroy();
 
     this.playerInstance = null;
     this.player = null;

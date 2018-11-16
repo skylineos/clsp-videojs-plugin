@@ -56,7 +56,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     this.debug = Debug('skyline:clsp:plugin:ClspPlugin');
     this.debug('constructing...');
 
-    const playerOptions = player.options();
+    const playerOptions = player.options_;
 
     this.options = videojs.mergeOptions({
       ...this.constructor.getDefaultOptions(),
@@ -143,7 +143,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
             // @todo - investigate how this can be called when the iov has been destroyed
             if (!iov || iov.destroyed || !iov.player) {
-              await this.initializeIOV(player);
+              this.initializeIOV(player);
             }
             else {
               await iov.player.restart();
@@ -158,33 +158,23 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     // this, we need to make the IOV and its player able to be instantiated
     // without automatically playing AND without automatically listening via
     // a conduit
-    player.on('firstplay', async (event) => {
+    player.on('firstplay', (event) => {
       this.debug('on player firstplay');
 
-      await this.initializeIOV(player);
+      this.initializeIOV(player);
     });
 
-    // @todo - is there a better way to enforce an asynchronous dispose listener
-    // than hijacking the dispose method on the player?
-    const originalDispose = player.dispose.bind(player);
-
-    player.dispose = async function (...args) {
-      // @todo - destroy the tech also, since it is a player-specific instance
-      // @todo - if the iframe is destroyed prematurely, the iov player destroy
-      // method never finishes (or perhaps it waits for a timeout) because the
-      // conduit can no longer communicate with the server via the iframe (because
-      // it no longer exists).  The iov, conduit, and player destruction methods
-      // need to be able to handle this scenario
+    player.on('dispose', () => {
+      // @todo - destroy the tech, since it is a player-specific instance
       try {
-        await player.tech(true).mqtt.iov.destroy();
+        player.tech(true).mqtt.iov.destroy();
       }
       catch (error) {
+        // @todo - need to improve iov destroy logic...
         console.error('Error while destroying clsp plugin instance!');
         console.error(error);
       }
-
-      originalDispose(...args);
-    };
+    });
   }
 
   getVideojsErrorsOptions () {
@@ -228,7 +218,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     });
   };
 
-  async initializeIOV (player) {
+  initializeIOV (player) {
     const mqttHandler = player.tech(true).mqtt;
 
     if (!mqttHandler) {
@@ -238,7 +228,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     mqttHandler.off('error', this.onMqttHandlerError);
     mqttHandler.on('error', this.onMqttHandlerError);
 
-    await mqttHandler.createIOV(player, {
+    mqttHandler.createIOV(player, {
       enableMetrics: this.options.enableMetrics,
       defaultNonSslPort: this.options.defaultNonSslPort,
       defaultSslPort: this.options.defaultSslPort,

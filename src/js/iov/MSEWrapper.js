@@ -10,6 +10,12 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:MSEWrapper`);
 const silly = Debug(`silly:${DEBUG_PREFIX}:MSEWrapper`);
 
+// This is the original error text, but it is subject to change by chrome,
+// and we are only checking the part of the error text that contains no
+// punctuation (and is all lower case).
+// "Failed to execute 'appendBuffer' on 'SourceBuffer': The SourceBuffer is full, and cannot free space to append additional buffers.";
+const FULL_BUFFER_ERROR = 'and cannot free space to append additional buffers';
+
 export default class MSEWrapper {
   static EVENT_NAMES = [
     'metric',
@@ -102,8 +108,6 @@ export default class MSEWrapper {
       mediaSource: {},
       sourceBuffer: {},
     };
-
-    this.onSourceBufferUpdateEnd = this.onSourceBufferUpdateEnd.bind(this);
   }
 
   on (name, action) {
@@ -240,7 +244,7 @@ export default class MSEWrapper {
     this.objectURL = null;
 
     if (this.sourceBuffer) {
-      this.sourceBufferAbort();
+      this.shouldAbort = true;
     }
 
     // free the resource
@@ -309,7 +313,12 @@ export default class MSEWrapper {
   }
 
   queueSegment (segment) {
-    debug(`Queueing segment.  The queue now has ${this.segmentQueue.length} segments.`);
+    if (this.segmentQueue.length) {
+      debug(`Queueing segment.  The queue currently has ${this.segmentQueue.length} segments.`);
+    }
+    else {
+      silly(`Queueing segment.  The queue is currently empty.`);
+    }
 
     this.metric('queue.added', 1);
 
@@ -325,7 +334,10 @@ export default class MSEWrapper {
     try {
       this.metric('sourceBuffer.abort', 1);
 
-      this.sourceBuffer.abort();
+      if (this.sourceBuffer) {
+        this.sourceBuffer.abort();
+        this.shouldAbort = false;
+      }
     }
     catch (error) {
       this.metric('error.sourceBuffer.abort', 1);
@@ -353,21 +365,35 @@ export default class MSEWrapper {
         return;
       }
 
-      debug(`Appending to the buffer with an estimated drift of ${estimatedDrift}`);
+      silly(`Appending to the buffer with an estimated drift of ${estimatedDrift}`);
 
       this.metric('sourceBuffer.append', 1);
 
       this.sourceBuffer.appendBuffer(byteArray);
     }
     catch (error) {
-      this.metric('error.sourceBuffer.append', 1);
+      if (error.message && error.message.toLowerCase().includes(FULL_BUFFER_ERROR)) {
+        // @todo - make this a valid metric
+        // this.metric('error.sourceBuffer.filled', 1);
 
-      this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
+        // If the buffer is full, we will flush it
+        console.warn('source buffer is full, about to flush it...');
+        this.trimBuffer(undefined, true);
+      }
+      else {
+        this.metric('error.sourceBuffer.append', 1);
+
+        this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
+      }
     }
   }
 
   processNextInQueue () {
     silly('processNextInQueue');
+
+    if (this.destroyed) {
+      return;
+    }
 
     if (document.hidden) {
       debug('Tab not in focus - dropping frame...');
@@ -415,6 +441,12 @@ export default class MSEWrapper {
   appendMoov (moov) {
     debug('appendMoov');
 
+    if (!moov) {
+      // @todo - do we need to throw here or something?  Under what
+      // circumstance would this be called with no moov?
+      return;
+    }
+
     this.metric('sourceBuffer.lastMoovSize', moov.length);
 
     // Sometimes this can get hit after destroy is called
@@ -430,6 +462,10 @@ export default class MSEWrapper {
 
   append (byteArray) {
     silly('Append');
+
+    if (this.destroyed) {
+      return;
+    }
 
     this.metric('sourceBuffer.lastMoofSize', byteArray.length);
 
@@ -451,43 +487,62 @@ export default class MSEWrapper {
   }
 
   getBufferTimes () {
-    const previousBufferSize = this.timeBuffered;
-    const bufferTimeStart = this.sourceBuffer.buffered.start(0);
-    const bufferTimeEnd = this.sourceBuffer.buffered.end(0);
-    const currentBufferSize = bufferTimeEnd - bufferTimeStart;
+    silly('getBufferTimes...');
 
-    const info = {
-      previousBufferSize,
-      currentBufferSize,
-      bufferTimeStart,
-      bufferTimeEnd,
-    };
+    try {
+      const previousBufferSize = this.timeBuffered;
+      const bufferTimeStart = this.sourceBuffer.buffered.start(0);
+      const bufferTimeEnd = this.sourceBuffer.buffered.end(0);
+      const currentBufferSize = bufferTimeEnd - bufferTimeStart;
 
-    return info;
+      silly('getBufferTimes finished successfully...');
+
+      return {
+        previousBufferSize,
+        currentBufferSize,
+        bufferTimeStart,
+        bufferTimeEnd,
+      };
+    }
+    catch (error) {
+      debug('getBufferTimes finished unsuccessfully...');
+
+      return null;
+    }
   }
 
-  trimBuffer (info, force = false) {
+  trimBuffer (info = this.getBufferTimes(), clearBuffer = false) {
+    silly('trimBuffer...');
+
     this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
     try {
-      if (!info) {
-        info = this.getBufferTimes();
-      }
-
-      if (force || (this.timeBuffered > this.options.bufferSizeLimit && this.isSourceBufferReady())) {
+      if (info && (clearBuffer || (this.timeBuffered > this.options.bufferSizeLimit)) && this.isSourceBufferReady()) {
         debug('Removing old stuff from sourceBuffer...');
 
         // @todo - this is the biggest performance problem we have with this player.
         // Can you figure out how to manage the memory usage without causing the streams
         // to stutter?
         this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
-        this.sourceBuffer.remove(info.bufferTimeStart, info.bufferTimeStart + this.options.bufferTruncateValue);
+
+        const trimEndTime = clearBuffer
+          ? Infinity
+          : info.bufferTimeStart + this.options.bufferTruncateValue;
+
+        debug('trimming buffer...');
+        this.sourceBuffer.remove(info.bufferTimeStart, trimEndTime);
+
+        debug('finished trimming buffer...');
       }
     }
     catch (error) {
+      debug('trimBuffer failure!');
       this.metric('sourceBuffer.trim.error', 1);
       this.eventListeners.sourceBuffer.onRemoveError(error);
+      console.error(error);
     }
+
+    silly('trimBuffer finished...');
   }
 
   onRemoveFinish (info = this.getBufferTimes()) {
@@ -516,10 +571,14 @@ export default class MSEWrapper {
     this.trimBuffer(info);
   }
 
-  onSourceBufferUpdateEnd () {
+  onSourceBufferUpdateEnd = () => {
     silly('onUpdateEnd');
 
     this.metric('sourceBuffer.updateEnd', 1);
+
+    if (this.shouldAbort) {
+      this.sourceBufferAbort();
+    }
 
     try {
       // Sometimes the mediaSource is removed while an update is being
@@ -553,12 +612,20 @@ export default class MSEWrapper {
   }
 
   destroySourceBuffer () {
+    debug('destroySourceBuffer...');
+
     return new Promise((resolve, reject) => {
       const finish = () => {
         if (this.sourceBuffer) {
           this.sourceBuffer.removeEventListener('updateend', finish);
         }
 
+        // We must abort in the final updateend listener to ensure that
+        // any operations, especially the remove operation, finish first,
+        // as aborting while removing is deprecated.
+        this.sourceBufferAbort();
+
+        debug('destroySourceBuffer finished...');
         resolve();
       };
 
@@ -566,18 +633,15 @@ export default class MSEWrapper {
         return finish();
       }
 
-      this.sourceBufferAbort();
-
       this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
       this.sourceBuffer.removeEventListener('error', this.eventListeners.sourceBuffer.onError);
 
       this.sourceBuffer.addEventListener('updateend', finish);
 
-      this.trimBuffer(undefined, true);
-
       // @todo - this is a hack - sometimes, the trimBuffer operation does not cause an update
       // on the sourceBuffer.  This acts as a timeout to ensure the destruction of this mseWrapper
       // instance can complete.
+      debug('giving sourceBuffer some time to finish updating itself...');
       setTimeout(finish, 1000);
     });
   }
@@ -590,6 +654,11 @@ export default class MSEWrapper {
     if (!this.mediaSource) {
       return;
     }
+
+    // We must do this PRIOR to the sourceBuffer being destroyed, to ensure that the
+    // 'buffered' property is still available, which is necessary for completely
+    // emptying the sourceBuffer.
+    this.trimBuffer(undefined, true);
 
     this.mediaSource.removeEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
     this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
@@ -607,6 +676,7 @@ export default class MSEWrapper {
     // }
 
     if (this.isMediaSourceReady() && this.isSourceBufferReady()) {
+      debug('media source was ready for endOfStream and removeSourceBuffer');
       this.mediaSource.endOfStream();
       this.mediaSource.removeSourceBuffer(this.sourceBuffer);
     }
@@ -618,20 +688,16 @@ export default class MSEWrapper {
     this.metric('mediaSource.destroyed', 1);
   }
 
-  async destroy () {
-    debug('destroySourceBuffer...');
+  _freeAllResources () {
+    debug('_freeAllResources...');
 
-    if (this.destroyed) {
-      return;
-    }
-
-    this.destroyed = true;
-
-    this.destroyMediaSource();
-    await this.destroySourceBuffer();
-
+    // We make NO assumptions here about what instance properties are
+    // needed during the asynchronous destruction of the source buffer,
+    // therefore we wait until it is finished to free all of these
+    // resources.
     this.mediaSource = null;
     this.sourceBuffer = null;
+
     this.videoElement = null;
 
     this.timeBuffered = null;
@@ -642,6 +708,59 @@ export default class MSEWrapper {
     this.metrics = null;
     this.events = null;
     this.eventListeners = null;
-    this.onSourceBufferUpdateEnd = null;
+
+    debug('_freeAllResources finished...');
+  }
+
+  destroy () {
+    debug('destroy...');
+
+    if (this.destroyed) {
+      return Promise.resolve();
+    }
+
+    this.destroyed = true;
+
+    this.destroyMediaSource();
+
+    // We MUST not force the destroy method here to be asynchronous, even
+    // though it "should" be.  This is because we cannot assume that the
+    // caller has control over whether or not its destroy method can be
+    // properly run asynchronously.  The specific use case here is that
+    // many client side libraries (angular, marionette, react, etc.) do
+    // not all give pre-destruction methods or events that can wait for
+    // an asynchronous operation.  If angular decides it is going to
+    // destroy a DOM element when a user navigates, we have no way of
+    // ensuring that it supports asynchronous operations, or that the
+    // caller is properly using them, if they exist.  Therefore, this
+    // destroy method will clean up the source buffer later, allowing the
+    // rest of the clsp destruction logic to continue.  The use case for
+    // needing that functionality is that the conduit needs to use the its
+    // iframe to contact the server, and if the iframe is destroyed before
+    // the conduit talks to the server, errors will be thrown during
+    // destruction, which will lead to resources not being free / memory
+    // leaks, which may cause the browser to crash after extended periods
+    // of time, such as 24 hours.
+    // Note that we still return the promise, so that the caller has the
+    // option of waiting if they choose.
+    const destroyPromise = this.destroySourceBuffer()
+      .then(() => {
+        debug('destroySourceBuffer successfully finished...');
+        this._freeAllResources();
+        debug('destroy successfully finished...');
+      })
+      .catch((error) => {
+        debug('destroySourceBuffer failed...');
+        console.error('Error while destroying the source buffer!');
+        console.error(error);
+
+        // Do our best at memory management, even on failure
+        this._freeAllResources();
+        debug('destroy unsuccessfully finished...');
+      });
+
+    debug('exiting destroy, asynchronous destroy logic in progress...');
+
+    return destroyPromise;
   }
 }

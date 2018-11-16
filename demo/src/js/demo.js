@@ -5,9 +5,11 @@ import '../styles/demo.scss';
 import 'babel-polyfill';
 
 import $ from 'jquery';
-import videojs from 'video.js';
 import moment from 'moment';
+import humanize from 'humanize';
+import videojs from 'video.js';
 import 'videojs-errors';
+import { version as videojsErrorsVersion } from 'videojs-errors/package.json';
 
 import packageJson from '~root/package.json';
 
@@ -212,6 +214,12 @@ function initializeWall () {
       const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
 
       $('#wallDuration').text(`${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+
+      if (window.performance && window.performance.memory) {
+        $('#wallHeapSizeLimit').text(humanize.filesize(window.performance.memory.jsHeapSizeLimit));
+        $('#wallTotalHeapSize').text(humanize.filesize(window.performance.memory.totalJSHeapSize));
+        $('#wallUsedHeapSize').text(humanize.filesize(window.performance.memory.usedJSHeapSize));
+      }
     }, 1000);
 
     hideControls();
@@ -412,6 +420,12 @@ function initializeTour () {
       const secondsFromStart = Math.floor(moment.duration(Date.now() - now).asSeconds()) - (hoursFromStart * 60 * 60) - (minutesFromStart * 60);
 
       $('#tourDuration').text(`${hoursFromStart} hours ${minutesFromStart} minutes ${secondsFromStart} seconds`);
+
+      if (window.performance && window.performance.memory) {
+        $('#tourHeapSizeLimit').text(humanize.filesize(window.performance.memory.jsHeapSizeLimit));
+        $('#tourTotalHeapSize').text(humanize.filesize(window.performance.memory.totalJSHeapSize));
+        $('#tourUsedHeapSize').text(humanize.filesize(window.performance.memory.usedJSHeapSize));
+      }
     }, 1000);
 
     hideControls();
@@ -463,6 +477,8 @@ $(() => {
   const pageTitle = `CLSP ${window.CLSP_DEMO_VERSION} Demo Page`;
   document.title = pageTitle;
   $('#page-title-version').html(window.CLSP_DEMO_VERSION);
+  $('#page-title-videojs-version').html(window.videojs.VERSION);
+  $('#page-title-videojs-error-version').html(videojsErrorsVersion);
 
   window.HELP_IMPROVE_VIDEOJS = false;
 
