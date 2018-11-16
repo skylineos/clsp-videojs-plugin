@@ -479,16 +479,14 @@ export default class MSEWrapper {
       const bufferTimeEnd = this.sourceBuffer.buffered.end(0);
       const currentBufferSize = bufferTimeEnd - bufferTimeStart;
 
-      const info = {
+      silly('getBufferTimes finished successfully...');
+
+      return {
         previousBufferSize,
         currentBufferSize,
         bufferTimeStart,
         bufferTimeEnd,
       };
-
-      silly('getBufferTimes finished successfully...');
-
-      return info;
     }
     catch (error) {
       debug('getBufferTimes finished unsuccessfully...');
@@ -733,6 +731,7 @@ export default class MSEWrapper {
       .then(() => {
         debug('destroySourceBuffer successfully finished...');
         this._freeAllResources();
+        debug('destroy successfully finished...');
       })
       .catch((error) => {
         debug('destroySourceBuffer failed...');
@@ -741,9 +740,10 @@ export default class MSEWrapper {
 
         // Do our best at memory management, even on failure
         this._freeAllResources();
+        debug('destroy unsuccessfully finished...');
       });
 
-    debug('destroy finished...');
+    debug('exiting destroy, asynchronous destroy logic in progress...');
 
     return destroyPromise;
   }

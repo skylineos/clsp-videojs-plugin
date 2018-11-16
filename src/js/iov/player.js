@@ -450,7 +450,7 @@ export default class IOVPlayer {
       // this.iov.conduit.disconnect();
     }
 
-    debug('stop about to finish synchronously...');
+    debug('stop about to finish synchronous operations and return promise...');
 
     // The logic above MUST be run synchronously when called, therefore,
     // we cannot use async to define the stop method, and must return a
@@ -634,12 +634,14 @@ export default class IOVPlayer {
       .then(() => {
         debug('stopped successfully...');
         this._freeAllResources();
+        debug('destroy successfully finished...');
       })
       .catch((error) => {
         debug('stopped unsuccessfully...');
         console.error('Error while destroying the iov player!');
         console.error(error);
         this._freeAllResources();
+        debug('destroy unsuccessfully finished...');
       });
 
     // This MUST be executed immediately after the stop command issues its
@@ -658,6 +660,6 @@ export default class IOVPlayer {
     this.videoElement.src = '';
     this.videoElement = null;
 
-    debug('destroy finished...');
+    debug('exiting destroy, asynchronous destroy logic in progress...');
   }
 };
