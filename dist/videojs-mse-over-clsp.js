@@ -2904,7 +2904,7 @@ module.exports = function (module) {
 /*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.9-2","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^4.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^1.0.1","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","humanize":"0.0.9","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.10.0","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^12.0.1","style-loader":"^0.23.1","uglifyjs-webpack-plugin":"^2.0.1","url-loader":"^1.0.1","video.js":"^7.3.0","videojs-errors":"^4.1.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.9-3","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^4.1.0","lodash":"^4.17.10","paho-mqtt":"^1.0.4"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^1.0.1","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","humanize":"0.0.9","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.10.0","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^12.0.1","style-loader":"^0.23.1","uglifyjs-webpack-plugin":"^2.0.1","url-loader":"^1.0.1","video.js":"^7.3.0","videojs-errors":"^4.1.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
 
 /***/ }),
 
@@ -4137,6 +4137,12 @@ var DEBUG_PREFIX = 'skyline:clsp:iov';
 var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MSEWrapper');
 var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX + ':MSEWrapper');
 
+// This is the original error text, but it is subject to change by chrome,
+// and we are only checking the part of the error text that contains no
+// punctuation (and is all lower case).
+// "Failed to execute 'appendBuffer' on 'SourceBuffer': The SourceBuffer is full, and cannot free space to append additional buffers.";
+var FULL_BUFFER_ERROR = 'and cannot free space to append additional buffers';
+
 var MSEWrapper = function () {
   _createClass(MSEWrapper, null, [{
     key: 'isMimeCodecSupported',
@@ -4553,9 +4559,18 @@ var MSEWrapper = function () {
 
         this.sourceBuffer.appendBuffer(byteArray);
       } catch (error) {
-        this.metric('error.sourceBuffer.append', 1);
+        if (error.message && error.message.toLowerCase().includes(FULL_BUFFER_ERROR)) {
+          // @todo - make this a valid metric
+          // this.metric('error.sourceBuffer.filled', 1);
 
-        this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
+          // If the buffer is full, we will flush it
+          console.warn('source buffer is full, about to flush it...');
+          this.trimBuffer(undefined, true);
+        } else {
+          this.metric('error.sourceBuffer.append', 1);
+
+          this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
+        }
       }
     }
   }, {
@@ -4671,16 +4686,14 @@ var MSEWrapper = function () {
         var bufferTimeEnd = this.sourceBuffer.buffered.end(0);
         var currentBufferSize = bufferTimeEnd - bufferTimeStart;
 
-        var info = {
+        silly('getBufferTimes finished successfully...');
+
+        return {
           previousBufferSize: previousBufferSize,
           currentBufferSize: currentBufferSize,
           bufferTimeStart: bufferTimeStart,
           bufferTimeEnd: bufferTimeEnd
         };
-
-        silly('getBufferTimes finished successfully...');
-
-        return info;
       } catch (error) {
         debug('getBufferTimes finished unsuccessfully...');
 
@@ -4898,6 +4911,7 @@ var MSEWrapper = function () {
       var destroyPromise = this.destroySourceBuffer().then(function () {
         debug('destroySourceBuffer successfully finished...');
         _this4._freeAllResources();
+        debug('destroy successfully finished...');
       }).catch(function (error) {
         debug('destroySourceBuffer failed...');
         console.error('Error while destroying the source buffer!');
@@ -4905,9 +4919,10 @@ var MSEWrapper = function () {
 
         // Do our best at memory management, even on failure
         _this4._freeAllResources();
+        debug('destroy unsuccessfully finished...');
       });
 
-      debug('destroy finished...');
+      debug('exiting destroy, asynchronous destroy logic in progress...');
 
       return destroyPromise;
     }
@@ -5679,7 +5694,7 @@ var IOVPlayer = function () {
         // this.iov.conduit.disconnect();
       }
 
-      debug('stop about to finish synchronously...');
+      debug('stop about to finish synchronous operations and return promise...');
 
       // The logic above MUST be run synchronously when called, therefore,
       // we cannot use async to define the stop method, and must return a
@@ -5883,11 +5898,13 @@ var IOVPlayer = function () {
       this.stop().then(function () {
         debug('stopped successfully...');
         _this8._freeAllResources();
+        debug('destroy successfully finished...');
       }).catch(function (error) {
         debug('stopped unsuccessfully...');
         console.error('Error while destroying the iov player!');
         console.error(error);
         _this8._freeAllResources();
+        debug('destroy unsuccessfully finished...');
       });
 
       // This MUST be executed immediately after the stop command issues its
@@ -5906,7 +5923,7 @@ var IOVPlayer = function () {
       this.videoElement.src = '';
       this.videoElement = null;
 
-      debug('destroy finished...');
+      debug('exiting destroy, asynchronous destroy logic in progress...');
     }
   }]);
 
