@@ -381,6 +381,11 @@ export default class IOVPlayer {
         this._onError(
           'mediaSource.generic',
           'mediaSource error',
+          // @todo - sometimes, this error is an event rather than an error!
+          // If different onError calls use different method signatures, that
+          // needs to be accounted for in the MSEWrapper, and the actual error
+          // that was thrown must ALWAYS be the first argument here.  As a
+          // shortcut, we can log `...args` here instead.
           error
         );
       },
