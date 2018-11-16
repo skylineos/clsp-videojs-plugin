@@ -10,6 +10,12 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:MSEWrapper`);
 const silly = Debug(`silly:${DEBUG_PREFIX}:MSEWrapper`);
 
+// This is the original error text, but it is subject to change by chrome,
+// and we are only checking the part of the error text that contains no
+// punctuation (and is all lower case).
+// "Failed to execute 'appendBuffer' on 'SourceBuffer': The SourceBuffer is full, and cannot free space to append additional buffers.";
+const FULL_BUFFER_ERROR = 'and cannot free space to append additional buffers';
+
 export default class MSEWrapper {
   static EVENT_NAMES = [
     'metric',
@@ -366,9 +372,19 @@ export default class MSEWrapper {
       this.sourceBuffer.appendBuffer(byteArray);
     }
     catch (error) {
-      this.metric('error.sourceBuffer.append', 1);
+      if (error.message && error.message.toLowerCase().includes(FULL_BUFFER_ERROR)) {
+        // @todo - make this a valid metric
+        // this.metric('error.sourceBuffer.filled', 1);
 
-      this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
+        // If the buffer is full, we will flush it
+        console.warn('source buffer is full, about to flush it...');
+        this.trimBuffer(undefined, true);
+      }
+      else {
+        this.metric('error.sourceBuffer.append', 1);
+
+        this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
+      }
     }
   }
 
