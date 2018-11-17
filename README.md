@@ -159,7 +159,7 @@ When using with Webpack, you will need to register the global videojs in your `w
 {
   // ...
   alias: {
-    'video.js$': 'video.js/dist/video.cjs.js',
+    'video.js$': path.resolve(__dirname, 'node_modules', 'video.js'),
   }
 }
 ```
