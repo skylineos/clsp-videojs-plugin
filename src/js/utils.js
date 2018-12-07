@@ -17,7 +17,7 @@ const MINIMUM_CHROME_VERSION = 52;
 const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
 function browserIsCompatable () {
-  const isChrome = (Boolean(window.chrome) && Boolean(window.chrome.webstore));
+  const isChrome = Boolean(window.chrome);
 
   if (!isChrome) {
     return false;
