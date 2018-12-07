@@ -1,6 +1,6 @@
 {
   "name": "videojs-mse-over-clsp",
-  "version": "0.13.10",
+  "version": "0.13.11",
   "description": "Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ",
   "main": "dist/videojs-mse-over-clsp.js",
   "generator-videojs-plugin": {
