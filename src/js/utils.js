@@ -2,7 +2,7 @@ const MINIMUM_CHROME_VERSION = 52;
 
 function browserIsCompatable () {
   // Chrome 1+
-  const isChrome = (Boolean(window.chrome) && Boolean(window.chrome.webstore));
+  const isChrome = (Boolean(window.chrome));
 
   if (!isChrome) {
     return false;
