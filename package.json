@@ -24,7 +24,7 @@
   "dependencies": {
     "debug": "^4.1.0",
     "lodash": "^4.17.10",
-    "paho-mqtt": "^1.0.4"
+    "paho-mqtt": "1.0.4"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
