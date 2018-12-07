@@ -2032,6 +2032,26 @@ module.exports = function (key) {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/modules/_advance-string-index.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/core-js/modules/_advance-string-index.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var at = __webpack_require__(/*! ./_string-at */ "./node_modules/core-js/modules/_string-at.js")(true);
+
+// `AdvanceStringIndex` abstract operation
+// https://tc39.github.io/ecma262/#sec-advancestringindex
+module.exports = function (S, index, unicode) {
+  return index + (unicode ? at(S, index).length : 1);
+};
+
+/***/ }),
+
 /***/ "./node_modules/core-js/modules/_an-instance.js":
 /*!******************************************************!*\
   !*** ./node_modules/core-js/modules/_an-instance.js ***!
@@ -2790,7 +2810,7 @@ module.exports = function (NAME, wrapper, methods, common, IS_MAP, IS_WEAK) {
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-var core = module.exports = { version: '2.5.7' };
+var core = module.exports = { version: '2.6.0' };
 if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 /***/ }),
@@ -3092,24 +3112,88 @@ module.exports = function (exec) {
 "use strict";
 
 
-var hide = __webpack_require__(/*! ./_hide */ "./node_modules/core-js/modules/_hide.js");
+__webpack_require__(/*! ./es6.regexp.exec */ "./node_modules/core-js/modules/es6.regexp.exec.js");
 var redefine = __webpack_require__(/*! ./_redefine */ "./node_modules/core-js/modules/_redefine.js");
+var hide = __webpack_require__(/*! ./_hide */ "./node_modules/core-js/modules/_hide.js");
 var fails = __webpack_require__(/*! ./_fails */ "./node_modules/core-js/modules/_fails.js");
 var defined = __webpack_require__(/*! ./_defined */ "./node_modules/core-js/modules/_defined.js");
 var wks = __webpack_require__(/*! ./_wks */ "./node_modules/core-js/modules/_wks.js");
+var regexpExec = __webpack_require__(/*! ./_regexp-exec */ "./node_modules/core-js/modules/_regexp-exec.js");
+
+var SPECIES = wks('species');
+
+var REPLACE_SUPPORTS_NAMED_GROUPS = !fails(function () {
+  // #replace needs built-in support for named groups.
+  // #match works fine because it just return the exec results, even if it has
+  // a "grops" property.
+  var re = /./;
+  re.exec = function () {
+    var result = [];
+    result.groups = { a: '7' };
+    return result;
+  };
+  return ''.replace(re, '$<a>') !== '7';
+});
+
+var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC = function () {
+  // Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
+  var re = /(?:)/;
+  var originalExec = re.exec;
+  re.exec = function () {
+    return originalExec.apply(this, arguments);
+  };
+  var result = 'ab'.split(re);
+  return result.length === 2 && result[0] === 'a' && result[1] === 'b';
+}();
 
 module.exports = function (KEY, length, exec) {
   var SYMBOL = wks(KEY);
-  var fns = exec(defined, SYMBOL, ''[KEY]);
-  var strfn = fns[0];
-  var rxfn = fns[1];
-  if (fails(function () {
+
+  var DELEGATES_TO_SYMBOL = !fails(function () {
+    // String methods call symbol-named RegEp methods
     var O = {};
     O[SYMBOL] = function () {
       return 7;
     };
     return ''[KEY](O) != 7;
-  })) {
+  });
+
+  var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL ? !fails(function () {
+    // Symbol-named RegExp methods call .exec
+    var execCalled = false;
+    var re = /a/;
+    re.exec = function () {
+      execCalled = true;return null;
+    };
+    if (KEY === 'split') {
+      // RegExp[@@split] doesn't call the regex's exec method, but first creates
+      // a new one. We need to return the patched regex when creating the new one.
+      re.constructor = {};
+      re.constructor[SPECIES] = function () {
+        return re;
+      };
+    }
+    re[SYMBOL]('');
+    return !execCalled;
+  }) : undefined;
+
+  if (!DELEGATES_TO_SYMBOL || !DELEGATES_TO_EXEC || KEY === 'replace' && !REPLACE_SUPPORTS_NAMED_GROUPS || KEY === 'split' && !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC) {
+    var nativeRegExpMethod = /./[SYMBOL];
+    var fns = exec(defined, SYMBOL, ''[KEY], function maybeCallNative(nativeMethod, regexp, str, arg2, forceStringMethod) {
+      if (regexp.exec === regexpExec) {
+        if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
+          // The native String method already delegates to @@method (this
+          // polyfilled function), leasing to infinite recursion.
+          // We avoid it by directly calling the native @@method method.
+          return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
+        }
+        return { done: true, value: nativeMethod.call(str, regexp, arg2) };
+      }
+      return { done: false };
+    });
+    var strfn = fns[0];
+    var rxfn = fns[1];
+
     redefine(String.prototype, KEY, strfn);
     hide(RegExp.prototype, SYMBOL, length == 2
     // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
@@ -4575,6 +4659,109 @@ __webpack_require__(/*! ./_core */ "./node_modules/core-js/modules/_core.js").in
 })(Function.prototype, TO_STRING, function toString() {
   return typeof this == 'function' && this[SRC] || $toString.call(this);
 });
+
+/***/ }),
+
+/***/ "./node_modules/core-js/modules/_regexp-exec-abstract.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/core-js/modules/_regexp-exec-abstract.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var classof = __webpack_require__(/*! ./_classof */ "./node_modules/core-js/modules/_classof.js");
+var builtinExec = RegExp.prototype.exec;
+
+// `RegExpExec` abstract operation
+// https://tc39.github.io/ecma262/#sec-regexpexec
+module.exports = function (R, S) {
+  var exec = R.exec;
+  if (typeof exec === 'function') {
+    var result = exec.call(R, S);
+    if ((typeof result === 'undefined' ? 'undefined' : _typeof(result)) !== 'object') {
+      throw new TypeError('RegExp exec method returned something other than an Object or null');
+    }
+    return result;
+  }
+  if (classof(R) !== 'RegExp') {
+    throw new TypeError('RegExp#exec called on incompatible receiver');
+  }
+  return builtinExec.call(R, S);
+};
+
+/***/ }),
+
+/***/ "./node_modules/core-js/modules/_regexp-exec.js":
+/*!******************************************************!*\
+  !*** ./node_modules/core-js/modules/_regexp-exec.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var regexpFlags = __webpack_require__(/*! ./_flags */ "./node_modules/core-js/modules/_flags.js");
+
+var nativeExec = RegExp.prototype.exec;
+// This always refers to the native implementation, because the
+// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
+// which loads this file before patching the method.
+var nativeReplace = String.prototype.replace;
+
+var patchedExec = nativeExec;
+
+var LAST_INDEX = 'lastIndex';
+
+var UPDATES_LAST_INDEX_WRONG = function () {
+  var re1 = /a/,
+      re2 = /b*/g;
+  nativeExec.call(re1, 'a');
+  nativeExec.call(re2, 'a');
+  return re1[LAST_INDEX] !== 0 || re2[LAST_INDEX] !== 0;
+}();
+
+// nonparticipating capturing group, copied from es5-shim's String#split patch.
+var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
+
+var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED;
+
+if (PATCH) {
+  patchedExec = function exec(str) {
+    var re = this;
+    var lastIndex, reCopy, match, i;
+
+    if (NPCG_INCLUDED) {
+      reCopy = new RegExp('^' + re.source + '$(?!\\s)', regexpFlags.call(re));
+    }
+    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re[LAST_INDEX];
+
+    match = nativeExec.call(re, str);
+
+    if (UPDATES_LAST_INDEX_WRONG && match) {
+      re[LAST_INDEX] = re.global ? match.index + match[0].length : lastIndex;
+    }
+    if (NPCG_INCLUDED && match && match.length > 1) {
+      // Fix browsers whose `exec` methods don't consistently return `undefined`
+      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
+      // eslint-disable-next-line no-loop-func
+      nativeReplace.call(match[0], reCopy, function () {
+        for (i = 1; i < arguments.length - 2; i++) {
+          if (arguments[i] === undefined) match[i] = undefined;
+        }
+      });
+    }
+
+    return match;
+  };
+}
+
+module.exports = patchedExec;
 
 /***/ }),
 
@@ -8697,6 +8884,27 @@ __webpack_require__(/*! ./_set-species */ "./node_modules/core-js/modules/_set-s
 
 /***/ }),
 
+/***/ "./node_modules/core-js/modules/es6.regexp.exec.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/core-js/modules/es6.regexp.exec.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var regexpExec = __webpack_require__(/*! ./_regexp-exec */ "./node_modules/core-js/modules/_regexp-exec.js");
+__webpack_require__(/*! ./_export */ "./node_modules/core-js/modules/_export.js")({
+  target: 'RegExp',
+  proto: true,
+  forced: regexpExec !== /./.exec
+}, {
+  exec: regexpExec
+});
+
+/***/ }),
+
 /***/ "./node_modules/core-js/modules/es6.regexp.flags.js":
 /*!**********************************************************!*\
   !*** ./node_modules/core-js/modules/es6.regexp.flags.js ***!
@@ -8719,16 +8927,45 @@ if (__webpack_require__(/*! ./_descriptors */ "./node_modules/core-js/modules/_d
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-// @@match logic
-__webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re-wks.js")('match', 1, function (defined, MATCH, $match) {
-  // 21.1.3.11 String.prototype.match(regexp)
-  return [function match(regexp) {
-    'use strict';
+"use strict";
 
+
+var anObject = __webpack_require__(/*! ./_an-object */ "./node_modules/core-js/modules/_an-object.js");
+var toLength = __webpack_require__(/*! ./_to-length */ "./node_modules/core-js/modules/_to-length.js");
+var advanceStringIndex = __webpack_require__(/*! ./_advance-string-index */ "./node_modules/core-js/modules/_advance-string-index.js");
+var regExpExec = __webpack_require__(/*! ./_regexp-exec-abstract */ "./node_modules/core-js/modules/_regexp-exec-abstract.js");
+
+// @@match logic
+__webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re-wks.js")('match', 1, function (defined, MATCH, $match, maybeCallNative) {
+  return [
+  // `String.prototype.match` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.match
+  function match(regexp) {
     var O = defined(this);
     var fn = regexp == undefined ? undefined : regexp[MATCH];
     return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
-  }, $match];
+  },
+  // `RegExp.prototype[@@match]` method
+  // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@match
+  function (regexp) {
+    var res = maybeCallNative($match, regexp, this);
+    if (res.done) return res.value;
+    var rx = anObject(regexp);
+    var S = String(this);
+    if (!rx.global) return regExpExec(rx, S);
+    var fullUnicode = rx.unicode;
+    rx.lastIndex = 0;
+    var A = [];
+    var n = 0;
+    var result;
+    while ((result = regExpExec(rx, S)) !== null) {
+      var matchStr = String(result[0]);
+      A[n] = matchStr;
+      if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
+      n++;
+    }
+    return n === 0 ? null : A;
+  }];
 });
 
 /***/ }),
@@ -8740,16 +8977,127 @@ __webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-// @@replace logic
-__webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re-wks.js")('replace', 2, function (defined, REPLACE, $replace) {
-  // 21.1.3.14 String.prototype.replace(searchValue, replaceValue)
-  return [function replace(searchValue, replaceValue) {
-    'use strict';
+"use strict";
 
+
+var anObject = __webpack_require__(/*! ./_an-object */ "./node_modules/core-js/modules/_an-object.js");
+var toObject = __webpack_require__(/*! ./_to-object */ "./node_modules/core-js/modules/_to-object.js");
+var toLength = __webpack_require__(/*! ./_to-length */ "./node_modules/core-js/modules/_to-length.js");
+var toInteger = __webpack_require__(/*! ./_to-integer */ "./node_modules/core-js/modules/_to-integer.js");
+var advanceStringIndex = __webpack_require__(/*! ./_advance-string-index */ "./node_modules/core-js/modules/_advance-string-index.js");
+var regExpExec = __webpack_require__(/*! ./_regexp-exec-abstract */ "./node_modules/core-js/modules/_regexp-exec-abstract.js");
+var max = Math.max;
+var min = Math.min;
+var floor = Math.floor;
+var SUBSTITUTION_SYMBOLS = /\$([$&`']|\d\d?|<[^>]*>)/g;
+var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&`']|\d\d?)/g;
+
+var maybeToString = function maybeToString(it) {
+  return it === undefined ? it : String(it);
+};
+
+// @@replace logic
+__webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re-wks.js")('replace', 2, function (defined, REPLACE, $replace, maybeCallNative) {
+  return [
+  // `String.prototype.replace` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.replace
+  function replace(searchValue, replaceValue) {
     var O = defined(this);
     var fn = searchValue == undefined ? undefined : searchValue[REPLACE];
     return fn !== undefined ? fn.call(searchValue, O, replaceValue) : $replace.call(String(O), searchValue, replaceValue);
-  }, $replace];
+  },
+  // `RegExp.prototype[@@replace]` method
+  // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@replace
+  function (regexp, replaceValue) {
+    var res = maybeCallNative($replace, regexp, this, replaceValue);
+    if (res.done) return res.value;
+
+    var rx = anObject(regexp);
+    var S = String(this);
+    var functionalReplace = typeof replaceValue === 'function';
+    if (!functionalReplace) replaceValue = String(replaceValue);
+    var global = rx.global;
+    if (global) {
+      var fullUnicode = rx.unicode;
+      rx.lastIndex = 0;
+    }
+    var results = [];
+    while (true) {
+      var result = regExpExec(rx, S);
+      if (result === null) break;
+      results.push(result);
+      if (!global) break;
+      var matchStr = String(result[0]);
+      if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
+    }
+    var accumulatedResult = '';
+    var nextSourcePosition = 0;
+    for (var i = 0; i < results.length; i++) {
+      result = results[i];
+      var matched = String(result[0]);
+      var position = max(min(toInteger(result.index), S.length), 0);
+      var captures = [];
+      // NOTE: This is equivalent to
+      //   captures = result.slice(1).map(maybeToString)
+      // but for some reason `nativeSlice.call(result, 1, result.length)` (called in
+      // the slice polyfill when slicing native arrays) "doesn't work" in safari 9 and
+      // causes a crash (https://pastebin.com/N21QzeQA) when trying to debug it.
+      for (var j = 1; j < result.length; j++) {
+        captures.push(maybeToString(result[j]));
+      }var namedCaptures = result.groups;
+      if (functionalReplace) {
+        var replacerArgs = [matched].concat(captures, position, S);
+        if (namedCaptures !== undefined) replacerArgs.push(namedCaptures);
+        var replacement = String(replaceValue.apply(undefined, replacerArgs));
+      } else {
+        replacement = getSubstitution(matched, S, position, captures, namedCaptures, replaceValue);
+      }
+      if (position >= nextSourcePosition) {
+        accumulatedResult += S.slice(nextSourcePosition, position) + replacement;
+        nextSourcePosition = position + matched.length;
+      }
+    }
+    return accumulatedResult + S.slice(nextSourcePosition);
+  }];
+
+  // https://tc39.github.io/ecma262/#sec-getsubstitution
+  function getSubstitution(matched, str, position, captures, namedCaptures, replacement) {
+    var tailPos = position + matched.length;
+    var m = captures.length;
+    var symbols = SUBSTITUTION_SYMBOLS_NO_NAMED;
+    if (namedCaptures !== undefined) {
+      namedCaptures = toObject(namedCaptures);
+      symbols = SUBSTITUTION_SYMBOLS;
+    }
+    return $replace.call(replacement, symbols, function (match, ch) {
+      var capture;
+      switch (ch.charAt(0)) {
+        case '$':
+          return '$';
+        case '&':
+          return matched;
+        case '`':
+          return str.slice(0, position);
+        case "'":
+          return str.slice(tailPos);
+        case '<':
+          capture = namedCaptures[ch.slice(1, -1)];
+          break;
+        default:
+          // \d\d?
+          var n = +ch;
+          if (n === 0) return ch;
+          if (n > m) {
+            var f = floor(n / 10);
+            if (f === 0) return ch;
+            if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
+            return ch;
+          }
+          capture = captures[n - 1];
+      }
+      return capture === undefined ? '' : capture;
+    });
+  }
 });
 
 /***/ }),
@@ -8761,16 +9109,36 @@ __webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-// @@search logic
-__webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re-wks.js")('search', 1, function (defined, SEARCH, $search) {
-  // 21.1.3.15 String.prototype.search(regexp)
-  return [function search(regexp) {
-    'use strict';
+"use strict";
 
+
+var anObject = __webpack_require__(/*! ./_an-object */ "./node_modules/core-js/modules/_an-object.js");
+var sameValue = __webpack_require__(/*! ./_same-value */ "./node_modules/core-js/modules/_same-value.js");
+var regExpExec = __webpack_require__(/*! ./_regexp-exec-abstract */ "./node_modules/core-js/modules/_regexp-exec-abstract.js");
+
+// @@search logic
+__webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re-wks.js")('search', 1, function (defined, SEARCH, $search, maybeCallNative) {
+  return [
+  // `String.prototype.search` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.search
+  function search(regexp) {
     var O = defined(this);
     var fn = regexp == undefined ? undefined : regexp[SEARCH];
     return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[SEARCH](String(O));
-  }, $search];
+  },
+  // `RegExp.prototype[@@search]` method
+  // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@search
+  function (regexp) {
+    var res = maybeCallNative($search, regexp, this);
+    if (res.done) return res.value;
+    var rx = anObject(regexp);
+    var S = String(this);
+    var previousLastIndex = rx.lastIndex;
+    if (!sameValue(previousLastIndex, 0)) rx.lastIndex = 0;
+    var result = regExpExec(rx, S);
+    if (!sameValue(rx.lastIndex, previousLastIndex)) rx.lastIndex = previousLastIndex;
+    return result === null ? -1 : result.index;
+  }];
 });
 
 /***/ }),
@@ -8782,45 +9150,50 @@ __webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-// @@split logic
-__webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re-wks.js")('split', 2, function (defined, SPLIT, $split) {
-  'use strict';
+"use strict";
 
-  var isRegExp = __webpack_require__(/*! ./_is-regexp */ "./node_modules/core-js/modules/_is-regexp.js");
-  var _split = $split;
-  var $push = [].push;
-  var $SPLIT = 'split';
-  var LENGTH = 'length';
-  var LAST_INDEX = 'lastIndex';
+
+var isRegExp = __webpack_require__(/*! ./_is-regexp */ "./node_modules/core-js/modules/_is-regexp.js");
+var anObject = __webpack_require__(/*! ./_an-object */ "./node_modules/core-js/modules/_an-object.js");
+var speciesConstructor = __webpack_require__(/*! ./_species-constructor */ "./node_modules/core-js/modules/_species-constructor.js");
+var advanceStringIndex = __webpack_require__(/*! ./_advance-string-index */ "./node_modules/core-js/modules/_advance-string-index.js");
+var toLength = __webpack_require__(/*! ./_to-length */ "./node_modules/core-js/modules/_to-length.js");
+var callRegExpExec = __webpack_require__(/*! ./_regexp-exec-abstract */ "./node_modules/core-js/modules/_regexp-exec-abstract.js");
+var regexpExec = __webpack_require__(/*! ./_regexp-exec */ "./node_modules/core-js/modules/_regexp-exec.js");
+var $min = Math.min;
+var $push = [].push;
+var $SPLIT = 'split';
+var LENGTH = 'length';
+var LAST_INDEX = 'lastIndex';
+
+// eslint-disable-next-line no-empty
+var SUPPORTS_Y = !!function () {
+  try {
+    return new RegExp('x', 'y');
+  } catch (e) {}
+}();
+
+// @@split logic
+__webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re-wks.js")('split', 2, function (defined, SPLIT, $split, maybeCallNative) {
+  var internalSplit = $split;
   if ('abbc'[$SPLIT](/(b)*/)[1] == 'c' || 'test'[$SPLIT](/(?:)/, -1)[LENGTH] != 4 || 'ab'[$SPLIT](/(?:ab)*/)[LENGTH] != 2 || '.'[$SPLIT](/(.?)(.?)/)[LENGTH] != 4 || '.'[$SPLIT](/()()/)[LENGTH] > 1 || ''[$SPLIT](/.?/)[LENGTH]) {
-    var NPCG = /()??/.exec('')[1] === undefined; // nonparticipating capturing group
     // based on es5-shim implementation, need to rework it
-    $split = function $split(separator, limit) {
+    internalSplit = function internalSplit(separator, limit) {
       var string = String(this);
       if (separator === undefined && limit === 0) return [];
       // If `separator` is not a regex, use native split
-      if (!isRegExp(separator)) return _split.call(string, separator, limit);
+      if (!isRegExp(separator)) return $split.call(string, separator, limit);
       var output = [];
       var flags = (separator.ignoreCase ? 'i' : '') + (separator.multiline ? 'm' : '') + (separator.unicode ? 'u' : '') + (separator.sticky ? 'y' : '');
       var lastLastIndex = 0;
       var splitLimit = limit === undefined ? 4294967295 : limit >>> 0;
       // Make `global` and avoid `lastIndex` issues by working with a copy
       var separatorCopy = new RegExp(separator.source, flags + 'g');
-      var separator2, match, lastIndex, lastLength, i;
-      // Doesn't need flags gy, but they don't hurt
-      if (!NPCG) separator2 = new RegExp('^' + separatorCopy.source + '$(?!\\s)', flags);
-      while (match = separatorCopy.exec(string)) {
-        // `separatorCopy.lastIndex` is not reliable cross-browser
-        lastIndex = match.index + match[0][LENGTH];
+      var match, lastIndex, lastLength;
+      while (match = regexpExec.call(separatorCopy, string)) {
+        lastIndex = separatorCopy[LAST_INDEX];
         if (lastIndex > lastLastIndex) {
           output.push(string.slice(lastLastIndex, match.index));
-          // Fix browsers whose `exec` methods don't consistently return `undefined` for NPCG
-          // eslint-disable-next-line no-loop-func
-          if (!NPCG && match[LENGTH] > 1) match[0].replace(separator2, function () {
-            for (i = 1; i < arguments[LENGTH] - 2; i++) {
-              if (arguments[i] === undefined) match[i] = undefined;
-            }
-          });
           if (match[LENGTH] > 1 && match.index < string[LENGTH]) $push.apply(output, match.slice(1));
           lastLength = match[0][LENGTH];
           lastLastIndex = lastIndex;
@@ -8835,16 +9208,63 @@ __webpack_require__(/*! ./_fix-re-wks */ "./node_modules/core-js/modules/_fix-re
     };
     // Chakra, V8
   } else if ('0'[$SPLIT](undefined, 0)[LENGTH]) {
-    $split = function $split(separator, limit) {
-      return separator === undefined && limit === 0 ? [] : _split.call(this, separator, limit);
+    internalSplit = function internalSplit(separator, limit) {
+      return separator === undefined && limit === 0 ? [] : $split.call(this, separator, limit);
     };
   }
-  // 21.1.3.17 String.prototype.split(separator, limit)
-  return [function split(separator, limit) {
+
+  return [
+  // `String.prototype.split` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.split
+  function split(separator, limit) {
     var O = defined(this);
-    var fn = separator == undefined ? undefined : separator[SPLIT];
-    return fn !== undefined ? fn.call(separator, O, limit) : $split.call(String(O), separator, limit);
-  }, $split];
+    var splitter = separator == undefined ? undefined : separator[SPLIT];
+    return splitter !== undefined ? splitter.call(separator, O, limit) : internalSplit.call(String(O), separator, limit);
+  },
+  // `RegExp.prototype[@@split]` method
+  // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@split
+  //
+  // NOTE: This cannot be properly polyfilled in engines that don't support
+  // the 'y' flag.
+  function (regexp, limit) {
+    var res = maybeCallNative(internalSplit, regexp, this, limit, internalSplit !== $split);
+    if (res.done) return res.value;
+
+    var rx = anObject(regexp);
+    var S = String(this);
+    var C = speciesConstructor(rx, RegExp);
+
+    var unicodeMatching = rx.unicode;
+    var flags = (rx.ignoreCase ? 'i' : '') + (rx.multiline ? 'm' : '') + (rx.unicode ? 'u' : '') + (SUPPORTS_Y ? 'y' : 'g');
+
+    // ^(? + rx + ) is needed, in combination with some S slicing, to
+    // simulate the 'y' flag.
+    var splitter = new C(SUPPORTS_Y ? rx : '^(?:' + rx.source + ')', flags);
+    var lim = limit === undefined ? 0xffffffff : limit >>> 0;
+    if (lim === 0) return [];
+    if (S.length === 0) return callRegExpExec(splitter, S) === null ? [S] : [];
+    var p = 0;
+    var q = 0;
+    var A = [];
+    while (q < S.length) {
+      splitter.lastIndex = SUPPORTS_Y ? q : 0;
+      var z = callRegExpExec(splitter, SUPPORTS_Y ? S : S.slice(q));
+      var e;
+      if (z === null || (e = $min(toLength(splitter.lastIndex + (SUPPORTS_Y ? 0 : q)), S.length)) === p) {
+        q = advanceStringIndex(S, q, unicodeMatching);
+      } else {
+        A.push(S.slice(p, q));
+        if (A.length === lim) return A;
+        for (var i = 1; i <= z.length - 1; i++) {
+          A.push(z[i]);
+          if (A.length === lim) return A;
+        }
+        q = p = e;
+      }
+    }
+    A.push(S.slice(p));
+    return A;
+  }];
 });
 
 /***/ }),
@@ -11515,6 +11935,7 @@ __webpack_require__(/*! ./modules/es6.array.find-index */ "./node_modules/core-j
 __webpack_require__(/*! ./modules/es6.array.species */ "./node_modules/core-js/modules/es6.array.species.js");
 __webpack_require__(/*! ./modules/es6.array.iterator */ "./node_modules/core-js/modules/es6.array.iterator.js");
 __webpack_require__(/*! ./modules/es6.regexp.constructor */ "./node_modules/core-js/modules/es6.regexp.constructor.js");
+__webpack_require__(/*! ./modules/es6.regexp.exec */ "./node_modules/core-js/modules/es6.regexp.exec.js");
 __webpack_require__(/*! ./modules/es6.regexp.to-string */ "./node_modules/core-js/modules/es6.regexp.to-string.js");
 __webpack_require__(/*! ./modules/es6.regexp.flags */ "./node_modules/core-js/modules/es6.regexp.flags.js");
 __webpack_require__(/*! ./modules/es6.regexp.match */ "./node_modules/core-js/modules/es6.regexp.match.js");
@@ -65483,7 +65904,7 @@ registerPlugin('errors', errors);
 /*! exports provided: _from, _id, _inBundle, _integrity, _location, _phantomChildren, _requested, _requiredBy, _resolved, _shasum, _spec, _where, author, browserslist, bugs, bundleDependencies, dependencies, deprecated, description, devDependencies, files, generator-videojs-plugin, homepage, husky, keywords, license, lint-staged, main, module, name, repository, scripts, version, vjsstandard, default */
 /***/ (function(module) {
 
-module.exports = {"_from":"videojs-errors@^4.1.1","_id":"videojs-errors@4.2.0","_inBundle":false,"_integrity":"sha512-F1dLIeLukET7ywJwmvIS5YXDBidtU3OVBraaXZkPAHhXJtD5AoQlvUyY4FLAIH9Qh1x4wi65/xrhUWq0LxW/Vg==","_location":"/videojs-errors","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"videojs-errors@^4.1.1","name":"videojs-errors","escapedName":"videojs-errors","rawSpec":"^4.1.1","saveSpec":null,"fetchSpec":"^4.1.1"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/videojs-errors/-/videojs-errors-4.2.0.tgz","_shasum":"2466bedbb39466c1c24b1a2de86c3edf225d4e6b","_spec":"videojs-errors@^4.1.1","_where":"/home/user/vagrant/clsp/clsp-videojs-plugin","author":{"name":"Brightcove, Inc."},"browserslist":["defaults","ie 11"],"bugs":{"url":"https://github.com/brightcove/videojs-errors/issues"},"bundleDependencies":false,"dependencies":{"global":"^4.3.2","video.js":"^6 || ^7"},"deprecated":false,"description":"A Video.js plugin for custom error reporting","devDependencies":{"conventional-changelog-cli":"^2.0.1","conventional-changelog-videojs":"^3.0.0","doctoc":"^1.3.1","husky":"^1.0.0-rc.13","jsdoc":"git+https://github.com/BrandonOCasey/jsdoc.git#feat/plugin-from-cli","karma":"^3.0.0","lint-staged":"^7.2.2","node-sass":"^4.5.3","not-prerelease":"^1.0.1","npm-merge-driver-install":"^1.0.0","npm-run-all":"^4.1.3","pkg-ok":"^2.2.0","postcss-cli":"^6.0.0","rollup":"^0.66.0","shx":"^0.3.2","sinon":"^6.1.5","videojs-generate-karma-config":"~3.0.0","videojs-generate-postcss-config":"~2.0.1","videojs-generate-rollup-config":"~2.2.0","videojs-generator-verify":"~1.0.3","videojs-languages":"^1.0.0","videojs-standard":"~7.1.0"},"files":["CONTRIBUTING.md","dist/","docs/","index.html","scripts/","src/","test/"],"generator-videojs-plugin":{"version":"7.3.2"},"homepage":"https://github.com/brightcove/videojs-errors#readme","husky":{"hooks":{"pre-commit":"lint-staged"}},"keywords":["videojs","videojs-plugin"],"license":"Apache-2.0","lint-staged":{"*.js":["vjsstandard --fix","git add"],"README.md":["npm run docs:toc","git add"]},"main":"dist/videojs-errors.cjs.js","module":"dist/videojs-errors.es.js","name":"videojs-errors","repository":{"type":"git","url":"git+https://github.com/brightcove/videojs-errors.git"},"scripts":{"build":"npm-run-all -p build:*","build:css":"node-sass src/plugin.scss dist/videojs-errors.css --output-style=compressed --linefeed=lf","build:js":"rollup -c scripts/rollup.config.js","build:lang":"vjslang --dir dist/lang","clean":"shx rm -rf ./dist ./test/dist","docs":"npm-run-all docs:*","docs:api":"jsdoc src -g plugins/markdown -r -d docs/api","docs:toc":"doctoc README.md","lint":"vjsstandard","postclean":"shx mkdir -p ./dist ./test/dist","posttest":"shx cat test/dist/coverage/text.txt","prebuild":"npm run clean","prepublishOnly":"npm run build && vjsverify","pretest":"npm-run-all lint build","preversion":"npm test","server":"karma start scripts/karma.conf.js --singleRun=false --auto-watch","start":"npm-run-all -p server watch","test":"karma start scripts/karma.conf.js","update-changelog":"conventional-changelog -p videojs -i CHANGELOG.md -s","version":"is-prerelease || npm run update-changelog && git add CHANGELOG.md","watch":"npm-run-all -p watch:*","watch:css":"npm run build:css -- -w","watch:js":"npm run build:js -- -w"},"version":"4.2.0","vjsstandard":{"ignore":["dist","docs","test/dist"]}};
+module.exports = {"_from":"videojs-errors@^4.1.1","_id":"videojs-errors@4.2.0","_inBundle":false,"_integrity":"sha512-F1dLIeLukET7ywJwmvIS5YXDBidtU3OVBraaXZkPAHhXJtD5AoQlvUyY4FLAIH9Qh1x4wi65/xrhUWq0LxW/Vg==","_location":"/videojs-errors","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"videojs-errors@^4.1.1","name":"videojs-errors","escapedName":"videojs-errors","rawSpec":"^4.1.1","saveSpec":null,"fetchSpec":"^4.1.1"},"_requiredBy":["#DEV:/"],"_resolved":"http://npm.devops.skyline.local:4873/videojs-errors/-/videojs-errors-4.2.0.tgz","_shasum":"2466bedbb39466c1c24b1a2de86c3edf225d4e6b","_spec":"videojs-errors@^4.1.1","_where":"/opt/skyline/clsp-videojs-plugin","author":{"name":"Brightcove, Inc."},"browserslist":["defaults","ie 11"],"bugs":{"url":"https://github.com/brightcove/videojs-errors/issues"},"bundleDependencies":false,"dependencies":{"global":"^4.3.2","video.js":"^6 || ^7"},"deprecated":false,"description":"A Video.js plugin for custom error reporting","devDependencies":{"conventional-changelog-cli":"^2.0.1","conventional-changelog-videojs":"^3.0.0","doctoc":"^1.3.1","husky":"^1.0.0-rc.13","jsdoc":"git+https://github.com/BrandonOCasey/jsdoc.git#feat/plugin-from-cli","karma":"^3.0.0","lint-staged":"^7.2.2","node-sass":"^4.5.3","not-prerelease":"^1.0.1","npm-merge-driver-install":"^1.0.0","npm-run-all":"^4.1.3","pkg-ok":"^2.2.0","postcss-cli":"^6.0.0","rollup":"^0.66.0","shx":"^0.3.2","sinon":"^6.1.5","videojs-generate-karma-config":"~3.0.0","videojs-generate-postcss-config":"~2.0.1","videojs-generate-rollup-config":"~2.2.0","videojs-generator-verify":"~1.0.3","videojs-languages":"^1.0.0","videojs-standard":"~7.1.0"},"files":["CONTRIBUTING.md","dist/","docs/","index.html","scripts/","src/","test/"],"generator-videojs-plugin":{"version":"7.3.2"},"homepage":"https://github.com/brightcove/videojs-errors#readme","husky":{"hooks":{"pre-commit":"lint-staged"}},"keywords":["videojs","videojs-plugin"],"license":"Apache-2.0","lint-staged":{"*.js":["vjsstandard --fix","git add"],"README.md":["npm run docs:toc","git add"]},"main":"dist/videojs-errors.cjs.js","module":"dist/videojs-errors.es.js","name":"videojs-errors","repository":{"type":"git","url":"git+https://github.com/brightcove/videojs-errors.git"},"scripts":{"build":"npm-run-all -p build:*","build:css":"node-sass src/plugin.scss dist/videojs-errors.css --output-style=compressed --linefeed=lf","build:js":"rollup -c scripts/rollup.config.js","build:lang":"vjslang --dir dist/lang","clean":"shx rm -rf ./dist ./test/dist","docs":"npm-run-all docs:*","docs:api":"jsdoc src -g plugins/markdown -r -d docs/api","docs:toc":"doctoc README.md","lint":"vjsstandard","postclean":"shx mkdir -p ./dist ./test/dist","posttest":"shx cat test/dist/coverage/text.txt","prebuild":"npm run clean","prepublishOnly":"npm run build && vjsverify","pretest":"npm-run-all lint build","preversion":"npm test","server":"karma start scripts/karma.conf.js --singleRun=false --auto-watch","start":"npm-run-all -p server watch","test":"karma start scripts/karma.conf.js","update-changelog":"conventional-changelog -p videojs -i CHANGELOG.md -s","version":"is-prerelease || npm run update-changelog && git add CHANGELOG.md","watch":"npm-run-all -p watch:*","watch:css":"npm run build:css -- -w","watch:js":"npm run build:js -- -w"},"version":"4.2.0","vjsstandard":{"ignore":["dist","docs","test/dist"]}};
 
 /***/ }),
 
@@ -67272,7 +67693,7 @@ g = function () {
 
 try {
 	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1, eval)("this");
+	g = g || new Function("return this")();
 } catch (e) {
 	// This works if the window reference is available
 	if ((typeof window === "undefined" ? "undefined" : _typeof(window)) === "object") g = window;
@@ -67615,7 +68036,7 @@ module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.9-3","descripti
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! /home/user/vagrant/clsp/clsp-videojs-plugin/demo/src/js/demo.js */"./demo/src/js/demo.js");
+module.exports = __webpack_require__(/*! /opt/skyline/clsp-videojs-plugin/demo/src/js/demo.js */"./demo/src/js/demo.js");
 
 
 /***/ }),
