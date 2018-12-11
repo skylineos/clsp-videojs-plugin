@@ -46,7 +46,9 @@ H.264 baseline 3.0 is a least common denominator codec supported on all browsers
 Chrome 52+ is required to run this videojs extension.  All other browsers are currently not supported.
 
 
-### VideoJS
+### Dependencies
+
+`babel-polyfill` `6.26.0` is required.
 
 `video.js` `7.3.0` is the recommended version required.  Version `6.x` is not recommended due to it being less performant over time.
 
@@ -109,14 +111,26 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
 
 ```html
 <head>
-  <link href="//vjs.zencdn.net/6.7.1/video-js.min.css" rel="stylesheet">
-  <link href="//path/to/node_modules/clsp-videojs-plugin/dist/videojs-mse-over-clsp.min.css" rel="stylesheet">
+  <link
+    rel="stylesheet"
+    href="//vjs.zencdn.net/7.3.0/video-js.min.css"
+  >
+  <link
+    rel="stylesheet"
+    href="../dist/videojs-mse-over-clsp.min.css"
+  >
+  <script
+    type="text/javascript"
+    src="//cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"
+  ></script>
 <head>
 ```
 
 ### `<script>` Tag
 
 This is the simplest case. Get the script in whatever way you prefer and include the plugin _after_ you include [video.js][videojs], so that the `videojs` global is available.
+
+See `dist/simple.html` for an example.
 
 ```html
 <video
@@ -137,12 +151,10 @@ This is the simplest case. Get the script in whatever way you prefer and include
     src="clsps://<SFS IP address>[:443]/<stream name>"
     type="video/mp4; codecs='avc1.42E01E'"
   />
-
-
 </video>
 
-<script src="//vjs.zencdn.net/6.7.1/video.min.js"></script>
-<script src="//path/to/node_modules/clsp-videojs-plugin/dist/videojs-mse-over-clsp.min.js"></script>
+<script src="//vjs.zencdn.net/7.3.0/video.min.js"></script>
+<script src="//path/to/node_modules/videojs-mse-over-clsp/dist/videojs-mse-over-clsp.min.js"></script>
 
 <script>
   var player = videojs('my-video');
@@ -167,6 +179,7 @@ When using with Webpack, you will need to register the global videojs in your `w
 In your code, you will need to set videojs on the window prior to requiring this plugin:
 
 ```javascript
+import 'babel-polyfill';
 import videojs from 'video.js';
 
 window.videojs = videojs;
@@ -186,6 +199,8 @@ player.clsp();
 When using with Browserify, install videojs-mse-over-clsp via npm and `require` the plugin as you would any other module.
 
 ```javascript
+require('babel-polyfill');
+
 const videojs = require('video.js');
 
 // The actual plugin function is exported by this module, but it is also
@@ -203,7 +218,7 @@ player.clsp();
 When using with RequireJS (or another AMD library), get the script in whatever way you prefer and `require` the plugin as you normally would:
 
 ```js
-require(['video.js', 'videojs-mse-over-clsp'], function(videojs) {
+require(['video.js', 'babel-polyfill', 'videojs-mse-over-clsp'], function(videojs) {
   var player = videojs('my-video');
 
   player.clsp();
