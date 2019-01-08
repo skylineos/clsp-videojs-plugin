@@ -45,11 +45,25 @@ export default class IOV {
 
     let useSSL;
     let default_port;
+    let jwt = false;
+    let b64_jwt_access_url ="";    
 
     // Chrome is the only browser that allows non-http protocols in
     // the anchor tag's href, so change them all to http here so we
     // get the benefits of the anchor tag's parsing
-    if (url.substring(0, 5).toLowerCase() === 'clsps') {
+    if (url.substring(0, 9).toLowerCase() === 'clsps-jwt') {
+      useSSL = true;
+      parser.href = url.replace('clsps-jwt', 'https');
+      default_port = 443;
+      jwt = true;
+    }
+    else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
+      useSSL = false;
+      parser.href = url.replace('clsp-jwt', 'http');
+      default_port = 9001;
+      jwt = true; 
+    }
+    else if (url.substring(0, 5).toLowerCase() === 'clsps') {
       useSSL = true;
       parser.href = url.replace('clsps', 'https');
       default_port = 443;
@@ -62,6 +76,33 @@ export default class IOV {
     else {
       throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
     }
+
+    if (jwt === true) {
+
+        //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
+        var qp_offset = url.indexOf(parser.pathname)+parser.pathname.length
+        
+        var i = 0;
+        var qr_args = url.substr(qp_offset).split('?')[1];
+        var query = {
+        };
+
+        var pairs = qr_args.split('&');
+        for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+        }
+
+        if (typeof query.Start === 'undefined') {
+           throw new Error("Required 'Start' query parameter not defined for a clsp[s]-jwt");
+        }
+        if (typeof query.End === 'undefined') {
+           throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
+        }
+
+        b64_jwt_access_url = window.btoa(url);
+    }
+    
 
     const paths = parser.pathname.split('/');
     const streamName = paths[paths.length - 1];
@@ -84,6 +125,8 @@ export default class IOV {
       wsport: parseInt(port),
       streamName,
       useSSL,
+      jwt,
+      b64_jwt_access_url 
     };
   }
 
@@ -120,6 +163,7 @@ export default class IOV {
       appStart: config.appStart,
       videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
+      jwt: config.jwt
     };
 
     this.statsMsg = {

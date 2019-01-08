@@ -438,7 +438,9 @@ function setup(env) {
 	}
 
 	function extend(namespace, delimiter) {
-		return createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+		var newDebug = createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+		newDebug.log = this.log;
+		return newDebug;
 	}
 
 	/**
@@ -3738,11 +3740,23 @@ var IOV = function () {
 
       var useSSL = void 0;
       var default_port = void 0;
+      var jwt = false;
+      var b64_jwt_access_url = "";
 
       // Chrome is the only browser that allows non-http protocols in
       // the anchor tag's href, so change them all to http here so we
       // get the benefits of the anchor tag's parsing
-      if (url.substring(0, 5).toLowerCase() === 'clsps') {
+      if (url.substring(0, 9).toLowerCase() === 'clsps-jwt') {
+        useSSL = true;
+        parser.href = url.replace('clsps-jwt', 'https');
+        default_port = 443;
+        jwt = true;
+      } else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
+        useSSL = false;
+        parser.href = url.replace('clsp-jwt', 'http');
+        default_port = 9001;
+        jwt = true;
+      } else if (url.substring(0, 5).toLowerCase() === 'clsps') {
         useSSL = true;
         parser.href = url.replace('clsps', 'https');
         default_port = 443;
@@ -3752,6 +3766,27 @@ var IOV = function () {
         default_port = 9001;
       } else {
         throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
+      }
+
+      if (jwt === true) {
+        var i = 0;
+        var qr_args = url.split('?')[1];
+        var query = {};
+
+        var pairs = qr_args.split('&');
+        for (var i = 0; i < pairs.length; i++) {
+          var pair = pairs[i].split('=');
+          query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+        }
+
+        if (typeof query.Start === 'undefined') {
+          throw new Error("Required 'Start' query parameter not defined for a clsp[s]-jwt");
+        }
+        if (typeof query.End === 'undefined') {
+          throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
+        }
+
+        b64_jwt_access_url = window.btoa("https://" + window.location.hostname + "/validate-for-clsp?" + "Start=" + query.Start + "&End=" + qyery.End);
       }
 
       var paths = parser.pathname.split('/');
@@ -3774,7 +3809,9 @@ var IOV = function () {
         wsbroker: hostname,
         wsport: parseInt(port),
         streamName: streamName,
-        useSSL: useSSL
+        useSSL: useSSL,
+        jwt: jwt,
+        b64_jwt_access_url: b64_jwt_access_url
       };
     }
   }, {
@@ -3816,7 +3853,8 @@ var IOV = function () {
       streamName: config.streamName,
       appStart: config.appStart,
       videoElementParent: config.videoElementParent || null,
-      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT
+      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
+      jwt: config.jwt
     };
 
     this.statsMsg = {
@@ -5672,14 +5710,45 @@ var IOVPlayer = function () {
       // @todo - why doesn't this play/stop connect/disconnect work?
       // this.iov.conduit.connect();
 
-      this.iov.conduit.transaction('iov/video/' + window.btoa(this.iov.config.streamName) + '/request', function () {
-        return _this5.onIovPlayTransaction.apply(_this5, arguments);
-      }, { clientId: this.iov.config.clientId });
+      if (this.iov.config.jwt === false) {
+
+        this.iov.conduit.transaction('iov/video/' + window.btoa(this.iov.config.streamName) + '/request', function () {
+          return _this5.onIovPlayTransaction.apply(_this5, arguments);
+        }, { clientId: this.iov.config.clientId });
+      } else {
+        /*
+            The user passed in a url in the following format:
+             clsp[s]-jwt://<sfs>/<json web token>
+             Call the sfs to get the streamName:
+                https://<sfs>/validate-for-clsp/{token}/{B64accessUrl}
+            If successful alter the streamName and proceed to play the stream. 
+        */
+        // Note: streamName is the jwt token
+        var url = "https://" + window.location.hostname + "/validate-for-clsp/" + this.iov.config.streamName + "/" + this.iov.config.b64_jwt_access_url;
+
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function () {
+          var _this6 = this;
+
+          // handle reply to http call
+
+          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            // validate: get the actual streamName 
+
+            var streamName = xmlHttp.responseText;
+            this.iov.conduit.transaction("iov/video/" + window.btoa(streamName) + "/request", function () {
+              return _this6.onIovPlayTransaction.apply(_this6, arguments);
+            }, { clientId: this.iov.config.clientId });
+          }
+        };
+        xmlHttp.open("GET", url, true); // true for asynchronous 
+        xmlHttp.send(null);
+      }
     }
   }, {
     key: 'stop',
     value: function stop() {
-      var _this6 = this;
+      var _this7 = this;
 
       debug('stop...');
 
@@ -5710,13 +5779,13 @@ var IOVPlayer = function () {
       return new Promise(function (resolve, reject) {
         // Don't wait until the next play event or the destruction of this player
         // to clear the MSE
-        if (_this6.mseWrapper) {
-          _this6.mseWrapper.destroy().then(function () {
-            _this6.mseWrapper = null;
+        if (_this7.mseWrapper) {
+          _this7.mseWrapper.destroy().then(function () {
+            _this7.mseWrapper = null;
             debug('stop succeeded asynchronously...');
             resolve();
           }).catch(function (error) {
-            _this6.mseWrapper = null;
+            _this7.mseWrapper = null;
             debug('stop failed asynchronously...');
             reject(error);
           });
@@ -5760,7 +5829,7 @@ var IOVPlayer = function () {
 
     // @todo - there is much shared between this and onChangeSourceTransaction
     value: function onIovPlayTransaction(_ref11) {
-      var _this7 = this;
+      var _this8 = this;
 
       var mimeCodec = _ref11.mimeCodec,
           guid = _ref11.guid;
@@ -5785,7 +5854,7 @@ var IOVPlayer = function () {
             while (1) {
               switch (_context10.prev = _context10.next) {
                 case 0:
-                  if (!_this7.stopped) {
+                  if (!_this8.stopped) {
                     _context10.next = 2;
                     break;
                   }
@@ -5800,42 +5869,42 @@ var IOVPlayer = function () {
                   moov = payloadBytes;
 
 
-                  _this7.state = 'waiting-for-first-moof';
+                  _this8.state = 'waiting-for-first-moof';
 
-                  _this7.iov.conduit.unsubscribe(initSegmentTopic);
+                  _this8.iov.conduit.unsubscribe(initSegmentTopic);
 
                   newTopic = 'iov/video/' + guid + '/live';
 
                   // subscribe to the live video topic.
 
-                  _this7.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
-                    if (_this7.stopped) {
+                  _this8.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
+                    if (_this8.stopped) {
                       return;
                     }
 
-                    _this7.trigger('videoReceived');
-                    _this7.getSegmentIntervalMetrics();
-                    _this7.mseWrapper.append(mqtt_msg.payloadBytes);
+                    _this8.trigger('videoReceived');
+                    _this8.getSegmentIntervalMetrics();
+                    _this8.mseWrapper.append(mqtt_msg.payloadBytes);
                   });
 
-                  _this7.guid = guid;
-                  _this7.moovBox = moov;
-                  _this7.mimeCodec = mimeCodec;
+                  _this8.guid = guid;
+                  _this8.moovBox = moov;
+                  _this8.mimeCodec = mimeCodec;
 
                   // this.trigger('firstChunk');
 
                   _context10.next = 14;
-                  return _this7.reinitializeMseWrapper(mimeCodec);
+                  return _this8.reinitializeMseWrapper(mimeCodec);
 
                 case 14:
-                  _this7.resyncStream(mimeCodec);
+                  _this8.resyncStream(mimeCodec);
 
                 case 15:
                 case 'end':
                   return _context10.stop();
               }
             }
-          }, _callee10, _this7);
+          }, _callee10, _this8);
         }));
 
         return function (_x5) {
@@ -5845,7 +5914,8 @@ var IOVPlayer = function () {
 
       this.iov.conduit.publish('iov/video/' + guid + '/play', {
         initSegmentTopic: initSegmentTopic,
-        clientId: this.iov.config.clientId
+        clientId: this.iov.config.clientId,
+        jwt: this.iov.config.jwt
       });
     }
   }, {
@@ -5884,7 +5954,7 @@ var IOVPlayer = function () {
   }, {
     key: 'destroy',
     value: function destroy() {
-      var _this8 = this;
+      var _this9 = this;
 
       debug('destroy...');
 
@@ -5903,13 +5973,13 @@ var IOVPlayer = function () {
       debug('about to stop...');
       this.stop().then(function () {
         debug('stopped successfully...');
-        _this8._freeAllResources();
+        _this9._freeAllResources();
         debug('destroy successfully finished...');
       }).catch(function (error) {
         debug('stopped unsuccessfully...');
         console.error('Error while destroying the iov player!');
         console.error(error);
-        _this8._freeAllResources();
+        _this9._freeAllResources();
         debug('destroy unsuccessfully finished...');
       });
 
