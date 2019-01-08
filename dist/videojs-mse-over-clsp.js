@@ -3769,8 +3769,12 @@ var IOV = function () {
       }
 
       if (jwt === true) {
+
+        //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
+        var qp_offset = url.indexOf(parser.pathname) + parser.pathname.length;
+
         var i = 0;
-        var qr_args = url.split('?')[1];
+        var qr_args = url.substr(qp_offset).split('?')[1];
         var query = {};
 
         var pairs = qr_args.split('&');
@@ -3786,7 +3790,7 @@ var IOV = function () {
           throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
         }
 
-        b64_jwt_access_url = window.btoa("https://" + window.location.hostname + "/validate-for-clsp?" + "Start=" + query.Start + "&End=" + qyery.End);
+        b64_jwt_access_url = window.btoa(url);
       }
 
       var paths = parser.pathname.split('/');

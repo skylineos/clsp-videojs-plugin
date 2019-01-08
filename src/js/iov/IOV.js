@@ -77,6 +77,24 @@ export default class IOV {
       throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
     }
 
+    
+
+    const paths = parser.pathname.split('/');
+    const streamName = paths[paths.length - 1];
+
+    let hostname = parser.hostname;
+    let port = parser.port;
+
+    if (port.length === 0) {
+      port = default_port;
+    }
+
+    // @ is a special address meaning the server that loaded the web page.
+    if (hostname === '@') {
+      hostname = window.location.hostname;
+    }
+
+
     if (jwt === true) {
 
         //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
@@ -100,24 +118,15 @@ export default class IOV {
            throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
         }
 
-        b64_jwt_access_url = window.btoa(url);
-    }
-    
-
-    const paths = parser.pathname.split('/');
-    const streamName = paths[paths.length - 1];
-
-    let hostname = parser.hostname;
-    let port = parser.port;
-
-    if (port.length === 0) {
-      port = default_port;
+         
+        b64_jwt_access_url = window.btoa(
+            (useSSL === true) ? "clsps-jwt://": "clsp-jwt://" 
+            + hostname + ":" + parseInt(port) + "/" 
+            + "?Start="+query.Start
+            + "&End="+query.End  
+        );
     }
 
-    // @ is a special address meaning the server that loaded the web page.
-    if (hostname === '@') {
-      hostname = window.location.hostname;
-    }
 
     return {
       // url,
@@ -163,7 +172,8 @@ export default class IOV {
       appStart: config.appStart,
       videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
-      jwt: config.jwt
+      jwt: config.jwt,
+      b64_jwt_access_url: config.b64_jwt_access_url 
     };
 
     this.statsMsg = {
