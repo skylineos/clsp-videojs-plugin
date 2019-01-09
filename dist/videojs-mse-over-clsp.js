@@ -3742,6 +3742,7 @@ var IOV = function () {
       var default_port = void 0;
       var jwt = false;
       var b64_jwt_access_url = "";
+      var jwt_validation_url = "";
 
       // Chrome is the only browser that allows non-http protocols in
       // the anchor tag's href, so change them all to http here so we
@@ -3768,6 +3769,21 @@ var IOV = function () {
         throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
       }
 
+      var paths = parser.pathname.split('/');
+      var streamName = paths[paths.length - 1];
+
+      var hostname = parser.hostname;
+      var port = parser.port;
+
+      if (port.length === 0) {
+        port = default_port;
+      }
+
+      // @ is a special address meaning the server that loaded the web page.
+      if (hostname === '@') {
+        hostname = window.location.hostname;
+      }
+
       if (jwt === true) {
 
         //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
@@ -3790,22 +3806,9 @@ var IOV = function () {
           throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
         }
 
-        b64_jwt_access_url = window.btoa(url);
-      }
+        b64_jwt_access_url = window.btoa(useSSL === true ? "clsps-jwt://" : "clsp-jwt://" + hostname + ":" + parseInt(port) + "/" + "?Start=" + query.Start + "&End=" + query.End);
 
-      var paths = parser.pathname.split('/');
-      var streamName = paths[paths.length - 1];
-
-      var hostname = parser.hostname;
-      var port = parser.port;
-
-      if (port.length === 0) {
-        port = default_port;
-      }
-
-      // @ is a special address meaning the server that loaded the web page.
-      if (hostname === '@') {
-        hostname = window.location.hostname;
+        jwt_validation_url = "https://" + hostname + "/validate-for-clsp/" + streamName + "/" + b64_jwt_access_url;
       }
 
       return {
@@ -3815,7 +3818,8 @@ var IOV = function () {
         streamName: streamName,
         useSSL: useSSL,
         jwt: jwt,
-        b64_jwt_access_url: b64_jwt_access_url
+        b64_jwt_access_url: b64_jwt_access_url,
+        jwt_validation_url: jwt_validation_url
       };
     }
   }, {
@@ -3858,7 +3862,9 @@ var IOV = function () {
       appStart: config.appStart,
       videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
-      jwt: config.jwt
+      jwt: config.jwt,
+      b64_jwt_access_url: config.b64_jwt_access_url,
+      jwt_validation_url: config.jwt_validation_url
     };
 
     this.statsMsg = {
@@ -5728,9 +5734,13 @@ var IOVPlayer = function () {
             If successful alter the streamName and proceed to play the stream. 
         */
         // Note: streamName is the jwt token
-        var url = "https://" + window.location.hostname + "/validate-for-clsp/" + this.iov.config.streamName + "/" + this.iov.config.b64_jwt_access_url;
-
+        var url = this.iov.config.jwt_validation_url;
         var xmlHttp = new XMLHttpRequest();
+
+        xmlHttp.onerror = function (err) {
+          console.log(err);
+        };
+
         xmlHttp.onreadystatechange = function () {
           var _this6 = this;
 
@@ -5746,7 +5756,7 @@ var IOVPlayer = function () {
           }
         };
         xmlHttp.open("GET", url, true); // true for asynchronous 
-        xmlHttp.send(null);
+        xmlHttp.send();
       }
     }
   }, {

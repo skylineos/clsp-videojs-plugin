@@ -444,13 +444,14 @@ export default class IOVPlayer {
             If successful alter the streamName and proceed to play the stream. 
         */
         // Note: streamName is the jwt token
-        let url = 
-            "https://"+window.location.hostname+"/validate-for-clsp/"+
-            this.iov.config.streamName+"/"+ 
-            this.iov.config.b64_jwt_access_url 
-        ;
-
+        let url = this.iov.config.jwt_validation_url;
         let xmlHttp = new XMLHttpRequest();
+        var player = this;
+
+        xmlHttp.onerror = function(err) {
+            console.log(err);
+        };
+
         xmlHttp.onreadystatechange = function() { 
             // handle reply to http call
 
@@ -458,15 +459,16 @@ export default class IOVPlayer {
                 // validate: get the actual streamName 
 
                 var streamName = xmlHttp.responseText;
-                this.iov.conduit.transaction(
+                player.iov.conduit.transaction(
                     "iov/video/"+window.btoa(streamName)+"/request",
-                    (...args) => this.onIovPlayTransaction(...args),
-                    { clientId: this.iov.config.clientId }
+                    (...args) => player.onIovPlayTransaction(...args),
+                    { clientId: player.iov.config.clientId }
                 );
             } 
         };
         xmlHttp.open("GET", url, true); // true for asynchronous 
-        xmlHttp.send(null);
+        console.log("calling ",url);
+        xmlHttp.send();
     }
   }
 

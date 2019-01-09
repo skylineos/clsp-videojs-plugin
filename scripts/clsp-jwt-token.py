@@ -6,8 +6,8 @@ import time
 import base64
 
 
-streamName = sys.argv[1]
-sfsAddr = sys.argv[2]
+sfsAddr = sys.argv[1]
+streamName = sys.argv[2]
 
 expire = 15
 

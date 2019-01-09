@@ -47,6 +47,7 @@ export default class IOV {
     let default_port;
     let jwt = false;
     let b64_jwt_access_url ="";    
+    let jwt_validation_url ="";
 
     // Chrome is the only browser that allows non-http protocols in
     // the anchor tag's href, so change them all to http here so we
@@ -125,6 +126,13 @@ export default class IOV {
             + "?Start="+query.Start
             + "&End="+query.End  
         );
+
+        jwt_validation_url = 
+            "https://"+hostname+"/validate-for-clsp/"+
+            streamName+"/"+ 
+            b64_jwt_access_url 
+        ;
+
     }
 
 
@@ -135,7 +143,8 @@ export default class IOV {
       streamName,
       useSSL,
       jwt,
-      b64_jwt_access_url 
+      b64_jwt_access_url,
+      jwt_validation_url
     };
   }
 
@@ -173,7 +182,8 @@ export default class IOV {
       videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
       jwt: config.jwt,
-      b64_jwt_access_url: config.b64_jwt_access_url 
+      b64_jwt_access_url: config.b64_jwt_access_url, 
+      jwt_validation_url: config.jwt_validation_url
     };
 
     this.statsMsg = {
