@@ -1,12 +1,15 @@
+/* global chrome */
+
 import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
 
 import MSEWrapper from './MSEWrapper';
-
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
 const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
+
+const REFRESH_THRESHOLD = 60 * 60 * 1000;
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -90,6 +93,8 @@ export default class IOVPlayer {
     this.moovBox = null;
     this.guid = null;
     this.mimeCodec = null;
+
+    this.blurIntervals = {};
 
     document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
@@ -245,6 +250,9 @@ export default class IOVPlayer {
           console.error(e);
         }
       }
+
+      window.addEventListener('blur', this.onBlur);
+      window.addEventListener('focus', this.onFocus);
     });
   }
 
@@ -530,6 +538,23 @@ export default class IOVPlayer {
     }
   };
 
+  onBlur = async () => {
+    // how to access timeBuffered here
+    console.log(this.mseWrapper)
+    const self = this;
+    this.blurIntervals[this.id] = setInterval(async function () {
+      console.log('REINITIALIZING BUFFER')
+      setTimeout(await self.stop(), 1000);
+      self.play();
+    }, REFRESH_THRESHOLD);
+  }
+
+  onFocus = () => {
+    console.log(this.blurIntervals)
+    this.blurIntervals[this.id].cancel();
+    this.onVisibilityChange();
+  }
+
   // @todo - there is much shared between this and onChangeSourceTransaction
   onIovPlayTransaction ({ mimeCodec, guid }) {
     if (this.stopped) {
@@ -657,6 +682,7 @@ export default class IOVPlayer {
     this.iov.conduit.disconnect();
 
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    window.removeEventListener('blur', this.onBlur);
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,

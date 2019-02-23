@@ -495,6 +495,8 @@ export default class MSEWrapper {
       const bufferTimeEnd = this.sourceBuffer.buffered.end(0);
       const currentBufferSize = bufferTimeEnd - bufferTimeStart;
 
+      console.log(currentBufferSize)
+
       silly('getBufferTimes finished successfully...');
 
       return {
@@ -600,6 +602,7 @@ export default class MSEWrapper {
     const info = this.getBufferTimes();
 
     this.timeBuffered = info.currentBufferSize;
+    // how to access timeBuffered in player
 
     if (info.previousBufferSize !== null && info.previousBufferSize > this.timeBuffered) {
       this.onRemoveFinish(info);

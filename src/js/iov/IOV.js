@@ -273,6 +273,9 @@ export default class IOV {
 
     this.playerInstance.on('changesrc', this.playerInstanceEventListeners.changesrc);
 
+    console.log("document hidden in IOV")
+    console.log(document.hidden)
+
     if (!document.hidden) {
       this.player.play();
     }
