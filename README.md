@@ -240,6 +240,19 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
+* make iframe javascript reference parent window paho library to reduce code duplication
+* minimize and minify the iframe srcdoc javascript
+* decouple mqtt conduit logic
+* decouple the MSE abstraction by creating separate mediasource and sourcebuffer abstractions
+* file / class restructure
+* decrease coupling between classes
+* decrease coupling between videojs and iovPlayer
+* perform destroy / cleanup logic when the videojs player is disposed
+* improve metrics
+* improve memory management
+* implement destroy method for all classes
+* fix destroy logic
+* improve error handling
 * implement linter
 * create dispose methods for all classes
 * make iov initialize execute once, and by default
