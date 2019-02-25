@@ -3,7 +3,7 @@
 source ./scripts/utils.sh
 
 dps "Building..."
-npm run build
+yarn run build
 ec "Successfully built!" "Failed to build!"
 
 dps "Serving"

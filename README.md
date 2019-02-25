@@ -57,11 +57,19 @@ If using `videojs-errors`, which is recommended, `4.2.0` is the recommended vers
 
 ### Development Environment
 
-Node 8.9.x is required to run the necessary build and development scripts.
+Node 10.15.x is required to run the necessary build and development scripts.
 
-One option for installing node in a development environment is to use the
-node version manager ["n"](https://github.com/tj/n).  If you're using
-Windows, you can get an installer from [Node's website](https://nodejs.org/en/download/).
+One option for installing node in a development environment is to use the node version manager ["n"](https://github.com/tj/n).  If you're using Windows, you can get an installer from [Node's website](https://nodejs.org/en/download/).
+
+#### Vagrant
+
+1. `cd` into the parent directory of the CLSP project
+1. `cp scripts/deploy/Vagrantfile .`
+1. `vagrant destroy -f && vagrant up && vagrant ssh`
+1. `cd /vagrant/clsp-videojs-plugin`
+1. `rm -rf node_modules`
+1. `yarn install`
+1. `yarn run serve:vagrant`
 
 
 ## Installation
@@ -69,7 +77,7 @@ Windows, you can get an installer from [Node's website](https://nodejs.org/en/do
 ```
 git clone https://github.com/skylineos/clsp-videojs-plugin.git
 cd clsp-videojs-plugin
-npm install
+yarn install
 ```
 
 ## Build
@@ -79,7 +87,7 @@ Note: If you ae installing on ubuntu the package for nodejs is way out of date, 
 After making changes to the plugin, build the project to generate a distributable, standalone file:
 
 ```
-npm run build
+yarn run build
 ```
 
 The generated files will be available in the `dist` directory.
@@ -87,16 +95,16 @@ The generated files will be available in the `dist` directory.
 
 ## Run test server
 
-1. `npm run serve`
+1. `yarn run serve`
 1. navigate to [http://localhost:9999](http://localhost:9999) in Chrome
 1. add a `clsp` url to any of the inputs, then click submit
 1. click play on the video element (if not using an autoplay player)
 
 Note that this dev server will NOT re-generate the `clspConduit.generated.js` file.
-If you make changes to this file, you will need to run `npm run build` and then
+If you make changes to this file, you will need to run `yarn run build` and then
 restart the dev server to get your changes to be recognized:
 
-`npm run build && npm run serve`
+`yarn run build && yarn run serve`
 
 This is expected to be fixed in an upcoming release.
 
@@ -196,7 +204,7 @@ player.clsp();
 
 ### Browserify/CommonJS
 
-When using with Browserify, install videojs-mse-over-clsp via npm and `require` the plugin as you would any other module.
+When using with Browserify, install videojs-mse-over-clsp via yarn or npm and `require` the plugin as you would any other module.
 
 ```javascript
 require('babel-polyfill');

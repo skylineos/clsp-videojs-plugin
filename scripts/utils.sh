@@ -85,8 +85,27 @@ function ec () {
   fi
 }
 
-# Ping google to check if we have internet access.
+##
+# Is the current user "root"?
+#
+# yes - return 0
+# no - exit 1
+##
+function enforceRoot () {
+  dpi "Ensuring this script was run as root..."
+
+  if [[ "$UID" -ne 0 ]]; then
+    dpe "You must run this script with sudo."
+    exit 13
+  fi
+
+  dps "This script was run with sudo - continuing..."
+
+  return 0
+}
+
 function confirmInternetAccess () {
+  # Ping google to check if we have internet access.
   dps "Ensuring we have web access."
   ping -q -c3 google.com > /dev/null
   ec "Web access available." "Exiting...please check network connection."
@@ -96,6 +115,34 @@ function getNodePackageVersion () {
   echo $(node -e 'console.log(require("./package.json").version)')
 }
 
+function getApplicationName () {
+  echo $(node -e 'console.log(require("./package.json").name)')
+}
+
+function getApplicationTitle () {
+  echo $(node -e 'console.log(require("./package.json").title)')
+}
+
 function getCurrentGitBranch () {
   echo $(git rev-parse --abbrev-ref HEAD)
 }
+
+APPLICATION_DIR="$(pwd)"
+APPLICATION_ROOT_DIR="$(dirname $APPLICATION_DIR)"
+
+jsFilesToLint=(\
+  ".eslintrc.js" \
+  "src/js/*.js" \
+  "src/js/**/*.js" \
+  "scripts/*.js" \
+  "scripts/**/*.js" \
+  "demo/src/js/*.js" \
+  "demo/src/js/**/*.js" \
+)
+
+scssFilesToLint=(\
+  "src/styles/*.scss" \
+  "src/styles/**/*.scss" \
+  "demo/src/styles/*.scss" \
+  "demo/src/styles/**/*.scss" \
+)

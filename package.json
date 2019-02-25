@@ -1,26 +1,30 @@
 {
   "name": "videojs-mse-over-clsp",
+  "title": "CLSP Plugin",
   "version": "0.13.11",
   "description": "Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ",
   "main": "dist/videojs-mse-over-clsp.js",
-  "generator-videojs-plugin": {
-    "version": "5.0.0"
-  },
-  "scripts": {
-    "build": "./scripts/build.sh",
-    "serve": "./scripts/serve.sh",
-    "lint": "eslint ./ --cache --quiet --ext .jsx --ext .js",
-    "lint-fix": "eslint ./ --cache --quiet --ext .jsx --ext .js --fix",
-    "preversion": "./scripts/version.sh --pre",
-    "version": "./scripts/version.sh",
-    "postversion": "./scripts/version.sh --post"
-  },
   "keywords": [
     "videojs",
     "videojs-plugin"
   ],
   "author": "dschere@skylinenet.net",
   "license": "MIT",
+  "generator-videojs-plugin": {
+    "version": "5.0.0"
+  },
+  "pre-commit": [
+    "lint"
+  ],
+  "scripts": {
+    "build": "./scripts/build.sh",
+    "serve": "./scripts/serve.sh",
+    "lint": "./scripts/lint.sh",
+    "lint-fix": "./scripts/lint.sh --fix",
+    "preversion": "./scripts/version.sh --pre",
+    "version": "./scripts/version.sh",
+    "postversion": "./scripts/version.sh --post"
+  },
   "dependencies": {
     "debug": "^4.1.0",
     "lodash": "^4.17.10",
