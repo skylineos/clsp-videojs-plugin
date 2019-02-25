@@ -495,7 +495,7 @@ export default class MSEWrapper {
       const bufferTimeEnd = this.sourceBuffer.buffered.end(0);
       const currentBufferSize = bufferTimeEnd - bufferTimeStart;
 
-      console.log(currentBufferSize)
+      // console.log(currentBufferSize)
 
       silly('getBufferTimes finished successfully...');
 

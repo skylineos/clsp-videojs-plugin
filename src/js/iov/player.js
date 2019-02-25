@@ -1,5 +1,3 @@
-/* global chrome */
-
 import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
@@ -250,7 +248,7 @@ export default class IOVPlayer {
           console.error(e);
         }
       }
-
+      // add listeners once the video has loaded.
       window.addEventListener('blur', this.onBlur);
       window.addEventListener('focus', this.onFocus);
     });
@@ -540,17 +538,15 @@ export default class IOVPlayer {
 
   onBlur = async () => {
     // how to access timeBuffered here
-    console.log(this.mseWrapper)
     const self = this;
     this.blurIntervals[this.id] = setInterval(async function () {
-      console.log('REINITIALIZING BUFFER')
       setTimeout(await self.stop(), 1000);
       self.play();
     }, REFRESH_THRESHOLD);
   }
 
   onFocus = () => {
-    console.log(this.blurIntervals)
+    // this isn't working and blurIntervals is not what I think it is
     this.blurIntervals[this.id].cancel();
     this.onVisibilityChange();
   }
@@ -683,6 +679,7 @@ export default class IOVPlayer {
 
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     window.removeEventListener('blur', this.onBlur);
+    window.removeEventListener('focus', this.onFocus);
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,
