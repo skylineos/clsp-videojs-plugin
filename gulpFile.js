@@ -60,9 +60,8 @@ function webpackBuild (pathToConfig) {
 
 gulp.task('generate-clsp-conduit', () => {
   // Construct the iframe contents
-  const mqttLibrary = fs.readFileSync('./node_modules/paho-mqtt/paho-mqtt-min.js', { encoding: 'utf8' });
   const clspRouterLibrary = fs.readFileSync('./src/js/conduit/clspRouter.js', { encoding: 'utf8' });
-  const iframeContents = jsStringEscape(mqttLibrary + '\n' + clspRouterLibrary);
+  const iframeContents = jsStringEscape(clspRouterLibrary);
 
   // Insert the iframe contents into the clsp conduit library
   const clspConduitLibraryTemplate = fs.readFileSync('./src/js/conduit/clspConduit.js', { encoding: 'utf8' });
