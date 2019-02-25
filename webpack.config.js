@@ -7,7 +7,6 @@ const WriteFilePlugin = require('write-file-webpack-plugin');
 const packageJson = require('./package.json');
 
 const pluginName = packageJson.name;
-const conduitName = 'clspConduit.generated';
 
 const extractSass = new ExtractTextPlugin({
   filename: '[name].css',
@@ -58,33 +57,6 @@ module.exports = () => [
     plugins: [
       extractSass,
     ],
-  },
-  {
-    mode: 'development',
-    name: conduitName,
-    entry: {
-      // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
-      [conduitName]: [`./src/js/conduit/${conduitName}.js`],
-    },
-    output: {
-      filename: '[name].min.js',
-      path: path.resolve(__dirname, 'src/js/conduit'),
-    },
-    module: {
-      rules: [
-        {
-          test: /\.js$/,
-          loader: 'babel-loader?cacheDirectory=true',
-          options: {
-            plugins: [
-              'transform-object-rest-spread',
-              'transform-class-properties',
-            ],
-            presets: [['env', { modules: false }]],
-          },
-        },
-      ],
-    },
   },
   {
     mode: 'development',

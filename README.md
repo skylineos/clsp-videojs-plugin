@@ -100,14 +100,6 @@ The generated files will be available in the `dist` directory.
 1. add a `clsp` url to any of the inputs, then click submit
 1. click play on the video element (if not using an autoplay player)
 
-Note that this dev server will NOT re-generate the `clspConduit.generated.js` file.
-If you make changes to this file, you will need to run `yarn run build` and then
-restart the dev server to get your changes to be recognized:
-
-`yarn run build && yarn run serve`
-
-This is expected to be fixed in an upcoming release.
-
 
 ## Usage
 
@@ -240,23 +232,23 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
-* make iframe javascript reference parent window paho library to reduce code duplication
-* minimize and minify the iframe srcdoc javascript
+* implement dev server
+* implement linter
+* create dispose methods for all classes
+* make iov initialize execute once, and by default
+* create demo for failover
+* minify css
+
+From 0.14
+
+* minify conduit
 * decouple mqtt conduit logic
 * decouple the MSE abstraction by creating separate mediasource and sourcebuffer abstractions
 * file / class restructure
 * decrease coupling between classes
 * decrease coupling between videojs and iovPlayer
-* perform destroy / cleanup logic when the videojs player is disposed
 * improve metrics
 * improve memory management
 * implement destroy method for all classes
 * fix destroy logic
 * improve error handling
-* implement linter
-* create dispose methods for all classes
-* make iov initialize execute once, and by default
-* create demo for failover
-* add lint precommit
-* minify css
-* minify conduit

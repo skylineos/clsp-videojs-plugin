@@ -8,6 +8,8 @@
 * add Vagrantfile and steps
 * update standard skyline development assets
 * remove gulp, rely solely on bash scripts and webpack
+* make iframe javascript reference parent window paho library to reduce code duplication
+* minimize the iframe srcdoc javascript
 * fix window minimize memory leak
 
 

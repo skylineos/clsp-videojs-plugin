@@ -8,6 +8,8 @@ import Debug from 'debug';
 import videojs from 'video.js';
 import Paho from 'paho-mqtt';
 
+import Conduit from './conduit/Conduit';
+
 import MqttSourceHandler from './MqttSourceHandler';
 import MqttConduitCollection from './MqttConduitCollection';
 import utils from './utils';
@@ -35,6 +37,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     window.Paho = {
       MQTT: Paho,
     };
+
+    Conduit();
 
     videojs.getTech('Html5').registerSourceHandler(MqttSourceHandler()('html5', MqttConduitCollection.factory()), 0);
     videojs.registerPlugin(utils.name, ClspPlugin);
