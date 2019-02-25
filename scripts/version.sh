@@ -42,14 +42,14 @@ fi
 
 dpi "Executing version logic..."
 
-dps "Linting..."
-yarn run lint --fix
-ec "Successfully linted!" "Failed to lint!"
+# dps "Linting..."
+# yarn run lint --fix
+# ec "Successfully linted!" "Failed to lint!"
 
-# Add back the modified/linted files to staging
-dps "Adding the fixed files..."
-git add "${jsFilesToLint[@]}"
-ec "Successfully added fixed files" "Failed to add fixed files!"
+# # Add back the modified/linted files to staging
+# dps "Adding the fixed files..."
+# git add "${jsFilesToLint[@]}"
+# ec "Successfully added fixed files" "Failed to add fixed files!"
 
 dps "Building..."
 yarn run build

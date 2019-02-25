@@ -63,11 +63,11 @@ One option for installing node in a development environment is to use the node v
 
 #### Vagrant
 
-1. `cd` into the parent directory of the CLSP project
-1. `cp scripts/deploy/Vagrantfile .`
+1. `cp scripts/deploy/Vagrantfile ..`
 1. `vagrant destroy -f && vagrant up && vagrant ssh`
 1. `cd /vagrant/clsp-videojs-plugin`
 1. `rm -rf node_modules`
+1. `sudo scripts/deploy/provision-bootstrap.sh`
 1. `yarn install`
 1. `yarn run serve:vagrant`
 
@@ -240,6 +240,7 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
+* implement linter
 * create dispose methods for all classes
 * make iov initialize execute once, and by default
 * create demo for failover
