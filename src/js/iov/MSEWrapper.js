@@ -313,6 +313,7 @@ export default class MSEWrapper {
   }
 
   queueSegment (segment) {
+    // console.log('tryna!!')
     if (this.segmentQueue.length) {
       debug(`Queueing segment.  The queue currently has ${this.segmentQueue.length} segments.`);
     }

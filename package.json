@@ -16,6 +16,7 @@
   "scripts": {
     "build": "./scripts/build.sh",
     "serve": "./scripts/serve.sh",
+    "serve:vagrant": "WATCH_WITH_POLLING=true yarn run serve",
     "lint": "./scripts/lint.sh",
     "lint-fix": "./scripts/lint.sh --fix",
     "preversion": "./scripts/version.sh --pre",
@@ -61,7 +62,7 @@
     "videojs-errors": "4.2.0",
     "webpack": "4.29.5",
     "webpack-bundle-analyzer": "3.0.4",
-    "webpack-serve": "2.0.3",
+    "webpack-dev-server": "3.2.1",
     "write-file-webpack-plugin": "4.5.0"
   }
 }

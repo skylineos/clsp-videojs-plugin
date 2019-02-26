@@ -238,6 +238,8 @@ See the LICENSE file at the root of this repository.
 * make iov initialize execute once, and by default
 * create demo for failover
 * minify css
+* hot reload?
+* hash in filenames via webpack?
 
 From 0.14
 

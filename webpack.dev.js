@@ -17,7 +17,7 @@ function devConfig (webpackConfig) {
     entry: {
       ...webpackConfig.entry,
       // @todo - these need to be documented
-      // [`${webpackConfig.name}.0`]: `webpack-dev-server/client?http://${devHost}:${devPort}`,
+      [`${webpackConfig.name}.0`]: `webpack-dev-server/client?http://${devHost}:${devPort}`,
       // [`${webpackConfig.name}.1`]: 'webpack/hot/only-dev-server',
     },
     output: {
