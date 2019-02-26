@@ -96,7 +96,7 @@ The generated files will be available in the `dist` directory.
 ## Run test server
 
 1. `yarn run serve`
-1. navigate to [http://localhost:9999](http://localhost:9999) in Chrome
+1. navigate to [http://localhost:8080](http://localhost:8080) in Chrome
 1. add a `clsp` url to any of the inputs, then click submit
 1. click play on the video element (if not using an autoplay player)
 

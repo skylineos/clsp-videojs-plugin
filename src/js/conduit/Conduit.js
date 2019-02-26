@@ -18,7 +18,6 @@ export default function () {
 
       // primitive function that routes message to iframe
       function command(m) {
-
           if (iframe.contentWindow !== null) {
               iframe.contentWindow.postMessage(m,"*");
               return;
