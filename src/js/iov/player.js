@@ -279,6 +279,7 @@ export default class IOVPlayer {
 
               const mqtt_msg = new window.Paho.MQTT.Message(byteArray);
               mqtt_msg.destinationName = this.LogSourceBufferTopic;
+              // note that this is defined in the Conduit
               window.MQTTClient.send(mqtt_msg);
             }
 

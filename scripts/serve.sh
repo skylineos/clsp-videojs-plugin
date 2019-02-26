@@ -2,10 +2,10 @@
 
 source ./scripts/utils.sh
 
-dps "Building..."
-npm run build
-ec "Successfully built!" "Failed to build!"
+# dps "Building..."
+# yarn run build
+# ec "Successfully built!" "Failed to build!"
 
-dps "Serving"
+dps "Bringing up webpack dev server..."
 ./scripts/serve.js
 ec "Successfully served!" "Failed to serve!"
