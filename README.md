@@ -70,6 +70,7 @@ One option for installing node in a development environment is to use the node v
 1. `sudo scripts/deploy/provision-bootstrap.sh`
 1. `yarn install`
 1. `yarn run serve:vagrant`
+1. [http://5.5.5.4:8080](http://5.5.5.4:8080)
 
 
 ## Installation
@@ -232,7 +233,6 @@ See the LICENSE file at the root of this repository.
 
 ## @todos
 
-* implement dev server
 * implement linter
 * create dispose methods for all classes
 * make iov initialize execute once, and by default

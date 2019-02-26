@@ -6,6 +6,6 @@ source ./scripts/utils.sh
 # yarn run build
 # ec "Successfully built!" "Failed to build!"
 
-dps "Brining up webpack dev server..."
+dps "Bringing up webpack dev server..."
 ./scripts/serve.js
 ec "Successfully served!" "Failed to serve!"
