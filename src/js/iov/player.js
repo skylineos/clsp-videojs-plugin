@@ -7,7 +7,8 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
 const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
 
-const REFRESH_THRESHOLD = 60 * 60 * 1000;
+// const REFRESH_THRESHOLD = 60 * 60 * 1000;
+const REFRESH_THRESHOLD = 15 * 60 * 1000;
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -537,17 +538,20 @@ export default class IOVPlayer {
   };
 
   onBlur = async () => {
+    console.log("blurring")
     // how to access timeBuffered here
     const self = this;
     this.blurIntervals[this.id] = setInterval(async function () {
-      setTimeout(await self.stop(), 1000);
-      self.play();
+      setTimeout(async () => {
+        await self.stop();
+        self.play();
+      }, 1000);
     }, REFRESH_THRESHOLD);
   }
 
   onFocus = () => {
-    // this isn't working and blurIntervals is not what I think it is
-    this.blurIntervals[this.id].cancel();
+    console.log(this.blurIntervals)
+    clearInterval(this.blurIntervals[this.id]);
     this.onVisibilityChange();
   }
 
