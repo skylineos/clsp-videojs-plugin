@@ -48,9 +48,9 @@ Chrome 52+ is required to run this videojs extension.  All other browsers are cu
 
 ### Dependencies
 
-`babel-polyfill` `6.26.0` is required.
+`@babel/polyfill` `7.2.5` is required.
 
-`video.js` `7.3.0` is the recommended version required.  Version `6.x` is not recommended due to it being less performant over time.
+`video.js` `7.4.1` is the recommended version.  Version `6.x` is not recommended due to it being less performant over time.
 
 If using `videojs-errors`, which is recommended, `4.2.0` is the recommended version, as it allows us to re-register successive errors to respond to successfive failures as necessary to support stream recovery.
 
@@ -113,7 +113,7 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
 <head>
   <link
     rel="stylesheet"
-    href="//vjs.zencdn.net/7.3.0/video-js.min.css"
+    href="//vjs.zencdn.net/7.4.1/video-js.min.css"
   >
   <link
     rel="stylesheet"
@@ -121,7 +121,7 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
   >
   <script
     type="text/javascript"
-    src="//cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"
+    src="//cdn.jsdelivr.net/npm/@babel/polyfill@7.2.5/dist/polyfill.min.js"
   ></script>
 <head>
 ```
@@ -153,7 +153,7 @@ See `dist/simple.html` for an example.
   />
 </video>
 
-<script src="//vjs.zencdn.net/7.3.0/video.min.js"></script>
+<script src="//vjs.zencdn.net/7.4.1/video.min.js"></script>
 <script src="//path/to/node_modules/videojs-mse-over-clsp/dist/videojs-mse-over-clsp.min.js"></script>
 
 <script>
@@ -165,7 +165,7 @@ See `dist/simple.html` for an example.
 
 ### Webpack
 
-When using with Webpack, you will need to register the global videojs in your `webpack.config.js` file:
+When using with Webpack, you will need to register the global videojs in your webpack config file:
 
 ```javascript
 {
@@ -179,7 +179,7 @@ When using with Webpack, you will need to register the global videojs in your `w
 In your code, you will need to set videojs on the window prior to requiring this plugin:
 
 ```javascript
-import 'babel-polyfill';
+import '@babel/polyfill';
 import videojs from 'video.js';
 
 window.videojs = videojs;
@@ -199,7 +199,7 @@ player.clsp();
 When using with Browserify, install videojs-mse-over-clsp via yarn or npm and `require` the plugin as you would any other module.
 
 ```javascript
-require('babel-polyfill');
+require('@babel/polyfill');
 
 const videojs = require('video.js');
 
@@ -218,7 +218,7 @@ player.clsp();
 When using with RequireJS (or another AMD library), get the script in whatever way you prefer and `require` the plugin as you normally would:
 
 ```js
-require(['video.js', 'babel-polyfill', 'videojs-mse-over-clsp'], function(videojs) {
+require(['video.js', '@babel/polyfill', 'videojs-mse-over-clsp'], function(videojs) {
   var player = videojs('my-video');
 
   player.clsp();

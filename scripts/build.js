@@ -2,20 +2,21 @@
 'use strict';
 
 const webpack = require('webpack');
+const chalk = require('chalk');
 
-const devConfig = require('../webpack.config')();
-const prodConfig = require('../webpack.config.prod')();
+const devConfigs = require('../webpack.dev');
+const prodConfigs = require('../webpack.prod');
 
 // @see - https://webpack.js.org/api/node/
 webpack([
-  ...devConfig,
-  ...prodConfig,
+  ...(devConfigs()),
+  ...(prodConfigs()),
 ], (err, stats) => {
   if (err) {
-    console.error(err.stack || err);
+    console.error(chalk.redBright(err.stack || err));
 
     if (err.details) {
-      console.error(err.details);
+      console.error(chalk.redBright(err.details));
     }
 
     process.exit(1);
@@ -23,15 +24,17 @@ webpack([
 
   const info = stats.toJson();
 
-  if (stats.hasErrors()) {
-    console.error(info.errors);
-  }
+  process.stdout.write(stats.toString() + '\n');
 
   if (stats.hasWarnings()) {
-    console.warn(info.warnings);
+    console.warn(chalk.yellowBright(info.warnings));
   }
 
-  process.stdout.write(stats.toString() + '\n');
+  // Write errors last to make failure more apparent
+  if (stats.hasErrors()) {
+    console.error(chalk.redBright(info.errors));
+    process.exit(1);
+  }
 
   process.exit(0);
 });
