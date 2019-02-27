@@ -16,6 +16,10 @@ import utils from './utils';
 
 const Plugin = videojs.getPlugin('plugin');
 
+// Note that the value can never be zero!
+const VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN = 1;
+const VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MAX = 20;
+
 export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   static VERSION = utils.version;
 
@@ -111,10 +115,21 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     // Track the number of times we've retried on error
     player._errorRetriesCount = 0;
 
-    // Needed to make videojs-errors think that the video is progressing
-    // If we do not do this, videojs-errors will give us a timeout error
-    player._currentTime = 0;
-    player.currentTime = () => player._currentTime++;
+    // Needed to make videojs-errors think that the video is progressing.
+    // If we do not do this, videojs-errors will give us a timeout error.
+    // The number just needs to change, it doesn't need to continually increment
+    player._currentTime = VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN;
+    player.currentTime = () => {
+      // Don't let this number get over 2 billion!
+      if (player._currentTime > VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MAX) {
+        player._currentTime = VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN;
+      }
+      else {
+        player._currentTime++;
+      }
+
+      return player._currentTime;
+    };
 
     // @todo - are we not using videojs properly?
     // @see - https://github.com/videojs/video.js/issues/5233
@@ -132,9 +147,36 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
     // @todo - this seems like we aren't using videojs properly
     player.on('error', async (event) => {
+      const retry = async () => {
+        if (this.options.maxRetriesOnError === 0) {
+          return;
+        }
+
+        if (this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= this.options.maxRetriesOnError) {
+          // @todo - when can we reset this to zero?
+          player._errorRetriesCount++;
+
+          this.resetErrors(player);
+
+          const iov = player.tech(true).mqtt.iov;
+
+          // @todo - investigate how this can be called when the iov has been destroyed
+          if (!iov || iov.destroyed || !iov.player) {
+            this.initializeIOV(player);
+          }
+          else {
+            await iov.player.restart();
+          }
+        }
+      };
+
       const error = player.error();
 
       switch (error.code) {
+        // timeout error
+        case -2: {
+          return retry();
+        }
         case 0:
         case 4:
         case 5:
@@ -142,26 +184,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
           break;
         }
         default: {
-          if (this.options.maxRetriesOnError === 0) {
-            break;
-          }
-
-          if (this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= this.options.maxRetriesOnError) {
-            // @todo - when can we reset this to zero?
-            player._errorRetriesCount++;
-
-            this.resetErrors(player);
-
-            const iov = player.tech(true).mqtt.iov;
-
-            // @todo - investigate how this can be called when the iov has been destroyed
-            if (!iov || iov.destroyed || !iov.player) {
-              this.initializeIOV(player);
-            }
-            else {
-              await iov.player.restart();
-            }
-          }
+          return retry();
         }
       }
     });

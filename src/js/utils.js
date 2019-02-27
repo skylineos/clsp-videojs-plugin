@@ -46,9 +46,36 @@ function isSupportedMimeType (mimeType) {
   return mimeType === SUPPORTED_MIME_TYPE;
 }
 
+let hiddenStateName;
+let visibilityChangeEventName;
+
+function getWindowStateNames () {
+  if (!hiddenStateName) {
+    // @see - https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API
+    if (typeof document.hidden !== 'undefined') {
+      hiddenStateName = 'hidden';
+      visibilityChangeEventName = 'visibilitychange';
+    }
+    else if (typeof document.msHidden !== 'undefined') {
+      hiddenStateName = 'msHidden';
+      visibilityChangeEventName = 'msvisibilitychange';
+    }
+    else if (typeof document.webkitHidden !== 'undefined') {
+      hiddenStateName = 'webkitHidden';
+      visibilityChangeEventName = 'webkitvisibilitychange';
+    }
+  }
+
+  return {
+    hiddenStateName,
+    visibilityChangeEventName,
+  };
+}
+
 export default {
   version,
   name: PLUGIN_NAME,
   supported: browserIsCompatable,
   isSupportedMimeType,
+  getWindowStateNames,
 };
