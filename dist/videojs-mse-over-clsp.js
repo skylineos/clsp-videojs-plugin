@@ -86,6 +86,198 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./node_modules/debug/node_modules/ms/index.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/debug/node_modules/ms/index.js ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+/**
+ * Helpers.
+ */
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var w = d * 7;
+var y = d * 365.25;
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} [options]
+ * @throws {Error} throw an error if val is not a non-empty string or a number
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function (val, options) {
+  options = options || {};
+
+  var type = _typeof(val);
+
+  if (type === 'string' && val.length > 0) {
+    return parse(val);
+  } else if (type === 'number' && isNaN(val) === false) {
+    return options.long ? fmtLong(val) : fmtShort(val);
+  }
+
+  throw new Error('val is not a non-empty string or a valid number. val=' + JSON.stringify(val));
+};
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+
+function parse(str) {
+  str = String(str);
+
+  if (str.length > 100) {
+    return;
+  }
+
+  var match = /^((?:\d+)?\-?\d?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(str);
+
+  if (!match) {
+    return;
+  }
+
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y;
+
+    case 'weeks':
+    case 'week':
+    case 'w':
+      return n * w;
+
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h;
+
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m;
+
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s;
+
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n;
+
+    default:
+      return undefined;
+  }
+}
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+
+function fmtShort(ms) {
+  var msAbs = Math.abs(ms);
+
+  if (msAbs >= d) {
+    return Math.round(ms / d) + 'd';
+  }
+
+  if (msAbs >= h) {
+    return Math.round(ms / h) + 'h';
+  }
+
+  if (msAbs >= m) {
+    return Math.round(ms / m) + 'm';
+  }
+
+  if (msAbs >= s) {
+    return Math.round(ms / s) + 's';
+  }
+
+  return ms + 'ms';
+}
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+
+function fmtLong(ms) {
+  var msAbs = Math.abs(ms);
+
+  if (msAbs >= d) {
+    return plural(ms, msAbs, d, 'day');
+  }
+
+  if (msAbs >= h) {
+    return plural(ms, msAbs, h, 'hour');
+  }
+
+  if (msAbs >= m) {
+    return plural(ms, msAbs, m, 'minute');
+  }
+
+  if (msAbs >= s) {
+    return plural(ms, msAbs, s, 'second');
+  }
+
+  return ms + ' ms';
+}
+/**
+ * Pluralization helper.
+ */
+
+
+function plural(ms, msAbs, n, name) {
+  var isPlural = msAbs >= n * 1.5;
+  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
+}
+
+/***/ }),
+
 /***/ "./node_modules/debug/src/browser.js":
 /*!*******************************************!*\
   !*** ./node_modules/debug/src/browser.js ***!
@@ -93,27 +285,24 @@
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+/* WEBPACK VAR INJECTION */(function(process) {function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 /* eslint-env browser */
 
 /**
  * This is the web browser implementation of `debug()`.
  */
-
 exports.log = log;
 exports.formatArgs = formatArgs;
 exports.save = save;
 exports.load = load;
 exports.useColors = useColors;
 exports.storage = localstorage();
-
 /**
  * Colors.
  */
 
 exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066FF', '#0099CC', '#0099FF', '#00CC00', '#00CC33', '#00CC66', '#00CC99', '#00CCCC', '#00CCFF', '#3300CC', '#3300FF', '#3333CC', '#3333FF', '#3366CC', '#3366FF', '#3399CC', '#3399FF', '#33CC00', '#33CC33', '#33CC66', '#33CC99', '#33CCCC', '#33CCFF', '#6600CC', '#6600FF', '#6633CC', '#6633FF', '#66CC00', '#66CC33', '#9900CC', '#9900FF', '#9933CC', '#9933FF', '#99CC00', '#99CC33', '#CC0000', '#CC0033', '#CC0066', '#CC0099', '#CC00CC', '#CC00FF', '#CC3300', '#CC3333', '#CC3366', '#CC3399', '#CC33CC', '#CC33FF', '#CC6600', '#CC6633', '#CC9900', '#CC9933', '#CCCC00', '#CCCC33', '#FF0000', '#FF0033', '#FF0066', '#FF0099', '#FF00CC', '#FF00FF', '#FF3300', '#FF3333', '#FF3366', '#FF3399', '#FF33CC', '#FF33FF', '#FF6600', '#FF6633', '#FF9900', '#FF9933', '#FFCC00', '#FFCC33'];
-
 /**
  * Currently only WebKit-based Web Inspectors, Firefox >= v31,
  * and the Firebug extension (any Firefox version) are known
@@ -121,125 +310,123 @@ exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066F
  *
  * TODO: add a `localStorage` variable to explicitly enable/disable colors
  */
-
 // eslint-disable-next-line complexity
+
 function useColors() {
-	// NB: In an Electron preload script, document will be defined but not fully
-	// initialized. Since we know we're in Chrome, we'll just detect this case
-	// explicitly
-	if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
-		return true;
-	}
+  // NB: In an Electron preload script, document will be defined but not fully
+  // initialized. Since we know we're in Chrome, we'll just detect this case
+  // explicitly
+  if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
+    return true;
+  } // Internet Explorer and Edge do not support colors.
 
-	// Internet Explorer and Edge do not support colors.
-	if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
-		return false;
-	}
 
-	// Is webkit? http://stackoverflow.com/a/16459606/376773
-	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-	return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance ||
-	// Is firebug? http://stackoverflow.com/a/398120/376773
-	typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) ||
-	// Is firefox >= v31?
-	// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-	typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 ||
-	// Double check webkit in userAgent just in case we are in a worker
-	typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
+  if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
+    return false;
+  } // Is webkit? http://stackoverflow.com/a/16459606/376773
+  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+
+
+  return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance || // Is firebug? http://stackoverflow.com/a/398120/376773
+  typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) || // Is firefox >= v31?
+  // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 || // Double check webkit in userAgent just in case we are in a worker
+  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
 }
-
 /**
  * Colorize log arguments if enabled.
  *
  * @api public
  */
 
+
 function formatArgs(args) {
-	args[0] = (this.useColors ? '%c' : '') + this.namespace + (this.useColors ? ' %c' : ' ') + args[0] + (this.useColors ? '%c ' : ' ') + '+' + module.exports.humanize(this.diff);
+  args[0] = (this.useColors ? '%c' : '') + this.namespace + (this.useColors ? ' %c' : ' ') + args[0] + (this.useColors ? '%c ' : ' ') + '+' + module.exports.humanize(this.diff);
 
-	if (!this.useColors) {
-		return;
-	}
+  if (!this.useColors) {
+    return;
+  }
 
-	var c = 'color: ' + this.color;
-	args.splice(1, 0, c, 'color: inherit');
+  var c = 'color: ' + this.color;
+  args.splice(1, 0, c, 'color: inherit'); // The final "%c" is somewhat tricky, because there could be other
+  // arguments passed either before or after the %c, so we need to
+  // figure out the correct index to insert the CSS into
 
-	// The final "%c" is somewhat tricky, because there could be other
-	// arguments passed either before or after the %c, so we need to
-	// figure out the correct index to insert the CSS into
-	var index = 0;
-	var lastC = 0;
-	args[0].replace(/%[a-zA-Z%]/g, function (match) {
-		if (match === '%%') {
-			return;
-		}
-		index++;
-		if (match === '%c') {
-			// We only are interested in the *last* %c
-			// (the user may have provided their own)
-			lastC = index;
-		}
-	});
+  var index = 0;
+  var lastC = 0;
+  args[0].replace(/%[a-zA-Z%]/g, function (match) {
+    if (match === '%%') {
+      return;
+    }
 
-	args.splice(lastC, 0, c);
+    index++;
+
+    if (match === '%c') {
+      // We only are interested in the *last* %c
+      // (the user may have provided their own)
+      lastC = index;
+    }
+  });
+  args.splice(lastC, 0, c);
 }
-
 /**
  * Invokes `console.log()` when available.
  * No-op when `console.log` is not a "function".
  *
  * @api public
  */
+
+
 function log() {
-	var _console;
+  var _console;
 
-	// This hackery is required for IE8/9, where
-	// the `console.log` function doesn't have 'apply'
-	return (typeof console === 'undefined' ? 'undefined' : _typeof(console)) === 'object' && console.log && (_console = console).log.apply(_console, arguments);
+  // This hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return (typeof console === "undefined" ? "undefined" : _typeof(console)) === 'object' && console.log && (_console = console).log.apply(_console, arguments);
 }
-
 /**
  * Save `namespaces`.
  *
  * @param {String} namespaces
  * @api private
  */
-function save(namespaces) {
-	try {
-		if (namespaces) {
-			exports.storage.setItem('debug', namespaces);
-		} else {
-			exports.storage.removeItem('debug');
-		}
-	} catch (error) {
-		// Swallow
-		// XXX (@Qix-) should we be logging these?
-	}
-}
 
+
+function save(namespaces) {
+  try {
+    if (namespaces) {
+      exports.storage.setItem('debug', namespaces);
+    } else {
+      exports.storage.removeItem('debug');
+    }
+  } catch (error) {// Swallow
+    // XXX (@Qix-) should we be logging these?
+  }
+}
 /**
  * Load `namespaces`.
  *
  * @return {String} returns the previously persisted debug modes
  * @api private
  */
+
+
 function load() {
-	var r = void 0;
-	try {
-		r = exports.storage.getItem('debug');
-	} catch (error) {}
-	// Swallow
-	// XXX (@Qix-) should we be logging these?
+  var r;
+
+  try {
+    r = exports.storage.getItem('debug');
+  } catch (error) {} // Swallow
+  // XXX (@Qix-) should we be logging these?
+  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
 
 
-	// If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-	if (!r && typeof process !== 'undefined' && 'env' in process) {
-		r = process.env.DEBUG;
-	}
+  if (!r && typeof process !== 'undefined' && 'env' in process) {
+    r = Object({"NODE_ENV":"development"}).DEBUG;
+  }
 
-	return r;
+  return r;
 }
-
 /**
  * Localstorage attempts to return the localstorage.
  *
@@ -251,33 +438,31 @@ function load() {
  * @api private
  */
 
+
 function localstorage() {
-	try {
-		// TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
-		// The Browser also has localStorage in the global context.
-		return localStorage;
-	} catch (error) {
-		// Swallow
-		// XXX (@Qix-) should we be logging these?
-	}
+  try {
+    // TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+    // The Browser also has localStorage in the global context.
+    return localStorage;
+  } catch (error) {// Swallow
+    // XXX (@Qix-) should we be logging these?
+  }
 }
 
 module.exports = __webpack_require__(/*! ./common */ "./node_modules/debug/src/common.js")(exports);
-
 var formatters = module.exports.formatters;
-
 /**
  * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
  */
 
 formatters.j = function (v) {
-	try {
-		return JSON.stringify(v);
-	} catch (error) {
-		return '[UnexpectedJSONParseError]: ' + error.message;
-	}
+  try {
+    return JSON.stringify(v);
+  } catch (error) {
+    return '[UnexpectedJSONParseError]: ' + error.message;
+  }
 };
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../node-libs-browser/node_modules/process/browser.js */ "./node_modules/node-libs-browser/node_modules/process/browser.js")))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../process/browser.js */ "./node_modules/process/browser.js")))
 
 /***/ }),
 
@@ -288,269 +473,276 @@ formatters.j = function (v) {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
 /**
  * This is the common logic for both the Node.js and web browser
  * implementations of `debug()`.
  */
-
 function setup(env) {
-	createDebug.debug = createDebug;
-	createDebug.default = createDebug;
-	createDebug.coerce = coerce;
-	createDebug.disable = disable;
-	createDebug.enable = enable;
-	createDebug.enabled = enabled;
-	createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
+  createDebug.debug = createDebug;
+  createDebug.default = createDebug;
+  createDebug.coerce = coerce;
+  createDebug.disable = disable;
+  createDebug.enable = enable;
+  createDebug.enabled = enabled;
+  createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/debug/node_modules/ms/index.js");
+  Object.keys(env).forEach(function (key) {
+    createDebug[key] = env[key];
+  });
+  /**
+  * Active `debug` instances.
+  */
 
-	Object.keys(env).forEach(function (key) {
-		createDebug[key] = env[key];
-	});
+  createDebug.instances = [];
+  /**
+  * The currently active debug mode names, and names to skip.
+  */
 
-	/**
- * Active `debug` instances.
- */
-	createDebug.instances = [];
+  createDebug.names = [];
+  createDebug.skips = [];
+  /**
+  * Map of special "%n" handling functions, for the debug "format" argument.
+  *
+  * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+  */
 
-	/**
- * The currently active debug mode names, and names to skip.
- */
+  createDebug.formatters = {};
+  /**
+  * Selects a color for a debug namespace
+  * @param {String} namespace The namespace string for the for the debug instance to be colored
+  * @return {Number|String} An ANSI color code for the given namespace
+  * @api private
+  */
 
-	createDebug.names = [];
-	createDebug.skips = [];
+  function selectColor(namespace) {
+    var hash = 0;
 
-	/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
- */
-	createDebug.formatters = {};
+    for (var i = 0; i < namespace.length; i++) {
+      hash = (hash << 5) - hash + namespace.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
+    }
 
-	/**
- * Selects a color for a debug namespace
- * @param {String} namespace The namespace string for the for the debug instance to be colored
- * @return {Number|String} An ANSI color code for the given namespace
- * @api private
- */
-	function selectColor(namespace) {
-		var hash = 0;
+    return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
+  }
 
-		for (var i = 0; i < namespace.length; i++) {
-			hash = (hash << 5) - hash + namespace.charCodeAt(i);
-			hash |= 0; // Convert to 32bit integer
-		}
+  createDebug.selectColor = selectColor;
+  /**
+  * Create a debugger with the given `namespace`.
+  *
+  * @param {String} namespace
+  * @return {Function}
+  * @api public
+  */
 
-		return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
-	}
-	createDebug.selectColor = selectColor;
+  function createDebug(namespace) {
+    var prevTime;
 
-	/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
-	function createDebug(namespace) {
-		var prevTime = void 0;
+    function debug() {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
 
-		function debug() {
-			for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-				args[_key] = arguments[_key];
-			}
+      // Disabled?
+      if (!debug.enabled) {
+        return;
+      }
 
-			// Disabled?
-			if (!debug.enabled) {
-				return;
-			}
+      var self = debug; // Set `diff` timestamp
 
-			var self = debug;
+      var curr = Number(new Date());
+      var ms = curr - (prevTime || curr);
+      self.diff = ms;
+      self.prev = prevTime;
+      self.curr = curr;
+      prevTime = curr;
+      args[0] = createDebug.coerce(args[0]);
 
-			// Set `diff` timestamp
-			var curr = Number(new Date());
-			var ms = curr - (prevTime || curr);
-			self.diff = ms;
-			self.prev = prevTime;
-			self.curr = curr;
-			prevTime = curr;
+      if (typeof args[0] !== 'string') {
+        // Anything else let's inspect with %O
+        args.unshift('%O');
+      } // Apply any `formatters` transformations
 
-			args[0] = createDebug.coerce(args[0]);
 
-			if (typeof args[0] !== 'string') {
-				// Anything else let's inspect with %O
-				args.unshift('%O');
-			}
+      var index = 0;
+      args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
+        // If we encounter an escaped % then don't increase the array index
+        if (match === '%%') {
+          return match;
+        }
 
-			// Apply any `formatters` transformations
-			var index = 0;
-			args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
-				// If we encounter an escaped % then don't increase the array index
-				if (match === '%%') {
-					return match;
-				}
-				index++;
-				var formatter = createDebug.formatters[format];
-				if (typeof formatter === 'function') {
-					var val = args[index];
-					match = formatter.call(self, val);
+        index++;
+        var formatter = createDebug.formatters[format];
 
-					// Now we need to remove `args[index]` since it's inlined in the `format`
-					args.splice(index, 1);
-					index--;
-				}
-				return match;
-			});
+        if (typeof formatter === 'function') {
+          var val = args[index];
+          match = formatter.call(self, val); // Now we need to remove `args[index]` since it's inlined in the `format`
 
-			// Apply env-specific formatting (colors, etc.)
-			createDebug.formatArgs.call(self, args);
+          args.splice(index, 1);
+          index--;
+        }
 
-			var logFn = self.log || createDebug.log;
-			logFn.apply(self, args);
-		}
+        return match;
+      }); // Apply env-specific formatting (colors, etc.)
 
-		debug.namespace = namespace;
-		debug.enabled = createDebug.enabled(namespace);
-		debug.useColors = createDebug.useColors();
-		debug.color = selectColor(namespace);
-		debug.destroy = destroy;
-		debug.extend = extend;
-		// Debug.formatArgs = formatArgs;
-		// debug.rawLog = rawLog;
+      createDebug.formatArgs.call(self, args);
+      var logFn = self.log || createDebug.log;
+      logFn.apply(self, args);
+    }
 
-		// env-specific initialization logic for debug instances
-		if (typeof createDebug.init === 'function') {
-			createDebug.init(debug);
-		}
+    debug.namespace = namespace;
+    debug.enabled = createDebug.enabled(namespace);
+    debug.useColors = createDebug.useColors();
+    debug.color = selectColor(namespace);
+    debug.destroy = destroy;
+    debug.extend = extend; // Debug.formatArgs = formatArgs;
+    // debug.rawLog = rawLog;
+    // env-specific initialization logic for debug instances
 
-		createDebug.instances.push(debug);
+    if (typeof createDebug.init === 'function') {
+      createDebug.init(debug);
+    }
 
-		return debug;
-	}
+    createDebug.instances.push(debug);
+    return debug;
+  }
 
-	function destroy() {
-		var index = createDebug.instances.indexOf(this);
-		if (index !== -1) {
-			createDebug.instances.splice(index, 1);
-			return true;
-		}
-		return false;
-	}
+  function destroy() {
+    var index = createDebug.instances.indexOf(this);
 
-	function extend(namespace, delimiter) {
-		return createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
-	}
+    if (index !== -1) {
+      createDebug.instances.splice(index, 1);
+      return true;
+    }
 
-	/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
-	function enable(namespaces) {
-		createDebug.save(namespaces);
+    return false;
+  }
 
-		createDebug.names = [];
-		createDebug.skips = [];
+  function extend(namespace, delimiter) {
+    var newDebug = createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+    newDebug.log = this.log;
+    return newDebug;
+  }
+  /**
+  * Enables a debug mode by namespaces. This can include modes
+  * separated by a colon and wildcards.
+  *
+  * @param {String} namespaces
+  * @api public
+  */
 
-		var i = void 0;
-		var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-		var len = split.length;
 
-		for (i = 0; i < len; i++) {
-			if (!split[i]) {
-				// ignore empty strings
-				continue;
-			}
+  function enable(namespaces) {
+    createDebug.save(namespaces);
+    createDebug.names = [];
+    createDebug.skips = [];
+    var i;
+    var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+    var len = split.length;
 
-			namespaces = split[i].replace(/\*/g, '.*?');
+    for (i = 0; i < len; i++) {
+      if (!split[i]) {
+        // ignore empty strings
+        continue;
+      }
 
-			if (namespaces[0] === '-') {
-				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-			} else {
-				createDebug.names.push(new RegExp('^' + namespaces + '$'));
-			}
-		}
+      namespaces = split[i].replace(/\*/g, '.*?');
 
-		for (i = 0; i < createDebug.instances.length; i++) {
-			var instance = createDebug.instances[i];
-			instance.enabled = createDebug.enabled(instance.namespace);
-		}
-	}
+      if (namespaces[0] === '-') {
+        createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+      } else {
+        createDebug.names.push(new RegExp('^' + namespaces + '$'));
+      }
+    }
 
-	/**
- * Disable debug output.
- *
- * @return {String} namespaces
- * @api public
- */
-	function disable() {
-		var namespaces = [].concat(_toConsumableArray(createDebug.names.map(toNamespace)), _toConsumableArray(createDebug.skips.map(toNamespace).map(function (namespace) {
-			return '-' + namespace;
-		}))).join(',');
-		createDebug.enable('');
-		return namespaces;
-	}
+    for (i = 0; i < createDebug.instances.length; i++) {
+      var instance = createDebug.instances[i];
+      instance.enabled = createDebug.enabled(instance.namespace);
+    }
+  }
+  /**
+  * Disable debug output.
+  *
+  * @return {String} namespaces
+  * @api public
+  */
 
-	/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-	function enabled(name) {
-		if (name[name.length - 1] === '*') {
-			return true;
-		}
 
-		var i = void 0;
-		var len = void 0;
+  function disable() {
+    var namespaces = [].concat(_toConsumableArray(createDebug.names.map(toNamespace)), _toConsumableArray(createDebug.skips.map(toNamespace).map(function (namespace) {
+      return '-' + namespace;
+    }))).join(',');
+    createDebug.enable('');
+    return namespaces;
+  }
+  /**
+  * Returns true if the given mode name is enabled, false otherwise.
+  *
+  * @param {String} name
+  * @return {Boolean}
+  * @api public
+  */
 
-		for (i = 0, len = createDebug.skips.length; i < len; i++) {
-			if (createDebug.skips[i].test(name)) {
-				return false;
-			}
-		}
 
-		for (i = 0, len = createDebug.names.length; i < len; i++) {
-			if (createDebug.names[i].test(name)) {
-				return true;
-			}
-		}
+  function enabled(name) {
+    if (name[name.length - 1] === '*') {
+      return true;
+    }
 
-		return false;
-	}
+    var i;
+    var len;
 
-	/**
- * Convert regexp to namespace
- *
- * @param {RegExp} regxep
- * @return {String} namespace
- * @api private
- */
-	function toNamespace(regexp) {
-		return regexp.toString().substring(2, regexp.toString().length - 2).replace(/\.\*\?$/, '*');
-	}
+    for (i = 0, len = createDebug.skips.length; i < len; i++) {
+      if (createDebug.skips[i].test(name)) {
+        return false;
+      }
+    }
 
-	/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-	function coerce(val) {
-		if (val instanceof Error) {
-			return val.stack || val.message;
-		}
-		return val;
-	}
+    for (i = 0, len = createDebug.names.length; i < len; i++) {
+      if (createDebug.names[i].test(name)) {
+        return true;
+      }
+    }
 
-	createDebug.enable(createDebug.load());
+    return false;
+  }
+  /**
+  * Convert regexp to namespace
+  *
+  * @param {RegExp} regxep
+  * @return {String} namespace
+  * @api private
+  */
 
-	return createDebug;
+
+  function toNamespace(regexp) {
+    return regexp.toString().substring(2, regexp.toString().length - 2).replace(/\.\*\?$/, '*');
+  }
+  /**
+  * Coerce `val`.
+  *
+  * @param {Mixed} val
+  * @return {Mixed}
+  * @api private
+  */
+
+
+  function coerce(val) {
+    if (val instanceof Error) {
+      return val.stack || val.message;
+    }
+
+    return val;
+  }
+
+  createDebug.enable(createDebug.load());
+  return createDebug;
 }
 
 module.exports = setup;
@@ -567,9 +759,10 @@ module.exports = setup;
 var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js");
 
 /** Built-in value references. */
-var _Symbol = root.Symbol;
+var Symbol = root.Symbol;
 
-module.exports = _Symbol;
+module.exports = Symbol;
+
 
 /***/ }),
 
@@ -592,19 +785,16 @@ module.exports = _Symbol;
  */
 function apply(func, thisArg, args) {
   switch (args.length) {
-    case 0:
-      return func.call(thisArg);
-    case 1:
-      return func.call(thisArg, args[0]);
-    case 2:
-      return func.call(thisArg, args[0], args[1]);
-    case 3:
-      return func.call(thisArg, args[0], args[1], args[2]);
+    case 0: return func.call(thisArg);
+    case 1: return func.call(thisArg, args[0]);
+    case 2: return func.call(thisArg, args[0], args[1]);
+    case 3: return func.call(thisArg, args[0], args[1], args[2]);
   }
   return func.apply(thisArg, args);
 }
 
 module.exports = apply;
+
 
 /***/ }),
 
@@ -646,15 +836,17 @@ function arrayLikeKeys(value, inherited) {
       length = result.length;
 
   for (var key in value) {
-    if ((inherited || hasOwnProperty.call(value, key)) && !(skipIndexes && (
-    // Safari 9 has enumerable `arguments.length` in strict mode.
-    key == 'length' ||
-    // Node.js 0.10 has enumerable non-index properties on buffers.
-    isBuff && (key == 'offset' || key == 'parent') ||
-    // PhantomJS 2 has enumerable non-index properties on typed arrays.
-    isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset') ||
-    // Skip index properties.
-    isIndex(key, length)))) {
+    if ((inherited || hasOwnProperty.call(value, key)) &&
+        !(skipIndexes && (
+           // Safari 9 has enumerable `arguments.length` in strict mode.
+           key == 'length' ||
+           // Node.js 0.10 has enumerable non-index properties on buffers.
+           (isBuff && (key == 'offset' || key == 'parent')) ||
+           // PhantomJS 2 has enumerable non-index properties on typed arrays.
+           (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
+           // Skip index properties.
+           isIndex(key, length)
+        ))) {
       result.push(key);
     }
   }
@@ -662,6 +854,7 @@ function arrayLikeKeys(value, inherited) {
 }
 
 module.exports = arrayLikeKeys;
+
 
 /***/ }),
 
@@ -672,7 +865,7 @@ module.exports = arrayLikeKeys;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var _Symbol = __webpack_require__(/*! ./_Symbol */ "./node_modules/lodash/_Symbol.js"),
+var Symbol = __webpack_require__(/*! ./_Symbol */ "./node_modules/lodash/_Symbol.js"),
     getRawTag = __webpack_require__(/*! ./_getRawTag */ "./node_modules/lodash/_getRawTag.js"),
     objectToString = __webpack_require__(/*! ./_objectToString */ "./node_modules/lodash/_objectToString.js");
 
@@ -681,7 +874,7 @@ var nullTag = '[object Null]',
     undefinedTag = '[object Undefined]';
 
 /** Built-in value references. */
-var symToStringTag = _Symbol ? _Symbol.toStringTag : undefined;
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
 
 /**
  * The base implementation of `getTag` without fallbacks for buggy environments.
@@ -691,13 +884,16 @@ var symToStringTag = _Symbol ? _Symbol.toStringTag : undefined;
  * @returns {string} Returns the `toStringTag`.
  */
 function baseGetTag(value) {
-    if (value == null) {
-        return value === undefined ? undefinedTag : nullTag;
-    }
-    return symToStringTag && symToStringTag in Object(value) ? getRawTag(value) : objectToString(value);
+  if (value == null) {
+    return value === undefined ? undefinedTag : nullTag;
+  }
+  return (symToStringTag && symToStringTag in Object(value))
+    ? getRawTag(value)
+    : objectToString(value);
 }
 
 module.exports = baseGetTag;
+
 
 /***/ }),
 
@@ -726,6 +922,7 @@ function baseIsArguments(value) {
 }
 
 module.exports = baseIsArguments;
+
 
 /***/ }),
 
@@ -761,7 +958,10 @@ var funcToString = funcProto.toString;
 var hasOwnProperty = objectProto.hasOwnProperty;
 
 /** Used to detect if a method is native. */
-var reIsNative = RegExp('^' + funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&').replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$');
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
 
 /**
  * The base implementation of `_.isNative` without bad shim checks.
@@ -780,6 +980,7 @@ function baseIsNative(value) {
 }
 
 module.exports = baseIsNative;
+
 
 /***/ }),
 
@@ -823,8 +1024,19 @@ var arrayBufferTag = '[object ArrayBuffer]',
 
 /** Used to identify `toStringTag` values of typed arrays. */
 var typedArrayTags = {};
-typedArrayTags[float32Tag] = typedArrayTags[float64Tag] = typedArrayTags[int8Tag] = typedArrayTags[int16Tag] = typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] = typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] = typedArrayTags[uint32Tag] = true;
-typedArrayTags[argsTag] = typedArrayTags[arrayTag] = typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] = typedArrayTags[dataViewTag] = typedArrayTags[dateTag] = typedArrayTags[errorTag] = typedArrayTags[funcTag] = typedArrayTags[mapTag] = typedArrayTags[numberTag] = typedArrayTags[objectTag] = typedArrayTags[regexpTag] = typedArrayTags[setTag] = typedArrayTags[stringTag] = typedArrayTags[weakMapTag] = false;
+typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
+typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
+typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
+typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
+typedArrayTags[uint32Tag] = true;
+typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
+typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
+typedArrayTags[errorTag] = typedArrayTags[funcTag] =
+typedArrayTags[mapTag] = typedArrayTags[numberTag] =
+typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+typedArrayTags[setTag] = typedArrayTags[stringTag] =
+typedArrayTags[weakMapTag] = false;
 
 /**
  * The base implementation of `_.isTypedArray` without Node.js optimizations.
@@ -834,10 +1046,12 @@ typedArrayTags[argsTag] = typedArrayTags[arrayTag] = typedArrayTags[arrayBufferT
  * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
  */
 function baseIsTypedArray(value) {
-    return isObjectLike(value) && isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
+  return isObjectLike(value) &&
+    isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
 }
 
 module.exports = baseIsTypedArray;
+
 
 /***/ }),
 
@@ -882,6 +1096,7 @@ function baseKeysIn(object) {
 
 module.exports = baseKeysIn;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_baseRest.js":
@@ -909,6 +1124,7 @@ function baseRest(func, start) {
 
 module.exports = baseRest;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_baseSetToString.js":
@@ -930,7 +1146,7 @@ var constant = __webpack_require__(/*! ./constant */ "./node_modules/lodash/cons
  * @param {Function} string The `toString` result.
  * @returns {Function} Returns `func`.
  */
-var baseSetToString = !defineProperty ? identity : function (func, string) {
+var baseSetToString = !defineProperty ? identity : function(func, string) {
   return defineProperty(func, 'toString', {
     'configurable': true,
     'enumerable': false,
@@ -940,6 +1156,7 @@ var baseSetToString = !defineProperty ? identity : function (func, string) {
 };
 
 module.exports = baseSetToString;
+
 
 /***/ }),
 
@@ -971,6 +1188,7 @@ function baseTimes(n, iteratee) {
 
 module.exports = baseTimes;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_baseUnary.js":
@@ -988,12 +1206,13 @@ module.exports = baseTimes;
  * @returns {Function} Returns the new capped function.
  */
 function baseUnary(func) {
-  return function (value) {
+  return function(value) {
     return func(value);
   };
 }
 
 module.exports = baseUnary;
+
 
 /***/ }),
 
@@ -1011,6 +1230,7 @@ var coreJsData = root['__core-js_shared__'];
 
 module.exports = coreJsData;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_defineProperty.js":
@@ -1022,15 +1242,16 @@ module.exports = coreJsData;
 
 var getNative = __webpack_require__(/*! ./_getNative */ "./node_modules/lodash/_getNative.js");
 
-var defineProperty = function () {
+var defineProperty = (function() {
   try {
     var func = getNative(Object, 'defineProperty');
     func({}, '', {});
     return func;
   } catch (e) {}
-}();
+}());
 
 module.exports = defineProperty;
+
 
 /***/ }),
 
@@ -1041,12 +1262,11 @@ module.exports = defineProperty;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = (typeof global === 'undefined' ? 'undefined' : _typeof(global)) == 'object' && global && global.Object === Object && global;
+/* WEBPACK VAR INJECTION */(function(global) {/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
 
 module.exports = freeGlobal;
+
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
 /***/ }),
@@ -1076,6 +1296,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_getRawTag.js":
@@ -1085,7 +1306,7 @@ module.exports = getNative;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var _Symbol = __webpack_require__(/*! ./_Symbol */ "./node_modules/lodash/_Symbol.js");
+var Symbol = __webpack_require__(/*! ./_Symbol */ "./node_modules/lodash/_Symbol.js");
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -1101,7 +1322,7 @@ var hasOwnProperty = objectProto.hasOwnProperty;
 var nativeObjectToString = objectProto.toString;
 
 /** Built-in value references. */
-var symToStringTag = _Symbol ? _Symbol.toStringTag : undefined;
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
 
 /**
  * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
@@ -1132,6 +1353,7 @@ function getRawTag(value) {
 
 module.exports = getRawTag;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_getValue.js":
@@ -1155,6 +1377,7 @@ function getValue(object, key) {
 
 module.exports = getValue;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_isIndex.js":
@@ -1163,8 +1386,6 @@ module.exports = getValue;
   \*****************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
@@ -1181,13 +1402,17 @@ var reIsUint = /^(?:0|[1-9]\d*)$/;
  * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
  */
 function isIndex(value, length) {
-  var type = typeof value === 'undefined' ? 'undefined' : _typeof(value);
+  var type = typeof value;
   length = length == null ? MAX_SAFE_INTEGER : length;
 
-  return !!length && (type == 'number' || type != 'symbol' && reIsUint.test(value)) && value > -1 && value % 1 == 0 && value < length;
+  return !!length &&
+    (type == 'number' ||
+      (type != 'symbol' && reIsUint.test(value))) &&
+        (value > -1 && value % 1 == 0 && value < length);
 }
 
 module.exports = isIndex;
+
 
 /***/ }),
 
@@ -1197,8 +1422,6 @@ module.exports = isIndex;
   \************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var eq = __webpack_require__(/*! ./eq */ "./node_modules/lodash/eq.js"),
     isArrayLike = __webpack_require__(/*! ./isArrayLike */ "./node_modules/lodash/isArrayLike.js"),
@@ -1219,14 +1442,18 @@ function isIterateeCall(value, index, object) {
   if (!isObject(object)) {
     return false;
   }
-  var type = typeof index === 'undefined' ? 'undefined' : _typeof(index);
-  if (type == 'number' ? isArrayLike(object) && isIndex(index, object.length) : type == 'string' && index in object) {
+  var type = typeof index;
+  if (type == 'number'
+        ? (isArrayLike(object) && isIndex(index, object.length))
+        : (type == 'string' && index in object)
+      ) {
     return eq(object[index], value);
   }
   return false;
 }
 
 module.exports = isIterateeCall;
+
 
 /***/ }),
 
@@ -1240,10 +1467,10 @@ module.exports = isIterateeCall;
 var coreJsData = __webpack_require__(/*! ./_coreJsData */ "./node_modules/lodash/_coreJsData.js");
 
 /** Used to detect methods masquerading as native. */
-var maskSrcKey = function () {
+var maskSrcKey = (function() {
   var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-  return uid ? 'Symbol(src)_1.' + uid : '';
-}();
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
 
 /**
  * Checks if `func` has its source masked.
@@ -1253,10 +1480,11 @@ var maskSrcKey = function () {
  * @returns {boolean} Returns `true` if `func` is masked, else `false`.
  */
 function isMasked(func) {
-  return !!maskSrcKey && maskSrcKey in func;
+  return !!maskSrcKey && (maskSrcKey in func);
 }
 
 module.exports = isMasked;
+
 
 /***/ }),
 
@@ -1279,12 +1507,13 @@ var objectProto = Object.prototype;
  */
 function isPrototype(value) {
   var Ctor = value && value.constructor,
-      proto = typeof Ctor == 'function' && Ctor.prototype || objectProto;
+      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
 
   return value === proto;
 }
 
 module.exports = isPrototype;
+
 
 /***/ }),
 
@@ -1316,6 +1545,7 @@ function nativeKeysIn(object) {
 
 module.exports = nativeKeysIn;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_nodeUtil.js":
@@ -1325,15 +1555,13 @@ module.exports = nativeKeysIn;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(module) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var freeGlobal = __webpack_require__(/*! ./_freeGlobal */ "./node_modules/lodash/_freeGlobal.js");
+/* WEBPACK VAR INJECTION */(function(module) {var freeGlobal = __webpack_require__(/*! ./_freeGlobal */ "./node_modules/lodash/_freeGlobal.js");
 
 /** Detect free variable `exports`. */
-var freeExports = ( false ? undefined : _typeof(exports)) == 'object' && exports && !exports.nodeType && exports;
+var freeExports =  true && exports && !exports.nodeType && exports;
 
 /** Detect free variable `module`. */
-var freeModule = freeExports && ( false ? undefined : _typeof(module)) == 'object' && module && !module.nodeType && module;
+var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
 
 /** Detect the popular CommonJS extension `module.exports`. */
 var moduleExports = freeModule && freeModule.exports === freeExports;
@@ -1342,7 +1570,7 @@ var moduleExports = freeModule && freeModule.exports === freeExports;
 var freeProcess = moduleExports && freeGlobal.process;
 
 /** Used to access faster Node.js helpers. */
-var nodeUtil = function () {
+var nodeUtil = (function() {
   try {
     // Use `util.types` for Node.js 10+.
     var types = freeModule && freeModule.require && freeModule.require('util').types;
@@ -1354,9 +1582,10 @@ var nodeUtil = function () {
     // Legacy `process.binding('util')` for Node.js < 10.
     return freeProcess && freeProcess.binding && freeProcess.binding('util');
   } catch (e) {}
-}();
+}());
 
 module.exports = nodeUtil;
+
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/module.js */ "./node_modules/webpack/buildin/module.js")(module)))
 
 /***/ }),
@@ -1391,6 +1620,7 @@ function objectToString(value) {
 
 module.exports = objectToString;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_overRest.js":
@@ -1415,8 +1645,8 @@ var nativeMax = Math.max;
  * @returns {Function} Returns the new function.
  */
 function overRest(func, start, transform) {
-  start = nativeMax(start === undefined ? func.length - 1 : start, 0);
-  return function () {
+  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+  return function() {
     var args = arguments,
         index = -1,
         length = nativeMax(args.length - start, 0),
@@ -1437,6 +1667,7 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/_root.js":
@@ -1446,17 +1677,16 @@ module.exports = overRest;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 var freeGlobal = __webpack_require__(/*! ./_freeGlobal */ "./node_modules/lodash/_freeGlobal.js");
 
 /** Detect free variable `self`. */
-var freeSelf = (typeof self === 'undefined' ? 'undefined' : _typeof(self)) == 'object' && self && self.Object === Object && self;
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
 
 /** Used as a reference to the global object. */
 var root = freeGlobal || freeSelf || Function('return this')();
 
 module.exports = root;
+
 
 /***/ }),
 
@@ -1481,6 +1711,7 @@ var baseSetToString = __webpack_require__(/*! ./_baseSetToString */ "./node_modu
 var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
+
 
 /***/ }),
 
@@ -1511,7 +1742,7 @@ function shortOut(func) {
   var count = 0,
       lastCalled = 0;
 
-  return function () {
+  return function() {
     var stamp = nativeNow(),
         remaining = HOT_SPAN - (stamp - lastCalled);
 
@@ -1528,6 +1759,7 @@ function shortOut(func) {
 }
 
 module.exports = shortOut;
+
 
 /***/ }),
 
@@ -1557,13 +1789,14 @@ function toSource(func) {
       return funcToString.call(func);
     } catch (e) {}
     try {
-      return func + '';
+      return (func + '');
     } catch (e) {}
   }
   return '';
 }
 
 module.exports = toSource;
+
 
 /***/ }),
 
@@ -1594,12 +1827,13 @@ module.exports = toSource;
  * // => true
  */
 function constant(value) {
-  return function () {
+  return function() {
     return value;
   };
 }
 
 module.exports = constant;
+
 
 /***/ }),
 
@@ -1642,7 +1876,7 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * _.defaults({ 'a': 1 }, { 'b': 2 }, { 'a': 3 });
  * // => { 'a': 1, 'b': 2 }
  */
-var defaults = baseRest(function (object, sources) {
+var defaults = baseRest(function(object, sources) {
   object = Object(object);
 
   var index = -1;
@@ -1663,7 +1897,8 @@ var defaults = baseRest(function (object, sources) {
       var key = props[propsIndex];
       var value = object[key];
 
-      if (value === undefined || eq(value, objectProto[key]) && !hasOwnProperty.call(object, key)) {
+      if (value === undefined ||
+          (eq(value, objectProto[key]) && !hasOwnProperty.call(object, key))) {
         object[key] = source[key];
       }
     }
@@ -1673,6 +1908,7 @@ var defaults = baseRest(function (object, sources) {
 });
 
 module.exports = defaults;
+
 
 /***/ }),
 
@@ -1716,10 +1952,11 @@ module.exports = defaults;
  * // => true
  */
 function eq(value, other) {
-  return value === other || value !== value && other !== other;
+  return value === other || (value !== value && other !== other);
 }
 
 module.exports = eq;
+
 
 /***/ }),
 
@@ -1751,6 +1988,7 @@ function identity(value) {
 }
 
 module.exports = identity;
+
 
 /***/ }),
 
@@ -1791,13 +2029,13 @@ var propertyIsEnumerable = objectProto.propertyIsEnumerable;
  * _.isArguments([1, 2, 3]);
  * // => false
  */
-var isArguments = baseIsArguments(function () {
-    return arguments;
-}()) ? baseIsArguments : function (value) {
-    return isObjectLike(value) && hasOwnProperty.call(value, 'callee') && !propertyIsEnumerable.call(value, 'callee');
+var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
+  return isObjectLike(value) && hasOwnProperty.call(value, 'callee') &&
+    !propertyIsEnumerable.call(value, 'callee');
 };
 
 module.exports = isArguments;
+
 
 /***/ }),
 
@@ -1834,6 +2072,7 @@ module.exports = isArguments;
 var isArray = Array.isArray;
 
 module.exports = isArray;
+
 
 /***/ }),
 
@@ -1878,6 +2117,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/isBuffer.js":
@@ -1887,16 +2127,14 @@ module.exports = isArrayLike;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(module) {var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js"),
+/* WEBPACK VAR INJECTION */(function(module) {var root = __webpack_require__(/*! ./_root */ "./node_modules/lodash/_root.js"),
     stubFalse = __webpack_require__(/*! ./stubFalse */ "./node_modules/lodash/stubFalse.js");
 
 /** Detect free variable `exports`. */
-var freeExports = ( false ? undefined : _typeof(exports)) == 'object' && exports && !exports.nodeType && exports;
+var freeExports =  true && exports && !exports.nodeType && exports;
 
 /** Detect free variable `module`. */
-var freeModule = freeExports && ( false ? undefined : _typeof(module)) == 'object' && module && !module.nodeType && module;
+var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
 
 /** Detect the popular CommonJS extension `module.exports`. */
 var moduleExports = freeModule && freeModule.exports === freeExports;
@@ -1927,6 +2165,7 @@ var nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined;
 var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
+
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/module.js */ "./node_modules/webpack/buildin/module.js")(module)))
 
 /***/ }),
@@ -1965,16 +2204,17 @@ var asyncTag = '[object AsyncFunction]',
  * // => false
  */
 function isFunction(value) {
-    if (!isObject(value)) {
-        return false;
-    }
-    // The use of `Object#toString` avoids issues with the `typeof` operator
-    // in Safari 9 which returns 'object' for typed arrays and other constructors.
-    var tag = baseGetTag(value);
-    return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
+  if (!isObject(value)) {
+    return false;
+  }
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 9 which returns 'object' for typed arrays and other constructors.
+  var tag = baseGetTag(value);
+  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
 }
 
 module.exports = isFunction;
+
 
 /***/ }),
 
@@ -2015,10 +2255,12 @@ var MAX_SAFE_INTEGER = 9007199254740991;
  * // => false
  */
 function isLength(value) {
-  return typeof value == 'number' && value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
 }
 
 module.exports = isLength;
+
 
 /***/ }),
 
@@ -2028,8 +2270,6 @@ module.exports = isLength;
   \*****************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 /**
  * Checks if `value` is the
@@ -2057,11 +2297,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  * // => false
  */
 function isObject(value) {
-  var type = typeof value === 'undefined' ? 'undefined' : _typeof(value);
+  var type = typeof value;
   return value != null && (type == 'object' || type == 'function');
 }
 
 module.exports = isObject;
+
 
 /***/ }),
 
@@ -2071,8 +2312,6 @@ module.exports = isObject;
   \*********************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
@@ -2099,10 +2338,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  * // => false
  */
 function isObjectLike(value) {
-  return value != null && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) == 'object';
+  return value != null && typeof value == 'object';
 }
 
 module.exports = isObjectLike;
+
 
 /***/ }),
 
@@ -2140,6 +2380,7 @@ var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
 var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
 
 module.exports = isTypedArray;
+
 
 /***/ }),
 
@@ -2183,6 +2424,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
+
 /***/ }),
 
 /***/ "./node_modules/lodash/noop.js":
@@ -2209,6 +2451,7 @@ function noop() {
 }
 
 module.exports = noop;
+
 
 /***/ }),
 
@@ -2238,181 +2481,2428 @@ function stubFalse() {
 
 module.exports = stubFalse;
 
+
 /***/ }),
 
-/***/ "./node_modules/ms/index.js":
-/*!**********************************!*\
-  !*** ./node_modules/ms/index.js ***!
-  \**********************************/
+/***/ "./node_modules/paho-mqtt/paho-mqtt.js":
+/*!*********************************************!*\
+  !*** ./node_modules/paho-mqtt/paho-mqtt.js ***!
+  \*********************************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+/*******************************************************************************
+ * Copyright (c) 2013 IBM Corp.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ *
+ * The Eclipse Public License is available at
+ *    http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ *   http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *    Andrew Banks - initial API and implementation and initial documentation
+ *******************************************************************************/
+
+
+// Only expose a single object name in the global namespace.
+// Everything must go through this module. Global Paho.MQTT module
+// only has a single public function, client, which returns
+// a Paho.MQTT client object given connection details.
 
 /**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var w = d * 7;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
+ * Send and receive messages using web browsers.
+ * <p>
+ * This programming interface lets a JavaScript client application use the MQTT V3.1 or
+ * V3.1.1 protocol to connect to an MQTT-supporting messaging server.
  *
- * Options:
+ * The function supported includes:
+ * <ol>
+ * <li>Connecting to and disconnecting from a server. The server is identified by its host name and port number.
+ * <li>Specifying options that relate to the communications link with the server,
+ * for example the frequency of keep-alive heartbeats, and whether SSL/TLS is required.
+ * <li>Subscribing to and receiving messages from MQTT Topics.
+ * <li>Publishing messages to MQTT Topics.
+ * </ol>
+ * <p>
+ * The API consists of two main objects:
+ * <dl>
+ * <dt><b>{@link Paho.MQTT.Client}</b></dt>
+ * <dd>This contains methods that provide the functionality of the API,
+ * including provision of callbacks that notify the application when a message
+ * arrives from or is delivered to the messaging server,
+ * or when the status of its connection to the messaging server changes.</dd>
+ * <dt><b>{@link Paho.MQTT.Message}</b></dt>
+ * <dd>This encapsulates the payload of the message along with various attributes
+ * associated with its delivery, in particular the destination to which it has
+ * been (or is about to be) sent.</dd>
+ * </dl>
+ * <p>
+ * The programming interface validates parameters passed to it, and will throw
+ * an Error containing an error message intended for developer use, if it detects
+ * an error with any parameter.
+ * <p>
+ * Example:
  *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} [options]
- * @throws {Error} throw an error if val is not a non-empty string or a number
- * @return {String|Number}
- * @api public
- */
+ * <code><pre>
+client = new Paho.MQTT.Client(location.hostname, Number(location.port), "clientId");
+client.onConnectionLost = onConnectionLost;
+client.onMessageArrived = onMessageArrived;
+client.connect({onSuccess:onConnect});
 
-module.exports = function (val, options) {
-  options = options || {};
-  var type = typeof val === 'undefined' ? 'undefined' : _typeof(val);
-  if (type === 'string' && val.length > 0) {
-    return parse(val);
-  } else if (type === 'number' && isNaN(val) === false) {
-    return options.long ? fmtLong(val) : fmtShort(val);
-  }
-  throw new Error('val is not a non-empty string or a valid number. val=' + JSON.stringify(val));
+function onConnect() {
+  // Once a connection has been made, make a subscription and send a message.
+  console.log("onConnect");
+  client.subscribe("/World");
+  message = new Paho.MQTT.Message("Hello");
+  message.destinationName = "/World";
+  client.send(message);
 };
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
+function onConnectionLost(responseObject) {
+  if (responseObject.errorCode !== 0)
+	console.log("onConnectionLost:"+responseObject.errorMessage);
+};
+function onMessageArrived(message) {
+  console.log("onMessageArrived:"+message.payloadString);
+  client.disconnect();
+};
+ * </pre></code>
+ * @namespace Paho.MQTT
  */
 
-function parse(str) {
-  str = String(str);
-  if (str.length > 100) {
-    return;
-  }
-  var match = /^((?:\d+)?\-?\d?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(str);
-  if (!match) {
-    return;
-  }
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'weeks':
-    case 'week':
-    case 'w':
-      return n * w;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-    default:
-      return undefined;
-  }
-}
+/* jshint shadow:true */
+(function ExportLibrary(root, factory) {
+	if(true){
+		module.exports = factory();
+	} else {}
+})(this, function LibraryFactory(){
 
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
 
-function fmtShort(ms) {
-  var msAbs = Math.abs(ms);
-  if (msAbs >= d) {
-    return Math.round(ms / d) + 'd';
-  }
-  if (msAbs >= h) {
-    return Math.round(ms / h) + 'h';
-  }
-  if (msAbs >= m) {
-    return Math.round(ms / m) + 'm';
-  }
-  if (msAbs >= s) {
-    return Math.round(ms / s) + 's';
-  }
-  return ms + 'ms';
-}
+var PahoMQTT = (function (global) {
 
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
+	// Private variables below, these are only visible inside the function closure
+	// which is used to define the module.
 
-function fmtLong(ms) {
-  var msAbs = Math.abs(ms);
-  if (msAbs >= d) {
-    return plural(ms, msAbs, d, 'day');
-  }
-  if (msAbs >= h) {
-    return plural(ms, msAbs, h, 'hour');
-  }
-  if (msAbs >= m) {
-    return plural(ms, msAbs, m, 'minute');
-  }
-  if (msAbs >= s) {
-    return plural(ms, msAbs, s, 'second');
-  }
-  return ms + ' ms';
-}
+	var version = "@VERSION@";
+	var buildLevel = "@BUILDLEVEL@";
 
-/**
- * Pluralization helper.
- */
+	/**
+	 * Unique message type identifiers, with associated
+	 * associated integer values.
+	 * @private
+	 */
+	var MESSAGE_TYPE = {
+		CONNECT: 1,
+		CONNACK: 2,
+		PUBLISH: 3,
+		PUBACK: 4,
+		PUBREC: 5,
+		PUBREL: 6,
+		PUBCOMP: 7,
+		SUBSCRIBE: 8,
+		SUBACK: 9,
+		UNSUBSCRIBE: 10,
+		UNSUBACK: 11,
+		PINGREQ: 12,
+		PINGRESP: 13,
+		DISCONNECT: 14
+	};
 
-function plural(ms, msAbs, n, name) {
-  var isPlural = msAbs >= n * 1.5;
-  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
-}
+	// Collection of utility methods used to simplify module code
+	// and promote the DRY pattern.
+
+	/**
+	 * Validate an object's parameter names to ensure they
+	 * match a list of expected variables name for this option
+	 * type. Used to ensure option object passed into the API don't
+	 * contain erroneous parameters.
+	 * @param {Object} obj - User options object
+	 * @param {Object} keys - valid keys and types that may exist in obj.
+	 * @throws {Error} Invalid option parameter found.
+	 * @private
+	 */
+	var validate = function(obj, keys) {
+		for (var key in obj) {
+			if (obj.hasOwnProperty(key)) {
+				if (keys.hasOwnProperty(key)) {
+					if (typeof obj[key] !== keys[key])
+					   throw new Error(format(ERROR.INVALID_TYPE, [typeof obj[key], key]));
+				} else {
+					var errorStr = "Unknown property, " + key + ". Valid properties are:";
+					for (var validKey in keys)
+						if (keys.hasOwnProperty(validKey))
+							errorStr = errorStr+" "+validKey;
+					throw new Error(errorStr);
+				}
+			}
+		}
+	};
+
+	/**
+	 * Return a new function which runs the user function bound
+	 * to a fixed scope.
+	 * @param {function} User function
+	 * @param {object} Function scope
+	 * @return {function} User function bound to another scope
+	 * @private
+	 */
+	var scope = function (f, scope) {
+		return function () {
+			return f.apply(scope, arguments);
+		};
+	};
+
+	/**
+	 * Unique message type identifiers, with associated
+	 * associated integer values.
+	 * @private
+	 */
+	var ERROR = {
+		OK: {code:0, text:"AMQJSC0000I OK."},
+		CONNECT_TIMEOUT: {code:1, text:"AMQJSC0001E Connect timed out."},
+		SUBSCRIBE_TIMEOUT: {code:2, text:"AMQJS0002E Subscribe timed out."},
+		UNSUBSCRIBE_TIMEOUT: {code:3, text:"AMQJS0003E Unsubscribe timed out."},
+		PING_TIMEOUT: {code:4, text:"AMQJS0004E Ping timed out."},
+		INTERNAL_ERROR: {code:5, text:"AMQJS0005E Internal error. Error Message: {0}, Stack trace: {1}"},
+		CONNACK_RETURNCODE: {code:6, text:"AMQJS0006E Bad Connack return code:{0} {1}."},
+		SOCKET_ERROR: {code:7, text:"AMQJS0007E Socket error:{0}."},
+		SOCKET_CLOSE: {code:8, text:"AMQJS0008I Socket closed."},
+		MALFORMED_UTF: {code:9, text:"AMQJS0009E Malformed UTF data:{0} {1} {2}."},
+		UNSUPPORTED: {code:10, text:"AMQJS0010E {0} is not supported by this browser."},
+		INVALID_STATE: {code:11, text:"AMQJS0011E Invalid state {0}."},
+		INVALID_TYPE: {code:12, text:"AMQJS0012E Invalid type {0} for {1}."},
+		INVALID_ARGUMENT: {code:13, text:"AMQJS0013E Invalid argument {0} for {1}."},
+		UNSUPPORTED_OPERATION: {code:14, text:"AMQJS0014E Unsupported operation."},
+		INVALID_STORED_DATA: {code:15, text:"AMQJS0015E Invalid data in local storage key={0} value={1}."},
+		INVALID_MQTT_MESSAGE_TYPE: {code:16, text:"AMQJS0016E Invalid MQTT message type {0}."},
+		MALFORMED_UNICODE: {code:17, text:"AMQJS0017E Malformed Unicode string:{0} {1}."},
+		BUFFER_FULL: {code:18, text:"AMQJS0018E Message buffer is full, maximum buffer size: {0}."},
+	};
+
+	/** CONNACK RC Meaning. */
+	var CONNACK_RC = {
+		0:"Connection Accepted",
+		1:"Connection Refused: unacceptable protocol version",
+		2:"Connection Refused: identifier rejected",
+		3:"Connection Refused: server unavailable",
+		4:"Connection Refused: bad user name or password",
+		5:"Connection Refused: not authorized"
+	};
+
+	/**
+	 * Format an error message text.
+	 * @private
+	 * @param {error} ERROR.KEY value above.
+	 * @param {substitutions} [array] substituted into the text.
+	 * @return the text with the substitutions made.
+	 */
+	var format = function(error, substitutions) {
+		var text = error.text;
+		if (substitutions) {
+		  var field,start;
+		  for (var i=0; i<substitutions.length; i++) {
+			field = "{"+i+"}";
+			start = text.indexOf(field);
+			if(start > 0) {
+				var part1 = text.substring(0,start);
+				var part2 = text.substring(start+field.length);
+				text = part1+substitutions[i]+part2;
+			}
+		  }
+		}
+		return text;
+	};
+
+	//MQTT protocol and version          6    M    Q    I    s    d    p    3
+	var MqttProtoIdentifierv3 = [0x00,0x06,0x4d,0x51,0x49,0x73,0x64,0x70,0x03];
+	//MQTT proto/version for 311         4    M    Q    T    T    4
+	var MqttProtoIdentifierv4 = [0x00,0x04,0x4d,0x51,0x54,0x54,0x04];
+
+	/**
+	 * Construct an MQTT wire protocol message.
+	 * @param type MQTT packet type.
+	 * @param options optional wire message attributes.
+	 *
+	 * Optional properties
+	 *
+	 * messageIdentifier: message ID in the range [0..65535]
+	 * payloadMessage:	Application Message - PUBLISH only
+	 * connectStrings:	array of 0 or more Strings to be put into the CONNECT payload
+	 * topics:			array of strings (SUBSCRIBE, UNSUBSCRIBE)
+	 * requestQoS:		array of QoS values [0..2]
+	 *
+	 * "Flag" properties
+	 * cleanSession:	true if present / false if absent (CONNECT)
+	 * willMessage:  	true if present / false if absent (CONNECT)
+	 * isRetained:		true if present / false if absent (CONNECT)
+	 * userName:		true if present / false if absent (CONNECT)
+	 * password:		true if present / false if absent (CONNECT)
+	 * keepAliveInterval:	integer [0..65535]  (CONNECT)
+	 *
+	 * @private
+	 * @ignore
+	 */
+	var WireMessage = function (type, options) {
+		this.type = type;
+		for (var name in options) {
+			if (options.hasOwnProperty(name)) {
+				this[name] = options[name];
+			}
+		}
+	};
+
+	WireMessage.prototype.encode = function() {
+		// Compute the first byte of the fixed header
+		var first = ((this.type & 0x0f) << 4);
+
+		/*
+		 * Now calculate the length of the variable header + payload by adding up the lengths
+		 * of all the component parts
+		 */
+
+		var remLength = 0;
+		var topicStrLength = [];
+		var destinationNameLength = 0;
+		var willMessagePayloadBytes;
+
+		// if the message contains a messageIdentifier then we need two bytes for that
+		if (this.messageIdentifier !== undefined)
+			remLength += 2;
+
+		switch(this.type) {
+			// If this a Connect then we need to include 12 bytes for its header
+			case MESSAGE_TYPE.CONNECT:
+				switch(this.mqttVersion) {
+					case 3:
+						remLength += MqttProtoIdentifierv3.length + 3;
+						break;
+					case 4:
+						remLength += MqttProtoIdentifierv4.length + 3;
+						break;
+				}
+
+				remLength += UTF8Length(this.clientId) + 2;
+				if (this.willMessage !== undefined) {
+					remLength += UTF8Length(this.willMessage.destinationName) + 2;
+					// Will message is always a string, sent as UTF-8 characters with a preceding length.
+					willMessagePayloadBytes = this.willMessage.payloadBytes;
+					if (!(willMessagePayloadBytes instanceof Uint8Array))
+						willMessagePayloadBytes = new Uint8Array(payloadBytes);
+					remLength += willMessagePayloadBytes.byteLength +2;
+				}
+				if (this.userName !== undefined)
+					remLength += UTF8Length(this.userName) + 2;
+				if (this.password !== undefined)
+					remLength += UTF8Length(this.password) + 2;
+			break;
+
+			// Subscribe, Unsubscribe can both contain topic strings
+			case MESSAGE_TYPE.SUBSCRIBE:
+				first |= 0x02; // Qos = 1;
+				for ( var i = 0; i < this.topics.length; i++) {
+					topicStrLength[i] = UTF8Length(this.topics[i]);
+					remLength += topicStrLength[i] + 2;
+				}
+				remLength += this.requestedQos.length; // 1 byte for each topic's Qos
+				// QoS on Subscribe only
+				break;
+
+			case MESSAGE_TYPE.UNSUBSCRIBE:
+				first |= 0x02; // Qos = 1;
+				for ( var i = 0; i < this.topics.length; i++) {
+					topicStrLength[i] = UTF8Length(this.topics[i]);
+					remLength += topicStrLength[i] + 2;
+				}
+				break;
+
+			case MESSAGE_TYPE.PUBREL:
+				first |= 0x02; // Qos = 1;
+				break;
+
+			case MESSAGE_TYPE.PUBLISH:
+				if (this.payloadMessage.duplicate) first |= 0x08;
+				first  = first |= (this.payloadMessage.qos << 1);
+				if (this.payloadMessage.retained) first |= 0x01;
+				destinationNameLength = UTF8Length(this.payloadMessage.destinationName);
+				remLength += destinationNameLength + 2;
+				var payloadBytes = this.payloadMessage.payloadBytes;
+				remLength += payloadBytes.byteLength;
+				if (payloadBytes instanceof ArrayBuffer)
+					payloadBytes = new Uint8Array(payloadBytes);
+				else if (!(payloadBytes instanceof Uint8Array))
+					payloadBytes = new Uint8Array(payloadBytes.buffer);
+				break;
+
+			case MESSAGE_TYPE.DISCONNECT:
+				break;
+
+			default:
+				break;
+		}
+
+		// Now we can allocate a buffer for the message
+
+		var mbi = encodeMBI(remLength);  // Convert the length to MQTT MBI format
+		var pos = mbi.length + 1;        // Offset of start of variable header
+		var buffer = new ArrayBuffer(remLength + pos);
+		var byteStream = new Uint8Array(buffer);    // view it as a sequence of bytes
+
+		//Write the fixed header into the buffer
+		byteStream[0] = first;
+		byteStream.set(mbi,1);
+
+		// If this is a PUBLISH then the variable header starts with a topic
+		if (this.type == MESSAGE_TYPE.PUBLISH)
+			pos = writeString(this.payloadMessage.destinationName, destinationNameLength, byteStream, pos);
+		// If this is a CONNECT then the variable header contains the protocol name/version, flags and keepalive time
+
+		else if (this.type == MESSAGE_TYPE.CONNECT) {
+			switch (this.mqttVersion) {
+				case 3:
+					byteStream.set(MqttProtoIdentifierv3, pos);
+					pos += MqttProtoIdentifierv3.length;
+					break;
+				case 4:
+					byteStream.set(MqttProtoIdentifierv4, pos);
+					pos += MqttProtoIdentifierv4.length;
+					break;
+			}
+			var connectFlags = 0;
+			if (this.cleanSession)
+				connectFlags = 0x02;
+			if (this.willMessage !== undefined ) {
+				connectFlags |= 0x04;
+				connectFlags |= (this.willMessage.qos<<3);
+				if (this.willMessage.retained) {
+					connectFlags |= 0x20;
+				}
+			}
+			if (this.userName !== undefined)
+				connectFlags |= 0x80;
+			if (this.password !== undefined)
+				connectFlags |= 0x40;
+			byteStream[pos++] = connectFlags;
+			pos = writeUint16 (this.keepAliveInterval, byteStream, pos);
+		}
+
+		// Output the messageIdentifier - if there is one
+		if (this.messageIdentifier !== undefined)
+			pos = writeUint16 (this.messageIdentifier, byteStream, pos);
+
+		switch(this.type) {
+			case MESSAGE_TYPE.CONNECT:
+				pos = writeString(this.clientId, UTF8Length(this.clientId), byteStream, pos);
+				if (this.willMessage !== undefined) {
+					pos = writeString(this.willMessage.destinationName, UTF8Length(this.willMessage.destinationName), byteStream, pos);
+					pos = writeUint16(willMessagePayloadBytes.byteLength, byteStream, pos);
+					byteStream.set(willMessagePayloadBytes, pos);
+					pos += willMessagePayloadBytes.byteLength;
+
+				}
+			if (this.userName !== undefined)
+				pos = writeString(this.userName, UTF8Length(this.userName), byteStream, pos);
+			if (this.password !== undefined)
+				pos = writeString(this.password, UTF8Length(this.password), byteStream, pos);
+			break;
+
+			case MESSAGE_TYPE.PUBLISH:
+				// PUBLISH has a text or binary payload, if text do not add a 2 byte length field, just the UTF characters.
+				byteStream.set(payloadBytes, pos);
+
+				break;
+
+//    	    case MESSAGE_TYPE.PUBREC:
+//    	    case MESSAGE_TYPE.PUBREL:
+//    	    case MESSAGE_TYPE.PUBCOMP:
+//    	    	break;
+
+			case MESSAGE_TYPE.SUBSCRIBE:
+				// SUBSCRIBE has a list of topic strings and request QoS
+				for (var i=0; i<this.topics.length; i++) {
+					pos = writeString(this.topics[i], topicStrLength[i], byteStream, pos);
+					byteStream[pos++] = this.requestedQos[i];
+				}
+				break;
+
+			case MESSAGE_TYPE.UNSUBSCRIBE:
+				// UNSUBSCRIBE has a list of topic strings
+				for (var i=0; i<this.topics.length; i++)
+					pos = writeString(this.topics[i], topicStrLength[i], byteStream, pos);
+				break;
+
+			default:
+				// Do nothing.
+		}
+
+		return buffer;
+	};
+
+	function decodeMessage(input,pos) {
+	    var startingPos = pos;
+		var first = input[pos];
+		var type = first >> 4;
+		var messageInfo = first &= 0x0f;
+		pos += 1;
+
+
+		// Decode the remaining length (MBI format)
+
+		var digit;
+		var remLength = 0;
+		var multiplier = 1;
+		do {
+			if (pos == input.length) {
+			    return [null,startingPos];
+			}
+			digit = input[pos++];
+			remLength += ((digit & 0x7F) * multiplier);
+			multiplier *= 128;
+		} while ((digit & 0x80) !== 0);
+
+		var endPos = pos+remLength;
+		if (endPos > input.length) {
+		    return [null,startingPos];
+		}
+
+		var wireMessage = new WireMessage(type);
+		switch(type) {
+			case MESSAGE_TYPE.CONNACK:
+				var connectAcknowledgeFlags = input[pos++];
+				if (connectAcknowledgeFlags & 0x01)
+					wireMessage.sessionPresent = true;
+				wireMessage.returnCode = input[pos++];
+				break;
+
+			case MESSAGE_TYPE.PUBLISH:
+				var qos = (messageInfo >> 1) & 0x03;
+
+				var len = readUint16(input, pos);
+				pos += 2;
+				var topicName = parseUTF8(input, pos, len);
+				pos += len;
+				// If QoS 1 or 2 there will be a messageIdentifier
+				if (qos > 0) {
+					wireMessage.messageIdentifier = readUint16(input, pos);
+					pos += 2;
+				}
+
+				var message = new Paho.MQTT.Message(input.subarray(pos, endPos));
+				if ((messageInfo & 0x01) == 0x01)
+					message.retained = true;
+				if ((messageInfo & 0x08) == 0x08)
+					message.duplicate =  true;
+				message.qos = qos;
+				message.destinationName = topicName;
+				wireMessage.payloadMessage = message;
+				break;
+
+			case  MESSAGE_TYPE.PUBACK:
+			case  MESSAGE_TYPE.PUBREC:
+			case  MESSAGE_TYPE.PUBREL:
+			case  MESSAGE_TYPE.PUBCOMP:
+			case  MESSAGE_TYPE.UNSUBACK:
+				wireMessage.messageIdentifier = readUint16(input, pos);
+				break;
+
+			case  MESSAGE_TYPE.SUBACK:
+				wireMessage.messageIdentifier = readUint16(input, pos);
+				pos += 2;
+				wireMessage.returnCode = input.subarray(pos, endPos);
+				break;
+
+			default:
+				break;
+		}
+
+		return [wireMessage,endPos];
+	}
+
+	function writeUint16(input, buffer, offset) {
+		buffer[offset++] = input >> 8;      //MSB
+		buffer[offset++] = input % 256;     //LSB
+		return offset;
+	}
+
+	function writeString(input, utf8Length, buffer, offset) {
+		offset = writeUint16(utf8Length, buffer, offset);
+		stringToUTF8(input, buffer, offset);
+		return offset + utf8Length;
+	}
+
+	function readUint16(buffer, offset) {
+		return 256*buffer[offset] + buffer[offset+1];
+	}
+
+	/**
+	 * Encodes an MQTT Multi-Byte Integer
+	 * @private
+	 */
+	function encodeMBI(number) {
+		var output = new Array(1);
+		var numBytes = 0;
+
+		do {
+			var digit = number % 128;
+			number = number >> 7;
+			if (number > 0) {
+				digit |= 0x80;
+			}
+			output[numBytes++] = digit;
+		} while ( (number > 0) && (numBytes<4) );
+
+		return output;
+	}
+
+	/**
+	 * Takes a String and calculates its length in bytes when encoded in UTF8.
+	 * @private
+	 */
+	function UTF8Length(input) {
+		var output = 0;
+		for (var i = 0; i<input.length; i++)
+		{
+			var charCode = input.charCodeAt(i);
+				if (charCode > 0x7FF)
+				   {
+					  // Surrogate pair means its a 4 byte character
+					  if (0xD800 <= charCode && charCode <= 0xDBFF)
+						{
+						  i++;
+						  output++;
+						}
+				   output +=3;
+				   }
+			else if (charCode > 0x7F)
+				output +=2;
+			else
+				output++;
+		}
+		return output;
+	}
+
+	/**
+	 * Takes a String and writes it into an array as UTF8 encoded bytes.
+	 * @private
+	 */
+	function stringToUTF8(input, output, start) {
+		var pos = start;
+		for (var i = 0; i<input.length; i++) {
+			var charCode = input.charCodeAt(i);
+
+			// Check for a surrogate pair.
+			if (0xD800 <= charCode && charCode <= 0xDBFF) {
+				var lowCharCode = input.charCodeAt(++i);
+				if (isNaN(lowCharCode)) {
+					throw new Error(format(ERROR.MALFORMED_UNICODE, [charCode, lowCharCode]));
+				}
+				charCode = ((charCode - 0xD800)<<10) + (lowCharCode - 0xDC00) + 0x10000;
+
+			}
+
+			if (charCode <= 0x7F) {
+				output[pos++] = charCode;
+			} else if (charCode <= 0x7FF) {
+				output[pos++] = charCode>>6  & 0x1F | 0xC0;
+				output[pos++] = charCode     & 0x3F | 0x80;
+			} else if (charCode <= 0xFFFF) {
+				output[pos++] = charCode>>12 & 0x0F | 0xE0;
+				output[pos++] = charCode>>6  & 0x3F | 0x80;
+				output[pos++] = charCode     & 0x3F | 0x80;
+			} else {
+				output[pos++] = charCode>>18 & 0x07 | 0xF0;
+				output[pos++] = charCode>>12 & 0x3F | 0x80;
+				output[pos++] = charCode>>6  & 0x3F | 0x80;
+				output[pos++] = charCode     & 0x3F | 0x80;
+			}
+		}
+		return output;
+	}
+
+	function parseUTF8(input, offset, length) {
+		var output = "";
+		var utf16;
+		var pos = offset;
+
+		while (pos < offset+length)
+		{
+			var byte1 = input[pos++];
+			if (byte1 < 128)
+				utf16 = byte1;
+			else
+			{
+				var byte2 = input[pos++]-128;
+				if (byte2 < 0)
+					throw new Error(format(ERROR.MALFORMED_UTF, [byte1.toString(16), byte2.toString(16),""]));
+				if (byte1 < 0xE0)             // 2 byte character
+					utf16 = 64*(byte1-0xC0) + byte2;
+				else
+				{
+					var byte3 = input[pos++]-128;
+					if (byte3 < 0)
+						throw new Error(format(ERROR.MALFORMED_UTF, [byte1.toString(16), byte2.toString(16), byte3.toString(16)]));
+					if (byte1 < 0xF0)        // 3 byte character
+						utf16 = 4096*(byte1-0xE0) + 64*byte2 + byte3;
+								else
+								{
+								   var byte4 = input[pos++]-128;
+								   if (byte4 < 0)
+						throw new Error(format(ERROR.MALFORMED_UTF, [byte1.toString(16), byte2.toString(16), byte3.toString(16), byte4.toString(16)]));
+								   if (byte1 < 0xF8)        // 4 byte character
+										   utf16 = 262144*(byte1-0xF0) + 4096*byte2 + 64*byte3 + byte4;
+					   else                     // longer encodings are not supported
+						throw new Error(format(ERROR.MALFORMED_UTF, [byte1.toString(16), byte2.toString(16), byte3.toString(16), byte4.toString(16)]));
+								}
+				}
+			}
+
+				if (utf16 > 0xFFFF)   // 4 byte character - express as a surrogate pair
+				  {
+					 utf16 -= 0x10000;
+					 output += String.fromCharCode(0xD800 + (utf16 >> 10)); // lead character
+					 utf16 = 0xDC00 + (utf16 & 0x3FF);  // trail character
+				  }
+			output += String.fromCharCode(utf16);
+		}
+		return output;
+	}
+
+	/**
+	 * Repeat keepalive requests, monitor responses.
+	 * @ignore
+	 */
+	var Pinger = function(client, window, keepAliveInterval) {
+		this._client = client;
+		this._window = window;
+		this._keepAliveInterval = keepAliveInterval*1000;
+		this.isReset = false;
+
+		var pingReq = new WireMessage(MESSAGE_TYPE.PINGREQ).encode();
+
+		var doTimeout = function (pinger) {
+			return function () {
+				return doPing.apply(pinger);
+			};
+		};
+
+		/** @ignore */
+		var doPing = function() {
+			if (!this.isReset) {
+				this._client._trace("Pinger.doPing", "Timed out");
+				this._client._disconnected( ERROR.PING_TIMEOUT.code , format(ERROR.PING_TIMEOUT));
+			} else {
+				this.isReset = false;
+				this._client._trace("Pinger.doPing", "send PINGREQ");
+				this._client.socket.send(pingReq);
+				this.timeout = this._window.setTimeout(doTimeout(this), this._keepAliveInterval);
+			}
+		};
+
+		this.reset = function() {
+			this.isReset = true;
+			this._window.clearTimeout(this.timeout);
+			if (this._keepAliveInterval > 0)
+				this.timeout = setTimeout(doTimeout(this), this._keepAliveInterval);
+		};
+
+		this.cancel = function() {
+			this._window.clearTimeout(this.timeout);
+		};
+	 };
+
+	/**
+	 * Monitor request completion.
+	 * @ignore
+	 */
+	var Timeout = function(client, window, timeoutSeconds, action, args) {
+		this._window = window;
+		if (!timeoutSeconds)
+			timeoutSeconds = 30;
+
+		var doTimeout = function (action, client, args) {
+			return function () {
+				return action.apply(client, args);
+			};
+		};
+		this.timeout = setTimeout(doTimeout(action, client, args), timeoutSeconds * 1000);
+
+		this.cancel = function() {
+			this._window.clearTimeout(this.timeout);
+		};
+	};
+
+	/*
+	 * Internal implementation of the Websockets MQTT V3.1 client.
+	 *
+	 * @name Paho.MQTT.ClientImpl @constructor
+	 * @param {String} host the DNS nameof the webSocket host.
+	 * @param {Number} port the port number for that host.
+	 * @param {String} clientId the MQ client identifier.
+	 */
+	var ClientImpl = function (uri, host, port, path, clientId) {
+		// Check dependencies are satisfied in this browser.
+		if (!("WebSocket" in global && global.WebSocket !== null)) {
+			throw new Error(format(ERROR.UNSUPPORTED, ["WebSocket"]));
+		}
+		if (!("localStorage" in global && global.localStorage !== null)) {
+			throw new Error(format(ERROR.UNSUPPORTED, ["localStorage"]));
+		}
+		if (!("ArrayBuffer" in global && global.ArrayBuffer !== null)) {
+			throw new Error(format(ERROR.UNSUPPORTED, ["ArrayBuffer"]));
+		}
+		this._trace("Paho.MQTT.Client", uri, host, port, path, clientId);
+
+		this.host = host;
+		this.port = port;
+		this.path = path;
+		this.uri = uri;
+		this.clientId = clientId;
+		this._wsuri = null;
+
+		// Local storagekeys are qualified with the following string.
+		// The conditional inclusion of path in the key is for backward
+		// compatibility to when the path was not configurable and assumed to
+		// be /mqtt
+		this._localKey=host+":"+port+(path!="/mqtt"?":"+path:"")+":"+clientId+":";
+
+		// Create private instance-only message queue
+		// Internal queue of messages to be sent, in sending order.
+		this._msg_queue = [];
+		this._buffered_msg_queue = [];
+
+		// Messages we have sent and are expecting a response for, indexed by their respective message ids.
+		this._sentMessages = {};
+
+		// Messages we have received and acknowleged and are expecting a confirm message for
+		// indexed by their respective message ids.
+		this._receivedMessages = {};
+
+		// Internal list of callbacks to be executed when messages
+		// have been successfully sent over web socket, e.g. disconnect
+		// when it doesn't have to wait for ACK, just message is dispatched.
+		this._notify_msg_sent = {};
+
+		// Unique identifier for SEND messages, incrementing
+		// counter as messages are sent.
+		this._message_identifier = 1;
+
+		// Used to determine the transmission sequence of stored sent messages.
+		this._sequence = 0;
+
+
+		// Load the local state, if any, from the saved version, only restore state relevant to this client.
+		for (var key in localStorage)
+			if (   key.indexOf("Sent:"+this._localKey) === 0 || key.indexOf("Received:"+this._localKey) === 0)
+			this.restore(key);
+	};
+
+	// Messaging Client public instance members.
+	ClientImpl.prototype.host = null;
+	ClientImpl.prototype.port = null;
+	ClientImpl.prototype.path = null;
+	ClientImpl.prototype.uri = null;
+	ClientImpl.prototype.clientId = null;
+
+	// Messaging Client private instance members.
+	ClientImpl.prototype.socket = null;
+	/* true once we have received an acknowledgement to a CONNECT packet. */
+	ClientImpl.prototype.connected = false;
+	/* The largest message identifier allowed, may not be larger than 2**16 but
+	 * if set smaller reduces the maximum number of outbound messages allowed.
+	 */
+	ClientImpl.prototype.maxMessageIdentifier = 65536;
+	ClientImpl.prototype.connectOptions = null;
+	ClientImpl.prototype.hostIndex = null;
+	ClientImpl.prototype.onConnected = null;
+	ClientImpl.prototype.onConnectionLost = null;
+	ClientImpl.prototype.onMessageDelivered = null;
+	ClientImpl.prototype.onMessageArrived = null;
+	ClientImpl.prototype.traceFunction = null;
+	ClientImpl.prototype._msg_queue = null;
+	ClientImpl.prototype._buffered_msg_queue = null;
+	ClientImpl.prototype._connectTimeout = null;
+	/* The sendPinger monitors how long we allow before we send data to prove to the server that we are alive. */
+	ClientImpl.prototype.sendPinger = null;
+	/* The receivePinger monitors how long we allow before we require evidence that the server is alive. */
+	ClientImpl.prototype.receivePinger = null;
+	ClientImpl.prototype._reconnectInterval = 1; // Reconnect Delay, starts at 1 second
+	ClientImpl.prototype._reconnecting = false;
+	ClientImpl.prototype._reconnectTimeout = null;
+	ClientImpl.prototype.disconnectedPublishing = false;
+	ClientImpl.prototype.disconnectedBufferSize = 5000;
+
+	ClientImpl.prototype.receiveBuffer = null;
+
+	ClientImpl.prototype._traceBuffer = null;
+	ClientImpl.prototype._MAX_TRACE_ENTRIES = 100;
+
+	ClientImpl.prototype.connect = function (connectOptions) {
+		var connectOptionsMasked = this._traceMask(connectOptions, "password");
+		this._trace("Client.connect", connectOptionsMasked, this.socket, this.connected);
+
+		if (this.connected)
+			throw new Error(format(ERROR.INVALID_STATE, ["already connected"]));
+		if (this.socket)
+			throw new Error(format(ERROR.INVALID_STATE, ["already connected"]));
+
+		if (this._reconnecting) {
+			// connect() function is called while reconnect is in progress.
+			// Terminate the auto reconnect process to use new connect options.
+			this._reconnectTimeout.cancel();
+			this._reconnectTimeout = null;
+			this._reconnecting = false;
+		}
+
+		this.connectOptions = connectOptions;
+		this._reconnectInterval = 1;
+		this._reconnecting = false;
+		if (connectOptions.uris) {
+			this.hostIndex = 0;
+			this._doConnect(connectOptions.uris[0]);
+		} else {
+			this._doConnect(this.uri);
+		}
+
+	};
+
+	ClientImpl.prototype.subscribe = function (filter, subscribeOptions) {
+		this._trace("Client.subscribe", filter, subscribeOptions);
+
+		if (!this.connected)
+			throw new Error(format(ERROR.INVALID_STATE, ["not connected"]));
+
+		var wireMessage = new WireMessage(MESSAGE_TYPE.SUBSCRIBE);
+		wireMessage.topics=[filter];
+		if (subscribeOptions.qos !== undefined)
+			wireMessage.requestedQos = [subscribeOptions.qos];
+		else
+			wireMessage.requestedQos = [0];
+
+		if (subscribeOptions.onSuccess) {
+			wireMessage.onSuccess = function(grantedQos) {subscribeOptions.onSuccess({invocationContext:subscribeOptions.invocationContext,grantedQos:grantedQos});};
+		}
+
+		if (subscribeOptions.onFailure) {
+			wireMessage.onFailure = function(errorCode) {subscribeOptions.onFailure({invocationContext:subscribeOptions.invocationContext,errorCode:errorCode, errorMessage:format(errorCode)});};
+		}
+
+		if (subscribeOptions.timeout) {
+			wireMessage.timeOut = new Timeout(this, window, subscribeOptions.timeout, subscribeOptions.onFailure,
+						[{invocationContext:subscribeOptions.invocationContext,
+						errorCode:ERROR.SUBSCRIBE_TIMEOUT.code,
+						errorMessage:format(ERROR.SUBSCRIBE_TIMEOUT)}]);
+		}
+
+		// All subscriptions return a SUBACK.
+		this._requires_ack(wireMessage);
+		this._schedule_message(wireMessage);
+	};
+
+	/** @ignore */
+	ClientImpl.prototype.unsubscribe = function(filter, unsubscribeOptions) {
+		this._trace("Client.unsubscribe", filter, unsubscribeOptions);
+
+		if (!this.connected)
+		   throw new Error(format(ERROR.INVALID_STATE, ["not connected"]));
+
+		var wireMessage = new WireMessage(MESSAGE_TYPE.UNSUBSCRIBE);
+		wireMessage.topics = [filter];
+
+		if (unsubscribeOptions.onSuccess) {
+			wireMessage.callback = function() {unsubscribeOptions.onSuccess({invocationContext:unsubscribeOptions.invocationContext});};
+		}
+		if (unsubscribeOptions.timeout) {
+			wireMessage.timeOut = new Timeout(this, window, unsubscribeOptions.timeout, unsubscribeOptions.onFailure,
+					  [{invocationContext:unsubscribeOptions.invocationContext,
+						errorCode:ERROR.UNSUBSCRIBE_TIMEOUT.code,
+						errorMessage:format(ERROR.UNSUBSCRIBE_TIMEOUT)}]);
+		}
+
+		// All unsubscribes return a SUBACK.
+		this._requires_ack(wireMessage);
+		this._schedule_message(wireMessage);
+	};
+
+	ClientImpl.prototype.send = function (message) {
+		this._trace("Client.send", message);
+
+		wireMessage = new WireMessage(MESSAGE_TYPE.PUBLISH);
+		wireMessage.payloadMessage = message;
+
+		if (this.connected) {
+			// Mark qos 1 & 2 message as "ACK required"
+			// For qos 0 message, invoke onMessageDelivered callback if there is one.
+			// Then schedule the message.
+			if (message.qos > 0) {
+			this._requires_ack(wireMessage);
+			} else if (this.onMessageDelivered) {
+			this._notify_msg_sent[wireMessage] = this.onMessageDelivered(wireMessage.payloadMessage);
+			}
+		this._schedule_message(wireMessage);
+		} else {
+			// Currently disconnected, will not schedule this message
+			// Check if reconnecting is in progress and disconnected publish is enabled.
+			if (this._reconnecting && this.disconnectedPublishing) {
+				// Check the limit which include the "required ACK" messages
+				var messageCount = Object.keys(this._sentMessages).length + this._buffered_msg_queue.length;
+				if (messageCount > this.disconnectedBufferSize) {
+					throw new Error(format(ERROR.BUFFER_FULL, [this.disconnectedBufferSize]));
+				} else {
+					if (message.qos > 0) {
+						// Mark this message as "ACK required"
+						this._requires_ack(wireMessage);
+					} else {
+						wireMessage.sequence = ++this._sequence;
+						this._buffered_msg_queue.push(wireMessage);
+					}
+				}
+			} else {
+				throw new Error(format(ERROR.INVALID_STATE, ["not connected"]));
+			}
+		}
+	};
+
+	ClientImpl.prototype.disconnect = function () {
+		this._trace("Client.disconnect");
+
+		if (this._reconnecting) {
+			// disconnect() function is called while reconnect is in progress.
+			// Terminate the auto reconnect process.
+			this._reconnectTimeout.cancel();
+			this._reconnectTimeout = null;
+			this._reconnecting = false;
+		}
+
+		if (!this.socket)
+			throw new Error(format(ERROR.INVALID_STATE, ["not connecting or connected"]));
+
+		wireMessage = new WireMessage(MESSAGE_TYPE.DISCONNECT);
+
+		// Run the disconnected call back as soon as the message has been sent,
+		// in case of a failure later on in the disconnect processing.
+		// as a consequence, the _disconected call back may be run several times.
+		this._notify_msg_sent[wireMessage] = scope(this._disconnected, this);
+
+		this._schedule_message(wireMessage);
+	};
+
+	ClientImpl.prototype.getTraceLog = function () {
+		if ( this._traceBuffer !== null ) {
+			this._trace("Client.getTraceLog", new Date());
+			this._trace("Client.getTraceLog in flight messages", this._sentMessages.length);
+			for (var key in this._sentMessages)
+				this._trace("_sentMessages ",key, this._sentMessages[key]);
+			for (var key in this._receivedMessages)
+				this._trace("_receivedMessages ",key, this._receivedMessages[key]);
+
+			return this._traceBuffer;
+		}
+	};
+
+	ClientImpl.prototype.startTrace = function () {
+		if ( this._traceBuffer === null ) {
+			this._traceBuffer = [];
+		}
+		this._trace("Client.startTrace", new Date(), version);
+	};
+
+	ClientImpl.prototype.stopTrace = function () {
+		delete this._traceBuffer;
+	};
+
+	ClientImpl.prototype._doConnect = function (wsurl) {
+		// When the socket is open, this client will send the CONNECT WireMessage using the saved parameters.
+		if (this.connectOptions.useSSL) {
+		    var uriParts = wsurl.split(":");
+		    uriParts[0] = "wss";
+		    wsurl = uriParts.join(":");
+		}
+		this._wsuri = wsurl;
+		this.connected = false;
+
+
+
+		if (this.connectOptions.mqttVersion < 4) {
+			this.socket = new WebSocket(wsurl, ["mqttv3.1"]);
+		} else {
+			this.socket = new WebSocket(wsurl, ["mqtt"]);
+		}
+		this.socket.binaryType = 'arraybuffer';
+		this.socket.onopen = scope(this._on_socket_open, this);
+		this.socket.onmessage = scope(this._on_socket_message, this);
+		this.socket.onerror = scope(this._on_socket_error, this);
+		this.socket.onclose = scope(this._on_socket_close, this);
+
+		this.sendPinger = new Pinger(this, window, this.connectOptions.keepAliveInterval);
+		this.receivePinger = new Pinger(this, window, this.connectOptions.keepAliveInterval);
+		if (this._connectTimeout) {
+			this._connectTimeout.cancel();
+			this._connectTimeout = null;
+		}
+		this._connectTimeout = new Timeout(this, window, this.connectOptions.timeout, this._disconnected,  [ERROR.CONNECT_TIMEOUT.code, format(ERROR.CONNECT_TIMEOUT)]);
+	};
+
+
+	// Schedule a new message to be sent over the WebSockets
+	// connection. CONNECT messages cause WebSocket connection
+	// to be started. All other messages are queued internally
+	// until this has happened. When WS connection starts, process
+	// all outstanding messages.
+	ClientImpl.prototype._schedule_message = function (message) {
+		this._msg_queue.push(message);
+		// Process outstanding messages in the queue if we have an  open socket, and have received CONNACK.
+		if (this.connected) {
+			this._process_queue();
+		}
+	};
+
+	ClientImpl.prototype.store = function(prefix, wireMessage) {
+		var storedMessage = {type:wireMessage.type, messageIdentifier:wireMessage.messageIdentifier, version:1};
+
+		switch(wireMessage.type) {
+		  case MESSAGE_TYPE.PUBLISH:
+			  if(wireMessage.pubRecReceived)
+				  storedMessage.pubRecReceived = true;
+
+			  // Convert the payload to a hex string.
+			  storedMessage.payloadMessage = {};
+			  var hex = "";
+			  var messageBytes = wireMessage.payloadMessage.payloadBytes;
+			  for (var i=0; i<messageBytes.length; i++) {
+				if (messageBytes[i] <= 0xF)
+				  hex = hex+"0"+messageBytes[i].toString(16);
+				else
+				  hex = hex+messageBytes[i].toString(16);
+			  }
+			  storedMessage.payloadMessage.payloadHex = hex;
+
+			  storedMessage.payloadMessage.qos = wireMessage.payloadMessage.qos;
+			  storedMessage.payloadMessage.destinationName = wireMessage.payloadMessage.destinationName;
+			  if (wireMessage.payloadMessage.duplicate)
+				  storedMessage.payloadMessage.duplicate = true;
+			  if (wireMessage.payloadMessage.retained)
+				  storedMessage.payloadMessage.retained = true;
+
+			  // Add a sequence number to sent messages.
+			  if ( prefix.indexOf("Sent:") === 0 ) {
+				  if ( wireMessage.sequence === undefined )
+					  wireMessage.sequence = ++this._sequence;
+				  storedMessage.sequence = wireMessage.sequence;
+			  }
+			  break;
+
+			default:
+				throw Error(format(ERROR.INVALID_STORED_DATA, [key, storedMessage]));
+		}
+		localStorage.setItem(prefix+this._localKey+wireMessage.messageIdentifier, JSON.stringify(storedMessage));
+	};
+
+	ClientImpl.prototype.restore = function(key) {
+		var value = localStorage.getItem(key);
+		var storedMessage = JSON.parse(value);
+
+		var wireMessage = new WireMessage(storedMessage.type, storedMessage);
+
+		switch(storedMessage.type) {
+		  case MESSAGE_TYPE.PUBLISH:
+			  // Replace the payload message with a Message object.
+			  var hex = storedMessage.payloadMessage.payloadHex;
+			  var buffer = new ArrayBuffer((hex.length)/2);
+			  var byteStream = new Uint8Array(buffer);
+			  var i = 0;
+			  while (hex.length >= 2) {
+				  var x = parseInt(hex.substring(0, 2), 16);
+				  hex = hex.substring(2, hex.length);
+				  byteStream[i++] = x;
+			  }
+			  var payloadMessage = new Paho.MQTT.Message(byteStream);
+
+			  payloadMessage.qos = storedMessage.payloadMessage.qos;
+			  payloadMessage.destinationName = storedMessage.payloadMessage.destinationName;
+			  if (storedMessage.payloadMessage.duplicate)
+				  payloadMessage.duplicate = true;
+			  if (storedMessage.payloadMessage.retained)
+				  payloadMessage.retained = true;
+			  wireMessage.payloadMessage = payloadMessage;
+
+			  break;
+
+			default:
+			  throw Error(format(ERROR.INVALID_STORED_DATA, [key, value]));
+		}
+
+		if (key.indexOf("Sent:"+this._localKey) === 0) {
+			wireMessage.payloadMessage.duplicate = true;
+			this._sentMessages[wireMessage.messageIdentifier] = wireMessage;
+		} else if (key.indexOf("Received:"+this._localKey) === 0) {
+			this._receivedMessages[wireMessage.messageIdentifier] = wireMessage;
+		}
+	};
+
+	ClientImpl.prototype._process_queue = function () {
+		var message = null;
+		// Process messages in order they were added
+		var fifo = this._msg_queue.reverse();
+
+		// Send all queued messages down socket connection
+		while ((message = fifo.pop())) {
+			this._socket_send(message);
+			// Notify listeners that message was successfully sent
+			if (this._notify_msg_sent[message]) {
+				this._notify_msg_sent[message]();
+				delete this._notify_msg_sent[message];
+			}
+		}
+	};
+
+	/**
+	 * Expect an ACK response for this message. Add message to the set of in progress
+	 * messages and set an unused identifier in this message.
+	 * @ignore
+	 */
+	ClientImpl.prototype._requires_ack = function (wireMessage) {
+		var messageCount = Object.keys(this._sentMessages).length;
+		if (messageCount > this.maxMessageIdentifier)
+			throw Error ("Too many messages:"+messageCount);
+
+		while(this._sentMessages[this._message_identifier] !== undefined) {
+			this._message_identifier++;
+		}
+		wireMessage.messageIdentifier = this._message_identifier;
+		this._sentMessages[wireMessage.messageIdentifier] = wireMessage;
+		if (wireMessage.type === MESSAGE_TYPE.PUBLISH) {
+			this.store("Sent:", wireMessage);
+		}
+		if (this._message_identifier === this.maxMessageIdentifier) {
+			this._message_identifier = 1;
+		}
+	};
+
+	/**
+	 * Called when the underlying websocket has been opened.
+	 * @ignore
+	 */
+	ClientImpl.prototype._on_socket_open = function () {
+		// Create the CONNECT message object.
+		var wireMessage = new WireMessage(MESSAGE_TYPE.CONNECT, this.connectOptions);
+		wireMessage.clientId = this.clientId;
+		this._socket_send(wireMessage);
+	};
+
+	/**
+	 * Called when the underlying websocket has received a complete packet.
+	 * @ignore
+	 */
+	ClientImpl.prototype._on_socket_message = function (event) {
+		this._trace("Client._on_socket_message", event.data);
+		var messages = this._deframeMessages(event.data);
+		for (var i = 0; i < messages.length; i+=1) {
+		    this._handleMessage(messages[i]);
+		}
+	};
+
+	ClientImpl.prototype._deframeMessages = function(data) {
+		var byteArray = new Uint8Array(data);
+		var messages = [];
+	    if (this.receiveBuffer) {
+	        var newData = new Uint8Array(this.receiveBuffer.length+byteArray.length);
+	        newData.set(this.receiveBuffer);
+	        newData.set(byteArray,this.receiveBuffer.length);
+	        byteArray = newData;
+	        delete this.receiveBuffer;
+	    }
+		try {
+		    var offset = 0;
+		    while(offset < byteArray.length) {
+		        var result = decodeMessage(byteArray,offset);
+		        var wireMessage = result[0];
+		        offset = result[1];
+		        if (wireMessage !== null) {
+		            messages.push(wireMessage);
+		        } else {
+		            break;
+		        }
+		    }
+		    if (offset < byteArray.length) {
+		    	this.receiveBuffer = byteArray.subarray(offset);
+		    }
+		} catch (error) {
+			var errorStack = ((error.hasOwnProperty('stack') == 'undefined') ? error.stack.toString() : "No Error Stack Available");
+			this._disconnected(ERROR.INTERNAL_ERROR.code , format(ERROR.INTERNAL_ERROR, [error.message,errorStack]));
+			return;
+		}
+		return messages;
+	};
+
+	ClientImpl.prototype._handleMessage = function(wireMessage) {
+
+		this._trace("Client._handleMessage", wireMessage);
+
+		try {
+			switch(wireMessage.type) {
+			case MESSAGE_TYPE.CONNACK:
+				this._connectTimeout.cancel();
+				if (this._reconnectTimeout)
+					this._reconnectTimeout.cancel();
+
+				// If we have started using clean session then clear up the local state.
+				if (this.connectOptions.cleanSession) {
+					for (var key in this._sentMessages) {
+						var sentMessage = this._sentMessages[key];
+						localStorage.removeItem("Sent:"+this._localKey+sentMessage.messageIdentifier);
+					}
+					this._sentMessages = {};
+
+					for (var key in this._receivedMessages) {
+						var receivedMessage = this._receivedMessages[key];
+						localStorage.removeItem("Received:"+this._localKey+receivedMessage.messageIdentifier);
+					}
+					this._receivedMessages = {};
+				}
+				// Client connected and ready for business.
+				if (wireMessage.returnCode === 0) {
+
+					this.connected = true;
+					// Jump to the end of the list of uris and stop looking for a good host.
+
+					if (this.connectOptions.uris)
+            this.hostIndex = this.connectOptions.uris.length;
+
+				} else {
+					this._disconnected(ERROR.CONNACK_RETURNCODE.code , format(ERROR.CONNACK_RETURNCODE, [wireMessage.returnCode, CONNACK_RC[wireMessage.returnCode]]));
+					break;
+				}
+
+				// Resend messages.
+				var sequencedMessages = [];
+				for (var msgId in this._sentMessages) {
+					if (this._sentMessages.hasOwnProperty(msgId))
+						sequencedMessages.push(this._sentMessages[msgId]);
+				}
+
+				// Also schedule qos 0 buffered messages if any
+				if (this._buffered_msg_queue.length > 0) {
+					var msg = null;
+					var fifo = this._buffered_msg_queue.reverse();
+					while ((msg = fifo.pop())) {
+						sequencedMessages.push(msg);
+						if (this.onMessageDelivered)
+							this._notify_msg_sent[msg] = this.onMessageDelivered(msg.payloadMessage);
+					}
+				}
+
+				// Sort sentMessages into the original sent order.
+				var sequencedMessages = sequencedMessages.sort(function(a,b) {return a.sequence - b.sequence;} );
+				for (var i=0, len=sequencedMessages.length; i<len; i++) {
+					var sentMessage = sequencedMessages[i];
+					if (sentMessage.type == MESSAGE_TYPE.PUBLISH && sentMessage.pubRecReceived) {
+						var pubRelMessage = new WireMessage(MESSAGE_TYPE.PUBREL, {messageIdentifier:sentMessage.messageIdentifier});
+						this._schedule_message(pubRelMessage);
+					} else {
+						this._schedule_message(sentMessage);
+				}
+				}
+
+				// Execute the connectOptions.onSuccess callback if there is one.
+        // Will also now return if this connection was the result of an automatic
+        // reconnect and which URI was successfully connected to.
+				if (this.connectOptions.onSuccess) {
+					this.connectOptions.onSuccess({invocationContext:this.connectOptions.invocationContext});
+				}
+
+				var reconnected = false;
+				if (this._reconnecting) {
+					reconnected = true;
+					this._reconnectInterval = 1;
+					this._reconnecting = false;
+				}
+
+				// Execute the onConnected callback if there is one.
+				this._connected(reconnected, this._wsuri);
+
+				// Process all queued messages now that the connection is established.
+				this._process_queue();
+				break;
+
+			case MESSAGE_TYPE.PUBLISH:
+				this._receivePublish(wireMessage);
+				break;
+
+			case MESSAGE_TYPE.PUBACK:
+				var sentMessage = this._sentMessages[wireMessage.messageIdentifier];
+				 // If this is a re flow of a PUBACK after we have restarted receivedMessage will not exist.
+				if (sentMessage) {
+					delete this._sentMessages[wireMessage.messageIdentifier];
+					localStorage.removeItem("Sent:"+this._localKey+wireMessage.messageIdentifier);
+					if (this.onMessageDelivered)
+						this.onMessageDelivered(sentMessage.payloadMessage);
+				}
+				break;
+
+			case MESSAGE_TYPE.PUBREC:
+				var sentMessage = this._sentMessages[wireMessage.messageIdentifier];
+				// If this is a re flow of a PUBREC after we have restarted receivedMessage will not exist.
+				if (sentMessage) {
+					sentMessage.pubRecReceived = true;
+					var pubRelMessage = new WireMessage(MESSAGE_TYPE.PUBREL, {messageIdentifier:wireMessage.messageIdentifier});
+					this.store("Sent:", sentMessage);
+					this._schedule_message(pubRelMessage);
+				}
+				break;
+
+			case MESSAGE_TYPE.PUBREL:
+				var receivedMessage = this._receivedMessages[wireMessage.messageIdentifier];
+				localStorage.removeItem("Received:"+this._localKey+wireMessage.messageIdentifier);
+				// If this is a re flow of a PUBREL after we have restarted receivedMessage will not exist.
+				if (receivedMessage) {
+					this._receiveMessage(receivedMessage);
+					delete this._receivedMessages[wireMessage.messageIdentifier];
+				}
+				// Always flow PubComp, we may have previously flowed PubComp but the server lost it and restarted.
+				var pubCompMessage = new WireMessage(MESSAGE_TYPE.PUBCOMP, {messageIdentifier:wireMessage.messageIdentifier});
+				this._schedule_message(pubCompMessage);
+
+
+				break;
+
+			case MESSAGE_TYPE.PUBCOMP:
+				var sentMessage = this._sentMessages[wireMessage.messageIdentifier];
+				delete this._sentMessages[wireMessage.messageIdentifier];
+				localStorage.removeItem("Sent:"+this._localKey+wireMessage.messageIdentifier);
+				if (this.onMessageDelivered)
+					this.onMessageDelivered(sentMessage.payloadMessage);
+				break;
+
+			case MESSAGE_TYPE.SUBACK:
+				var sentMessage = this._sentMessages[wireMessage.messageIdentifier];
+				if (sentMessage) {
+					if(sentMessage.timeOut)
+						sentMessage.timeOut.cancel();
+					// This will need to be fixed when we add multiple topic support
+          			if (wireMessage.returnCode[0] === 0x80) {
+						if (sentMessage.onFailure) {
+							sentMessage.onFailure(wireMessage.returnCode);
+						}
+					} else if (sentMessage.onSuccess) {
+						sentMessage.onSuccess(wireMessage.returnCode);
+					}
+					delete this._sentMessages[wireMessage.messageIdentifier];
+				}
+				break;
+
+			case MESSAGE_TYPE.UNSUBACK:
+				var sentMessage = this._sentMessages[wireMessage.messageIdentifier];
+				if (sentMessage) {
+					if (sentMessage.timeOut)
+						sentMessage.timeOut.cancel();
+					if (sentMessage.callback) {
+						sentMessage.callback();
+					}
+					delete this._sentMessages[wireMessage.messageIdentifier];
+				}
+
+				break;
+
+			case MESSAGE_TYPE.PINGRESP:
+				/* The sendPinger or receivePinger may have sent a ping, the receivePinger has already been reset. */
+				this.sendPinger.reset();
+				break;
+
+			case MESSAGE_TYPE.DISCONNECT:
+				// Clients do not expect to receive disconnect packets.
+				this._disconnected(ERROR.INVALID_MQTT_MESSAGE_TYPE.code , format(ERROR.INVALID_MQTT_MESSAGE_TYPE, [wireMessage.type]));
+				break;
+
+			default:
+				this._disconnected(ERROR.INVALID_MQTT_MESSAGE_TYPE.code , format(ERROR.INVALID_MQTT_MESSAGE_TYPE, [wireMessage.type]));
+			}
+		} catch (error) {
+			var errorStack = ((error.hasOwnProperty('stack') == 'undefined') ? error.stack.toString() : "No Error Stack Available");
+			this._disconnected(ERROR.INTERNAL_ERROR.code , format(ERROR.INTERNAL_ERROR, [error.message,errorStack]));
+			return;
+		}
+	};
+
+	/** @ignore */
+	ClientImpl.prototype._on_socket_error = function (error) {
+		if (!this._reconnecting) {
+		this._disconnected(ERROR.SOCKET_ERROR.code , format(ERROR.SOCKET_ERROR, [error.data]));
+		}
+	};
+
+	/** @ignore */
+	ClientImpl.prototype._on_socket_close = function () {
+		if (!this._reconnecting) {
+		this._disconnected(ERROR.SOCKET_CLOSE.code , format(ERROR.SOCKET_CLOSE));
+		}
+	};
+
+	/** @ignore */
+	ClientImpl.prototype._socket_send = function (wireMessage) {
+
+		if (wireMessage.type == 1) {
+			var wireMessageMasked = this._traceMask(wireMessage, "password");
+			this._trace("Client._socket_send", wireMessageMasked);
+		}
+		else this._trace("Client._socket_send", wireMessage);
+
+		this.socket.send(wireMessage.encode());
+		/* We have proved to the server we are alive. */
+		this.sendPinger.reset();
+	};
+
+	/** @ignore */
+	ClientImpl.prototype._receivePublish = function (wireMessage) {
+		switch(wireMessage.payloadMessage.qos) {
+			case "undefined":
+			case 0:
+				this._receiveMessage(wireMessage);
+				break;
+
+			case 1:
+				var pubAckMessage = new WireMessage(MESSAGE_TYPE.PUBACK, {messageIdentifier:wireMessage.messageIdentifier});
+				this._schedule_message(pubAckMessage);
+				this._receiveMessage(wireMessage);
+				break;
+
+			case 2:
+				this._receivedMessages[wireMessage.messageIdentifier] = wireMessage;
+				this.store("Received:", wireMessage);
+				var pubRecMessage = new WireMessage(MESSAGE_TYPE.PUBREC, {messageIdentifier:wireMessage.messageIdentifier});
+				this._schedule_message(pubRecMessage);
+
+				break;
+
+			default:
+				throw Error("Invaild qos="+wireMmessage.payloadMessage.qos);
+		}
+	};
+
+	/** @ignore */
+	ClientImpl.prototype._receiveMessage = function (wireMessage) {
+		if (this.onMessageArrived) {
+			this.onMessageArrived(wireMessage.payloadMessage);
+		}
+	};
+
+	/**
+	 * Client has connected.
+	 * @param {reconnect} [boolean] indicate if this was a result of reconnect operation.
+	 * @param {uri} [string] fully qualified WebSocket URI of the server.
+	 */
+	ClientImpl.prototype._connected = function (reconnect, uri) {
+		// Execute the onConnected callback if there is one.
+		if (this.onConnected)
+			this.onConnected(reconnect, uri);
+	};
+
+	/**
+	 * Attempts to reconnect the client to the server.
+   * For each reconnect attempt, will double the reconnect interval
+   * up to 128 seconds.
+	 */
+	ClientImpl.prototype._reconnect = function () {
+		this._trace("Client._reconnect");
+		if (!this.connected) {
+			this._reconnecting = true;
+			this.sendPinger.cancel();
+			this.receivePinger.cancel();
+			if (this._reconnectInterval < 128)
+				this._reconnectInterval = this._reconnectInterval * 2;
+			if (this.connectOptions.uris) {
+				this.hostIndex = 0;
+				this._doConnect(this.connectOptions.uris[0]);
+			} else {
+				this._doConnect(this.uri);
+			}
+		}
+	};
+
+	/**
+	 * Client has disconnected either at its own request or because the server
+	 * or network disconnected it. Remove all non-durable state.
+	 * @param {errorCode} [number] the error number.
+	 * @param {errorText} [string] the error text.
+	 * @ignore
+	 */
+	ClientImpl.prototype._disconnected = function (errorCode, errorText) {
+		this._trace("Client._disconnected", errorCode, errorText);
+
+		if (errorCode !== undefined && this._reconnecting) {
+      //Continue automatic reconnect process
+  		this._reconnectTimeout = new Timeout(this, window, this._reconnectInterval, this._reconnect);
+			return;
+		}
+
+		this.sendPinger.cancel();
+		this.receivePinger.cancel();
+		if (this._connectTimeout) {
+			this._connectTimeout.cancel();
+			this._connectTimeout = null;
+		}
+
+		// Clear message buffers.
+		this._msg_queue = [];
+		this._buffered_msg_queue = [];
+		this._notify_msg_sent = {};
+
+		if (this.socket) {
+			// Cancel all socket callbacks so that they cannot be driven again by this socket.
+			this.socket.onopen = null;
+			this.socket.onmessage = null;
+			this.socket.onerror = null;
+			this.socket.onclose = null;
+			if (this.socket.readyState === 1)
+				this.socket.close();
+			delete this.socket;
+		}
+
+		if (this.connectOptions.uris && this.hostIndex < this.connectOptions.uris.length-1) {
+			// Try the next host.
+			this.hostIndex++;
+			this._doConnect(this.connectOptions.uris[this.hostIndex]);
+		} else {
+
+			if (errorCode === undefined) {
+				errorCode = ERROR.OK.code;
+				errorText = format(ERROR.OK);
+			}
+
+			// Run any application callbacks last as they may attempt to reconnect and hence create a new socket.
+			if (this.connected) {
+				this.connected = false;
+				// Execute the connectionLostCallback if there is one, and we were connected.
+				if (this.onConnectionLost) {
+					this.onConnectionLost({errorCode:errorCode, errorMessage:errorText, reconnect:this.connectOptions.reconnect, uri:this._wsuri});
+				}
+				if (errorCode !== ERROR.OK.code && this.connectOptions.reconnect) {
+					// Start automatic reconnect process for the very first time since last successful connect.
+					this._reconnectInterval = 1;
+					this._reconnect();
+					return;
+				}
+			} else {
+				// Otherwise we never had a connection, so indicate that the connect has failed.
+				if (this.connectOptions.mqttVersion === 4 && this.connectOptions.mqttVersionExplicit === false) {
+					this._trace("Failed to connect V4, dropping back to V3");
+					this.connectOptions.mqttVersion = 3;
+					if (this.connectOptions.uris) {
+						this.hostIndex = 0;
+						this._doConnect(this.connectOptions.uris[0]);
+					} else {
+						this._doConnect(this.uri);
+					}
+				} else if(this.connectOptions.onFailure) {
+					this.connectOptions.onFailure({invocationContext:this.connectOptions.invocationContext, errorCode:errorCode, errorMessage:errorText});
+				}
+			}
+		}
+	};
+
+	/** @ignore */
+	ClientImpl.prototype._trace = function () {
+		// Pass trace message back to client's callback function
+		if (this.traceFunction) {
+			for (var i in arguments)
+			{
+				if (typeof arguments[i] !== "undefined")
+					arguments.splice(i, 1, JSON.stringify(arguments[i]));
+			}
+			var record = Array.prototype.slice.call(arguments).join("");
+			this.traceFunction ({severity: "Debug", message: record	});
+		}
+
+		//buffer style trace
+		if ( this._traceBuffer !== null ) {
+			for (var i = 0, max = arguments.length; i < max; i++) {
+				if ( this._traceBuffer.length == this._MAX_TRACE_ENTRIES ) {
+					this._traceBuffer.shift();
+				}
+				if (i === 0) this._traceBuffer.push(arguments[i]);
+				else if (typeof arguments[i] === "undefined" ) this._traceBuffer.push(arguments[i]);
+				else this._traceBuffer.push("  "+JSON.stringify(arguments[i]));
+		   }
+		}
+	};
+
+	/** @ignore */
+	ClientImpl.prototype._traceMask = function (traceObject, masked) {
+		var traceObjectMasked = {};
+		for (var attr in traceObject) {
+			if (traceObject.hasOwnProperty(attr)) {
+				if (attr == masked)
+					traceObjectMasked[attr] = "******";
+				else
+					traceObjectMasked[attr] = traceObject[attr];
+			}
+		}
+		return traceObjectMasked;
+	};
+
+	// ------------------------------------------------------------------------
+	// Public Programming interface.
+	// ------------------------------------------------------------------------
+
+	/**
+	 * The JavaScript application communicates to the server using a {@link Paho.MQTT.Client} object.
+	 * <p>
+	 * Most applications will create just one Client object and then call its connect() method,
+	 * however applications can create more than one Client object if they wish.
+	 * In this case the combination of host, port and clientId attributes must be different for each Client object.
+	 * <p>
+	 * The send, subscribe and unsubscribe methods are implemented as asynchronous JavaScript methods
+	 * (even though the underlying protocol exchange might be synchronous in nature).
+	 * This means they signal their completion by calling back to the application,
+	 * via Success or Failure callback functions provided by the application on the method in question.
+	 * Such callbacks are called at most once per method invocation and do not persist beyond the lifetime
+	 * of the script that made the invocation.
+	 * <p>
+	 * In contrast there are some callback functions, most notably <i>onMessageArrived</i>,
+	 * that are defined on the {@link Paho.MQTT.Client} object.
+	 * These may get called multiple times, and aren't directly related to specific method invocations made by the client.
+	 *
+	 * @name Paho.MQTT.Client
+	 *
+	 * @constructor
+	 *
+	 * @param {string} host - the address of the messaging server, as a fully qualified WebSocket URI, as a DNS name or dotted decimal IP address.
+	 * @param {number} port - the port number to connect to - only required if host is not a URI
+	 * @param {string} path - the path on the host to connect to - only used if host is not a URI. Default: '/mqtt'.
+	 * @param {string} clientId - the Messaging client identifier, between 1 and 23 characters in length.
+	 *
+	 * @property {string} host - <i>read only</i> the server's DNS hostname or dotted decimal IP address.
+	 * @property {number} port - <i>read only</i> the server's port.
+	 * @property {string} path - <i>read only</i> the server's path.
+	 * @property {string} clientId - <i>read only</i> used when connecting to the server.
+	 * @property {function} onConnectionLost - called when a connection has been lost.
+	 *                            after a connect() method has succeeded.
+	 *                            Establish the call back used when a connection has been lost. The connection may be
+	 *                            lost because the client initiates a disconnect or because the server or network
+	 *                            cause the client to be disconnected. The disconnect call back may be called without
+	 *                            the connectionComplete call back being invoked if, for example the client fails to
+	 *                            connect.
+	 *                            A single response object parameter is passed to the onConnectionLost callback containing the following fields:
+	 *                            <ol>
+	 *                            <li>errorCode
+	 *                            <li>errorMessage
+	 *                            </ol>
+	 * @property {function} onMessageDelivered - called when a message has been delivered.
+	 *                            All processing that this Client will ever do has been completed. So, for example,
+	 *                            in the case of a Qos=2 message sent by this client, the PubComp flow has been received from the server
+	 *                            and the message has been removed from persistent storage before this callback is invoked.
+	 *                            Parameters passed to the onMessageDelivered callback are:
+	 *                            <ol>
+	 *                            <li>{@link Paho.MQTT.Message} that was delivered.
+	 *                            </ol>
+	 * @property {function} onMessageArrived - called when a message has arrived in this Paho.MQTT.client.
+	 *                            Parameters passed to the onMessageArrived callback are:
+	 *                            <ol>
+	 *                            <li>{@link Paho.MQTT.Message} that has arrived.
+	 *                            </ol>
+	 * @property {function} onConnected - called when a connection is successfully made to the server.
+	 *                                  after a connect() method.
+	 *                                  Parameters passed to the onConnected callback are:
+	 *                                  <ol>
+	 *                                  <li>reconnect (boolean) - If true, the connection was the result of a reconnect.</li>
+	 *                                  <li>URI (string) - The URI used to connect to the server.</li>
+	 *                                  </ol>
+	 * @property {boolean} disconnectedPublishing - if set, will enable disconnected publishing in
+	 *                                            in the event that the connection to the server is lost.
+	 * @property {number} disconnectedBufferSize - Used to set the maximum number of messages that the disconnected
+	 *                                             buffer will hold before rejecting new messages. Default size: 5000 messages
+	 * @property {function} trace - called whenever trace is called. TODO
+	 */
+	var Client = function (host, port, path, clientId) {
+
+	    var uri;
+
+		if (typeof host !== "string")
+			throw new Error(format(ERROR.INVALID_TYPE, [typeof host, "host"]));
+
+	    if (arguments.length == 2) {
+	        // host: must be full ws:// uri
+	        // port: clientId
+	        clientId = port;
+	        uri = host;
+	        var match = uri.match(/^(wss?):\/\/((\[(.+)\])|([^\/]+?))(:(\d+))?(\/.*)$/);
+	        if (match) {
+	            host = match[4]||match[2];
+	            port = parseInt(match[7]);
+	            path = match[8];
+	        } else {
+	            throw new Error(format(ERROR.INVALID_ARGUMENT,[host,"host"]));
+	        }
+	    } else {
+	        if (arguments.length == 3) {
+				clientId = path;
+				path = "/mqtt";
+			}
+			if (typeof port !== "number" || port < 0)
+				throw new Error(format(ERROR.INVALID_TYPE, [typeof port, "port"]));
+			if (typeof path !== "string")
+				throw new Error(format(ERROR.INVALID_TYPE, [typeof path, "path"]));
+
+			var ipv6AddSBracket = (host.indexOf(":") !== -1 && host.slice(0,1) !== "[" && host.slice(-1) !== "]");
+			uri = "ws://"+(ipv6AddSBracket?"["+host+"]":host)+":"+port+path;
+		}
+
+		var clientIdLength = 0;
+		for (var i = 0; i<clientId.length; i++) {
+			var charCode = clientId.charCodeAt(i);
+			if (0xD800 <= charCode && charCode <= 0xDBFF)  {
+				 i++; // Surrogate pair.
+			}
+			clientIdLength++;
+		}
+		if (typeof clientId !== "string" || clientIdLength > 65535)
+			throw new Error(format(ERROR.INVALID_ARGUMENT, [clientId, "clientId"]));
+
+		var client = new ClientImpl(uri, host, port, path, clientId);
+		this._getHost =  function() { return host; };
+		this._setHost = function() { throw new Error(format(ERROR.UNSUPPORTED_OPERATION)); };
+
+		this._getPort = function() { return port; };
+		this._setPort = function() { throw new Error(format(ERROR.UNSUPPORTED_OPERATION)); };
+
+		this._getPath = function() { return path; };
+		this._setPath = function() { throw new Error(format(ERROR.UNSUPPORTED_OPERATION)); };
+
+		this._getURI = function() { return uri; };
+		this._setURI = function() { throw new Error(format(ERROR.UNSUPPORTED_OPERATION)); };
+
+		this._getClientId = function() { return client.clientId; };
+		this._setClientId = function() { throw new Error(format(ERROR.UNSUPPORTED_OPERATION)); };
+
+		this._getOnConnected = function() { return client.onConnected; };
+		this._setOnConnected = function(newOnConnected) {
+			if (typeof newOnConnected === "function")
+				client.onConnected = newOnConnected;
+			else
+				throw new Error(format(ERROR.INVALID_TYPE, [typeof newOnConnected, "onConnected"]));
+		};
+
+		this._getDisconnectedPublishing = function() { return client.disconnectedPublishing; };
+		this._setDisconnectedPublishing = function(newDisconnectedPublishing) {
+			client.disconnectedPublishing = newDisconnectedPublishing;
+		};
+
+		this._getDisconnectedBufferSize = function() { return client.disconnectedBufferSize; };
+		this._setDisconnectedBufferSize = function(newDisconnectedBufferSize) {
+			client.disconnectedBufferSize = newDisconnectedBufferSize;
+		};
+
+		this._getOnConnectionLost = function() { return client.onConnectionLost; };
+		this._setOnConnectionLost = function(newOnConnectionLost) {
+			if (typeof newOnConnectionLost === "function")
+				client.onConnectionLost = newOnConnectionLost;
+			else
+				throw new Error(format(ERROR.INVALID_TYPE, [typeof newOnConnectionLost, "onConnectionLost"]));
+		};
+
+		this._getOnMessageDelivered = function() { return client.onMessageDelivered; };
+		this._setOnMessageDelivered = function(newOnMessageDelivered) {
+			if (typeof newOnMessageDelivered === "function")
+				client.onMessageDelivered = newOnMessageDelivered;
+			else
+				throw new Error(format(ERROR.INVALID_TYPE, [typeof newOnMessageDelivered, "onMessageDelivered"]));
+		};
+
+		this._getOnMessageArrived = function() { return client.onMessageArrived; };
+		this._setOnMessageArrived = function(newOnMessageArrived) {
+			if (typeof newOnMessageArrived === "function")
+				client.onMessageArrived = newOnMessageArrived;
+			else
+				throw new Error(format(ERROR.INVALID_TYPE, [typeof newOnMessageArrived, "onMessageArrived"]));
+		};
+
+		this._getTrace = function() { return client.traceFunction; };
+		this._setTrace = function(trace) {
+			if(typeof trace === "function"){
+				client.traceFunction = trace;
+			}else{
+				throw new Error(format(ERROR.INVALID_TYPE, [typeof trace, "onTrace"]));
+			}
+		};
+
+		/**
+		 * Connect this Messaging client to its server.
+		 *
+		 * @name Paho.MQTT.Client#connect
+		 * @function
+		 * @param {object} connectOptions - Attributes used with the connection.
+		 * @param {number} connectOptions.timeout - If the connect has not succeeded within this
+		 *                    number of seconds, it is deemed to have failed.
+		 *                    The default is 30 seconds.
+		 * @param {string} connectOptions.userName - Authentication username for this connection.
+		 * @param {string} connectOptions.password - Authentication password for this connection.
+		 * @param {Paho.MQTT.Message} connectOptions.willMessage - sent by the server when the client
+		 *                    disconnects abnormally.
+		 * @param {number} connectOptions.keepAliveInterval - the server disconnects this client if
+		 *                    there is no activity for this number of seconds.
+		 *                    The default value of 60 seconds is assumed if not set.
+		 * @param {boolean} connectOptions.cleanSession - if true(default) the client and server
+		 *                    persistent state is deleted on successful connect.
+		 * @param {boolean} connectOptions.useSSL - if present and true, use an SSL Websocket connection.
+		 * @param {object} connectOptions.invocationContext - passed to the onSuccess callback or onFailure callback.
+		 * @param {function} connectOptions.onSuccess - called when the connect acknowledgement
+		 *                    has been received from the server.
+		 * A single response object parameter is passed to the onSuccess callback containing the following fields:
+		 * <ol>
+		 * <li>invocationContext as passed in to the onSuccess method in the connectOptions.
+		 * </ol>
+     * @param {function} connectOptions.onFailure - called when the connect request has failed or timed out.
+		 * A single response object parameter is passed to the onFailure callback containing the following fields:
+		 * <ol>
+		 * <li>invocationContext as passed in to the onFailure method in the connectOptions.
+		 * <li>errorCode a number indicating the nature of the error.
+		 * <li>errorMessage text describing the error.
+		 * </ol>
+     * @param {array} connectOptions.hosts - If present this contains either a set of hostnames or fully qualified
+		 * WebSocket URIs (ws://iot.eclipse.org:80/ws), that are tried in order in place
+		 * of the host and port paramater on the construtor. The hosts are tried one at at time in order until
+		 * one of then succeeds.
+     * @param {array} connectOptions.ports - If present the set of ports matching the hosts. If hosts contains URIs, this property
+		 * is not used.
+     * @param {boolean} connectOptions.reconnect - Sets whether the client will automatically attempt to reconnect
+     * to the server if the connection is lost.
+     *<ul>
+     *<li>If set to false, the client will not attempt to automatically reconnect to the server in the event that the
+     * connection is lost.</li>
+     *<li>If set to true, in the event that the connection is lost, the client will attempt to reconnect to the server.
+     * It will initially wait 1 second before it attempts to reconnect, for every failed reconnect attempt, the delay
+     * will double until it is at 2 minutes at which point the delay will stay at 2 minutes.</li>
+     *</ul>
+     * @param {number} connectOptions.mqttVersion - The version of MQTT to use to connect to the MQTT Broker.
+     *<ul>
+     *<li>3 - MQTT V3.1</li>
+     *<li>4 - MQTT V3.1.1</li>
+     *</ul>
+     * @param {boolean} connectOptions.mqttVersionExplicit - If set to true, will force the connection to use the
+     * selected MQTT Version or will fail to connect.
+     * @param {array} connectOptions.uris - If present, should contain a list of fully qualified WebSocket uris
+     * (e.g. ws://iot.eclipse.org:80/ws), that are tried in order in place of the host and port parameter of the construtor.
+     * The uris are tried one at a time in order until one of them succeeds. Do not use this in conjunction with hosts as
+     * the hosts array will be converted to uris and will overwrite this property.
+		 * @throws {InvalidState} If the client is not in disconnected state. The client must have received connectionLost
+		 * or disconnected before calling connect for a second or subsequent time.
+		 */
+		this.connect = function (connectOptions) {
+			connectOptions = connectOptions || {} ;
+			validate(connectOptions,  {timeout:"number",
+									   userName:"string",
+									   password:"string",
+									   willMessage:"object",
+									   keepAliveInterval:"number",
+									   cleanSession:"boolean",
+									   useSSL:"boolean",
+									   invocationContext:"object",
+									   onSuccess:"function",
+									   onFailure:"function",
+									   hosts:"object",
+									   ports:"object",
+									   reconnect:"boolean",
+									   mqttVersion:"number",
+									   mqttVersionExplicit:"boolean",
+									   uris: "object"});
+
+			// If no keep alive interval is set, assume 60 seconds.
+			if (connectOptions.keepAliveInterval === undefined)
+				connectOptions.keepAliveInterval = 60;
+
+			if (connectOptions.mqttVersion > 4 || connectOptions.mqttVersion < 3) {
+				throw new Error(format(ERROR.INVALID_ARGUMENT, [connectOptions.mqttVersion, "connectOptions.mqttVersion"]));
+			}
+
+			if (connectOptions.mqttVersion === undefined) {
+				connectOptions.mqttVersionExplicit = false;
+				connectOptions.mqttVersion = 4;
+			} else {
+				connectOptions.mqttVersionExplicit = true;
+			}
+
+			//Check that if password is set, so is username
+			if (connectOptions.password !== undefined && connectOptions.userName === undefined)
+				throw new Error(format(ERROR.INVALID_ARGUMENT, [connectOptions.password, "connectOptions.password"]));
+
+			if (connectOptions.willMessage) {
+				if (!(connectOptions.willMessage instanceof Message))
+					throw new Error(format(ERROR.INVALID_TYPE, [connectOptions.willMessage, "connectOptions.willMessage"]));
+				// The will message must have a payload that can be represented as a string.
+				// Cause the willMessage to throw an exception if this is not the case.
+				connectOptions.willMessage.stringPayload = null;
+
+				if (typeof connectOptions.willMessage.destinationName === "undefined")
+					throw new Error(format(ERROR.INVALID_TYPE, [typeof connectOptions.willMessage.destinationName, "connectOptions.willMessage.destinationName"]));
+			}
+			if (typeof connectOptions.cleanSession === "undefined")
+				connectOptions.cleanSession = true;
+			if (connectOptions.hosts) {
+
+				if (!(connectOptions.hosts instanceof Array) )
+					throw new Error(format(ERROR.INVALID_ARGUMENT, [connectOptions.hosts, "connectOptions.hosts"]));
+				if (connectOptions.hosts.length <1 )
+					throw new Error(format(ERROR.INVALID_ARGUMENT, [connectOptions.hosts, "connectOptions.hosts"]));
+
+				var usingURIs = false;
+				for (var i = 0; i<connectOptions.hosts.length; i++) {
+					if (typeof connectOptions.hosts[i] !== "string")
+						throw new Error(format(ERROR.INVALID_TYPE, [typeof connectOptions.hosts[i], "connectOptions.hosts["+i+"]"]));
+					if (/^(wss?):\/\/((\[(.+)\])|([^\/]+?))(:(\d+))?(\/.*)$/.test(connectOptions.hosts[i])) {
+						if (i === 0) {
+							usingURIs = true;
+						} else if (!usingURIs) {
+							throw new Error(format(ERROR.INVALID_ARGUMENT, [connectOptions.hosts[i], "connectOptions.hosts["+i+"]"]));
+						}
+					} else if (usingURIs) {
+						throw new Error(format(ERROR.INVALID_ARGUMENT, [connectOptions.hosts[i], "connectOptions.hosts["+i+"]"]));
+					}
+				}
+
+				if (!usingURIs) {
+					if (!connectOptions.ports)
+						throw new Error(format(ERROR.INVALID_ARGUMENT, [connectOptions.ports, "connectOptions.ports"]));
+					if (!(connectOptions.ports instanceof Array) )
+						throw new Error(format(ERROR.INVALID_ARGUMENT, [connectOptions.ports, "connectOptions.ports"]));
+					if (connectOptions.hosts.length !== connectOptions.ports.length)
+						throw new Error(format(ERROR.INVALID_ARGUMENT, [connectOptions.ports, "connectOptions.ports"]));
+
+					connectOptions.uris = [];
+
+					for (var i = 0; i<connectOptions.hosts.length; i++) {
+						if (typeof connectOptions.ports[i] !== "number" || connectOptions.ports[i] < 0)
+							throw new Error(format(ERROR.INVALID_TYPE, [typeof connectOptions.ports[i], "connectOptions.ports["+i+"]"]));
+						var host = connectOptions.hosts[i];
+						var port = connectOptions.ports[i];
+
+						var ipv6 = (host.indexOf(":") !== -1);
+						uri = "ws://"+(ipv6?"["+host+"]":host)+":"+port+path;
+						connectOptions.uris.push(uri);
+					}
+				} else {
+					connectOptions.uris = connectOptions.hosts;
+				}
+			}
+
+			client.connect(connectOptions);
+		};
+
+		/**
+		 * Subscribe for messages, request receipt of a copy of messages sent to the destinations described by the filter.
+		 *
+		 * @name Paho.MQTT.Client#subscribe
+		 * @function
+		 * @param {string} filter describing the destinations to receive messages from.
+		 * <br>
+		 * @param {object} subscribeOptions - used to control the subscription
+		 *
+		 * @param {number} subscribeOptions.qos - the maiximum qos of any publications sent
+		 *                                  as a result of making this subscription.
+		 * @param {object} subscribeOptions.invocationContext - passed to the onSuccess callback
+		 *                                  or onFailure callback.
+		 * @param {function} subscribeOptions.onSuccess - called when the subscribe acknowledgement
+		 *                                  has been received from the server.
+		 *                                  A single response object parameter is passed to the onSuccess callback containing the following fields:
+		 *                                  <ol>
+		 *                                  <li>invocationContext if set in the subscribeOptions.
+		 *                                  </ol>
+		 * @param {function} subscribeOptions.onFailure - called when the subscribe request has failed or timed out.
+		 *                                  A single response object parameter is passed to the onFailure callback containing the following fields:
+		 *                                  <ol>
+		 *                                  <li>invocationContext - if set in the subscribeOptions.
+		 *                                  <li>errorCode - a number indicating the nature of the error.
+		 *                                  <li>errorMessage - text describing the error.
+		 *                                  </ol>
+		 * @param {number} subscribeOptions.timeout - which, if present, determines the number of
+		 *                                  seconds after which the onFailure calback is called.
+		 *                                  The presence of a timeout does not prevent the onSuccess
+		 *                                  callback from being called when the subscribe completes.
+		 * @throws {InvalidState} if the client is not in connected state.
+		 */
+		this.subscribe = function (filter, subscribeOptions) {
+			if (typeof filter !== "string")
+				throw new Error("Invalid argument:"+filter);
+			subscribeOptions = subscribeOptions || {} ;
+			validate(subscribeOptions,  {qos:"number",
+										 invocationContext:"object",
+										 onSuccess:"function",
+										 onFailure:"function",
+										 timeout:"number"
+										});
+			if (subscribeOptions.timeout && !subscribeOptions.onFailure)
+				throw new Error("subscribeOptions.timeout specified with no onFailure callback.");
+			if (typeof subscribeOptions.qos !== "undefined" && !(subscribeOptions.qos === 0 || subscribeOptions.qos === 1 || subscribeOptions.qos === 2 ))
+				throw new Error(format(ERROR.INVALID_ARGUMENT, [subscribeOptions.qos, "subscribeOptions.qos"]));
+			client.subscribe(filter, subscribeOptions);
+		};
+
+		/**
+		 * Unsubscribe for messages, stop receiving messages sent to destinations described by the filter.
+		 *
+		 * @name Paho.MQTT.Client#unsubscribe
+		 * @function
+		 * @param {string} filter - describing the destinations to receive messages from.
+		 * @param {object} unsubscribeOptions - used to control the subscription
+		 * @param {object} unsubscribeOptions.invocationContext - passed to the onSuccess callback
+		                                      or onFailure callback.
+		 * @param {function} unsubscribeOptions.onSuccess - called when the unsubscribe acknowledgement has been received from the server.
+		 *                                    A single response object parameter is passed to the
+		 *                                    onSuccess callback containing the following fields:
+		 *                                    <ol>
+		 *                                    <li>invocationContext - if set in the unsubscribeOptions.
+		 *                                    </ol>
+		 * @param {function} unsubscribeOptions.onFailure called when the unsubscribe request has failed or timed out.
+		 *                                    A single response object parameter is passed to the onFailure callback containing the following fields:
+		 *                                    <ol>
+		 *                                    <li>invocationContext - if set in the unsubscribeOptions.
+		 *                                    <li>errorCode - a number indicating the nature of the error.
+		 *                                    <li>errorMessage - text describing the error.
+		 *                                    </ol>
+		 * @param {number} unsubscribeOptions.timeout - which, if present, determines the number of seconds
+		 *                                    after which the onFailure callback is called. The presence of
+		 *                                    a timeout does not prevent the onSuccess callback from being
+		 *                                    called when the unsubscribe completes
+		 * @throws {InvalidState} if the client is not in connected state.
+		 */
+		this.unsubscribe = function (filter, unsubscribeOptions) {
+			if (typeof filter !== "string")
+				throw new Error("Invalid argument:"+filter);
+			unsubscribeOptions = unsubscribeOptions || {} ;
+			validate(unsubscribeOptions,  {invocationContext:"object",
+										   onSuccess:"function",
+										   onFailure:"function",
+										   timeout:"number"
+										  });
+			if (unsubscribeOptions.timeout && !unsubscribeOptions.onFailure)
+				throw new Error("unsubscribeOptions.timeout specified with no onFailure callback.");
+			client.unsubscribe(filter, unsubscribeOptions);
+		};
+
+		/**
+		 * Send a message to the consumers of the destination in the Message.
+		 *
+		 * @name Paho.MQTT.Client#send
+		 * @function
+		 * @param {string|Paho.MQTT.Message} topic - <b>mandatory</b> The name of the destination to which the message is to be sent.
+		 * 					   - If it is the only parameter, used as Paho.MQTT.Message object.
+		 * @param {String|ArrayBuffer} payload - The message data to be sent.
+		 * @param {number} qos The Quality of Service used to deliver the message.
+		 * 		<dl>
+		 * 			<dt>0 Best effort (default).
+		 *     			<dt>1 At least once.
+		 *     			<dt>2 Exactly once.
+		 * 		</dl>
+		 * @param {Boolean} retained If true, the message is to be retained by the server and delivered
+		 *                     to both current and future subscriptions.
+		 *                     If false the server only delivers the message to current subscribers, this is the default for new Messages.
+		 *                     A received message has the retained boolean set to true if the message was published
+		 *                     with the retained boolean set to true
+		 *                     and the subscrption was made after the message has been published.
+		 * @throws {InvalidState} if the client is not connected.
+		 */
+		this.send = function (topic,payload,qos,retained) {
+			var message ;
+
+			if(arguments.length === 0){
+				throw new Error("Invalid argument."+"length");
+
+			}else if(arguments.length == 1) {
+
+				if (!(topic instanceof Message) && (typeof topic !== "string"))
+					throw new Error("Invalid argument:"+ typeof topic);
+
+				message = topic;
+				if (typeof message.destinationName === "undefined")
+					throw new Error(format(ERROR.INVALID_ARGUMENT,[message.destinationName,"Message.destinationName"]));
+				client.send(message);
+
+			}else {
+				//parameter checking in Message object
+				message = new Message(payload);
+				message.destinationName = topic;
+				if(arguments.length >= 3)
+					message.qos = qos;
+				if(arguments.length >= 4)
+					message.retained = retained;
+				client.send(message);
+			}
+		};
+
+		/**
+		 * Publish a message to the consumers of the destination in the Message.
+		 * Synonym for Paho.Mqtt.Client#send
+		 *
+		 * @name Paho.MQTT.Client#publish
+		 * @function
+		 * @param {string|Paho.MQTT.Message} topic - <b>mandatory</b> The name of the topic to which the message is to be published.
+		 * 					   - If it is the only parameter, used as Paho.MQTT.Message object.
+		 * @param {String|ArrayBuffer} payload - The message data to be published.
+		 * @param {number} qos The Quality of Service used to deliver the message.
+		 * 		<dl>
+		 * 			<dt>0 Best effort (default).
+		 *     			<dt>1 At least once.
+		 *     			<dt>2 Exactly once.
+		 * 		</dl>
+		 * @param {Boolean} retained If true, the message is to be retained by the server and delivered
+		 *                     to both current and future subscriptions.
+		 *                     If false the server only delivers the message to current subscribers, this is the default for new Messages.
+		 *                     A received message has the retained boolean set to true if the message was published
+		 *                     with the retained boolean set to true
+		 *                     and the subscrption was made after the message has been published.
+		 * @throws {InvalidState} if the client is not connected.
+		 */
+		 this.publish = function(topic,payload,qos,retained) {
+			 console.log("Publising message to: ", topic);
+			 var message ;
+
+ 			if(arguments.length === 0){
+ 				throw new Error("Invalid argument."+"length");
+
+ 			}else if(arguments.length == 1) {
+
+ 				if (!(topic instanceof Message) && (typeof topic !== "string"))
+ 					throw new Error("Invalid argument:"+ typeof topic);
+
+ 				message = topic;
+ 				if (typeof message.destinationName === "undefined")
+ 					throw new Error(format(ERROR.INVALID_ARGUMENT,[message.destinationName,"Message.destinationName"]));
+ 				client.send(message);
+
+ 			}else {
+ 				//parameter checking in Message object
+ 				message = new Message(payload);
+ 				message.destinationName = topic;
+ 				if(arguments.length >= 3)
+ 					message.qos = qos;
+ 				if(arguments.length >= 4)
+ 					message.retained = retained;
+ 				client.send(message);
+ 			}
+		};
+
+		/**
+		 * Normal disconnect of this Messaging client from its server.
+		 *
+		 * @name Paho.MQTT.Client#disconnect
+		 * @function
+		 * @throws {InvalidState} if the client is already disconnected.
+		 */
+		this.disconnect = function () {
+			client.disconnect();
+		};
+
+		/**
+		 * Get the contents of the trace log.
+		 *
+		 * @name Paho.MQTT.Client#getTraceLog
+		 * @function
+		 * @return {Object[]} tracebuffer containing the time ordered trace records.
+		 */
+		this.getTraceLog = function () {
+			return client.getTraceLog();
+		};
+
+		/**
+		 * Start tracing.
+		 *
+		 * @name Paho.MQTT.Client#startTrace
+		 * @function
+		 */
+		this.startTrace = function () {
+			client.startTrace();
+		};
+
+		/**
+		 * Stop tracing.
+		 *
+		 * @name Paho.MQTT.Client#stopTrace
+		 * @function
+		 */
+		this.stopTrace = function () {
+			client.stopTrace();
+		};
+
+		this.isConnected = function() {
+			return client.connected;
+		};
+	};
+
+	Client.prototype = {
+		get host() { return this._getHost(); },
+		set host(newHost) { this._setHost(newHost); },
+
+		get port() { return this._getPort(); },
+		set port(newPort) { this._setPort(newPort); },
+
+		get path() { return this._getPath(); },
+		set path(newPath) { this._setPath(newPath); },
+
+		get clientId() { return this._getClientId(); },
+		set clientId(newClientId) { this._setClientId(newClientId); },
+
+		get onConnected() { return this._getOnConnected(); },
+		set onConnected(newOnConnected) { this._setOnConnected(newOnConnected); },
+
+		get disconnectedPublishing() { return this._getDisconnectedPublishing(); },
+		set disconnectedPublishing(newDisconnectedPublishing) { this._setDisconnectedPublishing(newDisconnectedPublishing); },
+
+		get disconnectedBufferSize() { return this._getDisconnectedBufferSize(); },
+		set disconnectedBufferSize(newDisconnectedBufferSize) { this._setDisconnectedBufferSize(newDisconnectedBufferSize); },
+
+		get onConnectionLost() { return this._getOnConnectionLost(); },
+		set onConnectionLost(newOnConnectionLost) { this._setOnConnectionLost(newOnConnectionLost); },
+
+		get onMessageDelivered() { return this._getOnMessageDelivered(); },
+		set onMessageDelivered(newOnMessageDelivered) { this._setOnMessageDelivered(newOnMessageDelivered); },
+
+		get onMessageArrived() { return this._getOnMessageArrived(); },
+		set onMessageArrived(newOnMessageArrived) { this._setOnMessageArrived(newOnMessageArrived); },
+
+		get trace() { return this._getTrace(); },
+		set trace(newTraceFunction) { this._setTrace(newTraceFunction); }
+
+	};
+
+	/**
+	 * An application message, sent or received.
+	 * <p>
+	 * All attributes may be null, which implies the default values.
+	 *
+	 * @name Paho.MQTT.Message
+	 * @constructor
+	 * @param {String|ArrayBuffer} payload The message data to be sent.
+	 * <p>
+	 * @property {string} payloadString <i>read only</i> The payload as a string if the payload consists of valid UTF-8 characters.
+	 * @property {ArrayBuffer} payloadBytes <i>read only</i> The payload as an ArrayBuffer.
+	 * <p>
+	 * @property {string} destinationName <b>mandatory</b> The name of the destination to which the message is to be sent
+	 *                    (for messages about to be sent) or the name of the destination from which the message has been received.
+	 *                    (for messages received by the onMessage function).
+	 * <p>
+	 * @property {number} qos The Quality of Service used to deliver the message.
+	 * <dl>
+	 *     <dt>0 Best effort (default).
+	 *     <dt>1 At least once.
+	 *     <dt>2 Exactly once.
+	 * </dl>
+	 * <p>
+	 * @property {Boolean} retained If true, the message is to be retained by the server and delivered
+	 *                     to both current and future subscriptions.
+	 *                     If false the server only delivers the message to current subscribers, this is the default for new Messages.
+	 *                     A received message has the retained boolean set to true if the message was published
+	 *                     with the retained boolean set to true
+	 *                     and the subscrption was made after the message has been published.
+	 * <p>
+	 * @property {Boolean} duplicate <i>read only</i> If true, this message might be a duplicate of one which has already been received.
+	 *                     This is only set on messages received from the server.
+	 *
+	 */
+	var Message = function (newPayload) {
+		var payload;
+		if (   typeof newPayload === "string" ||
+		newPayload instanceof ArrayBuffer ||
+		newPayload instanceof Int8Array   ||
+		newPayload instanceof Uint8Array  ||
+		newPayload instanceof Int16Array  ||
+		newPayload instanceof Uint16Array ||
+		newPayload instanceof Int32Array  ||
+		newPayload instanceof Uint32Array ||
+		newPayload instanceof Float32Array ||
+		newPayload instanceof Float64Array
+		   ) {
+			payload = newPayload;
+		} else {
+			throw (format(ERROR.INVALID_ARGUMENT, [newPayload, "newPayload"]));
+		}
+
+		this._getPayloadString = function () {
+			if (typeof payload === "string")
+				return payload;
+			else
+				return parseUTF8(payload, 0, payload.length);
+		};
+
+		this._getPayloadBytes = function() {
+			if (typeof payload === "string") {
+				var buffer = new ArrayBuffer(UTF8Length(payload));
+				var byteStream = new Uint8Array(buffer);
+				stringToUTF8(payload, byteStream, 0);
+
+				return byteStream;
+			} else {
+				return payload;
+			}
+		};
+
+		var destinationName;
+		this._getDestinationName = function() { return destinationName; };
+		this._setDestinationName = function(newDestinationName) {
+			if (typeof newDestinationName === "string")
+				destinationName = newDestinationName;
+			else
+				throw new Error(format(ERROR.INVALID_ARGUMENT, [newDestinationName, "newDestinationName"]));
+		};
+
+		var qos = 0;
+		this._getQos = function() { return qos; };
+		this._setQos = function(newQos) {
+			if (newQos === 0 || newQos === 1 || newQos === 2 )
+				qos = newQos;
+			else
+				throw new Error("Invalid argument:"+newQos);
+		};
+
+		var retained = false;
+		this._getRetained = function() { return retained; };
+		this._setRetained = function(newRetained) {
+			if (typeof newRetained === "boolean")
+				retained = newRetained;
+			else
+				throw new Error(format(ERROR.INVALID_ARGUMENT, [newRetained, "newRetained"]));
+		};
+
+		var duplicate = false;
+		this._getDuplicate = function() { return duplicate; };
+		this._setDuplicate = function(newDuplicate) { duplicate = newDuplicate; };
+	};
+
+	Message.prototype = {
+		get payloadString() { return this._getPayloadString(); },
+		get payloadBytes() { return this._getPayloadBytes(); },
+
+		get destinationName() { return this._getDestinationName(); },
+		set destinationName(newDestinationName) { this._setDestinationName(newDestinationName); },
+
+		get topic() { return this._getDestinationName(); },
+		set topic(newTopic) { this._setDestinationName(newTopic); },
+
+		get qos() { return this._getQos(); },
+		set qos(newQos) { this._setQos(newQos); },
+
+		get retained() { return this._getRetained(); },
+		set retained(newRetained) { this._setRetained(newRetained); },
+
+		get duplicate() { return this._getDuplicate(); },
+		set duplicate(newDuplicate) { this._setDuplicate(newDuplicate); }
+	};
+
+	// Module contents.
+	return {
+		Client: Client,
+		Message: Message
+	};
+})(window);
+return PahoMQTT;
+});
+
 
 /***/ }),
 
-/***/ "./node_modules/node-libs-browser/node_modules/process/browser.js":
-/*!************************************************************************!*\
-  !*** ./node_modules/node-libs-browser/node_modules/process/browser.js ***!
-  \************************************************************************/
+/***/ "./node_modules/process/browser.js":
+/*!*****************************************!*\
+  !*** ./node_modules/process/browser.js ***!
+  \*****************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
@@ -2430,7 +4920,7 @@ var cachedClearTimeout;
 function defaultSetTimout() {
     throw new Error('setTimeout has not been defined');
 }
-function defaultClearTimeout() {
+function defaultClearTimeout () {
     throw new Error('clearTimeout has not been defined');
 }
 (function () {
@@ -2452,7 +4942,7 @@ function defaultClearTimeout() {
     } catch (e) {
         cachedClearTimeout = defaultClearTimeout;
     }
-})();
+} ())
 function runTimeout(fun) {
     if (cachedSetTimeout === setTimeout) {
         //normal enviroments in sane situations
@@ -2466,15 +4956,17 @@ function runTimeout(fun) {
     try {
         // when when somebody has screwed with setTimeout but no I.E. maddness
         return cachedSetTimeout(fun, 0);
-    } catch (e) {
+    } catch(e){
         try {
             // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
             return cachedSetTimeout.call(null, fun, 0);
-        } catch (e) {
+        } catch(e){
             // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
             return cachedSetTimeout.call(this, fun, 0);
         }
     }
+
+
 }
 function runClearTimeout(marker) {
     if (cachedClearTimeout === clearTimeout) {
@@ -2489,16 +4981,19 @@ function runClearTimeout(marker) {
     try {
         // when when somebody has screwed with setTimeout but no I.E. maddness
         return cachedClearTimeout(marker);
-    } catch (e) {
+    } catch (e){
         try {
             // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
             return cachedClearTimeout.call(null, marker);
-        } catch (e) {
+        } catch (e){
             // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
             // Some versions of I.E. have different rules for clearTimeout vs setTimeout
             return cachedClearTimeout.call(this, marker);
         }
     }
+
+
+
 }
 var queue = [];
 var draining = false;
@@ -2528,7 +5023,7 @@ function drainQueue() {
     draining = true;
 
     var len = queue.length;
-    while (len) {
+    while(len) {
         currentQueue = queue;
         queue = [];
         while (++queueIndex < len) {
@@ -2584,23 +5079,18 @@ process.emit = noop;
 process.prependListener = noop;
 process.prependOnceListener = noop;
 
-process.listeners = function (name) {
-    return [];
-};
+process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
 };
 
-process.cwd = function () {
-    return '/';
-};
+process.cwd = function () { return '/' };
 process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
-process.umask = function () {
-    return 0;
-};
+process.umask = function() { return 0; };
+
 
 /***/ }),
 
@@ -2611,31 +5101,30 @@ process.umask = function () {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-(function (root, factory) {
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
 	// `root` does not resolve to the global window object in a Browserified
 	// bundle, so a direct reference to that object is used instead.
 	var _srcDoc = window.srcDoc;
 
 	if (true) {
-		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports], __WEBPACK_AMD_DEFINE_RESULT__ = (function (exports) {
+		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports], __WEBPACK_AMD_DEFINE_RESULT__ = (function(exports) {
 			factory(exports, _srcDoc);
 			root.srcDoc = exports;
 		}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	} else {}
-})(this, function (exports, _srcDoc) {
+})(this, function(exports, _srcDoc) {
 	var idx, iframes;
 	var isCompliant = !!("srcdoc" in document.createElement("iframe"));
-	var sandboxMsg = "Polyfill may not function in the presence of the " + "`sandbox` attribute. Consider using the `force` option.";
+	var sandboxMsg = "Polyfill may not function in the presence of the " +
+		"`sandbox` attribute. Consider using the `force` option.";
 	var sandboxAllow = /\ballow-same-origin\b/;
 	/**
-  * Determine if the operation may be blocked by the `sandbox` attribute in
-  * some environments, and optionally issue a warning or remove the
-  * attribute.
-  */
-	var validate = function validate(iframe, options) {
+	 * Determine if the operation may be blocked by the `sandbox` attribute in
+	 * some environments, and optionally issue a warning or remove the
+	 * attribute.
+	 */
+	var validate = function( iframe, options ) {
 		var sandbox = iframe.getAttribute("sandbox");
 		if (typeof sandbox === "string" && !sandboxAllow.test(sandbox)) {
 			if (options && options.force) {
@@ -2647,14 +5136,14 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var _typeof = ty
 		}
 	};
 	var implementations = {
-		compliant: function compliant(iframe, content, options) {
+		compliant: function( iframe, content, options ) {
 
 			if (content) {
 				validate(iframe, options);
 				iframe.setAttribute("srcdoc", content);
 			}
 		},
-		legacy: function legacy(iframe, content, options) {
+		legacy: function( iframe, content, options ) {
 
 			var jsUrl;
 
@@ -2692,16 +5181,16 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var _typeof = ty
 	var logError;
 
 	if (window.console && window.console.error) {
-		logError = function logError(msg) {
+		logError = function(msg) {
 			window.console.error("[srcdoc-polyfill] " + msg);
 		};
 	} else {
-		logError = function logError() {};
+		logError = function() {};
 	}
 
 	// Assume the best
 	srcDoc.set = implementations.compliant;
-	srcDoc.noConflict = function () {
+	srcDoc.noConflict = function() {
 		window.srcDoc = _srcDoc;
 		return srcDoc;
 	};
@@ -2718,9 +5207,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var _typeof = ty
 	idx = iframes.length;
 
 	while (idx--) {
-		srcDoc.set(iframes[idx]);
+		srcDoc.set( iframes[idx] );
 	}
+
 });
+
 
 /***/ }),
 
@@ -2744,10 +5235,18 @@ function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
   // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return [bth[buf[i++]], bth[buf[i++]], bth[buf[i++]], bth[buf[i++]], '-', bth[buf[i++]], bth[buf[i++]], '-', bth[buf[i++]], bth[buf[i++]], '-', bth[buf[i++]], bth[buf[i++]], '-', bth[buf[i++]], bth[buf[i++]], bth[buf[i++]], bth[buf[i++]], bth[buf[i++]], bth[buf[i++]]].join('');
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
 }
 
 module.exports = bytesToUuid;
+
 
 /***/ }),
 
@@ -2765,7 +5264,8 @@ module.exports = bytesToUuid;
 
 // getRandomValues needs to be invoked in a context where "this" is a Crypto
 // implementation. Also, find the complete implementation of crypto on IE11.
-var getRandomValues = typeof crypto != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto) || typeof msCrypto != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto);
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
 
 if (getRandomValues) {
   // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
@@ -2792,6 +5292,7 @@ if (getRandomValues) {
   };
 }
 
+
 /***/ }),
 
 /***/ "./node_modules/uuid/v4.js":
@@ -2807,7 +5308,7 @@ var bytesToUuid = __webpack_require__(/*! ./lib/bytesToUuid */ "./node_modules/u
 function v4(options, buf, offset) {
   var i = buf && offset || 0;
 
-  if (typeof options == 'string') {
+  if (typeof(options) == 'string') {
     buf = options === 'binary' ? new Array(16) : null;
     options = null;
   }
@@ -2816,8 +5317,8 @@ function v4(options, buf, offset) {
   var rnds = options.random || (options.rng || rng)();
 
   // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
-  rnds[6] = rnds[6] & 0x0f | 0x40;
-  rnds[8] = rnds[8] & 0x3f | 0x80;
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
 
   // Copy bytes to buffer, if provided
   if (buf) {
@@ -2831,6 +5332,7 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
+
 /***/ }),
 
 /***/ "./node_modules/webpack/buildin/global.js":
@@ -2840,21 +5342,19 @@ module.exports = v4;
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 var g;
 
 // This works in non-strict mode
-g = function () {
+g = (function() {
 	return this;
-}();
+})();
 
 try {
 	// This works if eval is allowed (see CSP)
 	g = g || new Function("return this")();
 } catch (e) {
 	// This works if the window reference is available
-	if ((typeof window === "undefined" ? "undefined" : _typeof(window)) === "object") g = window;
+	if (typeof window === "object") g = window;
 }
 
 // g can still be undefined, but nothing to do about it...
@@ -2862,6 +5362,7 @@ try {
 // easier to handle this case. if(!global) { ...}
 
 module.exports = g;
+
 
 /***/ }),
 
@@ -2872,21 +5373,21 @@ module.exports = g;
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = function (module) {
+module.exports = function(module) {
 	if (!module.webpackPolyfill) {
-		module.deprecate = function () {};
+		module.deprecate = function() {};
 		module.paths = [];
 		// module.parent = undefined by default
 		if (!module.children) module.children = [];
 		Object.defineProperty(module, "loaded", {
 			enumerable: true,
-			get: function get() {
+			get: function() {
 				return module.l;
 			}
 		});
 		Object.defineProperty(module, "id", {
 			enumerable: true,
-			get: function get() {
+			get: function() {
 				return module.i;
 			}
 		});
@@ -2895,16 +5396,17 @@ module.exports = function (module) {
 	return module;
 };
 
+
 /***/ }),
 
 /***/ "./package.json":
 /*!**********************!*\
   !*** ./package.json ***!
   \**********************/
-/*! exports provided: name, version, description, main, generator-videojs-plugin, scripts, keywords, author, license, dependencies, devDependencies, default */
+/*! exports provided: name, title, version, description, main, keywords, author, license, generator-videojs-plugin, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.11","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","lint":"eslint ./ --cache --quiet --ext .jsx --ext .js","lint-fix":"eslint ./ --cache --quiet --ext .jsx --ext .js --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","dependencies":{"debug":"^4.1.0","lodash":"^4.17.10","paho-mqtt":"1.0.4"},"devDependencies":{"babel-core":"^6.26.3","babel-eslint":"^8.2.5","babel-loader":"^7.1.5","babel-plugin-transform-class-properties":"^6.24.1","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"^6.26.0","babel-preset-env":"^1.7.0","css-loader":"^1.0.1","eslint":"^5.0.1","extract-text-webpack-plugin":"^4.0.0-beta.0","gulp":"^3.9.1","gulp-load-plugins":"^1.5.0","humanize":"0.0.9","jquery":"^3.3.1","js-string-escape":"^1.0.1","moment":"^2.22.2","node-sass":"^4.10.0","pre-commit":"^1.2.2","run-sequence":"^2.2.0","sass-loader":"^7.0.3","srcdoc-polyfill":"^1.0.0","standard":"^12.0.1","style-loader":"^0.23.1","uglifyjs-webpack-plugin":"^2.0.1","url-loader":"^1.0.1","video.js":"^7.3.0","videojs-errors":"^4.1.1","webpack":"^4.15.1","webpack-serve":"^2.0.2","write-file-webpack-plugin":"^4.3.2"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.15.0","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.0.4"},"devDependencies":{"@babel/core":"7.3.4","@babel/plugin-proposal-class-properties":"7.3.4","@babel/plugin-proposal-object-rest-spread":"7.3.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.2.5","@babel/preset-env":"7.3.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"1.0.1","eslint":"5.14.1","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.16.0","eslint-plugin-node":"8.0.1","eslint-plugin-promise":"4.0.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.3.1","moment":"2.24.0","node-sass":"4.11.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.4.1","videojs-errors":"4.2.0","webpack":"4.29.5","webpack-bundle-analyzer":"3.0.4","webpack-dev-server":"3.2.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -2917,21 +5419,24 @@ module.exports = {"name":"videojs-mse-over-clsp","version":"0.13.11","descriptio
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return MqttConduitCollection; });
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 
 var DEBUG_PREFIX = 'skyline:clsp';
+var singleton;
 
-var singleton = void 0;
-
-var MqttConduitCollection = function () {
+var MqttConduitCollection =
+/*#__PURE__*/
+function () {
   _createClass(MqttConduitCollection, null, [{
-    key: 'factory',
+    key: "factory",
     value: function factory() {
       if (!singleton) {
         singleton = new MqttConduitCollection();
@@ -2946,12 +5451,9 @@ var MqttConduitCollection = function () {
 
     _classCallCheck(this, MqttConduitCollection);
 
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MqttConduitCollection');
-
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()("".concat(DEBUG_PREFIX, ":MqttConduitCollection"));
     this.debug('constructing...');
-
     this._conduits = {};
-
     window.addEventListener('message', function (event) {
       _this.debug('window on message');
 
@@ -2962,54 +5464,56 @@ var MqttConduitCollection = function () {
         // a fail event is always sent.  It is not necessary to log this as an error
         // in the console, because it is not an error.
         if (!event.data.event === 'fail') {
-          console.error('No conduit with id "' + clientId + '" exists!');
+          console.error("No conduit with id \"".concat(clientId, "\" exists!"));
         }
 
+        return;
+      } // If the document is hidden, don't execute the onMessage handler.  If the
+      // handler is executed, for some reason, the conduit will continue to
+      // request/receive data from the server, which will eventually result in
+      // unconstrained resource utilization, and ultimately a browser crash
+
+
+      if (document.hidden) {
         return;
       }
 
       var conduit = _this.getById(clientId);
-      var iov = conduit.iov;
 
+      var iov = conduit.iov;
       iov.onMessage(event);
     });
   }
 
   _createClass(MqttConduitCollection, [{
-    key: 'set',
+    key: "set",
     value: function set(id, conduit) {
       this.debug('setting...', id, conduit);
-
       this._conduits[id] = conduit;
-
       return conduit;
     }
   }, {
-    key: 'remove',
+    key: "remove",
     value: function remove(id) {
       delete this._conduits[id];
     }
   }, {
-    key: 'addFromIov',
+    key: "addFromIov",
     value: function addFromIov(iov) {
       this.debug('adding from iov...', iov);
-
       var conduit = this.exists(iov.config.clientId) ? this.getById(iov.config.clientId) : window.mqttConduit(iov);
-
       return this.set(iov.config.clientId, conduit);
     }
   }, {
-    key: 'getById',
+    key: "getById",
     value: function getById(id) {
       this.debug('getting...', id);
-
       return this._conduits[id];
     }
   }, {
-    key: 'exists',
+    key: "exists",
     value: function exists(id) {
       this.debug('exists?', id);
-
       return this._conduits.hasOwnProperty(id);
     }
   }]);
@@ -3017,7 +5521,7 @@ var MqttConduitCollection = function () {
   return MqttConduitCollection;
 }();
 
-/* harmony default export */ __webpack_exports__["default"] = (MqttConduitCollection);
+
 
 /***/ }),
 
@@ -3030,60 +5534,69 @@ var MqttConduitCollection = function () {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return MqttHandler; });
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _iov_IOV__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./iov/IOV */ "./src/js/iov/IOV.js");
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 
 
 
 var Component = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getComponent('Component');
-
 var DEBUG_PREFIX = 'skyline:clsp';
 
-var MqttHandler = function (_Component) {
+var MqttHandler =
+/*#__PURE__*/
+function (_Component) {
   _inherits(MqttHandler, _Component);
 
   function MqttHandler(source, tech, mqttConduitCollection, options) {
+    var _this;
+
     _classCallCheck(this, MqttHandler);
 
-    var _this = _possibleConstructorReturn(this, (MqttHandler.__proto__ || Object.getPrototypeOf(MqttHandler)).call(this, tech, options.mqtt));
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(MqttHandler).call(this, tech, options.mqtt));
+    _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()("".concat(DEBUG_PREFIX, ":MqttHandler"));
 
-    _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MqttHandler');
     _this.debug('constructor');
 
     _this.tech_ = tech;
-    _this.source_ = source;
-
-    // @todo - is there a better way to do this where we don't pollute the
+    _this.source_ = source; // @todo - is there a better way to do this where we don't pollute the
     // top level namespace?
+
     _this.iov = null;
     _this.mqttConduitCollection = mqttConduitCollection;
     return _this;
   }
 
   _createClass(MqttHandler, [{
-    key: 'createIOV',
+    key: "createIOV",
     value: function createIOV(player) {
       this.debug('createIOV');
-
       this.updateIOV(_iov_IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(this.source_.src, this.mqttConduitCollection, player));
-
       this.iov.initialize();
     }
   }, {
-    key: 'updateIOV',
+    key: "updateIOV",
     value: function updateIOV(iov) {
       this.debug('updateIOV');
 
@@ -3103,7 +5616,7 @@ var MqttHandler = function (_Component) {
   return MqttHandler;
 }(Component);
 
-/* harmony default export */ __webpack_exports__["default"] = (MqttHandler);
+
 ;
 
 /***/ }),
@@ -3127,19 +5640,14 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
-
 var DEBUG_PREFIX = 'skyline:clsp';
 var SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
-
 /* harmony default export */ __webpack_exports__["default"] = (function () {
-  var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MqttSourceHandler');
-
+  var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()("".concat(DEBUG_PREFIX, ":MqttSourceHandler"));
   return function (mode, mqttConduitCollection) {
     var obj = {
       canHandleSource: function canHandleSource(srcObj) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
         debug('canHandleSource');
 
         if (!srcObj.src) {
@@ -3162,13 +5670,13 @@ var SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
       },
       handleSource: function handleSource(source, tech) {
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
         debug('handleSource');
-
-        var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options, { mqtt: { mode: mode } });
-
+        var localOptions = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(video_js__WEBPACK_IMPORTED_MODULE_1___default.a.options, options, {
+          mqtt: {
+            mode: mode
+          }
+        });
         tech.mqtt = new _MqttHandler__WEBPACK_IMPORTED_MODULE_2__["default"](source, tech, mqttConduitCollection, localOptions);
-
         return tech.mqtt;
       },
       canPlayType: function canPlayType(type) {
@@ -3178,12 +5686,10 @@ var SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
           return 'maybe';
         }
 
-        console.error('clsp type=\'' + type + '\' rejected');
-
+        console.error("clsp type='".concat(type, "' rejected"));
         return '';
       }
     };
-
     return obj;
   };
 });
@@ -3203,27 +5709,41 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! video.js */ "video.js");
 /* harmony import */ var video_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(video_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
-/* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/MqttConduitCollection.js");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
+/* harmony import */ var paho_mqtt__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! paho-mqtt */ "./node_modules/paho-mqtt/paho-mqtt.js");
+/* harmony import */ var paho_mqtt__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(paho_mqtt__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _conduit_Conduit__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./conduit/Conduit */ "./src/js/conduit/Conduit.js");
+/* harmony import */ var _MqttSourceHandler__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./MqttSourceHandler */ "./src/js/MqttSourceHandler.js");
+/* harmony import */ var _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./MqttConduitCollection */ "./src/js/MqttConduitCollection.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
 
 
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-// This is configured as an external library by webpack, so the caller must
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+ // This is configured as an external library by webpack, so the caller must
 // provide videojs on `window`
 
 
@@ -3231,29 +5751,41 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 
 
-var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin');
 
+var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin'); // Note that the value can never be zero!
+
+var VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN = 1;
+var VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MAX = 20;
 /* harmony default export */ __webpack_exports__["default"] = (function () {
   var _class, _temp;
 
   var defaultOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-  return _temp = _class = function (_Plugin) {
+  return _temp = _class =
+  /*#__PURE__*/
+  function (_Plugin) {
     _inherits(ClspPlugin, _Plugin);
 
     _createClass(ClspPlugin, null, [{
-      key: 'register',
+      key: "register",
       value: function register() {
-        if (video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin(_utils__WEBPACK_IMPORTED_MODULE_4__["default"].name)) {
+        if (video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin(_utils__WEBPACK_IMPORTED_MODULE_6__["default"].name)) {
           throw new Error('You can only register the clsp plugin once, and it has already been registered.');
-        }
+        } // Make it globally accessible to the conduit.
+        // Even though the export of paho-mqtt is { Client, Message }, there is an
+        // internal reference that the library makes to itself, and it expects
+        // itself to exist at Paho.MQTT.  FIRED!
 
-        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getTech('Html5').registerSourceHandler(Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_2__["default"])()('html5', _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_3__["default"].factory()), 0);
-        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.registerPlugin(_utils__WEBPACK_IMPORTED_MODULE_4__["default"].name, ClspPlugin);
 
+        window.Paho = {
+          MQTT: paho_mqtt__WEBPACK_IMPORTED_MODULE_2___default.a
+        };
+        Object(_conduit_Conduit__WEBPACK_IMPORTED_MODULE_3__["default"])();
+        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getTech('Html5').registerSourceHandler(Object(_MqttSourceHandler__WEBPACK_IMPORTED_MODULE_4__["default"])()('html5', _MqttConduitCollection__WEBPACK_IMPORTED_MODULE_5__["default"].factory()), 0);
+        video_js__WEBPACK_IMPORTED_MODULE_1___default.a.registerPlugin(_utils__WEBPACK_IMPORTED_MODULE_6__["default"].name, ClspPlugin);
         return ClspPlugin;
       }
     }, {
-      key: 'getDefaultOptions',
+      key: "getDefaultOptions",
       value: function getDefaultOptions() {
         return {
           /**
@@ -3273,13 +5805,13 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
     }]);
 
     function ClspPlugin(player, options) {
-      var _this2 = this;
+      var _this;
 
       _classCallCheck(this, ClspPlugin);
 
-      var _this = _possibleConstructorReturn(this, (ClspPlugin.__proto__ || Object.getPrototypeOf(ClspPlugin)).call(this, player, options));
+      _this = _possibleConstructorReturn(this, _getPrototypeOf(ClspPlugin).call(this, player, options));
 
-      _this.onMqttHandlerError = function () {
+      _defineProperty(_assertThisInitialized(_this), "onMqttHandlerError", function () {
         var mqttHandler = _this.player.tech(true).mqtt;
 
         mqttHandler.destroy();
@@ -3291,62 +5823,63 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
           headline: 'Insufficient Resources',
           message: 'The current hardware cannot support the current number of playing streams.'
         });
-      };
+      });
 
       _this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()('skyline:clsp:plugin:ClspPlugin');
+
       _this.debug('constructing...');
 
       var playerOptions = player.options_;
-
-      _this.options = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(_extends({}, _this.constructor.getDefaultOptions(), defaultOptions, playerOptions.clsp || {}), options);
-
+      _this.options = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.mergeOptions(_objectSpread({}, _this.constructor.getDefaultOptions(), defaultOptions, playerOptions.clsp || {}), options);
       _this._playerOptions = playerOptions;
       _this.currentSourceIndex = 0;
-
       player.addClass('vjs-mse-over-mqtt');
 
       if (_this.options.customClass) {
         player.addClass(_this.options.customClass);
       }
 
-      _this.resetErrors(player);
+      _this.resetErrors(player); // @todo - this error doesn't work or display the way it's intended to
 
-      // @todo - this error doesn't work or display the way it's intended to
-      if (!_utils__WEBPACK_IMPORTED_MODULE_4__["default"].supported()) {
-        var _ret;
 
-        return _ret = player.error({
+      if (!_utils__WEBPACK_IMPORTED_MODULE_6__["default"].supported()) {
+        return _possibleConstructorReturn(_this, player.error({
           code: 'PLAYER_ERR_NOT_COMPAT',
           type: 'PLAYER_ERR_NOT_COMPAT',
           dismiss: false
-        }), _possibleConstructorReturn(_this, _ret);
+        }));
       }
 
-      _this.autoplayEnabled = playerOptions.autoplay || player.getAttribute('autoplay') === 'true';
-
-      // for debugging...
-
+      _this.autoplayEnabled = playerOptions.autoplay || player.getAttribute('autoplay') === 'true'; // for debugging...
       // const oldTrigger = player.trigger.bind(player);
       // player.trigger = (eventName, ...args) => {
       //   console.log(eventName);
       //   console.log(...args);
       //   oldTrigger(eventName, ...args);
       // };
-
       // Track the number of times we've retried on error
-      player._errorRetriesCount = 0;
 
-      // Needed to make videojs-errors think that the video is progressing
-      // If we do not do this, videojs-errors will give us a timeout error
-      player._currentTime = 0;
+      player._errorRetriesCount = 0; // Needed to make videojs-errors think that the video is progressing.
+      // If we do not do this, videojs-errors will give us a timeout error.
+      // The number just needs to change, it doesn't need to continually increment
+
+      player._currentTime = VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN;
+
       player.currentTime = function () {
-        return player._currentTime++;
-      };
+        // Don't let this number get over 2 billion!
+        if (player._currentTime > VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MAX) {
+          player._currentTime = VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN;
+        } else {
+          player._currentTime++;
+        }
 
-      // @todo - are we not using videojs properly?
+        return player._currentTime;
+      }; // @todo - are we not using videojs properly?
       // @see - https://github.com/videojs/video.js/issues/5233
       // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
       // This is currently needed for autoplay.
+
+
       player.on('ready', function () {
         if (_this.autoplayEnabled) {
           // Even though the "ready" event has fired, it's not actually ready
@@ -3355,84 +5888,113 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
             player.play();
           });
         }
-      });
+      }); // @todo - this seems like we aren't using videojs properly
 
-      // @todo - this seems like we aren't using videojs properly
-      player.on('error', function () {
-        var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(event) {
-          var error, iov;
-          return regeneratorRuntime.wrap(function _callee$(_context) {
+      player.on('error',
+      /*#__PURE__*/
+      function () {
+        var _ref = _asyncToGenerator(
+        /*#__PURE__*/
+        regeneratorRuntime.mark(function _callee2(event) {
+          var retry, error;
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
-              switch (_context.prev = _context.next) {
+              switch (_context2.prev = _context2.next) {
                 case 0:
-                  error = player.error();
-                  _context.t0 = error.code;
-                  _context.next = _context.t0 === 0 ? 4 : _context.t0 === 4 ? 4 : _context.t0 === 5 ? 4 : _context.t0 === 'PLAYER_ERR_IOV' ? 4 : 5;
-                  break;
+                  retry =
+                  /*#__PURE__*/
+                  function () {
+                    var _ref2 = _asyncToGenerator(
+                    /*#__PURE__*/
+                    regeneratorRuntime.mark(function _callee() {
+                      var iov;
+                      return regeneratorRuntime.wrap(function _callee$(_context) {
+                        while (1) {
+                          switch (_context.prev = _context.next) {
+                            case 0:
+                              if (!(_this.options.maxRetriesOnError === 0)) {
+                                _context.next = 2;
+                                break;
+                              }
 
-                case 4:
-                  return _context.abrupt('break', 17);
+                              return _context.abrupt("return");
+
+                            case 2:
+                              if (!(_this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= _this.options.maxRetriesOnError)) {
+                                _context.next = 12;
+                                break;
+                              }
+
+                              // @todo - when can we reset this to zero?
+                              player._errorRetriesCount++;
+
+                              _this.resetErrors(player);
+
+                              iov = player.tech(true).mqtt.iov; // @todo - investigate how this can be called when the iov has been destroyed
+
+                              if (!(!iov || iov.destroyed || !iov.player)) {
+                                _context.next = 10;
+                                break;
+                              }
+
+                              _this.initializeIOV(player);
+
+                              _context.next = 12;
+                              break;
+
+                            case 10:
+                              _context.next = 12;
+                              return iov.player.restart();
+
+                            case 12:
+                            case "end":
+                              return _context.stop();
+                          }
+                        }
+                      }, _callee);
+                    }));
+
+                    return function retry() {
+                      return _ref2.apply(this, arguments);
+                    };
+                  }();
+
+                  error = player.error();
+                  _context2.t0 = error.code;
+                  _context2.next = _context2.t0 === -2 ? 5 : _context2.t0 === 0 ? 6 : _context2.t0 === 4 ? 6 : _context2.t0 === 5 ? 6 : _context2.t0 === 'PLAYER_ERR_IOV' ? 6 : 7;
+                  break;
 
                 case 5:
-                  if (!(_this.options.maxRetriesOnError === 0)) {
-                    _context.next = 7;
-                    break;
-                  }
+                  return _context2.abrupt("return", retry());
 
-                  return _context.abrupt('break', 17);
+                case 6:
+                  return _context2.abrupt("break", 8);
 
                 case 7:
-                  if (!(_this.options.maxRetriesOnError < 0 || player._errorRetriesCount <= _this.options.maxRetriesOnError)) {
-                    _context.next = 17;
-                    break;
-                  }
+                  return _context2.abrupt("return", retry());
 
-                  // @todo - when can we reset this to zero?
-                  player._errorRetriesCount++;
-
-                  _this.resetErrors(player);
-
-                  iov = player.tech(true).mqtt.iov;
-
-                  // @todo - investigate how this can be called when the iov has been destroyed
-
-                  if (!(!iov || iov.destroyed || !iov.player)) {
-                    _context.next = 15;
-                    break;
-                  }
-
-                  _this.initializeIOV(player);
-                  _context.next = 17;
-                  break;
-
-                case 15:
-                  _context.next = 17;
-                  return iov.player.restart();
-
-                case 17:
-                case 'end':
-                  return _context.stop();
+                case 8:
+                case "end":
+                  return _context2.stop();
               }
             }
-          }, _callee, _this2);
+          }, _callee2);
         }));
 
-        return function (_x2) {
+        return function (_x) {
           return _ref.apply(this, arguments);
         };
-      }());
-
-      // @todo - we are currently creating the IOV for this player on `firstplay`
+      }()); // @todo - we are currently creating the IOV for this player on `firstplay`
       // but we could do it on the `ready` event.  However, in order to support
       // this, we need to make the IOV and its player able to be instantiated
       // without automatically playing AND without automatically listening via
       // a conduit
+
       player.on('firstplay', function (event) {
         _this.debug('on player firstplay');
 
         _this.initializeIOV(player);
       });
-
       player.on('dispose', function () {
         // @todo - destroy the tech, since it is a player-specific instance
         try {
@@ -3447,9 +6009,9 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
     }
 
     _createClass(ClspPlugin, [{
-      key: 'getVideojsErrorsOptions',
+      key: "getVideojsErrorsOptions",
       value: function getVideojsErrorsOptions() {
-        return _extends({
+        return _objectSpread({
           timeout: 120 * 1000,
           errors: {
             PLAYER_ERR_NOT_COMPAT: {
@@ -3461,31 +6023,29 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
         }, this.options.videojsErrorsOptions);
       }
     }, {
-      key: 'resetErrors',
+      key: "resetErrors",
       value: function resetErrors(player) {
         // @see - https://github.com/videojs/video.js/issues/4401
         player.error(null);
-        player.errorDisplay.close();
-
-        // Support for the videojs-errors library
+        player.errorDisplay.close(); // Support for the videojs-errors library
         // After an error occurs, and then we clear the error and its message
         // above, we must re-enable videojs-errors on the player
+
         if (player.errors) {
           player.errors(this.getVideojsErrorsOptions());
         }
       }
     }, {
-      key: 'initializeIOV',
+      key: "initializeIOV",
       value: function initializeIOV(player) {
         var mqttHandler = player.tech(true).mqtt;
 
         if (!mqttHandler) {
-          throw new Error('VideoJS Player ' + player.id() + ' does not have mqtt tech!');
+          throw new Error("VideoJS Player ".concat(player.id(), " does not have mqtt tech!"));
         }
 
         mqttHandler.off('error', this.onMqttHandlerError);
         mqttHandler.on('error', this.onMqttHandlerError);
-
         mqttHandler.createIOV(player, {
           enableMetrics: this.options.enableMetrics,
           defaultNonSslPort: this.options.defaultNonSslPort,
@@ -3493,14 +6053,11 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
         });
       }
     }, {
-      key: 'destroy',
+      key: "destroy",
       value: function destroy() {
         this.debug('destroying...');
-
         var mqttHandler = this.player.tech(true).mqtt;
-
         mqttHandler.off('error', this.onMqttHandlerError);
-
         this._playerOptions = null;
         this.currentSourceIndex = null;
         this.debug = null;
@@ -3508,161 +6065,361 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_1___default.a.getPlugin('plugin')
     }]);
 
     return ClspPlugin;
-  }(Plugin), _class.VERSION = _utils__WEBPACK_IMPORTED_MODULE_4__["default"].version, _class.utils = _utils__WEBPACK_IMPORTED_MODULE_4__["default"], _class.METRIC_TYPES = ['videojs.errorRetriesCount'], _temp;
+  }(Plugin), _defineProperty(_class, "VERSION", _utils__WEBPACK_IMPORTED_MODULE_6__["default"].version), _defineProperty(_class, "utils", _utils__WEBPACK_IMPORTED_MODULE_6__["default"]), _defineProperty(_class, "METRIC_TYPES", ['videojs.errorRetriesCount']), _temp;
 });
 
 /***/ }),
 
-/***/ "./src/js/conduit/clspConduit.generated.js":
-/*!*************************************************!*\
-  !*** ./src/js/conduit/clspConduit.generated.js ***!
-  \*************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ "./src/js/conduit/Conduit.js":
+/*!***********************************!*\
+  !*** ./src/js/conduit/Conduit.js ***!
+  \***********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-/*
-Creates a hidden iframe that is used to establish a dedicated mqtt websocket
-for a single video. This is basically an in browser micro service which
-uses cross document communication to route data to and from the iframe.
-*/
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Router__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Router */ "./src/js/conduit/Router.js");
 
-// The below string literals allow the iframe to be created completely withinjavascript allowing
-// the videojs to be completely protable.
+/**
+ * Creates a hidden iframe that is used to establish a dedicated mqtt websocket
+ * for a single video. This is basically an in-browser micro service which
+ * uses cross-document communication to route data to and from the iframe.
+ */
 
 
-// this code is filled in by the gulpfile.js
-var iframe_code = "/*******************************************************************************\n * Copyright (c) 2013, 2016 IBM Corp.\n *\n * All rights reserved. This program and the accompanying materials\n * are made available under the terms of the Eclipse Public License v1.0\n * and Eclipse Distribution License v1.0 which accompany this distribution.\n *\n * The Eclipse Public License is available at\n *    http://www.eclipse.org/legal/epl-v10.html\n * and the Eclipse Distribution License is available at\n *   http://www.eclipse.org/org/documents/edl-v10.php.\n *\n *******************************************************************************/\n(function(p,s){\"object\"===typeof exports&&\"object\"===typeof module?module.exports=s():\"function\"===typeof define&&define.amd?define(s):\"object\"===typeof exports?exports=s():(\"undefined\"===typeof p.Paho&&(p.Paho={}),p.Paho.MQTT=s())})(this,function(){return function(p){function s(a,b,c){b[c++]=a>>8;b[c++]=a%256;return c}function u(a,b,c,k){k=s(b,c,k);D(a,c,k);return k+b}function n(a){for(var b=0,c=0;c<a.length;c++){var k=a.charCodeAt(c);2047<k?(55296<=k&&56319>=k&&(c++,b++),b+=3):127<k?b+=2:b++}return b}\nfunction D(a,b,c){for(var k=0;k<a.length;k++){var e=a.charCodeAt(k);if(55296<=e&&56319>=e){var g=a.charCodeAt(++k);if(isNaN(g))throw Error(f(h.MALFORMED_UNICODE,[e,g]));e=(e-55296<<10)+(g-56320)+65536}127>=e?b[c++]=e:(2047>=e?b[c++]=e>>6&31|192:(65535>=e?b[c++]=e>>12&15|224:(b[c++]=e>>18&7|240,b[c++]=e>>12&63|128),b[c++]=e>>6&63|128),b[c++]=e&63|128)}return b}function E(a,b,c){for(var k=\"\",e,g=b;g<b+c;){e=a[g++];if(!(128>e)){var m=a[g++]-128;if(0>m)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),\n\"\"]));if(224>e)e=64*(e-192)+m;else{var d=a[g++]-128;if(0>d)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16)]));if(240>e)e=4096*(e-224)+64*m+d;else{var l=a[g++]-128;if(0>l)throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16),l.toString(16)]));if(248>e)e=262144*(e-240)+4096*m+64*d+l;else throw Error(f(h.MALFORMED_UTF,[e.toString(16),m.toString(16),d.toString(16),l.toString(16)]));}}}65535<e&&(e-=65536,k+=String.fromCharCode(55296+(e>>10)),e=56320+(e&\n1023));k+=String.fromCharCode(e)}return k}var z=function(a,b){for(var c in a)if(a.hasOwnProperty(c))if(b.hasOwnProperty(c)){if(typeof a[c]!==b[c])throw Error(f(h.INVALID_TYPE,[typeof a[c],c]));}else{c=\"Unknown property, \"+c+\". Valid properties are:\";for(var k in b)b.hasOwnProperty(k)&&(c=c+\" \"+k);throw Error(c);}},v=function(a,b){return function(){return a.apply(b,arguments)}},h={OK:{code:0,text:\"AMQJSC0000I OK.\"},CONNECT_TIMEOUT:{code:1,text:\"AMQJSC0001E Connect timed out.\"},SUBSCRIBE_TIMEOUT:{code:2,\ntext:\"AMQJS0002E Subscribe timed out.\"},UNSUBSCRIBE_TIMEOUT:{code:3,text:\"AMQJS0003E Unsubscribe timed out.\"},PING_TIMEOUT:{code:4,text:\"AMQJS0004E Ping timed out.\"},INTERNAL_ERROR:{code:5,text:\"AMQJS0005E Internal error. Error Message: {0}, Stack trace: {1}\"},CONNACK_RETURNCODE:{code:6,text:\"AMQJS0006E Bad Connack return code:{0} {1}.\"},SOCKET_ERROR:{code:7,text:\"AMQJS0007E Socket error:{0}.\"},SOCKET_CLOSE:{code:8,text:\"AMQJS0008I Socket closed.\"},MALFORMED_UTF:{code:9,text:\"AMQJS0009E Malformed UTF data:{0} {1} {2}.\"},\nUNSUPPORTED:{code:10,text:\"AMQJS0010E {0} is not supported by this browser.\"},INVALID_STATE:{code:11,text:\"AMQJS0011E Invalid state {0}.\"},INVALID_TYPE:{code:12,text:\"AMQJS0012E Invalid type {0} for {1}.\"},INVALID_ARGUMENT:{code:13,text:\"AMQJS0013E Invalid argument {0} for {1}.\"},UNSUPPORTED_OPERATION:{code:14,text:\"AMQJS0014E Unsupported operation.\"},INVALID_STORED_DATA:{code:15,text:\"AMQJS0015E Invalid data in local storage key\\x3d{0} value\\x3d{1}.\"},INVALID_MQTT_MESSAGE_TYPE:{code:16,text:\"AMQJS0016E Invalid MQTT message type {0}.\"},\nMALFORMED_UNICODE:{code:17,text:\"AMQJS0017E Malformed Unicode string:{0} {1}.\"},BUFFER_FULL:{code:18,text:\"AMQJS0018E Message buffer is full, maximum buffer size: {0}.\"}},H={0:\"Connection Accepted\",1:\"Connection Refused: unacceptable protocol version\",2:\"Connection Refused: identifier rejected\",3:\"Connection Refused: server unavailable\",4:\"Connection Refused: bad user name or password\",5:\"Connection Refused: not authorized\"},f=function(a,b){var c=a.text;if(b)for(var k,e,g=0;g<b.length;g++)if(k=\"{\"+\ng+\"}\",e=c.indexOf(k),0<e)var h=c.substring(0,e),c=c.substring(e+k.length),c=h+b[g]+c;return c},A=[0,6,77,81,73,115,100,112,3],B=[0,4,77,81,84,84,4],q=function(a,b){this.type=a;for(var c in b)b.hasOwnProperty(c)&&(this[c]=b[c])};q.prototype.encode=function(){var a=(this.type&15)<<4,b=0,c=[],k=0,e;void 0!==this.messageIdentifier&&(b+=2);switch(this.type){case 1:switch(this.mqttVersion){case 3:b+=A.length+3;break;case 4:b+=B.length+3}b+=n(this.clientId)+2;void 0!==this.willMessage&&(b+=n(this.willMessage.destinationName)+\n2,e=this.willMessage.payloadBytes,e instanceof Uint8Array||(e=new Uint8Array(h)),b+=e.byteLength+2);void 0!==this.userName&&(b+=n(this.userName)+2);void 0!==this.password&&(b+=n(this.password)+2);break;case 8:for(var a=a|2,g=0;g<this.topics.length;g++)c[g]=n(this.topics[g]),b+=c[g]+2;b+=this.requestedQos.length;break;case 10:a|=2;for(g=0;g<this.topics.length;g++)c[g]=n(this.topics[g]),b+=c[g]+2;break;case 6:a|=2;break;case 3:this.payloadMessage.duplicate&&(a|=8);a=a|=this.payloadMessage.qos<<1;this.payloadMessage.retained&&\n(a|=1);var k=n(this.payloadMessage.destinationName),h=this.payloadMessage.payloadBytes,b=b+(k+2)+h.byteLength;h instanceof ArrayBuffer?h=new Uint8Array(h):h instanceof Uint8Array||(h=new Uint8Array(h.buffer))}var f=b,g=Array(1),d=0;do{var t=f%128,f=f>>7;0<f&&(t|=128);g[d++]=t}while(0<f&&4>d);f=g.length+1;b=new ArrayBuffer(b+f);d=new Uint8Array(b);d[0]=a;d.set(g,1);if(3==this.type)f=u(this.payloadMessage.destinationName,k,d,f);else if(1==this.type){switch(this.mqttVersion){case 3:d.set(A,f);f+=A.length;\nbreak;case 4:d.set(B,f),f+=B.length}a=0;this.cleanSession&&(a=2);void 0!==this.willMessage&&(a=a|4|this.willMessage.qos<<3,this.willMessage.retained&&(a|=32));void 0!==this.userName&&(a|=128);void 0!==this.password&&(a|=64);d[f++]=a;f=s(this.keepAliveInterval,d,f)}void 0!==this.messageIdentifier&&(f=s(this.messageIdentifier,d,f));switch(this.type){case 1:f=u(this.clientId,n(this.clientId),d,f);void 0!==this.willMessage&&(f=u(this.willMessage.destinationName,n(this.willMessage.destinationName),d,f),\nf=s(e.byteLength,d,f),d.set(e,f),f+=e.byteLength);void 0!==this.userName&&(f=u(this.userName,n(this.userName),d,f));void 0!==this.password&&u(this.password,n(this.password),d,f);break;case 3:d.set(h,f);break;case 8:for(g=0;g<this.topics.length;g++)f=u(this.topics[g],c[g],d,f),d[f++]=this.requestedQos[g];break;case 10:for(g=0;g<this.topics.length;g++)f=u(this.topics[g],c[g],d,f)}return b};var F=function(a,b,c){this._client=a;this._window=b;this._keepAliveInterval=1E3*c;this.isReset=!1;var k=(new q(12)).encode(),\ne=function(a){return function(){return g.apply(a)}},g=function(){this.isReset?(this.isReset=!1,this._client._trace(\"Pinger.doPing\",\"send PINGREQ\"),this._client.socket.send(k),this.timeout=this._window.setTimeout(e(this),this._keepAliveInterval)):(this._client._trace(\"Pinger.doPing\",\"Timed out\"),this._client._disconnected(h.PING_TIMEOUT.code,f(h.PING_TIMEOUT)))};this.reset=function(){this.isReset=!0;this._window.clearTimeout(this.timeout);0<this._keepAliveInterval&&(this.timeout=setTimeout(e(this),\nthis._keepAliveInterval))};this.cancel=function(){this._window.clearTimeout(this.timeout)}},w=function(a,b,c,f,e){this._window=b;c||(c=30);this.timeout=setTimeout(function(a,b,c){return function(){return a.apply(b,c)}}(f,a,e),1E3*c);this.cancel=function(){this._window.clearTimeout(this.timeout)}},d=function(a,b,c,d,e){if(!(\"WebSocket\"in p&&null!==p.WebSocket))throw Error(f(h.UNSUPPORTED,[\"WebSocket\"]));if(!(\"localStorage\"in p&&null!==p.localStorage))throw Error(f(h.UNSUPPORTED,[\"localStorage\"]));\nif(!(\"ArrayBuffer\"in p&&null!==p.ArrayBuffer))throw Error(f(h.UNSUPPORTED,[\"ArrayBuffer\"]));this._trace(\"Paho.MQTT.Client\",a,b,c,d,e);this.host=b;this.port=c;this.path=d;this.uri=a;this.clientId=e;this._wsuri=null;this._localKey=b+\":\"+c+(\"/mqtt\"!=d?\":\"+d:\"\")+\":\"+e+\":\";this._msg_queue=[];this._buffered_msg_queue=[];this._sentMessages={};this._receivedMessages={};this._notify_msg_sent={};this._message_identifier=1;this._sequence=0;for(var g in localStorage)0!==g.indexOf(\"Sent:\"+this._localKey)&&0!==\ng.indexOf(\"Received:\"+this._localKey)||this.restore(g)};d.prototype.host=null;d.prototype.port=null;d.prototype.path=null;d.prototype.uri=null;d.prototype.clientId=null;d.prototype.socket=null;d.prototype.connected=!1;d.prototype.maxMessageIdentifier=65536;d.prototype.connectOptions=null;d.prototype.hostIndex=null;d.prototype.onConnected=null;d.prototype.onConnectionLost=null;d.prototype.onMessageDelivered=null;d.prototype.onMessageArrived=null;d.prototype.traceFunction=null;d.prototype._msg_queue=\nnull;d.prototype._buffered_msg_queue=null;d.prototype._connectTimeout=null;d.prototype.sendPinger=null;d.prototype.receivePinger=null;d.prototype._reconnectInterval=1;d.prototype._reconnecting=!1;d.prototype._reconnectTimeout=null;d.prototype.disconnectedPublishing=!1;d.prototype.disconnectedBufferSize=5E3;d.prototype.receiveBuffer=null;d.prototype._traceBuffer=null;d.prototype._MAX_TRACE_ENTRIES=100;d.prototype.connect=function(a){var b=this._traceMask(a,\"password\");this._trace(\"Client.connect\",\nb,this.socket,this.connected);if(this.connected)throw Error(f(h.INVALID_STATE,[\"already connected\"]));if(this.socket)throw Error(f(h.INVALID_STATE,[\"already connected\"]));this._reconnecting&&(this._reconnectTimeout.cancel(),this._reconnectTimeout=null,this._reconnecting=!1);this.connectOptions=a;this._reconnectInterval=1;this._reconnecting=!1;a.uris?(this.hostIndex=0,this._doConnect(a.uris[0])):this._doConnect(this.uri)};d.prototype.subscribe=function(a,b){this._trace(\"Client.subscribe\",a,b);if(!this.connected)throw Error(f(h.INVALID_STATE,\n[\"not connected\"]));var c=new q(8);c.topics=[a];c.requestedQos=void 0!==b.qos?[b.qos]:[0];b.onSuccess&&(c.onSuccess=function(a){b.onSuccess({invocationContext:b.invocationContext,grantedQos:a})});b.onFailure&&(c.onFailure=function(a){b.onFailure({invocationContext:b.invocationContext,errorCode:a,errorMessage:f(a)})});b.timeout&&(c.timeOut=new w(this,window,b.timeout,b.onFailure,[{invocationContext:b.invocationContext,errorCode:h.SUBSCRIBE_TIMEOUT.code,errorMessage:f(h.SUBSCRIBE_TIMEOUT)}]));this._requires_ack(c);\nthis._schedule_message(c)};d.prototype.unsubscribe=function(a,b){this._trace(\"Client.unsubscribe\",a,b);if(!this.connected)throw Error(f(h.INVALID_STATE,[\"not connected\"]));var c=new q(10);c.topics=[a];b.onSuccess&&(c.callback=function(){b.onSuccess({invocationContext:b.invocationContext})});b.timeout&&(c.timeOut=new w(this,window,b.timeout,b.onFailure,[{invocationContext:b.invocationContext,errorCode:h.UNSUBSCRIBE_TIMEOUT.code,errorMessage:f(h.UNSUBSCRIBE_TIMEOUT)}]));this._requires_ack(c);this._schedule_message(c)};\nd.prototype.send=function(a){this._trace(\"Client.send\",a);wireMessage=new q(3);wireMessage.payloadMessage=a;if(this.connected)0<a.qos?this._requires_ack(wireMessage):this.onMessageDelivered&&(this._notify_msg_sent[wireMessage]=this.onMessageDelivered(wireMessage.payloadMessage)),this._schedule_message(wireMessage);else if(this._reconnecting&&this.disconnectedPublishing){if(Object.keys(this._sentMessages).length+this._buffered_msg_queue.length>this.disconnectedBufferSize)throw Error(f(h.BUFFER_FULL,\n[this.disconnectedBufferSize]));0<a.qos?this._requires_ack(wireMessage):(wireMessage.sequence=++this._sequence,this._buffered_msg_queue.push(wireMessage))}else throw Error(f(h.INVALID_STATE,[\"not connected\"]));};d.prototype.disconnect=function(){this._trace(\"Client.disconnect\");this._reconnecting&&(this._reconnectTimeout.cancel(),this._reconnectTimeout=null,this._reconnecting=!1);if(!this.socket)throw Error(f(h.INVALID_STATE,[\"not connecting or connected\"]));wireMessage=new q(14);this._notify_msg_sent[wireMessage]=\nv(this._disconnected,this);this._schedule_message(wireMessage)};d.prototype.getTraceLog=function(){if(null!==this._traceBuffer){this._trace(\"Client.getTraceLog\",new Date);this._trace(\"Client.getTraceLog in flight messages\",this._sentMessages.length);for(var a in this._sentMessages)this._trace(\"_sentMessages \",a,this._sentMessages[a]);for(a in this._receivedMessages)this._trace(\"_receivedMessages \",a,this._receivedMessages[a]);return this._traceBuffer}};d.prototype.startTrace=function(){null===this._traceBuffer&&\n(this._traceBuffer=[]);this._trace(\"Client.startTrace\",new Date,\"1.0.3\")};d.prototype.stopTrace=function(){delete this._traceBuffer};d.prototype._doConnect=function(a){this.connectOptions.useSSL&&(a=a.split(\":\"),a[0]=\"wss\",a=a.join(\":\"));this._wsuri=a;this.connected=!1;this.socket=4>this.connectOptions.mqttVersion?new WebSocket(a,[\"mqttv3.1\"]):new WebSocket(a,[\"mqtt\"]);this.socket.binaryType=\"arraybuffer\";this.socket.onopen=v(this._on_socket_open,this);this.socket.onmessage=v(this._on_socket_message,\nthis);this.socket.onerror=v(this._on_socket_error,this);this.socket.onclose=v(this._on_socket_close,this);this.sendPinger=new F(this,window,this.connectOptions.keepAliveInterval);this.receivePinger=new F(this,window,this.connectOptions.keepAliveInterval);this._connectTimeout&&(this._connectTimeout.cancel(),this._connectTimeout=null);this._connectTimeout=new w(this,window,this.connectOptions.timeout,this._disconnected,[h.CONNECT_TIMEOUT.code,f(h.CONNECT_TIMEOUT)])};d.prototype._schedule_message=function(a){this._msg_queue.push(a);\nthis.connected&&this._process_queue()};d.prototype.store=function(a,b){var c={type:b.type,messageIdentifier:b.messageIdentifier,version:1};switch(b.type){case 3:b.pubRecReceived&&(c.pubRecReceived=!0);c.payloadMessage={};for(var d=\"\",e=b.payloadMessage.payloadBytes,g=0;g<e.length;g++)d=15>=e[g]?d+\"0\"+e[g].toString(16):d+e[g].toString(16);c.payloadMessage.payloadHex=d;c.payloadMessage.qos=b.payloadMessage.qos;c.payloadMessage.destinationName=b.payloadMessage.destinationName;b.payloadMessage.duplicate&&\n(c.payloadMessage.duplicate=!0);b.payloadMessage.retained&&(c.payloadMessage.retained=!0);0===a.indexOf(\"Sent:\")&&(void 0===b.sequence&&(b.sequence=++this._sequence),c.sequence=b.sequence);break;default:throw Error(f(h.INVALID_STORED_DATA,[key,c]));}localStorage.setItem(a+this._localKey+b.messageIdentifier,JSON.stringify(c))};d.prototype.restore=function(a){var b=localStorage.getItem(a),c=JSON.parse(b),d=new q(c.type,c);switch(c.type){case 3:for(var b=c.payloadMessage.payloadHex,e=new ArrayBuffer(b.length/\n2),e=new Uint8Array(e),g=0;2<=b.length;){var m=parseInt(b.substring(0,2),16),b=b.substring(2,b.length);e[g++]=m}b=new Paho.MQTT.Message(e);b.qos=c.payloadMessage.qos;b.destinationName=c.payloadMessage.destinationName;c.payloadMessage.duplicate&&(b.duplicate=!0);c.payloadMessage.retained&&(b.retained=!0);d.payloadMessage=b;break;default:throw Error(f(h.INVALID_STORED_DATA,[a,b]));}0===a.indexOf(\"Sent:\"+this._localKey)?(d.payloadMessage.duplicate=!0,this._sentMessages[d.messageIdentifier]=d):0===a.indexOf(\"Received:\"+\nthis._localKey)&&(this._receivedMessages[d.messageIdentifier]=d)};d.prototype._process_queue=function(){for(var a=null,b=this._msg_queue.reverse();a=b.pop();)this._socket_send(a),this._notify_msg_sent[a]&&(this._notify_msg_sent[a](),delete this._notify_msg_sent[a])};d.prototype._requires_ack=function(a){var b=Object.keys(this._sentMessages).length;if(b>this.maxMessageIdentifier)throw Error(\"Too many messages:\"+b);for(;void 0!==this._sentMessages[this._message_identifier];)this._message_identifier++;\na.messageIdentifier=this._message_identifier;this._sentMessages[a.messageIdentifier]=a;3===a.type&&this.store(\"Sent:\",a);this._message_identifier===this.maxMessageIdentifier&&(this._message_identifier=1)};d.prototype._on_socket_open=function(){var a=new q(1,this.connectOptions);a.clientId=this.clientId;this._socket_send(a)};d.prototype._on_socket_message=function(a){this._trace(\"Client._on_socket_message\",a.data);a=this._deframeMessages(a.data);for(var b=0;b<a.length;b+=1)this._handleMessage(a[b])};\nd.prototype._deframeMessages=function(a){a=new Uint8Array(a);var b=[];if(this.receiveBuffer){var c=new Uint8Array(this.receiveBuffer.length+a.length);c.set(this.receiveBuffer);c.set(a,this.receiveBuffer.length);a=c;delete this.receiveBuffer}try{for(c=0;c<a.length;){var d;a:{var e=a,g=c,m=g,n=e[g],l=n>>4,t=n&15,g=g+1,x=void 0,C=0,p=1;do{if(g==e.length){d=[null,m];break a}x=e[g++];C+=(x&127)*p;p*=128}while(0!==(x&128));x=g+C;if(x>e.length)d=[null,m];else{var y=new q(l);switch(l){case 2:e[g++]&1&&(y.sessionPresent=\n!0);y.returnCode=e[g++];break;case 3:var m=t>>1&3,s=256*e[g]+e[g+1],g=g+2,u=E(e,g,s),g=g+s;0<m&&(y.messageIdentifier=256*e[g]+e[g+1],g+=2);var r=new Paho.MQTT.Message(e.subarray(g,x));1==(t&1)&&(r.retained=!0);8==(t&8)&&(r.duplicate=!0);r.qos=m;r.destinationName=u;y.payloadMessage=r;break;case 4:case 5:case 6:case 7:case 11:y.messageIdentifier=256*e[g]+e[g+1];break;case 9:y.messageIdentifier=256*e[g]+e[g+1],g+=2,y.returnCode=e.subarray(g,x)}d=[y,x]}}var v=d[0],c=d[1];if(null!==v)b.push(v);else break}c<\na.length&&(this.receiveBuffer=a.subarray(c))}catch(w){d=\"undefined\"==w.hasOwnProperty(\"stack\")?w.stack.toString():\"No Error Stack Available\";this._disconnected(h.INTERNAL_ERROR.code,f(h.INTERNAL_ERROR,[w.message,d]));return}return b};d.prototype._handleMessage=function(a){this._trace(\"Client._handleMessage\",a);try{switch(a.type){case 2:this._connectTimeout.cancel();this._reconnectTimeout&&this._reconnectTimeout.cancel();if(this.connectOptions.cleanSession){for(var b in this._sentMessages){var c=this._sentMessages[b];\nlocalStorage.removeItem(\"Sent:\"+this._localKey+c.messageIdentifier)}this._sentMessages={};for(b in this._receivedMessages){var d=this._receivedMessages[b];localStorage.removeItem(\"Received:\"+this._localKey+d.messageIdentifier)}this._receivedMessages={}}if(0===a.returnCode)this.connected=!0,this.connectOptions.uris&&(this.hostIndex=this.connectOptions.uris.length);else{this._disconnected(h.CONNACK_RETURNCODE.code,f(h.CONNACK_RETURNCODE,[a.returnCode,H[a.returnCode]]));break}a=[];for(var e in this._sentMessages)this._sentMessages.hasOwnProperty(e)&&\na.push(this._sentMessages[e]);if(0<this._buffered_msg_queue.length){e=null;for(var g=this._buffered_msg_queue.reverse();e=g.pop();)a.push(e),this.onMessageDelivered&&(this._notify_msg_sent[e]=this.onMessageDelivered(e.payloadMessage))}a=a.sort(function(a,b){return a.sequence-b.sequence});for(var g=0,m=a.length;g<m;g++)if(c=a[g],3==c.type&&c.pubRecReceived){var n=new q(6,{messageIdentifier:c.messageIdentifier});this._schedule_message(n)}else this._schedule_message(c);if(this.connectOptions.onSuccess)this.connectOptions.onSuccess({invocationContext:this.connectOptions.invocationContext});\nc=!1;this._reconnecting&&(c=!0,this._reconnectInterval=1,this._reconnecting=!1);this._connected(c,this._wsuri);this._process_queue();break;case 3:this._receivePublish(a);break;case 4:if(c=this._sentMessages[a.messageIdentifier])if(delete this._sentMessages[a.messageIdentifier],localStorage.removeItem(\"Sent:\"+this._localKey+a.messageIdentifier),this.onMessageDelivered)this.onMessageDelivered(c.payloadMessage);break;case 5:if(c=this._sentMessages[a.messageIdentifier])c.pubRecReceived=!0,n=new q(6,{messageIdentifier:a.messageIdentifier}),\nthis.store(\"Sent:\",c),this._schedule_message(n);break;case 6:d=this._receivedMessages[a.messageIdentifier];localStorage.removeItem(\"Received:\"+this._localKey+a.messageIdentifier);d&&(this._receiveMessage(d),delete this._receivedMessages[a.messageIdentifier]);var l=new q(7,{messageIdentifier:a.messageIdentifier});this._schedule_message(l);break;case 7:c=this._sentMessages[a.messageIdentifier];delete this._sentMessages[a.messageIdentifier];localStorage.removeItem(\"Sent:\"+this._localKey+a.messageIdentifier);\nif(this.onMessageDelivered)this.onMessageDelivered(c.payloadMessage);break;case 9:if(c=this._sentMessages[a.messageIdentifier]){c.timeOut&&c.timeOut.cancel();if(128===a.returnCode[0]){if(c.onFailure)c.onFailure(a.returnCode)}else if(c.onSuccess)c.onSuccess(a.returnCode);delete this._sentMessages[a.messageIdentifier]}break;case 11:if(c=this._sentMessages[a.messageIdentifier])c.timeOut&&c.timeOut.cancel(),c.callback&&c.callback(),delete this._sentMessages[a.messageIdentifier];break;case 13:this.sendPinger.reset();\nbreak;case 14:this._disconnected(h.INVALID_MQTT_MESSAGE_TYPE.code,f(h.INVALID_MQTT_MESSAGE_TYPE,[a.type]));break;default:this._disconnected(h.INVALID_MQTT_MESSAGE_TYPE.code,f(h.INVALID_MQTT_MESSAGE_TYPE,[a.type]))}}catch(t){c=\"undefined\"==t.hasOwnProperty(\"stack\")?t.stack.toString():\"No Error Stack Available\",this._disconnected(h.INTERNAL_ERROR.code,f(h.INTERNAL_ERROR,[t.message,c]))}};d.prototype._on_socket_error=function(a){this._reconnecting||this._disconnected(h.SOCKET_ERROR.code,f(h.SOCKET_ERROR,\n[a.data]))};d.prototype._on_socket_close=function(){this._reconnecting||this._disconnected(h.SOCKET_CLOSE.code,f(h.SOCKET_CLOSE))};d.prototype._socket_send=function(a){if(1==a.type){var b=this._traceMask(a,\"password\");this._trace(\"Client._socket_send\",b)}else this._trace(\"Client._socket_send\",a);this.socket.send(a.encode());this.sendPinger.reset()};d.prototype._receivePublish=function(a){switch(a.payloadMessage.qos){case \"undefined\":case 0:this._receiveMessage(a);break;case 1:var b=new q(4,{messageIdentifier:a.messageIdentifier});\nthis._schedule_message(b);this._receiveMessage(a);break;case 2:this._receivedMessages[a.messageIdentifier]=a;this.store(\"Received:\",a);a=new q(5,{messageIdentifier:a.messageIdentifier});this._schedule_message(a);break;default:throw Error(\"Invaild qos\\x3d\"+wireMmessage.payloadMessage.qos);}};d.prototype._receiveMessage=function(a){if(this.onMessageArrived)this.onMessageArrived(a.payloadMessage)};d.prototype._connected=function(a,b){if(this.onConnected)this.onConnected(a,b)};d.prototype._reconnect=\nfunction(){this._trace(\"Client._reconnect\");this.connected||(this._reconnecting=!0,this.sendPinger.cancel(),this.receivePinger.cancel(),128>this._reconnectInterval&&(this._reconnectInterval*=2),this.connectOptions.uris?(this.hostIndex=0,this._doConnect(this.connectOptions.uris[0])):this._doConnect(this.uri))};d.prototype._disconnected=function(a,b){this._trace(\"Client._disconnected\",a,b);if(void 0!==a&&this._reconnecting)this._reconnectTimeout=new w(this,window,this._reconnectInterval,this._reconnect);\nelse if(this.sendPinger.cancel(),this.receivePinger.cancel(),this._connectTimeout&&(this._connectTimeout.cancel(),this._connectTimeout=null),this._msg_queue=[],this._buffered_msg_queue=[],this._notify_msg_sent={},this.socket&&(this.socket.onopen=null,this.socket.onmessage=null,this.socket.onerror=null,this.socket.onclose=null,1===this.socket.readyState&&this.socket.close(),delete this.socket),this.connectOptions.uris&&this.hostIndex<this.connectOptions.uris.length-1)this.hostIndex++,this._doConnect(this.connectOptions.uris[this.hostIndex]);\nelse if(void 0===a&&(a=h.OK.code,b=f(h.OK)),this.connected){this.connected=!1;if(this.onConnectionLost)this.onConnectionLost({errorCode:a,errorMessage:b,reconnect:this.connectOptions.reconnect,uri:this._wsuri});a!==h.OK.code&&this.connectOptions.reconnect&&(this._reconnectInterval=1,this._reconnect())}else if(4===this.connectOptions.mqttVersion&&!1===this.connectOptions.mqttVersionExplicit)this._trace(\"Failed to connect V4, dropping back to V3\"),this.connectOptions.mqttVersion=3,this.connectOptions.uris?\n(this.hostIndex=0,this._doConnect(this.connectOptions.uris[0])):this._doConnect(this.uri);else if(this.connectOptions.onFailure)this.connectOptions.onFailure({invocationContext:this.connectOptions.invocationContext,errorCode:a,errorMessage:b})};d.prototype._trace=function(){if(this.traceFunction){for(var a in arguments)\"undefined\"!==typeof arguments[a]&&arguments.splice(a,1,JSON.stringify(arguments[a]));a=Array.prototype.slice.call(arguments).join(\"\");this.traceFunction({severity:\"Debug\",message:a})}if(null!==\nthis._traceBuffer){a=0;for(var b=arguments.length;a<b;a++)this._traceBuffer.length==this._MAX_TRACE_ENTRIES&&this._traceBuffer.shift(),0===a?this._traceBuffer.push(arguments[a]):\"undefined\"===typeof arguments[a]?this._traceBuffer.push(arguments[a]):this._traceBuffer.push(\"  \"+JSON.stringify(arguments[a]))}};d.prototype._traceMask=function(a,b){var c={},d;for(d in a)a.hasOwnProperty(d)&&(c[d]=d==b?\"******\":a[d]);return c};var G=function(a,b,c,k){var e;if(\"string\"!==typeof a)throw Error(f(h.INVALID_TYPE,\n[typeof a,\"host\"]));if(2==arguments.length){k=b;e=a;var g=e.match(/^(wss?):\\/\\/((\\[(.+)\\])|([^\\/]+?))(:(\\d+))?(\\/.*)$/);if(g)a=g[4]||g[2],b=parseInt(g[7]),c=g[8];else throw Error(f(h.INVALID_ARGUMENT,[a,\"host\"]));}else{3==arguments.length&&(k=c,c=\"/mqtt\");if(\"number\"!==typeof b||0>b)throw Error(f(h.INVALID_TYPE,[typeof b,\"port\"]));if(\"string\"!==typeof c)throw Error(f(h.INVALID_TYPE,[typeof c,\"path\"]));e=\"ws://\"+(-1!==a.indexOf(\":\")&&\"[\"!==a.slice(0,1)&&\"]\"!==a.slice(-1)?\"[\"+a+\"]\":a)+\":\"+b+c}for(var m=\ng=0;m<k.length;m++){var n=k.charCodeAt(m);55296<=n&&56319>=n&&m++;g++}if(\"string\"!==typeof k||65535<g)throw Error(f(h.INVALID_ARGUMENT,[k,\"clientId\"]));var l=new d(e,a,b,c,k);this._getHost=function(){return a};this._setHost=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getPort=function(){return b};this._setPort=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getPath=function(){return c};this._setPath=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getURI=function(){return e};\nthis._setURI=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getClientId=function(){return l.clientId};this._setClientId=function(){throw Error(f(h.UNSUPPORTED_OPERATION));};this._getOnConnected=function(){return l.onConnected};this._setOnConnected=function(a){if(\"function\"===typeof a)l.onConnected=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onConnected\"]));};this._getDisconnectedPublishing=function(){return l.disconnectedPublishing};this._setDisconnectedPublishing=function(a){l.disconnectedPublishing=\na};this._getDisconnectedBufferSize=function(){return l.disconnectedBufferSize};this._setDisconnectedBufferSize=function(a){l.disconnectedBufferSize=a};this._getOnConnectionLost=function(){return l.onConnectionLost};this._setOnConnectionLost=function(a){if(\"function\"===typeof a)l.onConnectionLost=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onConnectionLost\"]));};this._getOnMessageDelivered=function(){return l.onMessageDelivered};this._setOnMessageDelivered=function(a){if(\"function\"===typeof a)l.onMessageDelivered=\na;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onMessageDelivered\"]));};this._getOnMessageArrived=function(){return l.onMessageArrived};this._setOnMessageArrived=function(a){if(\"function\"===typeof a)l.onMessageArrived=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onMessageArrived\"]));};this._getTrace=function(){return l.traceFunction};this._setTrace=function(a){if(\"function\"===typeof a)l.traceFunction=a;else throw Error(f(h.INVALID_TYPE,[typeof a,\"onTrace\"]));};this.connect=function(a){a=a||{};z(a,\n{timeout:\"number\",userName:\"string\",password:\"string\",willMessage:\"object\",keepAliveInterval:\"number\",cleanSession:\"boolean\",useSSL:\"boolean\",invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",hosts:\"object\",ports:\"object\",reconnect:\"boolean\",mqttVersion:\"number\",mqttVersionExplicit:\"boolean\",uris:\"object\"});void 0===a.keepAliveInterval&&(a.keepAliveInterval=60);if(4<a.mqttVersion||3>a.mqttVersion)throw Error(f(h.INVALID_ARGUMENT,[a.mqttVersion,\"connectOptions.mqttVersion\"]));void 0===\na.mqttVersion?(a.mqttVersionExplicit=!1,a.mqttVersion=4):a.mqttVersionExplicit=!0;if(void 0!==a.password&&void 0===a.userName)throw Error(f(h.INVALID_ARGUMENT,[a.password,\"connectOptions.password\"]));if(a.willMessage){if(!(a.willMessage instanceof r))throw Error(f(h.INVALID_TYPE,[a.willMessage,\"connectOptions.willMessage\"]));a.willMessage.stringPayload=null;if(\"undefined\"===typeof a.willMessage.destinationName)throw Error(f(h.INVALID_TYPE,[typeof a.willMessage.destinationName,\"connectOptions.willMessage.destinationName\"]));\n}\"undefined\"===typeof a.cleanSession&&(a.cleanSession=!0);if(a.hosts){if(!(a.hosts instanceof Array))throw Error(f(h.INVALID_ARGUMENT,[a.hosts,\"connectOptions.hosts\"]));if(1>a.hosts.length)throw Error(f(h.INVALID_ARGUMENT,[a.hosts,\"connectOptions.hosts\"]));for(var b=!1,d=0;d<a.hosts.length;d++){if(\"string\"!==typeof a.hosts[d])throw Error(f(h.INVALID_TYPE,[typeof a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));if(/^(wss?):\\/\\/((\\[(.+)\\])|([^\\/]+?))(:(\\d+))?(\\/.*)$/.test(a.hosts[d]))if(0===d)b=!0;else{if(!b)throw Error(f(h.INVALID_ARGUMENT,\n[a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));}else if(b)throw Error(f(h.INVALID_ARGUMENT,[a.hosts[d],\"connectOptions.hosts[\"+d+\"]\"]));}if(b)a.uris=a.hosts;else{if(!a.ports)throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));if(!(a.ports instanceof Array))throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));if(a.hosts.length!==a.ports.length)throw Error(f(h.INVALID_ARGUMENT,[a.ports,\"connectOptions.ports\"]));a.uris=[];for(d=0;d<a.hosts.length;d++){if(\"number\"!==typeof a.ports[d]||\n0>a.ports[d])throw Error(f(h.INVALID_TYPE,[typeof a.ports[d],\"connectOptions.ports[\"+d+\"]\"]));var b=a.hosts[d],g=a.ports[d];e=\"ws://\"+(-1!==b.indexOf(\":\")?\"[\"+b+\"]\":b)+\":\"+g+c;a.uris.push(e)}}}l.connect(a)};this.subscribe=function(a,b){if(\"string\"!==typeof a)throw Error(\"Invalid argument:\"+a);b=b||{};z(b,{qos:\"number\",invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",timeout:\"number\"});if(b.timeout&&!b.onFailure)throw Error(\"subscribeOptions.timeout specified with no onFailure callback.\");\nif(\"undefined\"!==typeof b.qos&&0!==b.qos&&1!==b.qos&&2!==b.qos)throw Error(f(h.INVALID_ARGUMENT,[b.qos,\"subscribeOptions.qos\"]));l.subscribe(a,b)};this.unsubscribe=function(a,b){if(\"string\"!==typeof a)throw Error(\"Invalid argument:\"+a);b=b||{};z(b,{invocationContext:\"object\",onSuccess:\"function\",onFailure:\"function\",timeout:\"number\"});if(b.timeout&&!b.onFailure)throw Error(\"unsubscribeOptions.timeout specified with no onFailure callback.\");l.unsubscribe(a,b)};this.send=function(a,b,c,d){var e;if(0===\narguments.length)throw Error(\"Invalid argument.length\");if(1==arguments.length){if(!(a instanceof r)&&\"string\"!==typeof a)throw Error(\"Invalid argument:\"+typeof a);e=a;if(\"undefined\"===typeof e.destinationName)throw Error(f(h.INVALID_ARGUMENT,[e.destinationName,\"Message.destinationName\"]));}else e=new r(b),e.destinationName=a,3<=arguments.length&&(e.qos=c),4<=arguments.length&&(e.retained=d);l.send(e)};this.publish=function(a,b,c,d){console.log(\"Publising message to: \",a);var e;if(0===arguments.length)throw Error(\"Invalid argument.length\");\nif(1==arguments.length){if(!(a instanceof r)&&\"string\"!==typeof a)throw Error(\"Invalid argument:\"+typeof a);e=a;if(\"undefined\"===typeof e.destinationName)throw Error(f(h.INVALID_ARGUMENT,[e.destinationName,\"Message.destinationName\"]));}else e=new r(b),e.destinationName=a,3<=arguments.length&&(e.qos=c),4<=arguments.length&&(e.retained=d);l.send(e)};this.disconnect=function(){l.disconnect()};this.getTraceLog=function(){return l.getTraceLog()};this.startTrace=function(){l.startTrace()};this.stopTrace=\nfunction(){l.stopTrace()};this.isConnected=function(){return l.connected}};G.prototype={get host(){return this._getHost()},set host(a){this._setHost(a)},get port(){return this._getPort()},set port(a){this._setPort(a)},get path(){return this._getPath()},set path(a){this._setPath(a)},get clientId(){return this._getClientId()},set clientId(a){this._setClientId(a)},get onConnected(){return this._getOnConnected()},set onConnected(a){this._setOnConnected(a)},get disconnectedPublishing(){return this._getDisconnectedPublishing()},\nset disconnectedPublishing(a){this._setDisconnectedPublishing(a)},get disconnectedBufferSize(){return this._getDisconnectedBufferSize()},set disconnectedBufferSize(a){this._setDisconnectedBufferSize(a)},get onConnectionLost(){return this._getOnConnectionLost()},set onConnectionLost(a){this._setOnConnectionLost(a)},get onMessageDelivered(){return this._getOnMessageDelivered()},set onMessageDelivered(a){this._setOnMessageDelivered(a)},get onMessageArrived(){return this._getOnMessageArrived()},set onMessageArrived(a){this._setOnMessageArrived(a)},\nget trace(){return this._getTrace()},set trace(a){this._setTrace(a)}};var r=function(a){var b;if(\"string\"===typeof a||a instanceof ArrayBuffer||a instanceof Int8Array||a instanceof Uint8Array||a instanceof Int16Array||a instanceof Uint16Array||a instanceof Int32Array||a instanceof Uint32Array||a instanceof Float32Array||a instanceof Float64Array)b=a;else throw f(h.INVALID_ARGUMENT,[a,\"newPayload\"]);this._getPayloadString=function(){return\"string\"===typeof b?b:E(b,0,b.length)};this._getPayloadBytes=\nfunction(){if(\"string\"===typeof b){var a=new ArrayBuffer(n(b)),a=new Uint8Array(a);D(b,a,0);return a}return b};var c;this._getDestinationName=function(){return c};this._setDestinationName=function(a){if(\"string\"===typeof a)c=a;else throw Error(f(h.INVALID_ARGUMENT,[a,\"newDestinationName\"]));};var d=0;this._getQos=function(){return d};this._setQos=function(a){if(0===a||1===a||2===a)d=a;else throw Error(\"Invalid argument:\"+a);};var e=!1;this._getRetained=function(){return e};this._setRetained=function(a){if(\"boolean\"===\ntypeof a)e=a;else throw Error(f(h.INVALID_ARGUMENT,[a,\"newRetained\"]));};var g=!1;this._getDuplicate=function(){return g};this._setDuplicate=function(a){g=a}};r.prototype={get payloadString(){return this._getPayloadString()},get payloadBytes(){return this._getPayloadBytes()},get destinationName(){return this._getDestinationName()},set destinationName(a){this._setDestinationName(a)},get topic(){return this._getDestinationName()},set topic(a){this._setDestinationName(a)},get qos(){return this._getQos()},\nset qos(a){this._setQos(a)},get retained(){return this._getRetained()},set retained(a){this._setRetained(a)},get duplicate(){return this._getDuplicate()},set duplicate(a){this._setDuplicate(a)}};return{Client:G,Message:r}}(window)});\nfunction _clspRouter() {\n    function send(m){\n        // route message to parent which will in turn route to the correct\n        // player based on clientId.\n        m.clientId = MqttClientId;\n        window.parent.postMessage(m,\"*\");\n    }// end send\n\n\n    function routeInbound(message){\n        var pstring = \"\";\n\n        try {\n            pstring = message.payloadString;\n        } catch(e) {\n            //bogus excepton?\n        }\n\n        send({\n          event: \'data\',\n          destinationName: message.destinationName,\n          payloadString: pstring,\n          payloadBytes: message.payloadBytes || null\n        });\n    }// end route inbound\n\n    function disconnect () {\n        var ERROR_CODE_NOT_CONNECTED = \'AMQJS0011E\';\n\n        try {\n            MQTTClient.disconnect();\n        } catch (e) {\n            if (!e.message.startsWith(ERROR_CODE_NOT_CONNECTED)) {\n                console.error(e);\n            }\n        }\n    }\n\n    function eventHandler(evt){\n        var m = evt.data;\n\n        try {\n            if (m.method === \'subscribe\') {\n                MQTTClient.subscribe(m.topic);\n            } else if (m.method === \'unsubscribe\') {\n                MQTTClient.unsubscribe(m.topic);\n            } else if (m.method === \'publish\') {\n                var mqtt_payload = null;\n                try {\n                    mqtt_payload = JSON.stringify(m.data);\n                } catch( json_error ) {\n                    console.error(\"json stringify error: \" + m.data);\n                    return;\n                }\n\n                var mqtt_msg = new Paho.MQTT.Message(mqtt_payload);\n                mqtt_msg.destinationName = m.topic;\n                MQTTClient.send(mqtt_msg);\n            } else if (m.method === \'connect\') {\n                connect();\n            } else if (m.method === \'disconnect\') {\n                disconnect();\n            }\n        } catch(e) {\n            // we are dead!\n           send({\n               event: \'fail\',\n               reason: \"network failure\"\n            });\n\n            disconnect();\n        }\n\n    }\n\n    function AppReady() {\n        window.removeEventListener(\"message\", eventHandler);\n        window.addEventListener(\"message\", eventHandler, false);\n\n        send({\n          event: \'ready\'\n        });\n\n        if (Reconnect !== -1)\n        {\n            clearInterval(Reconnect);\n            Reconnect = -1;\n        }\n\n    }// application ready\n\n\n    function AppFail(message) {\n      var e = \"Error code \" +\n          parseInt(message.errorCode) + \": \" + message.errorMessage;\n      send({\n        event: \'fail\',\n        reason: e\n      });\n    }\n\n    MQTTClient = new Paho.MQTT.Client(\n        MqttIp,\n        MqttPort,\n        MqttClientId\n    );\n\n    /*\n     * Hold the id of the reconnect interval task\n     */\n    var Reconnect = -1;\n\n    /*\n     * Callback which gets called when the connection is lost\n     */\n    function onConnectionLost(message){\n        if (message.errorCode === 0) {\n            return;\n        }\n\n        send({\n            event: \'fail\',\n            reason: \"connection lost error code \" + parseInt(message.errorCode)\n        });\n        if (Reconnect === -1) {\n            Reconnect = setInterval(function () {\n                connect();\n            }, 2000);\n        }\n    }\n\n    MQTTClient.onConnectionLost = onConnectionLost;\n\n    // perhaps the busiest function in this module ;)\n    MQTTClient.onMessageArrived = function(message) {\n        try {\n             routeInbound(message);\n        }catch(e) {\n            if (e) {\n                console.error(e);\n            }\n        }\n    };\n\n    /**\n     * Connect to MQTT...\n     */\n    function connect()\n    {\n        // setup connection options\n        var options = {\n            timeout: 120,\n            onSuccess:  AppReady,\n            onFailure: AppFail\n        };\n        // last will message sent on disconnect\n        var willmsg = new Paho.MQTT.Message(JSON.stringify({\n            clientId: MqttClientId\n        }));\n        willmsg.destinationName = \"iov/clientDisconnect\";\n        options.willMessage = willmsg;\n\n        if (MqttUseSSL === true) {\n            options.useSSL = true;\n        }\n\n        try {\n            MQTTClient.connect(options);\n        } catch(e) {\n            var ERROR_CODE_ALREADY_CONNECTED = \'AMQJS0011E\';\n\n            if (!e.message.startsWith(ERROR_CODE_ALREADY_CONNECTED)) {\n                console.error(\"connect failed\", e);\n                send({\n                    event: \'fail\',\n                    reason: \"connect failed\"\n                });\n            }\n        }\n    }\n\n    connect();\n}\n\nfunction clspRouter() {\n    try {\n        _clspRouter();\n    } catch(e) {\n        console.error(\"IFRAME error\");\n        console.error(e);\n    }\n}\n\nfunction onunload()\n{\n    if (typeof MQTTClient !== \'undefined\') {\n        try {\n            MQTTClient.disconnect();\n        } catch (e) {\n            if (!e.message.startsWith(\'AMQJS0011E\')) {\n                console.error(e);\n            }\n        }\n    }\n}\n";
-
-function pframe_client(iframe, iov) {
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  function pframe_client(iframe, iov) {
     var self = {
-        dispatch: {},
-        iov: iov
-    };
+      dispatch: {},
+      iov: iov
+    }; // primitive function that routes message to iframe
 
-    // primitive function that routes message to iframe
     function command(m) {
+      if (iframe.contentWindow !== null) {
+        iframe.contentWindow.postMessage(m, "*");
+        return;
+      }
 
+      var t = setInterval(function () {
         if (iframe.contentWindow !== null) {
-            iframe.contentWindow.postMessage(m, "*");
-            return;
+          iframe.contentWindow.postMessage(m, "*");
+          clearInterval(t);
         }
-
-        var t = setInterval(function () {
-            if (iframe.contentWindow !== null) {
-                iframe.contentWindow.postMessage(m, "*");
-                clearInterval(t);
-            }
-        }, 1000);
+      }, 1000);
     }
-
     /* message from mqttRouter routeInbound go handler which associates this
        client with the clientId. It then calls self.inboundHandler handler to
        process the message from the iframe.
     */
+
+
     self.inboundHandler = function (message) {
-        var handler = self.dispatch[message.destinationName];
-        if (typeof handler !== 'undefined') {
-            try {
-                handler(message);
-            } catch (e) {
-                console.error(e);
-            }
-        } else {
-            console.error("No handler for " + message.destinationName);
+      var handler = self.dispatch[message.destinationName];
+
+      if (typeof handler !== 'undefined') {
+        try {
+          handler(message);
+        } catch (e) {
+          console.error(e);
         }
+      } else {
+        console.error("No handler for " + message.destinationName);
+      }
     };
 
     self.subscribe = function (topic, callback) {
-        self.dispatch[topic] = callback;
-        command({
-            method: "subscribe",
-            topic: topic
-        });
+      self.dispatch[topic] = callback;
+      command({
+        method: "subscribe",
+        topic: topic
+      });
     };
 
     self.unsubscribe = function (topic) {
-        if (topic in self.dispatch) {
-            delete self.dispatch[topic];
-        }
-        command({
-            method: "unsubscribe",
-            topic: topic
-        });
+      if (topic in self.dispatch) {
+        delete self.dispatch[topic];
+      }
+
+      command({
+        method: "unsubscribe",
+        topic: topic
+      });
     };
 
     self.publish = function (topic, data) {
-        command({
-            method: "publish",
-            topic: topic,
-            data: data
-        });
+      command({
+        method: "publish",
+        topic: topic,
+        data: data
+      });
     };
 
     self.connect = function () {
-        command({
-            method: "connect"
-        });
+      command({
+        method: "connect"
+      });
     };
 
     self.disconnect = function () {
-        command({
-            method: "disconnect"
-        });
+      command({
+        method: "disconnect"
+      });
     };
 
     self.transaction = function (topic, callback, obj) {
-        obj.resp_topic = iov.config.clientId + "/response/" + parseInt(Math.random() * 1000000);
-        self.subscribe(obj.resp_topic, function (mqtt_resp) {
-            //call user specified callback to handle response from remote process
-            var resp = JSON.parse(mqtt_resp.payloadString);
-            // call user specified callback to handle response
-            callback(resp);
-            // cleanup.
-            self.unsubscribe(obj.resp_topic);
-        });
+      obj.resp_topic = iov.config.clientId + "/response/" + parseInt(Math.random() * 1000000);
+      self.subscribe(obj.resp_topic, function (mqtt_resp) {
+        //call user specified callback to handle response from remote process
+        var resp = JSON.parse(mqtt_resp.payloadString); // call user specified callback to handle response
 
-        // start transaction
-        //MQTTClient.send(mqtt_msg);
-        self.publish(topic, obj);
-    };
+        callback(resp); // cleanup.
 
-    // return client for video player.
+        self.unsubscribe(obj.resp_topic);
+      }); // start transaction
+      //MQTTClient.send(mqtt_msg);
+
+      self.publish(topic, obj);
+    }; // return client for video player.
+
+
     return self;
-}
+  }
 
-window.mqttConduit = function (iov) {
+  window.mqttConduit = function (iov) {
     var iframe = document.createElement('iframe');
-    var MqttUseSSL = iov.config.useSSL || false ? "true" : "false";
-
-    var markup = '<html><head>' + '<script>\n' + "var MqttIp = '" + iov.config.wsbroker + "' ; \n" + "var MqttPort = " + iov.config.wsport + "; \n" + "var MqttUseSSL = " + MqttUseSSL + "; \n" + "var MqttClientId = '" + iov.config.clientId + "' ; \n" + "var Origin = '" + window.location.origin + "' ; \n" + iframe_code + '\n' + '</script>\n' + '</head><body onload="clspRouter();" onunload="onunload();"><body>' + '<div id="message"></div>' + '</body></html>';
-
-    // inject code into iframe
-    iframe.srcdoc = markup;
-
     iframe.width = 0;
     iframe.height = 0;
     iframe.setAttribute('style', 'display:none;');
     iframe.setAttribute('id', iov.config.clientId);
-
-    // attach hidden iframe to player
+    iframe.srcdoc = "\n      <html>\n        <head>\n          <script type=\"text/javascript\">\n            window.MqttIp = '".concat(iov.config.wsbroker, "';\n            window.MqttPort = ").concat(iov.config.wsport, ";\n            window.MqttUseSSL = ").concat(iov.config.useSSL, ";\n            window.MqttClientId = '").concat(iov.config.clientId, "';\n            window.iframeCode = ").concat(_Router__WEBPACK_IMPORTED_MODULE_0__["default"].toString(), "();\n          </script>\n        </head>\n        <body onload=\"window.iframeCode.clspRouter();\" onunload=\"window.iframeCode.onunload();\">\n          <div id=\"message\"></div>\n        </body>\n      </html>\n    "); // attach hidden iframe to player
     //document.body.appendChild(iframe);
+
     if (iov.config.videoElementParent !== null) {
-        iov.config.videoElementParent.appendChild(iframe);
+      iov.config.videoElementParent.appendChild(iframe);
     } else if (iov.videoElement.parentNode !== null) {
-        iov.videoElement.parentNode.appendChild(iframe);
-        iov.config.videoElementParent = iov.videoElement.parentNode;
+      iov.videoElement.parentNode.appendChild(iframe);
+      iov.config.videoElementParent = iov.videoElement.parentNode;
     } else {
-        var t = setInterval(function () {
-            if (iov.videoElement.parentNode !== null) {
-                iov.videoElement.parentNode.appendChild(iframe);
-                iov.config.videoElementParent = iov.videoElement.parentNode;
-                clearInterval(t);
-            }
-        }, 1000);
+      var t = setInterval(function () {
+        if (iov.videoElement.parentNode !== null) {
+          iov.videoElement.parentNode.appendChild(iframe);
+          iov.config.videoElementParent = iov.videoElement.parentNode;
+          clearInterval(t);
+        }
+      }, 1000);
     }
 
     return pframe_client(iframe, iov);
-};
+  };
+});
+
+/***/ }),
+
+/***/ "./src/js/conduit/Router.js":
+/*!**********************************!*\
+  !*** ./src/js/conduit/Router.js ***!
+  \**********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Router; });
+ // Note that this is the code that gets duplicated in each iframe.
+// Keep the contents of the exported function light and ES5 only.
+
+function Router() {
+  return {
+    clspRouter: function clspRouter() {
+      function send(m) {
+        // route message to parent which will in turn route to the correct
+        // player based on clientId.
+        m.clientId = window.MqttClientId;
+        window.parent.postMessage(m, '*');
+      }
+
+      function routeInbound(message) {
+        var pstring = '';
+
+        try {
+          pstring = message.payloadString;
+        } catch (e) {// bogus excepton?
+        }
+
+        send({
+          event: 'data',
+          destinationName: message.destinationName,
+          payloadString: pstring,
+          payloadBytes: message.payloadBytes || null
+        });
+      }
+
+      function disconnect() {
+        var ERROR_CODE_NOT_CONNECTED = 'AMQJS0011E';
+
+        try {
+          window.MQTTClient.disconnect();
+        } catch (e) {
+          if (!e.message.startsWith(ERROR_CODE_NOT_CONNECTED)) {
+            console.error(e);
+          }
+        }
+      }
+
+      function eventHandler(evt) {
+        var m = evt.data;
+
+        try {
+          if (m.method === 'subscribe') {
+            window.MQTTClient.subscribe(m.topic);
+          } else if (m.method === 'unsubscribe') {
+            window.MQTTClient.unsubscribe(m.topic);
+          } else if (m.method === 'publish') {
+            var mqtt_payload = null;
+
+            try {
+              mqtt_payload = JSON.stringify(m.data);
+            } catch (json_error) {
+              console.error('json stringify error: ' + m.data);
+              return;
+            }
+
+            var mqtt_msg = new window.parent.Paho.MQTT.Message(mqtt_payload);
+            mqtt_msg.destinationName = m.topic;
+            window.MQTTClient.send(mqtt_msg);
+          } else if (m.method === 'connect') {
+            connect();
+          } else if (m.method === 'disconnect') {
+            disconnect();
+          }
+        } catch (e) {
+          // we are dead!
+          send({
+            event: 'fail',
+            reason: 'network failure'
+          });
+          disconnect();
+        }
+      }
+
+      function AppReady() {
+        window.removeEventListener('message', eventHandler);
+        window.addEventListener('message', eventHandler, false);
+        send({
+          event: 'ready'
+        });
+
+        if (Reconnect !== -1) {
+          clearInterval(Reconnect);
+          Reconnect = -1;
+        }
+      }
+
+      function AppFail(message) {
+        var e = 'Error code ' + parseInt(message.errorCode) + ': ' + message.errorMessage;
+        send({
+          event: 'fail',
+          reason: e
+        });
+      }
+      /*
+        * Callback which gets called when the connection is lost
+        */
+
+
+      function onConnectionLost(message) {
+        if (message.errorCode === 0) {
+          return;
+        }
+
+        send({
+          event: 'fail',
+          reason: 'connection lost error code ' + parseInt(message.errorCode)
+        });
+
+        if (Reconnect === -1) {
+          Reconnect = setInterval(function () {
+            connect();
+          }, 2000);
+        }
+      }
+      /**
+       * Connect to MQTT...
+       */
+
+
+      function connect() {
+        // setup connection options
+        var options = {
+          timeout: 120,
+          onSuccess: AppReady,
+          onFailure: AppFail
+        }; // last will message sent on disconnect
+
+        var willmsg = new window.parent.Paho.MQTT.Message(JSON.stringify({
+          clientId: window.MqttClientId
+        }));
+        willmsg.destinationName = 'iov/clientDisconnect';
+        options.willMessage = willmsg;
+
+        if (window.MqttUseSSL === true) {
+          options.useSSL = true;
+        }
+
+        try {
+          window.MQTTClient.connect(options);
+        } catch (e) {
+          var ERROR_CODE_ALREADY_CONNECTED = 'AMQJS0011E';
+
+          if (!e.message.startsWith(ERROR_CODE_ALREADY_CONNECTED)) {
+            console.error('connect failed', e);
+            send({
+              event: 'fail',
+              reason: 'connect failed'
+            });
+          }
+        }
+      }
+
+      try {
+        window.MQTTClient = new window.parent.Paho.MQTT.Client(window.MqttIp, window.MqttPort, window.MqttClientId);
+        /*
+         * Hold the id of the reconnect interval task
+         */
+
+        var Reconnect = -1;
+        window.MQTTClient.onConnectionLost = onConnectionLost; // perhaps the busiest function in this module ;)
+
+        window.MQTTClient.onMessageArrived = function (message) {
+          try {
+            routeInbound(message);
+          } catch (e) {
+            if (e) {
+              console.error(e);
+            }
+          }
+        };
+
+        connect();
+      } catch (e) {
+        console.error('IFRAME error');
+        console.error(e);
+      }
+    },
+    onunload: function onunload() {
+      if (typeof window.MQTTClient !== 'undefined') {
+        try {
+          window.MQTTClient.disconnect();
+        } catch (e) {
+          if (!e.message.startsWith('AMQJS0011E')) {
+            console.error(e);
+          }
+        }
+      }
+    }
+  };
+}
 
 /***/ }),
 
@@ -3675,45 +6432,49 @@ window.mqttConduit = function (iov) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return IOV; });
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
 /* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MqttTopicHandlers */ "./src/js/iov/MqttTopicHandlers.js");
 /* harmony import */ var _player__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./player */ "./src/js/iov/player.js");
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
 
 
 
 var DEBUG_PREFIX = 'skyline:clsp:iov';
-
 /**
  * Internet of Video client. This module uses the MediaSource API to
  * deliver video content streamed through MQTT from distributed sources.
  */
-
 //  @todo - should this be the videojs component?  it seems like the
 // mqttHandler does nothing, and that this could replace it
 
-var IOV = function () {
+var IOV =
+/*#__PURE__*/
+function () {
   _createClass(IOV, null, [{
-    key: 'compatibilityCheck',
+    key: "compatibilityCheck",
     value: function compatibilityCheck() {
       // @todo - shouldn't this be done in the utils function?
       // @todo - does this need to throw an error?
       // For the MAC
       var NoMediaSourceAlert = false;
-
       window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 
       if (!window.MediaSource) {
@@ -3725,23 +6486,21 @@ var IOV = function () {
       }
     }
   }, {
-    key: 'generateConfigFromUrl',
+    key: "generateConfigFromUrl",
     value: function generateConfigFromUrl(url) {
       if (!url) {
         throw new Error('No source was given to be parsed!');
-      }
-
-      // We use an anchor tag here beacuse, when an href is added to
+      } // We use an anchor tag here beacuse, when an href is added to
       // an anchor dom Element, the parsing is done for you by the
       // browser.
+
+
       var parser = document.createElement('a');
-
-      var useSSL = void 0;
-      var default_port = void 0;
-
-      // Chrome is the only browser that allows non-http protocols in
+      var useSSL;
+      var default_port; // Chrome is the only browser that allows non-http protocols in
       // the anchor tag's href, so change them all to http here so we
       // get the benefits of the anchor tag's parsing
+
       if (url.substring(0, 5).toLowerCase() === 'clsps') {
         useSSL = true;
         parser.href = url.replace('clsps', 'https');
@@ -3756,15 +6515,14 @@ var IOV = function () {
 
       var paths = parser.pathname.split('/');
       var streamName = paths[paths.length - 1];
-
       var hostname = parser.hostname;
       var port = parser.port;
 
       if (port.length === 0) {
         port = default_port;
-      }
+      } // @ is a special address meaning the server that loaded the web page.
 
-      // @ is a special address meaning the server that loaded the web page.
+
       if (hostname === '@') {
         hostname = window.location.hostname;
       }
@@ -3778,18 +6536,16 @@ var IOV = function () {
       };
     }
   }, {
-    key: 'factory',
+    key: "factory",
     value: function factory(mqttConduitCollection, player) {
       var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
       return new IOV(mqttConduitCollection, player, config);
     }
   }, {
-    key: 'fromUrl',
+    key: "fromUrl",
     value: function fromUrl(url, mqttConduitCollection, player) {
       var config = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-
-      return IOV.factory(mqttConduitCollection, player, _extends({}, config, IOV.generateConfigFromUrl(url)));
+      return IOV.factory(mqttConduitCollection, player, _objectSpread({}, config, IOV.generateConfigFromUrl(url)));
     }
   }]);
 
@@ -3797,17 +6553,13 @@ var IOV = function () {
     _classCallCheck(this, IOV);
 
     IOV.compatibilityCheck();
-
     this.id = uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()();
-
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':main');
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()("".concat(DEBUG_PREFIX, ":").concat(this.id, ":main"));
     this.debug('constructor');
-
     this.destroyed = false;
     this.onReadyAlreadyCalled = false;
     this.playerInstance = player;
     this.videoElement = this.playerInstance.el();
-
     this.config = {
       clientId: this.id,
       wsbroker: config.wsbroker,
@@ -3818,34 +6570,29 @@ var IOV = function () {
       videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT
     };
-
     this.statsMsg = {
       byteCount: 0,
       inkbps: 0,
       host: document.location.host,
       clientId: this.config.clientId
-    };
+    }; // @todo - this needs to be a global service or something
 
-    // @todo - this needs to be a global service or something
-    this.mqttConduitCollection = mqttConduitCollection;
-
-    // handle inbound messages from MQTT, including video
+    this.mqttConduitCollection = mqttConduitCollection; // handle inbound messages from MQTT, including video
     // and distributes them to players.
-    this.mqttTopicHandlers = new _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__["default"](this.id, this);
 
+    this.mqttTopicHandlers = new _MqttTopicHandlers__WEBPACK_IMPORTED_MODULE_2__["default"](this.id, this);
     this.events = {
       connection_lost: function connection_lost(responseObject) {
         // @todo - close all players and display an error message
         console.error('MQTT connection lost');
         console.error(responseObject);
       },
-
       // @todo - does this ever get fired?
       on_message: this.mqttTopicHandlers.msghandler,
-
       // generic exception handler
       exception: function exception(text, e) {
         console.error(text);
+
         if (typeof e !== 'undefined') {
           console.error(e.stack);
         }
@@ -3854,56 +6601,48 @@ var IOV = function () {
   }
 
   _createClass(IOV, [{
-    key: 'initialize',
+    key: "initialize",
     value: function initialize() {
       this.conduit = this.mqttConduitCollection.addFromIov(this);
       this.player = _player__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this, this.playerInstance);
     }
   }, {
-    key: 'clone',
+    key: "clone",
     value: function clone(config) {
       this.debug('clone');
 
-      var cloneConfig = _extends({}, config, {
+      var cloneConfig = _objectSpread({}, config, {
         videoElementParent: this.config.videoElementParent
-      });
+      }); // @todo - is it possible to reuse the iov player?
 
-      // @todo - is it possible to reuse the iov player?
+
       return IOV.factory(this.mqttConduitCollection, this.playerInstance, cloneConfig);
     }
   }, {
-    key: 'cloneFromUrl',
+    key: "cloneFromUrl",
     value: function cloneFromUrl(url) {
       var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
       this.debug('cloneFromUrl');
-
-      return this.clone(_extends({}, IOV.generateConfigFromUrl(url), config));
-    }
-
-    // query remote server and get a list of all stream names
+      return this.clone(_objectSpread({}, IOV.generateConfigFromUrl(url), config));
+    } // query remote server and get a list of all stream names
 
   }, {
-    key: 'getAvailableStreams',
+    key: "getAvailableStreams",
     value: function getAvailableStreams(callback) {
       this.debug('getAvailableStreams');
-
       this.conduit.transaction('iov/video/list', callback, {});
     }
   }, {
-    key: 'onChangeSource',
+    key: "onChangeSource",
     value: function onChangeSource(url) {
-      this.debug('changeSource on player "' + this.id + '""');
+      this.debug("changeSource on player \"".concat(this.id, "\"\""));
 
       if (!url) {
         throw new Error('Unable to change source because there is no url!');
       }
 
       var clone = this.cloneFromUrl(url);
-
-      clone.initialize();
-
-      // When the tab is not in focus, chrome doesn't handle things the same
+      clone.initialize(); // When the tab is not in focus, chrome doesn't handle things the same
       // way as when the tab is in focus, and it seems that the result of that
       // is that the "firstFrameShown" event never fires.  Having the IOV be
       // updated on a delay in case the "firstFrameShown" takes too long will
@@ -3915,32 +6654,30 @@ var IOV = function () {
       // MSEWrapper, but I don't think that is likely to happen until the MSE
       // is standardized, and even then, we may be subject to non-intuitive
       // behavior based on tab switching, etc.
+
       setTimeout(function () {
         clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-      }, clone.config.changeSourceMaxWait);
-
-      // Under normal circumstances, meaning when the tab is in focus, we want
+      }, clone.config.changeSourceMaxWait); // Under normal circumstances, meaning when the tab is in focus, we want
       // to respond by switching the IOV when the new IOV Player has something
       // to display
+
       clone.player.on('firstFrameShown', function () {
         clone.playerInstance.tech(true).mqtt.updateIOV(clone);
       });
     }
   }, {
-    key: 'onReady',
+    key: "onReady",
     value: function onReady(event) {
       var _this = this;
 
-      this.debug('onReady');
+      this.debug('onReady'); // @todo - why is this necessary?
 
-      // @todo - why is this necessary?
       if (this.videoElement.parentNode !== null) {
         this.config.videoElementParentId = this.videoElement.parentNode.id;
       }
 
-      var videoTag = this.playerInstance.children()[0];
+      var videoTag = this.playerInstance.children()[0]; // @todo - there must be a better way to determine autoplay...
 
-      // @todo - there must be a better way to determine autoplay...
       if (videoTag.getAttribute('autoplay') !== null) {
         // playButton.trigger('click');
         this.playerInstance.trigger('play', videoTag);
@@ -3952,38 +6689,37 @@ var IOV = function () {
       }
 
       this.onReadyAlreadyCalled = true;
-
       this.player.on('firstFrameShown', function () {
         _this.playerInstance.loadingSpinner.hide();
 
         videoTag.style.display = 'none';
       });
-
       this.player.on('videoReceived', function () {
         // reset the timeout monitor from videojs-errors
         _this.playerInstance.trigger('timeupdate');
       });
-
       this.player.on('videoInfoReceived', function () {
         // reset the timeout monitor from videojs-errors
         _this.playerInstance.trigger('timeupdate');
       });
-
       this.playerInstanceEventListeners = {
         changesrc: function changesrc(event, _ref) {
           var url = _ref.url;
           return _this.onChangeSource(url);
         }
       };
-
       this.playerInstance.on('changesrc', this.playerInstanceEventListeners.changesrc);
 
       if (!document.hidden) {
         this.player.play();
       }
 
-      this.videoElement.addEventListener('mse-error-event', function () {
-        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e) {
+      this.videoElement.addEventListener('mse-error-event',
+      /*#__PURE__*/
+      function () {
+        var _ref2 = _asyncToGenerator(
+        /*#__PURE__*/
+        regeneratorRuntime.mark(function _callee(e) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -3992,20 +6728,19 @@ var IOV = function () {
                   return _this.player.restart();
 
                 case 2:
-                case 'end':
+                case "end":
                   return _context.stop();
               }
             }
-          }, _callee, _this);
+          }, _callee);
         }));
 
-        return function (_x4) {
+        return function (_x) {
           return _ref2.apply(this, arguments);
         };
-      }(), false);
-
-      // the mse service will stop streaming to us if we don't send
+      }(), false); // the mse service will stop streaming to us if we don't send
       // a message to iov/stats within 1 minute.
+
       this._statsTimer = setInterval(function () {
         _this.statsMsg.inkbps = _this.statsMsg.byteCount * 8 / 30000.0;
         _this.statsMsg.byteCount = 0;
@@ -4016,29 +6751,25 @@ var IOV = function () {
       }, 5000);
     }
   }, {
-    key: 'onFail',
+    key: "onFail",
     value: function onFail(event) {
-      this.debug('onFail');
-
-      // when a stream fails, it no longer needs to send stats to the
+      this.debug('onFail'); // when a stream fails, it no longer needs to send stats to the
       // server, and it may not even be connected to the server
-      clearInterval(this._statsTimer);
 
+      clearInterval(this._statsTimer);
       this.debug('network error', event.data.reason);
       this.playerInstance.trigger('network-error', event.data.reason);
     }
   }, {
-    key: 'onData',
+    key: "onData",
     value: function onData(event) {
       this.debug('onData');
-
       this.conduit.inboundHandler(event.data);
     }
   }, {
-    key: 'onMessage',
+    key: "onMessage",
     value: function onMessage(event) {
       var eventType = event.data.event;
-
       this.debug('onMessage', eventType);
 
       switch (eventType) {
@@ -4047,24 +6778,27 @@ var IOV = function () {
             this.onReady(event);
             break;
           }
+
         case 'fail':
           {
             this.onFail(event);
             break;
           }
+
         case 'data':
           {
             this.onData(event);
             break;
           }
+
         default:
           {
-            console.error('No match for event: ' + eventType);
+            console.error("No match for event: ".concat(eventType));
           }
       }
     }
   }, {
-    key: 'destroy',
+    key: "destroy",
     value: function destroy() {
       this.debug('destroy');
 
@@ -4073,22 +6807,17 @@ var IOV = function () {
       }
 
       this.destroyed = true;
-
-      clearInterval(this._statsTimer);
-
-      // this.playerInstanceEventListeners will not be defined if the iov is
+      clearInterval(this._statsTimer); // this.playerInstanceEventListeners will not be defined if the iov is
       // destroyed too early
+
       if (this.playerInstanceEventListeners) {
         this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
       }
 
       this.player.destroy();
-
       this.playerInstance = null;
       this.player = null;
-
       this.mqttConduitCollection.remove(this.id);
-
       var iframe = document.getElementById(this.config.clientId);
       iframe.parentNode.removeChild(iframe);
       iframe.srcdoc = '';
@@ -4098,8 +6827,9 @@ var IOV = function () {
   return IOV;
 }();
 
-IOV.CHANGE_SOURCE_MAX_WAIT = 5000;
-/* harmony default export */ __webpack_exports__["default"] = (IOV);
+_defineProperty(IOV, "CHANGE_SOURCE_MAX_WAIT", 5000);
+
+
 ;
 
 /***/ }),
@@ -4113,6 +6843,7 @@ IOV.CHANGE_SOURCE_MAX_WAIT = 5000;
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return MSEWrapper; });
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
@@ -4121,39 +6852,43 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var lodash_noop__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lodash_noop__WEBPACK_IMPORTED_MODULE_2__);
 
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
 
-// import { mp4toJSON } from './mp4-inspect';
+ // import { mp4toJSON } from './mp4-inspect';
 
 var DEBUG_PREFIX = 'skyline:clsp:iov';
-
-var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':MSEWrapper');
-var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX + ':MSEWrapper');
-
-// This is the original error text, but it is subject to change by chrome,
+var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()("".concat(DEBUG_PREFIX, ":MSEWrapper"));
+var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()("silly:".concat(DEBUG_PREFIX, ":MSEWrapper")); // This is the original error text, but it is subject to change by chrome,
 // and we are only checking the part of the error text that contains no
 // punctuation (and is all lower case).
 // "Failed to execute 'appendBuffer' on 'SourceBuffer': The SourceBuffer is full, and cannot free space to append additional buffers.";
+
 var FULL_BUFFER_ERROR = 'and cannot free space to append additional buffers';
 
-var MSEWrapper = function () {
+var MSEWrapper =
+/*#__PURE__*/
+function () {
   _createClass(MSEWrapper, null, [{
-    key: 'isMimeCodecSupported',
+    key: "isMimeCodecSupported",
     value: function isMimeCodecSupported(mimeCodec) {
       return window.MediaSource && window.MediaSource.isTypeSupported(mimeCodec);
     }
   }, {
-    key: 'factory',
+    key: "factory",
     value: function factory(videoElement) {
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
       return new MSEWrapper(videoElement, options);
     }
   }]);
@@ -4165,7 +6900,7 @@ var MSEWrapper = function () {
 
     _classCallCheck(this, MSEWrapper);
 
-    this.onSourceBufferUpdateEnd = function () {
+    _defineProperty(this, "onSourceBufferUpdateEnd", function () {
       silly('onUpdateEnd');
 
       _this.metric('sourceBuffer.updateEnd', 1);
@@ -4180,12 +6915,14 @@ var MSEWrapper = function () {
         // "buffered" property.
         if (_this.sourceBuffer.buffered.length <= 0) {
           _this.metric('sourceBuffer.updateEnd.bufferLength.empty', 1);
+
           debug('After updating, the sourceBuffer has no length!');
           return;
         }
       } catch (error) {
         // @todo - do we need to handle this?
         _this.metric('sourceBuffer.updateEnd.bufferLength.error', 1);
+
         debug('The mediaSource was removed while an update operation was occurring.');
         return;
       }
@@ -4201,7 +6938,7 @@ var MSEWrapper = function () {
       }
 
       _this.processNextInQueue();
-    };
+    });
 
     debug('Constructing...');
 
@@ -4210,9 +6947,7 @@ var MSEWrapper = function () {
     }
 
     this.destroyed = false;
-
     this.videoElement = videoElement;
-
     this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
       // These default buffer value provide the best results in my testing.
       // It keeps the memory usage as low as is practical, and rarely causes
@@ -4224,10 +6959,8 @@ var MSEWrapper = function () {
       duration: 10,
       enableMetrics: false
     });
-
     this.segmentQueue = [];
     this.sequenceNumber = 0;
-
     this.mediaSource = null;
     this.sourceBuffer = null;
     this.objectURL = null;
@@ -4237,9 +6970,8 @@ var MSEWrapper = function () {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
     }
 
-    this.metrics = {};
+    this.metrics = {}; // @todo - there must be a more proper way to do events than this...
 
-    // @todo - there must be a more proper way to do events than this...
     this.events = {};
 
     for (var i = 0; i < MSEWrapper.EVENT_NAMES.length; i++) {
@@ -4253,27 +6985,27 @@ var MSEWrapper = function () {
   }
 
   _createClass(MSEWrapper, [{
-    key: 'on',
+    key: "on",
     value: function on(name, action) {
-      debug('Registering Listener for ' + name + ' event...');
+      debug("Registering Listener for ".concat(name, " event..."));
 
       if (!MSEWrapper.EVENT_NAMES.includes(name)) {
-        throw new Error('"' + name + '" is not a valid event."');
+        throw new Error("\"".concat(name, "\" is not a valid event.\""));
       }
 
       this.events[name].push(action);
     }
   }, {
-    key: 'trigger',
+    key: "trigger",
     value: function trigger(name, value) {
       if (name === 'metric') {
-        silly('Triggering ' + name + ' event...');
+        silly("Triggering ".concat(name, " event..."));
       } else {
-        debug('Triggering ' + name + ' event...');
+        debug("Triggering ".concat(name, " event..."));
       }
 
       if (!MSEWrapper.EVENT_NAMES.includes(name)) {
-        throw new Error('"' + name + '" is not a valid event."');
+        throw new Error("\"".concat(name, "\" is not a valid event.\""));
       }
 
       for (var i = 0; i < this.events[name].length; i++) {
@@ -4281,7 +7013,7 @@ var MSEWrapper = function () {
       }
     }
   }, {
-    key: 'metric',
+    key: "metric",
     value: function metric(type, value) {
       if (!this.options || !this.options.enableMetrics) {
         return;
@@ -4299,6 +7031,7 @@ var MSEWrapper = function () {
             this.metrics[type] = value;
             break;
           }
+
         default:
           {
             if (!this.metrics.hasOwnProperty(type)) {
@@ -4315,25 +7048,20 @@ var MSEWrapper = function () {
       });
     }
   }, {
-    key: 'initializeMediaSource',
+    key: "initializeMediaSource",
     value: function initializeMediaSource() {
       var _this2 = this;
 
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
       debug('Initializing mediaSource...');
-
       options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
         onSourceOpen: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
         onSourceEnded: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
         onError: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a
       });
+      this.metric('mediaSource.created', 1); // Kill the existing media source
 
-      this.metric('mediaSource.created', 1);
-
-      // Kill the existing media source
       this.destroyMediaSource();
-
       this.mediaSource = new window.MediaSource();
 
       this.eventListeners.mediaSource.sourceopen = function () {
@@ -4342,44 +7070,41 @@ var MSEWrapper = function () {
         // to call remove on the buffer, which is expensive?  It seems
         // like it...
         _this2.mediaSource.duration = _this2.options.duration;
-
         options.onSourceOpen();
       };
+
       this.eventListeners.mediaSource.sourceended = options.onSourceEnded;
       this.eventListeners.mediaSource.error = options.onError;
-
       this.mediaSource.addEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
       this.mediaSource.addEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
       this.mediaSource.addEventListener('error', this.eventListeners.mediaSource.error);
     }
   }, {
-    key: 'getVideoElementSrc',
+    key: "getVideoElementSrc",
     value: function getVideoElementSrc() {
       debug('getVideoElementSrc...');
 
       if (!this.mediaSource) {
         // @todo - should this throw?
         return;
-      }
-
-      // @todo - should multiple calls to this method with the same mediaSource
+      } // @todo - should multiple calls to this method with the same mediaSource
       // result in multiple objectURLs being created?  The docs for this say that
       // it creates something on the document, which lives until revokeObjectURL
       // is called on it.  Does that mean we should only ever have one per
       // this.mediaSource?  It seems like it, but I do not know.  Having only one
       // seems more predictable, and more memory efficient.
-
       // Ensure only a single objectURL exists at one time
+
+
       if (!this.objectURL) {
         this.metric('objectURL.created', 1);
-
         this.objectURL = window.URL.createObjectURL(this.mediaSource);
       }
 
       this.videoElement.src = this.objectURL;
     }
   }, {
-    key: 'destroyVideoElementSrc',
+    key: "destroyVideoElementSrc",
     value: function destroyVideoElementSrc() {
       debug('destroyVideoElementSrc...');
 
@@ -4391,32 +7116,29 @@ var MSEWrapper = function () {
       if (!this.objectURL) {
         // @todo - should this throw?
         return;
-      }
+      } // this.metric('objectURL.revoked', 1);
 
-      // this.metric('objectURL.revoked', 1);
 
       this.objectURL = null;
 
       if (this.sourceBuffer) {
         this.shouldAbort = true;
-      }
+      } // free the resource
 
-      // free the resource
+
       return window.URL.revokeObjectURL(this.videoElement.src);
     }
   }, {
-    key: 'reinitializeVideoElementSrc',
+    key: "reinitializeVideoElementSrc",
     value: function reinitializeVideoElementSrc() {
       this.metric('mediaSource.reinitialized', 1);
-
-      this.destroyVideoElementSrc();
-
-      // reallocate, this will call media source open which will
+      this.destroyVideoElementSrc(); // reallocate, this will call media source open which will
       // append the MOOV atom.
+
       return this.getVideoElementSrc();
     }
   }, {
-    key: 'isMediaSourceReady',
+    key: "isMediaSourceReady",
     value: function isMediaSourceReady() {
       // found when stress testing many videos, it is possible for the
       // media source ready state not to be open even though
@@ -4424,21 +7146,24 @@ var MSEWrapper = function () {
       return this.mediaSource && this.mediaSource.readyState === 'open';
     }
   }, {
-    key: 'isSourceBufferReady',
+    key: "isSourceBufferReady",
     value: function isSourceBufferReady() {
       return this.sourceBuffer && this.sourceBuffer.updating === false;
     }
   }, {
-    key: 'initializeSourceBuffer',
+    key: "initializeSourceBuffer",
     value: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(mimeCodec) {
-        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var _initializeSourceBuffer = _asyncToGenerator(
+      /*#__PURE__*/
+      regeneratorRuntime.mark(function _callee(mimeCodec) {
+        var options,
+            _args = arguments;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
+                options = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
                 debug('initializeSourceBuffer...');
-
                 options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
                   onAppendStart: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
                   onAppendFinish: lodash_noop__WEBPACK_IMPORTED_MODULE_2___default.a,
@@ -4451,68 +7176,63 @@ var MSEWrapper = function () {
                 });
 
                 if (this.isMediaSourceReady()) {
-                  _context.next = 4;
+                  _context.next = 5;
                   break;
                 }
 
                 throw new Error('Cannot create the sourceBuffer if the mediaSource is not ready.');
 
-              case 4:
-                _context.next = 6;
+              case 5:
+                _context.next = 7;
                 return this.destroySourceBuffer();
 
-              case 6:
-
+              case 7:
                 this.metric('sourceBuffer.created', 1);
-
                 this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
-                this.sourceBuffer.mode = 'sequence';
+                this.sourceBuffer.mode = 'sequence'; // Custom Events
 
-                // Custom Events
                 this.eventListeners.sourceBuffer.onAppendStart = options.onAppendStart;
                 this.eventListeners.sourceBuffer.onAppendError = options.onAppendError;
                 this.eventListeners.sourceBuffer.onRemoveFinish = options.onRemoveFinish;
                 this.eventListeners.sourceBuffer.onAppendFinish = options.onAppendFinish;
                 this.eventListeners.sourceBuffer.onRemoveError = options.onRemoveError;
                 this.eventListeners.sourceBuffer.onStreamFrozen = options.onStreamFrozen;
-                this.eventListeners.sourceBuffer.onError = options.onError;
+                this.eventListeners.sourceBuffer.onError = options.onError; // Supported Events
 
-                // Supported Events
                 this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
                 this.sourceBuffer.addEventListener('error', this.eventListeners.sourceBuffer.onError);
 
-              case 18:
-              case 'end':
+              case 19:
+              case "end":
                 return _context.stop();
             }
           }
         }, _callee, this);
       }));
 
-      function initializeSourceBuffer(_x5) {
-        return _ref.apply(this, arguments);
+      function initializeSourceBuffer(_x) {
+        return _initializeSourceBuffer.apply(this, arguments);
       }
 
       return initializeSourceBuffer;
     }()
   }, {
-    key: 'queueSegment',
+    key: "queueSegment",
     value: function queueSegment(segment) {
       if (this.segmentQueue.length) {
-        debug('Queueing segment.  The queue currently has ' + this.segmentQueue.length + ' segments.');
+        debug("Queueing segment.  The queue currently has ".concat(this.segmentQueue.length, " segments."));
       } else {
-        silly('Queueing segment.  The queue is currently empty.');
+        silly("Queueing segment.  The queue is currently empty.");
       }
 
       this.metric('queue.added', 1);
-
       this.segmentQueue.push({
         timestamp: Date.now(),
         byteArray: segment
       });
     }
   }, {
-    key: 'sourceBufferAbort',
+    key: "sourceBufferAbort",
     value: function sourceBufferAbort() {
       debug('Aborting current sourceBuffer operation');
 
@@ -4524,57 +7244,51 @@ var MSEWrapper = function () {
           this.shouldAbort = false;
         }
       } catch (error) {
-        this.metric('error.sourceBuffer.abort', 1);
+        this.metric('error.sourceBuffer.abort', 1); // Somehow, this can be become undefined...
 
-        // Somehow, this can be become undefined...
         if (this.eventListeners.sourceBuffer.onAbortError) {
           this.eventListeners.sourceBuffer.onAbortError(error);
         }
       }
     }
   }, {
-    key: '_append',
-    value: function _append(_ref2) {
-      var timestamp = _ref2.timestamp,
-          byteArray = _ref2.byteArray;
-
+    key: "_append",
+    value: function _append(_ref) {
+      var timestamp = _ref.timestamp,
+          byteArray = _ref.byteArray;
       silly('Appending to the sourceBuffer...');
 
       try {
         var estimatedDrift = Date.now() - timestamp;
 
         if (estimatedDrift > this.options.driftThreshold) {
-          debug('Estimated drift of ' + estimatedDrift + ' is above the ' + this.options.driftThreshold + ' threshold.  Flushing queue...');
-          // @todo - perhaps we should re-add the last segment to the queue with a fresh
+          debug("Estimated drift of ".concat(estimatedDrift, " is above the ").concat(this.options.driftThreshold, " threshold.  Flushing queue...")); // @todo - perhaps we should re-add the last segment to the queue with a fresh
           // timestamp?  I think one cause of stream freezing is the sourceBuffer getting
           // starved, but I don't know if that's correct
+
           this.metric('queue.removed', this.segmentQueue.length + 1);
           this.segmentQueue = [];
           return;
         }
 
-        silly('Appending to the buffer with an estimated drift of ' + estimatedDrift);
-
+        silly("Appending to the buffer with an estimated drift of ".concat(estimatedDrift));
         this.metric('sourceBuffer.append', 1);
-
         this.sourceBuffer.appendBuffer(byteArray);
       } catch (error) {
         if (error.message && error.message.toLowerCase().includes(FULL_BUFFER_ERROR)) {
           // @todo - make this a valid metric
           // this.metric('error.sourceBuffer.filled', 1);
-
           // If the buffer is full, we will flush it
           console.warn('source buffer is full, about to flush it...');
           this.trimBuffer(undefined, true);
         } else {
           this.metric('error.sourceBuffer.append', 1);
-
           this.eventListeners.sourceBuffer.onAppendError(error, byteArray);
         }
       }
     }
   }, {
-    key: 'processNextInQueue',
+    key: "processNextInQueue",
     value: function processNextInQueue() {
       silly('processNextInQueue');
 
@@ -4606,11 +7320,12 @@ var MSEWrapper = function () {
       if (this.segmentQueue.length > 0) {
         this.metric('queue.shift', 1);
         this.metric('queue.canProcessNext', 1);
+
         this._append(this.segmentQueue.shift());
       }
     }
   }, {
-    key: 'formatMoof',
+    key: "formatMoof",
     value: function formatMoof(moof) {
       // We must overwrite the sequence number locally, because it
       // the sequence that comes from the server will not necessarily
@@ -4622,11 +7337,10 @@ var MSEWrapper = function () {
       moof[21] = (this.sequenceNumber & 0x00FF0000) >> 16;
       moof[22] = (this.sequenceNumber & 0x0000FF00) >> 8;
       moof[23] = this.sequenceNumber & 0xFF;
-
       return moof;
     }
   }, {
-    key: 'appendMoov',
+    key: "appendMoov",
     value: function appendMoov(moov) {
       debug('appendMoov');
 
@@ -4636,20 +7350,18 @@ var MSEWrapper = function () {
         return;
       }
 
-      this.metric('sourceBuffer.lastMoovSize', moov.length);
+      this.metric('sourceBuffer.lastMoovSize', moov.length); // Sometimes this can get hit after destroy is called
 
-      // Sometimes this can get hit after destroy is called
       if (!this.eventListeners.sourceBuffer.onAppendStart) {
         return;
       }
 
       debug('appending moov...');
       this.queueSegment(moov);
-
       this.processNextInQueue();
     }
   }, {
-    key: 'append',
+    key: "append",
     value: function append(byteArray) {
       silly('Append');
 
@@ -4657,26 +7369,21 @@ var MSEWrapper = function () {
         return;
       }
 
-      this.metric('sourceBuffer.lastMoofSize', byteArray.length);
-
-      // console.log(mp4toJSON(byteArray));
-
+      this.metric('sourceBuffer.lastMoofSize', byteArray.length); // console.log(mp4toJSON(byteArray));
       // Sometimes this can get hit after destroy is called
+
       if (!this.eventListeners.sourceBuffer.onAppendStart) {
         return;
       }
 
       this.eventListeners.sourceBuffer.onAppendStart(byteArray);
-
       this.metric('queue.append', 1);
-
       this.queueSegment(this.formatMoof(byteArray));
       this.sequenceNumber++;
-
       this.processNextInQueue();
     }
   }, {
-    key: 'getBufferTimes',
+    key: "getBufferTimes",
     value: function getBufferTimes() {
       silly('getBufferTimes...');
 
@@ -4685,9 +7392,7 @@ var MSEWrapper = function () {
         var bufferTimeStart = this.sourceBuffer.buffered.start(0);
         var bufferTimeEnd = this.sourceBuffer.buffered.end(0);
         var currentBufferSize = bufferTimeEnd - bufferTimeStart;
-
         silly('getBufferTimes finished successfully...');
-
         return {
           previousBufferSize: previousBufferSize,
           currentBufferSize: currentBufferSize,
@@ -4696,34 +7401,27 @@ var MSEWrapper = function () {
         };
       } catch (error) {
         debug('getBufferTimes finished unsuccessfully...');
-
         return null;
       }
     }
   }, {
-    key: 'trimBuffer',
+    key: "trimBuffer",
     value: function trimBuffer() {
       var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
       var clearBuffer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
       silly('trimBuffer...');
-
       this.metric('sourceBuffer.lastKnownBufferSize', this.timeBuffered);
 
       try {
         if (info && (clearBuffer || this.timeBuffered > this.options.bufferSizeLimit) && this.isSourceBufferReady()) {
-          debug('Removing old stuff from sourceBuffer...');
-
-          // @todo - this is the biggest performance problem we have with this player.
+          debug('Removing old stuff from sourceBuffer...'); // @todo - this is the biggest performance problem we have with this player.
           // Can you figure out how to manage the memory usage without causing the streams
           // to stutter?
+
           this.metric('sourceBuffer.trim', this.options.bufferTruncateValue);
-
           var trimEndTime = clearBuffer ? Infinity : info.bufferTimeStart + this.options.bufferTruncateValue;
-
           debug('trimming buffer...');
           this.sourceBuffer.remove(info.bufferTimeStart, trimEndTime);
-
           debug('finished trimming buffer...');
         }
       } catch (error) {
@@ -4736,26 +7434,21 @@ var MSEWrapper = function () {
       silly('trimBuffer finished...');
     }
   }, {
-    key: 'onRemoveFinish',
+    key: "onRemoveFinish",
     value: function onRemoveFinish() {
       var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
-
       debug('On remove finish...');
-
       this.metric('sourceBuffer.updateEnd.removeEvent', 1);
       this.eventListeners.sourceBuffer.onRemoveFinish(info);
     }
   }, {
-    key: 'onAppendFinish',
+    key: "onAppendFinish",
     value: function onAppendFinish() {
       var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
-
       silly('On append finish...');
-
-      this.metric('sourceBuffer.updateEnd.appendEvent', 1);
-
-      // The current buffer size should always be bigger.If it isn't, there is a problem,
+      this.metric('sourceBuffer.updateEnd.appendEvent', 1); // The current buffer size should always be bigger.If it isn't, there is a problem,
       // and we need to reinitialize or something.
+
       if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
         this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
         this.eventListeners.sourceBuffer.onStreamFrozen();
@@ -4763,26 +7456,24 @@ var MSEWrapper = function () {
       }
 
       this.previousTimeEnd = info.bufferTimeEnd;
-
       this.eventListeners.sourceBuffer.onAppendFinish(info);
       this.trimBuffer(info);
     }
   }, {
-    key: 'destroySourceBuffer',
+    key: "destroySourceBuffer",
     value: function destroySourceBuffer() {
       var _this3 = this;
 
       debug('destroySourceBuffer...');
-
       return new Promise(function (resolve, reject) {
         var finish = function finish() {
           if (_this3.sourceBuffer) {
             _this3.sourceBuffer.removeEventListener('updateend', finish);
-          }
-
-          // We must abort in the final updateend listener to ensure that
+          } // We must abort in the final updateend listener to ensure that
           // any operations, especially the remove operation, finish first,
           // as aborting while removing is deprecated.
+
+
           _this3.sourceBufferAbort();
 
           debug('destroySourceBuffer finished...');
@@ -4794,44 +7485,39 @@ var MSEWrapper = function () {
         }
 
         _this3.sourceBuffer.removeEventListener('updateend', _this3.onSourceBufferUpdateEnd);
+
         _this3.sourceBuffer.removeEventListener('error', _this3.eventListeners.sourceBuffer.onError);
 
-        _this3.sourceBuffer.addEventListener('updateend', finish);
-
-        // @todo - this is a hack - sometimes, the trimBuffer operation does not cause an update
+        _this3.sourceBuffer.addEventListener('updateend', finish); // @todo - this is a hack - sometimes, the trimBuffer operation does not cause an update
         // on the sourceBuffer.  This acts as a timeout to ensure the destruction of this mseWrapper
         // instance can complete.
+
+
         debug('giving sourceBuffer some time to finish updating itself...');
         setTimeout(finish, 1000);
       });
     }
   }, {
-    key: 'destroyMediaSource',
+    key: "destroyMediaSource",
     value: function destroyMediaSource() {
       this.metric('sourceBuffer.destroyed', 1);
-
       debug('Destroying mediaSource...');
 
       if (!this.mediaSource) {
         return;
-      }
-
-      // We must do this PRIOR to the sourceBuffer being destroyed, to ensure that the
+      } // We must do this PRIOR to the sourceBuffer being destroyed, to ensure that the
       // 'buffered' property is still available, which is necessary for completely
       // emptying the sourceBuffer.
-      this.trimBuffer(undefined, true);
 
+
+      this.trimBuffer(undefined, true);
       this.mediaSource.removeEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
       this.mediaSource.removeEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
-      this.mediaSource.removeEventListener('error', this.eventListeners.mediaSource.error);
-
-      // let sourceBuffers = this.mediaSource.sourceBuffers;
-
+      this.mediaSource.removeEventListener('error', this.eventListeners.mediaSource.error); // let sourceBuffers = this.mediaSource.sourceBuffers;
       // if (sourceBuffers.SourceBuffers) {
       //   // @see - https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/sourceBuffers
       //   sourceBuffers = sourceBuffers.SourceBuffers();
       // }
-
       // for (let i = 0; i < sourceBuffers.length; i++) {
       // this.mediaSource.removeSourceBuffer(sourceBuffers[i]);
       // }
@@ -4840,41 +7526,35 @@ var MSEWrapper = function () {
         debug('media source was ready for endOfStream and removeSourceBuffer');
         this.mediaSource.endOfStream();
         this.mediaSource.removeSourceBuffer(this.sourceBuffer);
-      }
-
-      // @todo - is this happening at the right time, or should it happen
+      } // @todo - is this happening at the right time, or should it happen
       // prior to removing the source buffers?
-      this.destroyVideoElementSrc();
 
+
+      this.destroyVideoElementSrc();
       this.metric('mediaSource.destroyed', 1);
     }
   }, {
-    key: '_freeAllResources',
+    key: "_freeAllResources",
     value: function _freeAllResources() {
-      debug('_freeAllResources...');
-
-      // We make NO assumptions here about what instance properties are
+      debug('_freeAllResources...'); // We make NO assumptions here about what instance properties are
       // needed during the asynchronous destruction of the source buffer,
       // therefore we wait until it is finished to free all of these
       // resources.
+
       this.mediaSource = null;
       this.sourceBuffer = null;
-
       this.videoElement = null;
-
       this.timeBuffered = null;
       this.previousTimeEnd = null;
       this.segmentQueue = null;
-
       this.options = null;
       this.metrics = null;
       this.events = null;
       this.eventListeners = null;
-
       debug('_freeAllResources finished...');
     }
   }, {
-    key: 'destroy',
+    key: "destroy",
     value: function destroy() {
       var _this4 = this;
 
@@ -4885,10 +7565,7 @@ var MSEWrapper = function () {
       }
 
       this.destroyed = true;
-
-      this.destroyMediaSource();
-
-      // We MUST not force the destroy method here to be asynchronous, even
+      this.destroyMediaSource(); // We MUST not force the destroy method here to be asynchronous, even
       // though it "should" be.  This is because we cannot assume that the
       // caller has control over whether or not its destroy method can be
       // properly run asynchronously.  The specific use case here is that
@@ -4908,22 +7585,23 @@ var MSEWrapper = function () {
       // of time, such as 24 hours.
       // Note that we still return the promise, so that the caller has the
       // option of waiting if they choose.
+
       var destroyPromise = this.destroySourceBuffer().then(function () {
         debug('destroySourceBuffer successfully finished...');
+
         _this4._freeAllResources();
+
         debug('destroy successfully finished...');
       }).catch(function (error) {
         debug('destroySourceBuffer failed...');
         console.error('Error while destroying the source buffer!');
-        console.error(error);
+        console.error(error); // Do our best at memory management, even on failure
 
-        // Do our best at memory management, even on failure
         _this4._freeAllResources();
+
         debug('destroy unsuccessfully finished...');
       });
-
       debug('exiting destroy, asynchronous destroy logic in progress...');
-
       return destroyPromise;
     }
   }]);
@@ -4931,9 +7609,11 @@ var MSEWrapper = function () {
   return MSEWrapper;
 }();
 
-MSEWrapper.EVENT_NAMES = ['metric'];
-MSEWrapper.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen', 'sourceBuffer.abort', 'error.sourceBuffer.abort', 'sourceBuffer.lastMoofSize'];
-/* harmony default export */ __webpack_exports__["default"] = (MSEWrapper);
+_defineProperty(MSEWrapper, "EVENT_NAMES", ['metric']);
+
+_defineProperty(MSEWrapper, "METRIC_TYPES", ['mediaSource.created', 'mediaSource.destroyed', 'objectURL.created', 'objectURL.revoked', 'mediaSource.reinitialized', 'sourceBuffer.created', 'sourceBuffer.destroyed', 'queue.added', 'queue.removed', 'sourceBuffer.append', 'error.sourceBuffer.append', 'frameDrop.hiddenTab', 'queue.mediaSourceNotReady', 'queue.sourceBufferNotReady', 'queue.shift', 'queue.append', 'sourceBuffer.lastKnownBufferSize', 'sourceBuffer.trim', 'sourceBuffer.trim.error', 'sourceBuffer.updateEnd', 'sourceBuffer.updateEnd.bufferLength.empty', 'sourceBuffer.updateEnd.bufferLength.error', 'sourceBuffer.updateEnd.removeEvent', 'sourceBuffer.updateEnd.appendEvent', 'sourceBuffer.updateEnd.bufferFrozen', 'sourceBuffer.abort', 'error.sourceBuffer.abort', 'sourceBuffer.lastMoofSize']);
+
+
 
 /***/ }),
 
@@ -4946,42 +7626,42 @@ MSEWrapper.METRIC_TYPES = ['mediaSource.created', 'mediaSource.destroyed', 'obje
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return MqttTopicHandlers; });
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 
 var DEBUG_PREFIX = 'skyline:clsp:iov';
-
 /**
  * route inbound messages/data to player's event handlers.
  */
 
-var MqttTopicHandlers = function () {
+var MqttTopicHandlers =
+/*#__PURE__*/
+function () {
   function MqttTopicHandlers(id, iov) {
     _classCallCheck(this, MqttTopicHandlers);
 
     this.id = id;
-    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':' + this.id + ':MqttTopicHandlers');
-
+    this.debug = debug__WEBPACK_IMPORTED_MODULE_0___default()("".concat(DEBUG_PREFIX, ":").concat(this.id, ":MqttTopicHandlers"));
     this.debug('constructing...');
-
     this.iov = iov;
     this._handlers = {};
   }
 
   _createClass(MqttTopicHandlers, [{
-    key: 'get',
+    key: "get",
     value: function get(topic) {
       this.debug('getting...', topic);
-
       return this._handlers[topic];
     }
   }, {
-    key: 'register',
+    key: "register",
     value: function register(topic, callback) {
       var _this = this;
 
@@ -4990,11 +7670,11 @@ var MqttTopicHandlers = function () {
       this._handlers[topic] = function () {
         _this.debug('executing handler...', topic);
 
-        callback.apply(undefined, arguments);
+        callback.apply(void 0, arguments);
       };
     }
   }, {
-    key: 'unregister',
+    key: "unregister",
     value: function unregister(topic) {
       this.debug('unregistering...', topic);
 
@@ -5003,32 +7683,27 @@ var MqttTopicHandlers = function () {
       }
     }
   }, {
-    key: 'exists',
+    key: "exists",
     value: function exists(topic) {
       this.debug('exists?', topic);
-
       return this._handlers.hasOwnProperty(topic);
-    }
-
-    // central entry point for all MQTT inbound traffic.
+    } // central entry point for all MQTT inbound traffic.
 
   }, {
-    key: 'msghandler',
+    key: "msghandler",
     value: function msghandler(message) {
       this.debug('msghandler...', message);
-
       var topic = message.destinationName;
 
       if (!this.exists(topic)) {
-        this.debug('No handler for ' + topic + ' - message dropped', message);
-
+        this.debug("No handler for ".concat(topic, " - message dropped"), message);
         return;
       }
 
       try {
         this.get(topic)(message);
       } catch (e) {
-        this.iov.events.exception(topic + ' handler exception', e);
+        this.iov.events.exception("".concat(topic, " handler exception"), e);
       }
     }
   }]);
@@ -5036,7 +7711,7 @@ var MqttTopicHandlers = function () {
   return MqttTopicHandlers;
 }();
 
-/* harmony default export */ __webpack_exports__["default"] = (MqttTopicHandlers);
+
 
 /***/ }),
 
@@ -5049,6 +7724,7 @@ var MqttTopicHandlers = function () {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return IOVPlayer; });
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! debug */ "./node_modules/debug/src/browser.js");
 /* harmony import */ var debug__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(debug__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
@@ -5056,14 +7732,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
 /* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var _MSEWrapper__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./MSEWrapper */ "./src/js/iov/MSEWrapper.js");
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../utils */ "./src/js/utils.js");
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
 
@@ -5071,9 +7753,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 
 var DEBUG_PREFIX = 'skyline:clsp:iov';
-var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()(DEBUG_PREFIX + ':IOVPlayer');
-var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX + ':IOVPlayer');
-
+var debug = debug__WEBPACK_IMPORTED_MODULE_0___default()("".concat(DEBUG_PREFIX, ":IOVPlayer"));
+var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()("silly:".concat(DEBUG_PREFIX, ":IOVPlayer"));
 /**
  * Responsible for receiving stream input and routing it to the media source
  * buffer for rendering on the video tag. There is some 'light' reworking of
@@ -5088,12 +7769,13 @@ var silly = debug__WEBPACK_IMPORTED_MODULE_0___default()('silly:' + DEBUG_PREFIX
  * player.play( video_element_id, stream_name );
 */
 
-var IOVPlayer = function () {
+var IOVPlayer =
+/*#__PURE__*/
+function () {
   _createClass(IOVPlayer, null, [{
-    key: 'factory',
+    key: "factory",
     value: function factory(iov, playerInstance) {
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
       return new IOVPlayer(iov, playerInstance, options);
     }
   }]);
@@ -5103,15 +7785,17 @@ var IOVPlayer = function () {
 
     _classCallCheck(this, IOVPlayer);
 
-    this.onVisibilityChange = function () {
-      // @todo - the timeout value will be created every time this function is
-      // executed, which means that if you switch tabs and come back faster than
-      // one second, the timeout from the tab switch will never be cleared (because
-      // it is no longer in scope), and the video will be stopped and never re-played
-      var timeout = void 0;
+    _defineProperty(this, "onVisibilityChange", function () {
+      var _utils$getWindowState = _utils__WEBPACK_IMPORTED_MODULE_4__["default"].getWindowStateNames(),
+          hiddenStateName = _utils$getWindowState.hiddenStateName;
 
-      if (document.hidden) {
-        timeout = setTimeout(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      if (document[hiddenStateName]) {
+        // Stop playing when tab is hidden or window is minimized
+        _this.visibilityChangeTimeout = setTimeout(
+        /*#__PURE__*/
+        _asyncToGenerator(
+        /*#__PURE__*/
+        regeneratorRuntime.mark(function _callee() {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -5120,23 +7804,51 @@ var IOVPlayer = function () {
                   return _this.stop();
 
                 case 2:
-                case 'end':
+                case "end":
                   return _context.stop();
               }
             }
-          }, _callee, _this);
-        })), 1000);
-      } else {
-        clearTimeout(timeout);
+          }, _callee);
+        })), 1000); // Continue to update the time, which will prevent videojs-errors from
+        // issuing a timeout error
+
+        _this.visibilityChangeInterval = setInterval(
+        /*#__PURE__*/
+        _asyncToGenerator(
+        /*#__PURE__*/
+        regeneratorRuntime.mark(function _callee2() {
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  _this.playerInstance.trigger('timeupdate');
+
+                case 1:
+                case "end":
+                  return _context2.stop();
+              }
+            }
+          }, _callee2);
+        })), 2000);
+        return;
+      }
+
+      if (_this.visibilityChangeTimeout) {
+        clearTimeout(_this.visibilityChangeTimeout);
+      }
+
+      if (_this.visibilityChangeInterval) {
+        clearInterval(_this.visibilityChangeInterval);
+      }
+
+      if (_this.stopped) {
         _this.play();
       }
-    };
+    });
 
     debug('constructor');
+    this.metrics = {}; // @todo - there must be a more proper way to do events than this...
 
-    this.metrics = {};
-
-    // @todo - there must be a more proper way to do events than this...
     this.events = {};
 
     for (var i = 0; i < IOVPlayer.EVENT_NAMES.length; i++) {
@@ -5148,45 +7860,44 @@ var IOVPlayer = function () {
     this.playerInstance = playerInstance;
     this.eid = this.playerInstance.el().firstChild.id;
     this.id = this.eid.replace('_html5_api', '');
-
     this.initializeVideoElement();
-
     this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_2___default()({}, options, {
       segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
       driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
       enableMetrics: false
     });
-
     this.state = 'initializing';
     this.firstFrameShown = false;
-    this.stopped = false;
-
-    // Used for determining the size of the internal buffer hidden from the MSE
+    this.stopped = false; // Used for determining the size of the internal buffer hidden from the MSE
     // api by recording the size and time of each chunk of video upon buffer append
     // and recording the time when the updateend event is called.
+
     this.LogSourceBuffer = false;
     this.LogSourceBufferTopic = null;
-
     this.latestSegmentReceived = null;
     this.segmentIntervalAverage = null;
     this.segmentInterval = null;
     this.segmentIntervals = [];
-
     this.mseWrapper = null;
     this.moovBox = null;
     this.guid = null;
     this.mimeCodec = null;
 
-    document.addEventListener('visibilitychange', this.onVisibilityChange);
+    var _utils$getWindowState2 = _utils__WEBPACK_IMPORTED_MODULE_4__["default"].getWindowStateNames(),
+        visibilityChangeEventName = _utils$getWindowState2.visibilityChangeEventName;
+
+    if (visibilityChangeEventName) {
+      document.addEventListener(visibilityChangeEventName, this.onVisibilityChange, false);
+    }
   }
 
   _createClass(IOVPlayer, [{
-    key: 'on',
+    key: "on",
     value: function on(name, action) {
-      debug('Registering Listener for ' + name + ' event...');
+      debug("Registering Listener for ".concat(name, " event..."));
 
       if (!IOVPlayer.EVENT_NAMES.includes(name)) {
-        throw new Error('"' + name + '" is not a valid event."');
+        throw new Error("\"".concat(name, "\" is not a valid event.\""));
       }
 
       if (this.destroyed) {
@@ -5196,14 +7907,14 @@ var IOVPlayer = function () {
       this.events[name].push(action);
     }
   }, {
-    key: 'trigger',
+    key: "trigger",
     value: function trigger(name, value) {
       var sillyMetrics = ['metric', 'videoReceived'];
 
       if (sillyMetrics.includes(name)) {
-        silly('Triggering ' + name + ' event...');
+        silly("Triggering ".concat(name, " event..."));
       } else {
-        debug('Triggering ' + name + ' event...');
+        debug("Triggering ".concat(name, " event..."));
       }
 
       if (this.destroyed) {
@@ -5211,7 +7922,7 @@ var IOVPlayer = function () {
       }
 
       if (!IOVPlayer.EVENT_NAMES.includes(name)) {
-        throw new Error('"' + name + '" is not a valid event."');
+        throw new Error("\"".concat(name, "\" is not a valid event.\""));
       }
 
       for (var i = 0; i < this.events[name].length; i++) {
@@ -5219,7 +7930,7 @@ var IOVPlayer = function () {
       }
     }
   }, {
-    key: 'metric',
+    key: "metric",
     value: function metric(type, value) {
       if (!this.options.enableMetrics) {
         return;
@@ -5238,9 +7949,9 @@ var IOVPlayer = function () {
             }
 
             this.metrics[type] += value;
-
             break;
           }
+
         default:
           {
             this.metrics[type] = value;
@@ -5253,56 +7964,51 @@ var IOVPlayer = function () {
       });
     }
   }, {
-    key: '_onError',
+    key: "_onError",
     value: function _onError(type, message, error) {
       console.warn(type, ':', message);
       console.error(error);
     }
   }, {
-    key: 'assertMimeCodecSupported',
+    key: "assertMimeCodecSupported",
     value: function assertMimeCodecSupported(mimeCodec) {
       if (!_MSEWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].isMimeCodecSupported(mimeCodec)) {
         this.state = 'unsupported-mime-codec';
-
-        var message = 'Unsupported mime codec: ' + mimeCodec;
-
+        var message = "Unsupported mime codec: ".concat(mimeCodec);
         this.videoPlayer.errors.extend({
           PLAYER_ERR_IOV: {
             headline: 'Error Playing Stream',
             message: message
           }
         });
-
-        this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
-
+        this.videoPlayer.error({
+          code: 'PLAYER_ERR_IOV'
+        });
         throw new Error(message);
       }
     }
   }, {
-    key: 'initializeVideoElement',
+    key: "initializeVideoElement",
     value: function initializeVideoElement() {
       var _this2 = this;
 
       this.videoJsVideoElement = document.getElementById(this.eid);
 
       if (!this.videoJsVideoElement) {
-        throw new Error('Unable to find an element in the DOM with id "' + this.eid + '".');
+        throw new Error("Unable to find an element in the DOM with id \"".concat(this.eid, "\"."));
       }
 
-      var videoId = 'clsp-video-' + this._id;
-
-      // when videojs initializes the video element (or something like that),
+      var videoId = "clsp-video-".concat(this._id); // when videojs initializes the video element (or something like that),
       // it creates events and listeners on that element that it uses, however
       // these events interfere with our ability to play clsp streams.  Cloning
       // the element like this and reinserting it is a blunt instrument to remove
       // all of the videojs events so that we are in control of the player.
       // this.videoElement = this.videoJsVideoElement.cloneNode();
+
       this.videoElement = this.videoJsVideoElement.cloneNode();
       this.videoElement.setAttribute('id', videoId);
       this.videoElement.classList.add('clsp-video');
-
       this.videoElementParent = this.videoJsVideoElement.parentNode;
-
       this.on('firstFrameShown', function () {
         // @todo - this may be overkill given the IOV changeSourceMaxWait...
         // When the video is ready to be displayed, swap out the video player if
@@ -5323,16 +8029,16 @@ var IOVPlayer = function () {
                 // video.load();
                 // video.style.display = 'none';
                 _this2.videoElementParent.removeChild(video);
+
                 video.remove();
                 video = null;
                 videos = null;
                 break;
               }
-            }
-
-            // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
+            } // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
             // is there still a reference to this element?
             // this.videoJsVideoElement = null;
+
           } catch (e) {
             console.error(e);
           }
@@ -5340,53 +8046,56 @@ var IOVPlayer = function () {
       });
     }
   }, {
-    key: 'reinitializeMseWrapper',
+    key: "reinitializeMseWrapper",
     value: function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(mimeCodec) {
+      var _reinitializeMseWrapper = _asyncToGenerator(
+      /*#__PURE__*/
+      regeneratorRuntime.mark(function _callee8(mimeCodec) {
         var _this3 = this;
 
-        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context7.prev = _context7.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
                 if (!this.mseWrapper) {
-                  _context7.next = 3;
+                  _context8.next = 3;
                   break;
                 }
 
-                _context7.next = 3;
+                _context8.next = 3;
                 return this.mseWrapper.destroy();
 
               case 3:
-
                 this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_3__["default"].factory(this.videoElement);
-
                 this.mseWrapper.on('metric', function (_ref3) {
                   var type = _ref3.type,
                       value = _ref3.value;
 
-                  _this3.trigger('metric', { type: type, value: value });
+                  _this3.trigger('metric', {
+                    type: type,
+                    value: value
+                  });
                 });
-
                 this.mseWrapper.initializeMediaSource({
                   onSourceOpen: function () {
-                    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-                      return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                    var _onSourceOpen = _asyncToGenerator(
+                    /*#__PURE__*/
+                    regeneratorRuntime.mark(function _callee6() {
+                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
                         while (1) {
-                          switch (_context5.prev = _context5.next) {
+                          switch (_context6.prev = _context6.next) {
                             case 0:
                               debug('on mediaSource sourceopen');
-
-                              _context5.next = 3;
+                              _context6.next = 3;
                               return _this3.mseWrapper.initializeSourceBuffer(mimeCodec, {
                                 onAppendStart: function onAppendStart(byteArray) {
                                   silly('On Append Start...');
 
                                   if (_this3.LogSourceBuffer === true && _this3.LogSourceBufferTopic !== null) {
-                                    debug('Recording ' + parseInt(byteArray.length) + ' bytes of data.');
-
+                                    debug("Recording ".concat(parseInt(byteArray.length), " bytes of data."));
                                     var mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-                                    mqtt_msg.destinationName = _this3.LogSourceBufferTopic;
+                                    mqtt_msg.destinationName = _this3.LogSourceBufferTopic; // note that this is defined in the Conduit
+
                                     window.MQTTClient.send(mqtt_msg);
                                   }
 
@@ -5397,18 +8106,23 @@ var IOVPlayer = function () {
 
                                   if (!_this3.firstFrameShown) {
                                     _this3.firstFrameShown = true;
+
                                     _this3.playerInstance.trigger('firstFrameShown');
+
                                     _this3.trigger('firstFrameShown');
                                   }
 
                                   _this3.drift = info.bufferTimeEnd - _this3.videoElement.currentTime;
 
                                   _this3.metric('sourceBuffer.bufferTimeEnd', info.bufferTimeEnd);
+
                                   _this3.metric('video.currentTime', _this3.videoElement.currentTime);
+
                                   _this3.metric('video.drift', _this3.drift);
 
                                   if (_this3.drift > _this3.segmentIntervalAverage / 1000 + _this3.options.driftCorrectionConstant) {
                                     _this3.metric('video.driftCorrection', 1);
+
                                     _this3.videoElement.currentTime = info.bufferTimeEnd;
                                   }
 
@@ -5432,10 +8146,12 @@ var IOVPlayer = function () {
                                   debug('onRemoveFinish');
                                 },
                                 onAppendError: function () {
-                                  var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(error) {
-                                    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                                  var _onAppendError = _asyncToGenerator(
+                                  /*#__PURE__*/
+                                  regeneratorRuntime.mark(function _callee3(error) {
+                                    return regeneratorRuntime.wrap(function _callee3$(_context3) {
                                       while (1) {
-                                        switch (_context2.prev = _context2.next) {
+                                        switch (_context3.prev = _context3.next) {
                                           case 0:
                                             // internal error, this has been observed to happen the tab
                                             // in the browser where this video player lives is hidden
@@ -5443,19 +8159,19 @@ var IOVPlayer = function () {
                                             // within the MSE C++ implementation in the browser.
                                             _this3._onError('sourceBuffer.append', 'Error while appending to sourceBuffer', error);
 
-                                            _context2.next = 3;
+                                            _context3.next = 3;
                                             return _this3.reinitializeMseWrapper(mimeCodec);
 
                                           case 3:
-                                          case 'end':
-                                            return _context2.stop();
+                                          case "end":
+                                            return _context3.stop();
                                         }
                                       }
-                                    }, _callee2, _this3);
+                                    }, _callee3);
                                   }));
 
-                                  function onAppendError(_x3) {
-                                    return _ref5.apply(this, arguments);
+                                  function onAppendError(_x2) {
+                                    return _onAppendError.apply(this, arguments);
                                   }
 
                                   return onAppendError;
@@ -5465,58 +8181,61 @@ var IOVPlayer = function () {
                                     // @todo - every time the mseWrapper is destroyed, there is a
                                     // sourceBuffer error.  No need to log that, but you should fix it
                                     return;
-                                  }
-
-                                  // observed this fail during a memry snapshot in chrome
+                                  } // observed this fail during a memry snapshot in chrome
                                   // otherwise no observed failure, so ignore exception.
+
+
                                   _this3._onError('sourceBuffer.remove', 'Error while removing segments from sourceBuffer', error);
                                 },
                                 onStreamFrozen: function () {
-                                  var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-                                    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                                  var _onStreamFrozen = _asyncToGenerator(
+                                  /*#__PURE__*/
+                                  regeneratorRuntime.mark(function _callee4() {
+                                    return regeneratorRuntime.wrap(function _callee4$(_context4) {
                                       while (1) {
-                                        switch (_context3.prev = _context3.next) {
+                                        switch (_context4.prev = _context4.next) {
                                           case 0:
                                             debug('stream appears to be frozen - reinitializing...');
-
-                                            _context3.next = 3;
+                                            _context4.next = 3;
                                             return _this3.reinitializeMseWrapper(mimeCodec);
 
                                           case 3:
-                                          case 'end':
-                                            return _context3.stop();
+                                          case "end":
+                                            return _context4.stop();
                                         }
                                       }
-                                    }, _callee3, _this3);
+                                    }, _callee4);
                                   }));
 
                                   function onStreamFrozen() {
-                                    return _ref6.apply(this, arguments);
+                                    return _onStreamFrozen.apply(this, arguments);
                                   }
 
                                   return onStreamFrozen;
                                 }(),
                                 onError: function () {
-                                  var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(error) {
-                                    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+                                  var _onError2 = _asyncToGenerator(
+                                  /*#__PURE__*/
+                                  regeneratorRuntime.mark(function _callee5(error) {
+                                    return regeneratorRuntime.wrap(function _callee5$(_context5) {
                                       while (1) {
-                                        switch (_context4.prev = _context4.next) {
+                                        switch (_context5.prev = _context5.next) {
                                           case 0:
                                             _this3._onError('mediaSource.sourceBuffer.generic', 'mediaSource sourceBuffer error', error);
 
-                                            _context4.next = 3;
+                                            _context5.next = 3;
                                             return _this3.reinitializeMseWrapper(mimeCodec);
 
                                           case 3:
-                                          case 'end':
-                                            return _context4.stop();
+                                          case "end":
+                                            return _context5.stop();
                                         }
                                       }
-                                    }, _callee4, _this3);
+                                    }, _callee5);
                                   }));
 
-                                  function onError(_x4) {
-                                    return _ref7.apply(this, arguments);
+                                  function onError(_x3) {
+                                    return _onError2.apply(this, arguments);
                                   }
 
                                   return onError;
@@ -5524,52 +8243,52 @@ var IOVPlayer = function () {
                               });
 
                             case 3:
-
                               _this3.trigger('videoInfoReceived');
+
                               _this3.mseWrapper.appendMoov(_this3.moovBox);
 
                             case 5:
-                            case 'end':
-                              return _context5.stop();
+                            case "end":
+                              return _context6.stop();
                           }
                         }
-                      }, _callee5, _this3);
+                      }, _callee6);
                     }));
 
                     function onSourceOpen() {
-                      return _ref4.apply(this, arguments);
+                      return _onSourceOpen.apply(this, arguments);
                     }
 
                     return onSourceOpen;
                   }(),
                   onSourceEnded: function () {
-                    var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
-                      return regeneratorRuntime.wrap(function _callee6$(_context6) {
+                    var _onSourceEnded = _asyncToGenerator(
+                    /*#__PURE__*/
+                    regeneratorRuntime.mark(function _callee7() {
+                      return regeneratorRuntime.wrap(function _callee7$(_context7) {
                         while (1) {
-                          switch (_context6.prev = _context6.next) {
+                          switch (_context7.prev = _context7.next) {
                             case 0:
                               debug('on mediaSource sourceended');
-
-                              _context6.next = 3;
+                              _context7.next = 3;
                               return _this3.stop();
 
                             case 3:
-                            case 'end':
-                              return _context6.stop();
+                            case "end":
+                              return _context7.stop();
                           }
                         }
-                      }, _callee6, _this3);
+                      }, _callee7);
                     }));
 
                     function onSourceEnded() {
-                      return _ref8.apply(this, arguments);
+                      return _onSourceEnded.apply(this, arguments);
                     }
 
                     return onSourceEnded;
                   }(),
                   onError: function onError(error) {
-                    _this3._onError('mediaSource.generic', 'mediaSource error',
-                    // @todo - sometimes, this error is an event rather than an error!
+                    _this3._onError('mediaSource.generic', 'mediaSource error', // @todo - sometimes, this error is an event rather than an error!
                     // If different onError calls use different method signatures, that
                     // needs to be accounted for in the MSEWrapper, and the actual error
                     // that was thrown must ALWAYS be the first argument here.  As a
@@ -5579,134 +8298,131 @@ var IOVPlayer = function () {
                 });
 
                 if (!(!this.mseWrapper.mediaSource || !this.videoElement)) {
-                  _context7.next = 8;
+                  _context8.next = 8;
                   break;
                 }
 
                 throw new Error('The video element or mediaSource is not ready!');
 
               case 8:
-
                 this.mseWrapper.reinitializeVideoElementSrc();
 
               case 9:
-              case 'end':
-                return _context7.stop();
+              case "end":
+                return _context8.stop();
             }
           }
-        }, _callee7, this);
+        }, _callee8, this);
       }));
 
-      function reinitializeMseWrapper(_x2) {
-        return _ref2.apply(this, arguments);
+      function reinitializeMseWrapper(_x) {
+        return _reinitializeMseWrapper.apply(this, arguments);
       }
 
       return reinitializeMseWrapper;
     }()
   }, {
-    key: 'resyncStream',
+    key: "resyncStream",
     value: function resyncStream(mimeCodec) {
       var _this4 = this;
 
       // subscribe to a sync topic that will be called if the stream that is feeding
       // the mse service dies and has to be restarted that this player should restart the stream
       debug('Trying to resync stream...');
-
-      this.iov.conduit.subscribe('iov/video/' + this.guid + '/resync', _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
-        return regeneratorRuntime.wrap(function _callee8$(_context8) {
-          while (1) {
-            switch (_context8.prev = _context8.next) {
-              case 0:
-                debug('sync received re-initialize media source buffer');
-                _context8.next = 3;
-                return _this4.reinitializeMseWrapper(mimeCodec);
-
-              case 3:
-              case 'end':
-                return _context8.stop();
-            }
-          }
-        }, _callee8, _this4);
-      })));
-    }
-  }, {
-    key: 'restart',
-    value: function () {
-      var _ref10 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+      this.iov.conduit.subscribe("iov/video/".concat(this.guid, "/resync"),
+      /*#__PURE__*/
+      _asyncToGenerator(
+      /*#__PURE__*/
+      regeneratorRuntime.mark(function _callee9() {
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
             switch (_context9.prev = _context9.next) {
               case 0:
-                debug('restart');
-
+                debug('sync received re-initialize media source buffer');
                 _context9.next = 3;
-                return this.stop();
+                return _this4.reinitializeMseWrapper(mimeCodec);
 
               case 3:
-
-                this.play();
-
-              case 4:
-              case 'end':
+              case "end":
                 return _context9.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee9);
+      })));
+    }
+  }, {
+    key: "restart",
+    value: function () {
+      var _restart = _asyncToGenerator(
+      /*#__PURE__*/
+      regeneratorRuntime.mark(function _callee10() {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                debug('restart');
+                _context10.next = 3;
+                return this.stop();
+
+              case 3:
+                this.play();
+
+              case 4:
+              case "end":
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
       }));
 
       function restart() {
-        return _ref10.apply(this, arguments);
+        return _restart.apply(this, arguments);
       }
 
       return restart;
     }()
   }, {
-    key: 'play',
+    key: "play",
     value: function play() {
       var _this5 = this;
 
       debug('play');
-
-      this.stopped = false;
-
-      // @todo - why doesn't this play/stop connect/disconnect work?
+      this.stopped = false; // @todo - why doesn't this play/stop connect/disconnect work?
       // this.iov.conduit.connect();
 
-      this.iov.conduit.transaction('iov/video/' + window.btoa(this.iov.config.streamName) + '/request', function () {
+      this.iov.conduit.transaction("iov/video/".concat(window.btoa(this.iov.config.streamName), "/request"), function () {
         return _this5.onIovPlayTransaction.apply(_this5, arguments);
-      }, { clientId: this.iov.config.clientId });
+      }, {
+        clientId: this.iov.config.clientId
+      });
     }
   }, {
-    key: 'stop',
+    key: "stop",
     value: function stop() {
       var _this6 = this;
 
       debug('stop...');
-
       this.stopped = true;
       this.moovBox = null;
 
       if (this.guid) {
         // Stop listening for moofs
-        this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/live');
+        this.iov.conduit.unsubscribe("iov/video/".concat(this.guid, "/live")); // Stop listening for resync events
 
-        // Stop listening for resync events
-        this.iov.conduit.unsubscribe('iov/video/' + this.guid + '/resync');
+        this.iov.conduit.unsubscribe("iov/video/".concat(this.guid, "/resync")); // Tell the server we've stopped
 
-        // Tell the server we've stopped
-        this.iov.conduit.publish('iov/video/' + this.guid + '/stop', { clientId: this.iov.config.clientId });
-
-        // @todo - why doesn't this play/stop connect/disconnect work?
+        this.iov.conduit.publish("iov/video/".concat(this.guid, "/stop"), {
+          clientId: this.iov.config.clientId
+        }); // @todo - why doesn't this play/stop connect/disconnect work?
         // this.iov.conduit.disconnect();
       }
 
-      debug('stop about to finish synchronous operations and return promise...');
-
-      // The logic above MUST be run synchronously when called, therefore,
+      debug('stop about to finish synchronous operations and return promise...'); // The logic above MUST be run synchronously when called, therefore,
       // we cannot use async to define the stop method, and must return a
       // promise here rather than using await.  We return this promise so
       // that the caller has the option of waiting, but is not forced to
       // wait.
+
       return new Promise(function (resolve, reject) {
         // Don't wait until the next play event or the destruction of this player
         // to clear the MSE
@@ -5726,7 +8442,7 @@ var IOVPlayer = function () {
       });
     }
   }, {
-    key: 'getSegmentIntervalMetrics',
+    key: "getSegmentIntervalMetrics",
     value: function getSegmentIntervalMetrics() {
       var previousSegmentReceived = this.latestSegmentReceived;
       this.latestSegmentReceived = Date.now();
@@ -5741,7 +8457,6 @@ var IOVPlayer = function () {
         }
 
         this.segmentIntervals.push(this.segmentInterval);
-
         var segmentIntervalSum = 0;
 
         for (var i = 0; i < this.segmentIntervals.length; i++) {
@@ -5749,64 +8464,56 @@ var IOVPlayer = function () {
         }
 
         this.segmentIntervalAverage = segmentIntervalSum / this.segmentIntervals.length;
-
         this.metric('video.segmentInterval', this.segmentInterval);
         this.metric('video.segmentIntervalAverage', this.segmentIntervalAverage);
       }
     }
   }, {
-    key: 'onIovPlayTransaction',
-
-
+    key: "onIovPlayTransaction",
     // @todo - there is much shared between this and onChangeSourceTransaction
-    value: function onIovPlayTransaction(_ref11) {
+    value: function onIovPlayTransaction(_ref5) {
       var _this7 = this;
 
-      var mimeCodec = _ref11.mimeCodec,
-          guid = _ref11.guid;
+      var mimeCodec = _ref5.mimeCodec,
+          guid = _ref5.guid;
 
       if (this.stopped) {
         return;
       }
 
       debug('onIovPlayTransaction');
-
       this.assertMimeCodecSupported(mimeCodec);
-
-      var initSegmentTopic = this.iov.config.clientId + '/init-segment/' + parseInt(Math.random() * 1000000);
-
+      var initSegmentTopic = "".concat(this.iov.config.clientId, "/init-segment/").concat(parseInt(Math.random() * 1000000));
       this.state = 'waiting-for-first-moov';
-
-      this.iov.conduit.subscribe(initSegmentTopic, function () {
-        var _ref13 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(_ref12) {
-          var payloadBytes = _ref12.payloadBytes;
-          var moov, newTopic;
-          return regeneratorRuntime.wrap(function _callee10$(_context10) {
+      this.iov.conduit.subscribe(initSegmentTopic,
+      /*#__PURE__*/
+      function () {
+        var _ref7 = _asyncToGenerator(
+        /*#__PURE__*/
+        regeneratorRuntime.mark(function _callee11(_ref6) {
+          var payloadBytes, moov, newTopic;
+          return regeneratorRuntime.wrap(function _callee11$(_context11) {
             while (1) {
-              switch (_context10.prev = _context10.next) {
+              switch (_context11.prev = _context11.next) {
                 case 0:
+                  payloadBytes = _ref6.payloadBytes;
+
                   if (!_this7.stopped) {
-                    _context10.next = 2;
+                    _context11.next = 3;
                     break;
                   }
 
-                  return _context10.abrupt('return');
+                  return _context11.abrupt("return");
 
-                case 2:
-
-                  debug('onIovPlayTransaction ' + initSegmentTopic + ' listener fired');
-                  debug('received moov of type "' + (typeof payloadBytes === 'undefined' ? 'undefined' : _typeof(payloadBytes)) + '" from server');
-
+                case 3:
+                  debug("onIovPlayTransaction ".concat(initSegmentTopic, " listener fired"));
+                  debug("received moov of type \"".concat(_typeof(payloadBytes), "\" from server"));
                   moov = payloadBytes;
-
-
                   _this7.state = 'waiting-for-first-moof';
 
                   _this7.iov.conduit.unsubscribe(initSegmentTopic);
 
-                  newTopic = 'iov/video/' + guid + '/live';
-
-                  // subscribe to the live video topic.
+                  newTopic = "iov/video/".concat(guid, "/live"); // subscribe to the live video topic.
 
                   _this7.iov.conduit.subscribe(newTopic, function (mqtt_msg) {
                     if (_this7.stopped) {
@@ -5814,75 +8521,66 @@ var IOVPlayer = function () {
                     }
 
                     _this7.trigger('videoReceived');
+
                     _this7.getSegmentIntervalMetrics();
+
                     _this7.mseWrapper.append(mqtt_msg.payloadBytes);
                   });
 
                   _this7.guid = guid;
                   _this7.moovBox = moov;
-                  _this7.mimeCodec = mimeCodec;
+                  _this7.mimeCodec = mimeCodec; // this.trigger('firstChunk');
 
-                  // this.trigger('firstChunk');
-
-                  _context10.next = 14;
+                  _context11.next = 15;
                   return _this7.reinitializeMseWrapper(mimeCodec);
 
-                case 14:
+                case 15:
                   _this7.resyncStream(mimeCodec);
 
-                case 15:
-                case 'end':
-                  return _context10.stop();
+                case 16:
+                case "end":
+                  return _context11.stop();
               }
             }
-          }, _callee10, _this7);
+          }, _callee11);
         }));
 
-        return function (_x5) {
-          return _ref13.apply(this, arguments);
+        return function (_x4) {
+          return _ref7.apply(this, arguments);
         };
       }());
-
-      this.iov.conduit.publish('iov/video/' + guid + '/play', {
+      this.iov.conduit.publish("iov/video/".concat(guid, "/play"), {
         initSegmentTopic: initSegmentTopic,
         clientId: this.iov.config.clientId
       });
     }
   }, {
-    key: '_freeAllResources',
+    key: "_freeAllResources",
     value: function _freeAllResources() {
-      debug('_freeAllResources...');
-
-      // Note you will need to destroy the iov yourself.  The child should
+      debug('_freeAllResources...'); // Note you will need to destroy the iov yourself.  The child should
       // probably not destroy the parent
-      this.iov = null;
 
+      this.iov = null;
       this.state = null;
       this.firstFrameShown = null;
-
       this.playerInstance = null;
       this.videoJsVideoElement = null;
       this.videoElementParent = null;
-
       this.events = null;
       this.metrics = null;
-
       this.LogSourceBuffer = null;
       this.LogSourceBufferTopic = null;
-
       this.latestSegmentReceived = null;
       this.segmentIntervalAverage = null;
       this.segmentInterval = null;
       this.segmentIntervals = null;
-
       this.guid = null;
       this.moovBox = null;
       this.mimeCodec = null;
-
       debug('_freeAllResources finished...');
     }
   }, {
-    key: 'destroy',
+    key: "destroy",
     value: function destroy() {
       var _this8 = this;
 
@@ -5892,43 +8590,49 @@ var IOVPlayer = function () {
         return;
       }
 
-      this.destroyed = true;
-
-      // Note that we DO NOT wait for the stop command to finish execution,
+      this.destroyed = true; // Note that we DO NOT wait for the stop command to finish execution,
       // because this destroy method MUST be treated as a synchronous operation
       // to ensure that the caller is not forced to wait on destruction.  This
       // allows us to properly support client side libraries and frameworks that
       // do not support asynchronous destruction.  See the comments in the destroy
       // method on the MSEWrapper for a more detailed explanation.
+
       debug('about to stop...');
       this.stop().then(function () {
         debug('stopped successfully...');
+
         _this8._freeAllResources();
+
         debug('destroy successfully finished...');
       }).catch(function (error) {
         debug('stopped unsuccessfully...');
         console.error('Error while destroying the iov player!');
         console.error(error);
-        _this8._freeAllResources();
-        debug('destroy unsuccessfully finished...');
-      });
 
-      // This MUST be executed immediately after the stop command issues its
+        _this8._freeAllResources();
+
+        debug('destroy unsuccessfully finished...');
+      }); // This MUST be executed immediately after the stop command issues its
       // conduit commands.  If it is not, meaning the stop operation was waited
       // for, then we run the risk of the iframe being destroyed by the caller
       // before we can properly disconnect from the server.
+
       debug('disconnecting from server...');
       this.iov.conduit.disconnect();
 
-      document.removeEventListener('visibilitychange', this.onVisibilityChange);
+      var _utils$getWindowState3 = _utils__WEBPACK_IMPORTED_MODULE_4__["default"].getWindowStateNames(),
+          visibilityChangeEventName = _utils$getWindowState3.visibilityChangeEventName;
 
-      // Setting the src of the video element to an empty string is
+      if (visibilityChangeEventName) {
+        document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
+      } // Setting the src of the video element to an empty string is
       // the only reliable way we have found to ensure that MediaSource,
       // SourceBuffer, and various Video elements are properly dereferenced
       // to avoid memory leaks
+
+
       this.videoElement.src = '';
       this.videoElement = null;
-
       debug('exiting destroy, asynchronous destroy logic in progress...');
     }
   }]);
@@ -5936,11 +8640,15 @@ var IOVPlayer = function () {
   return IOVPlayer;
 }();
 
-IOVPlayer.EVENT_NAMES = ['metric', 'firstFrameShown', 'videoReceived', 'videoInfoReceived'];
-IOVPlayer.METRIC_TYPES = ['sourceBuffer.bufferTimeEnd', 'video.currentTime', 'video.drift', 'video.driftCorrection', 'video.segmentInterval', 'video.segmentIntervalAverage'];
-IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
-IOVPlayer.DRIFT_CORRECTION_CONSTANT = 2;
-/* harmony default export */ __webpack_exports__["default"] = (IOVPlayer);
+_defineProperty(IOVPlayer, "EVENT_NAMES", ['metric', 'firstFrameShown', 'videoReceived', 'videoInfoReceived']);
+
+_defineProperty(IOVPlayer, "METRIC_TYPES", ['sourceBuffer.bufferTimeEnd', 'video.currentTime', 'video.drift', 'video.driftCorrection', 'video.segmentInterval', 'video.segmentIntervalAverage']);
+
+_defineProperty(IOVPlayer, "SEGMENT_INTERVAL_SAMPLE_SIZE", 5);
+
+_defineProperty(IOVPlayer, "DRIFT_CORRECTION_CONSTANT", 2);
+
+
 ;
 
 /***/ }),
@@ -5959,11 +8667,8 @@ var _package_json__WEBPACK_IMPORTED_MODULE_0___namespace = /*#__PURE__*/__webpac
 
 
 
-
 var PLUGIN_NAME = 'clsp';
-var MINIMUM_CHROME_VERSION = 52;
-
-// @todo - this mime type, though used in the videojs plugin, and
+var MINIMUM_CHROME_VERSION = 52; // @todo - this mime type, though used in the videojs plugin, and
 // seemingly enforced, is not actually enforced.  The only enforcement
 // done is requiring the user provide this string on the video element
 // in the DOM.  The codecs that are supplied by the SFS's vary.  Here
@@ -5972,6 +8677,7 @@ var MINIMUM_CHROME_VERSION = 52;
 // video/mp4; codecs="avc1.4DE016"
 // video/mp4; codecs="avc1.42E00C"
 // video/mp4; codecs="avc1.42E00D"
+
 var SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
 function browserIsCompatable() {
@@ -5979,14 +8685,13 @@ function browserIsCompatable() {
 
   if (!isChrome) {
     return false;
-  }
+  } // For the MAC
 
-  // For the MAC
+
   window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 
   if (!window.MediaSource) {
     console.error('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
-
     return false;
   }
 
@@ -5994,7 +8699,6 @@ function browserIsCompatable() {
     return parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10) >= MINIMUM_CHROME_VERSION;
   } catch (error) {
     console.error(error);
-
     return false;
   }
 }
@@ -6003,11 +8707,36 @@ function isSupportedMimeType(mimeType) {
   return mimeType === SUPPORTED_MIME_TYPE;
 }
 
+var hiddenStateName;
+var visibilityChangeEventName;
+
+function getWindowStateNames() {
+  if (!hiddenStateName) {
+    // @see - https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API
+    if (typeof document.hidden !== 'undefined') {
+      hiddenStateName = 'hidden';
+      visibilityChangeEventName = 'visibilitychange';
+    } else if (typeof document.msHidden !== 'undefined') {
+      hiddenStateName = 'msHidden';
+      visibilityChangeEventName = 'msvisibilitychange';
+    } else if (typeof document.webkitHidden !== 'undefined') {
+      hiddenStateName = 'webkitHidden';
+      visibilityChangeEventName = 'webkitvisibilitychange';
+    }
+  }
+
+  return {
+    hiddenStateName: hiddenStateName,
+    visibilityChangeEventName: visibilityChangeEventName
+  };
+}
+
 /* harmony default export */ __webpack_exports__["default"] = ({
   version: _package_json__WEBPACK_IMPORTED_MODULE_0__["version"],
   name: PLUGIN_NAME,
   supported: browserIsCompatable,
-  isSupportedMimeType: isSupportedMimeType
+  isSupportedMimeType: isSupportedMimeType,
+  getWindowStateNames: getWindowStateNames
 });
 
 /***/ }),
@@ -6023,26 +8752,19 @@ function isSupportedMimeType(mimeType) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
 /* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./conduit/clspConduit.generated.js */ "./src/js/conduit/clspConduit.generated.js");
-/* harmony import */ var _conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_conduit_clspConduit_generated_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MseOverMqttPlugin */ "./src/js/MseOverMqttPlugin.js");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
-/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MseOverMqttPlugin */ "./src/js/MseOverMqttPlugin.js");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../styles/videojs-mse-over-clsp.scss */ "./src/styles/videojs-mse-over-clsp.scss");
+/* harmony import */ var _styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_styles_videojs_mse_over_clsp_scss__WEBPACK_IMPORTED_MODULE_2__);
 
 
 
 
-
-
-
-
-// @todo - do not initialize the plugin by default, since that is a side
+ // @todo - do not initialize the plugin by default, since that is a side
 // effect.  make the caller call the initialize function.  also, is it
 // possible to unregister the plugin?
-var clspPlugin = Object(_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_2__["default"])();
 
+var clspPlugin = Object(_MseOverMqttPlugin__WEBPACK_IMPORTED_MODULE_1__["default"])();
 clspPlugin.register();
-
 /* harmony default export */ __webpack_exports__["default"] = (clspPlugin);
 
 /***/ }),
@@ -6065,7 +8787,7 @@ clspPlugin.register();
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! ./src/js/videojs-mse-over-clsp.js */"./src/js/videojs-mse-over-clsp.js");
+module.exports = __webpack_require__(/*! /vagrant/clsp-videojs-plugin/src/js/videojs-mse-over-clsp.js */"./src/js/videojs-mse-over-clsp.js");
 
 
 /***/ }),
