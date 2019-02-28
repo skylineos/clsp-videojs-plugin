@@ -36,6 +36,14 @@ export default class MqttConduitCollection {
         return;
       }
 
+      // If the document is hidden, don't execute the onMessage handler.  If the
+      // handler is executed, for some reason, the conduit will continue to
+      // request/receive data from the server, which will eventually result in
+      // unconstrained resource utilization, and ultimately a browser crash
+      if (document.hidden) {
+        return;
+      }
+
       const conduit = this.getById(clientId);
       const iov = conduit.iov;
 

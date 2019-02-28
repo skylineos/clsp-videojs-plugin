@@ -2,7 +2,7 @@
 
 import '../styles/demo.scss';
 
-import 'babel-polyfill';
+import '@babel/polyfill';
 
 import $ from 'jquery';
 import moment from 'moment';

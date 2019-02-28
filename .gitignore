@@ -1,7 +1,5 @@
-node_modules/
-package-lock.json
-.eslintcache
+/node_modules/
+/.eslintcache
 
-# These need to be built every time and should not be tracked
-clspConduit.generated.js
-clspConduit.generated.min.js
+/ubuntu-xenial-16.04-cloudimg-console.log
+/yarn-error.log

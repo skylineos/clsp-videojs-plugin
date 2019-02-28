@@ -1,7 +1,6 @@
 'use strict';
 
 import 'srcdoc-polyfill';
-import './conduit/clspConduit.generated.js';
 
 import MseOverMqttPlugin from './MseOverMqttPlugin';
 import '../styles/videojs-mse-over-clsp.scss';

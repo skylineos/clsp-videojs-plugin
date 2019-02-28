@@ -3,6 +3,7 @@ import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
 
 import MSEWrapper from './MSEWrapper';
+import utils from '../utils';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
@@ -91,7 +92,13 @@ export default class IOVPlayer {
     this.guid = null;
     this.mimeCodec = null;
 
-    document.addEventListener('visibilitychange', this.onVisibilityChange);
+    const {
+      visibilityChangeEventName,
+    } = utils.getWindowStateNames();
+
+    if (visibilityChangeEventName) {
+      document.addEventListener(visibilityChangeEventName, this.onVisibilityChange, false);
+    }
   }
 
   on (name, action) {
@@ -272,6 +279,7 @@ export default class IOVPlayer {
 
               const mqtt_msg = new window.Paho.MQTT.Message(byteArray);
               mqtt_msg.destinationName = this.LogSourceBufferTopic;
+              // note that this is defined in the Conduit
               window.MQTTClient.send(mqtt_msg);
             }
 
@@ -513,19 +521,34 @@ export default class IOVPlayer {
   }
 
   onVisibilityChange = () => {
-    // @todo - the timeout value will be created every time this function is
-    // executed, which means that if you switch tabs and come back faster than
-    // one second, the timeout from the tab switch will never be cleared (because
-    // it is no longer in scope), and the video will be stopped and never re-played
-    let timeout;
+    const {
+      hiddenStateName,
+    } = utils.getWindowStateNames();
 
-    if (document.hidden) {
-      timeout = setTimeout(async () => {
+    if (document[hiddenStateName]) {
+      // Stop playing when tab is hidden or window is minimized
+      this.visibilityChangeTimeout = setTimeout(async () => {
         await this.stop();
       }, 1000);
+
+      // Continue to update the time, which will prevent videojs-errors from
+      // issuing a timeout error
+      this.visibilityChangeInterval = setInterval(async () => {
+        this.playerInstance.trigger('timeupdate');
+      }, 2000)
+
+      return;
     }
-    else {
-      clearTimeout(timeout);
+
+    if (this.visibilityChangeTimeout) {
+      clearTimeout(this.visibilityChangeTimeout);
+    }
+
+    if (this.visibilityChangeInterval) {
+      clearInterval(this.visibilityChangeInterval);
+    }
+
+    if (this.stopped) {
       this.play();
     }
   };
@@ -656,7 +679,13 @@ export default class IOVPlayer {
     debug('disconnecting from server...');
     this.iov.conduit.disconnect();
 
-    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    const {
+      visibilityChangeEventName,
+    } = utils.getWindowStateNames();
+
+    if (visibilityChangeEventName) {
+      document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
+    }
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,
