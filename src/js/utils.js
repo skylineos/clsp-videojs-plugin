@@ -18,11 +18,13 @@ const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
 function browserIsCompatable () {
   const isChrome = Boolean(window.chrome);
+  const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1; 
 
-  if (!isChrome) {
-    return false;
+  
+  if (isFirefox === false && isChrome === false) {
+     return false;
   }
-
+ 
   // For the MAC
   window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 
@@ -31,6 +33,13 @@ function browserIsCompatable () {
 
     return false;
   }
+
+  // no specific version of firefox required for now.
+  if (isFirefox === true) {
+    return true;
+  } 
+
+  
 
   try {
     return (parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10) >= MINIMUM_CHROME_VERSION);
