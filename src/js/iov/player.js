@@ -433,11 +433,52 @@ export default class IOVPlayer {
     // @todo - why doesn't this play/stop connect/disconnect work?
     // this.iov.conduit.connect();
 
-    this.iov.conduit.transaction(
-      `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
-      (...args) => this.onIovPlayTransaction(...args),
-      { clientId: this.iov.config.clientId }
-    );
+
+    if (this.iov.config.jwt === false) {
+
+        this.iov.conduit.transaction(
+          `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
+          (...args) => this.onIovPlayTransaction(...args),
+          { clientId: this.iov.config.clientId }
+        );
+
+    } else {
+        /*
+            The user passed in a url in the following format:
+            clsp[s]-jwt://<sfs>/<json web token>
+            Call the sfs to get the streamName:
+                https://<sfs>/validate-for-clsp/{token}/{B64accessUrl}
+            If successful alter the streamName and proceed to play the stream. 
+        */
+        // Note: streamName is the jwt token
+        let url = this.iov.config.jwt_validation_url;
+        let xmlHttp = new XMLHttpRequest();
+        var player = this;
+
+        xmlHttp.onerror = function(err) {
+            console.log(err);
+        };
+
+        xmlHttp.onreadystatechange = function() { 
+            // handle reply to http call
+
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                // validate: get the actual streamName 
+
+                var streamName = xmlHttp.responseText;
+                player.iov.conduit.transaction(
+                    "iov/video/"+window.btoa(streamName)+"/request",
+                    (...args) => player.onIovPlayTransaction(...args),
+                    { clientId: player.iov.config.clientId }
+                );
+            } 
+        };
+        xmlHttp.open("GET", url, true); // true for asynchronous 
+        console.log("calling ",url);
+        xmlHttp.send();
+    }
+
+
   }
 
   stop () {
@@ -607,6 +648,7 @@ export default class IOVPlayer {
     this.iov.conduit.publish(`iov/video/${guid}/play`, {
       initSegmentTopic,
       clientId: this.iov.config.clientId,
+      jwt: this.iov.config.jwt
     });
   }
 
