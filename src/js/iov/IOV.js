@@ -45,9 +45,10 @@ export default class IOV {
 
     let useSSL;
     let default_port;
-    let jwt = false;
+    let jwtUrl = false;
     let b64_jwt_access_url ="";
     let jwt_validation_url ="";
+    let jwt = "";
 
     // Chrome is the only browser that allows non-http protocols in
     // the anchor tag's href, so change them all to http here so we
@@ -56,13 +57,13 @@ export default class IOV {
       useSSL = true;
       parser.href = url.replace('clsps-jwt', 'https');
       default_port = 443;
-      jwt = true;
+      jwtUrl = true;
     }
     else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
       useSSL = false;
       parser.href = url.replace('clsp-jwt', 'http');
       default_port = 9001;
-      jwt = true; 
+      jwtUrl = true; 
     }
     else if (url.substring(0, 5).toLowerCase() === 'clsps') {
       useSSL = true;
@@ -94,7 +95,7 @@ export default class IOV {
     }
 
     // if jwt extract required url parameters.
-    if (jwt === true) {
+    if (jwtUrl === true) {
 
          //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
         var qp_offset = url.indexOf(parser.pathname)+parser.pathname.length
@@ -124,12 +125,9 @@ export default class IOV {
             + "?Start="+query.Start
             + "&End="+query.End  
         );
-
-        jwt_validation_url = 
-            "https://"+hostname+"/validate-for-clsp/"+
-            streamName+"/"+ 
-            b64_jwt_access_url 
-        ;
+        jwt = query.token; 
+         
+        
 
     } // end if jwt
 
@@ -141,6 +139,8 @@ export default class IOV {
       wsport: parseInt(port),
       streamName,
       useSSL,
+      b64_jwt_access_url,
+      jwt
     };
 
   }
@@ -179,8 +179,7 @@ export default class IOV {
       videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
       jwt: config.jwt,
-      b64_jwt_access_url: config.b64_jwt_access_url, 
-      jwt_validation_url: config.jwt_validation_url
+      b64_jwt_access_url: config.b64_jwt_access_url
     };
 
     this.statsMsg = {

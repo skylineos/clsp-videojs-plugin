@@ -6553,7 +6553,10 @@ function () {
         wsbroker: hostname,
         wsport: parseInt(port),
         streamName: streamName,
-        useSSL: useSSL
+        useSSL: useSSL,
+        b64_jwt_access_url: b64_jwt_access_url,
+        jwt_validation_url: jwt_validation_url,
+        jwt: jwt
       };
     }
   }, {
@@ -8441,7 +8444,22 @@ function () {
           // handle reply to http call
           if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
             // validate: get the actual streamName 
-            var streamName = xmlHttp.responseText;
+            var clspUrl = xmlHttp.responseText; //TODO, figure out how to handle a change in the sfs url from the
+            // clsp-jwt from the target url returned from decrypting the jwt
+            // token.
+            // Example:
+            //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
+            //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+            // --- due to the videojs architecture i don't see a clean way of doing this.
+            // ==============================================================================
+            //    The only way I can see doing this cleanly is to change videojs itself to
+            //    allow the 'canHandleSource' function in MqttSourceHandler to return a 
+            //    promise not a value, then ascychronously find out if it can play this
+            //    source after making the call to decrypt the jwt token.
+            // =============================================================================
+
+            var t = clspUrl.split('/');
+            var streamName = t[t.length - 1];
             player.iov.conduit.transaction("iov/video/" + window.btoa(streamName) + "/request", function () {
               return player.onIovPlayTransaction.apply(player, arguments);
             }, {
