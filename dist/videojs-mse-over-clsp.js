@@ -6479,9 +6479,10 @@ function () {
       var parser = document.createElement('a');
       var useSSL;
       var default_port;
-      var jwt = false;
+      var jwtUrl = false;
       var b64_jwt_access_url = "";
-      var jwt_validation_url = ""; // Chrome is the only browser that allows non-http protocols in
+      var jwt_validation_url = "";
+      var jwt = ""; // Chrome is the only browser that allows non-http protocols in
       // the anchor tag's href, so change them all to http here so we
       // get the benefits of the anchor tag's parsing
 
@@ -6489,12 +6490,12 @@ function () {
         useSSL = true;
         parser.href = url.replace('clsps-jwt', 'https');
         default_port = 443;
-        jwt = true;
+        jwtUrl = true;
       } else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
         useSSL = false;
         parser.href = url.replace('clsp-jwt', 'http');
         default_port = 9001;
-        jwt = true;
+        jwtUrl = true;
       } else if (url.substring(0, 5).toLowerCase() === 'clsps') {
         useSSL = true;
         parser.href = url.replace('clsps', 'https');
@@ -6522,7 +6523,7 @@ function () {
       } // if jwt extract required url parameters.
 
 
-      if (jwt === true) {
+      if (jwtUrl === true) {
         //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
         var qp_offset = url.indexOf(parser.pathname) + parser.pathname.length;
         var i = 0;
@@ -6543,8 +6544,8 @@ function () {
           throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
         }
 
-        b64_jwt_access_url = window.btoa(useSSL === true ? "clsps-jwt://" : "clsp-jwt://" + hostname + ":" + parseInt(port) + "/" + "?Start=" + query.Start + "&End=" + query.End);
-        jwt_validation_url = "https://" + hostname + "/validate-for-clsp/" + streamName + "/" + b64_jwt_access_url;
+        b64_jwt_access_url = window.btoa(useSSL === true ? "clsps-jwt://" : "clsp-jwt://" + hostname + ":" + parseInt(port) + "/jwt" + "?Start=" + query.Start + "&End=" + query.End);
+        jwt = query.token;
       } // end if jwt
 
 
@@ -6555,7 +6556,6 @@ function () {
         streamName: streamName,
         useSSL: useSSL,
         b64_jwt_access_url: b64_jwt_access_url,
-        jwt_validation_url: jwt_validation_url,
         jwt: jwt
       };
     }
@@ -6594,8 +6594,7 @@ function () {
       videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
       jwt: config.jwt,
-      b64_jwt_access_url: config.b64_jwt_access_url,
-      jwt_validation_url: config.jwt_validation_url
+      b64_jwt_access_url: config.b64_jwt_access_url
     };
     this.statsMsg = {
       byteCount: 0,
@@ -8417,61 +8416,55 @@ function () {
       this.stopped = false; // @todo - why doesn't this play/stop connect/disconnect work?
       // this.iov.conduit.connect();
 
-      if (this.iov.config.jwt === false) {
+      if (this.iov.config.jwt.length === 0) {
         this.iov.conduit.transaction("iov/video/".concat(window.btoa(this.iov.config.streamName), "/request"), function () {
           return _this5.onIovPlayTransaction.apply(_this5, arguments);
         }, {
           clientId: this.iov.config.clientId
         });
       } else {
-        /*
-            The user passed in a url in the following format:
-            clsp[s]-jwt://<sfs>/<json web token>
-            Call the sfs to get the streamName:
-                https://<sfs>/validate-for-clsp/{token}/{B64accessUrl}
-            If successful alter the streamName and proceed to play the stream. 
-        */
-        // Note: streamName is the jwt token
-        var url = this.iov.config.jwt_validation_url;
-        var xmlHttp = new XMLHttpRequest();
+        var topic = "iov/jwtValidate";
+        var req = {
+          b64_access_url: this.iov.config.b64_jwt_access_url,
+          token: this.iov.config.jwt
+        };
         var player = this;
 
-        xmlHttp.onerror = function (err) {
-          console.log(err);
-        };
+        var callback = function callback(resp) {
+          //resp ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+          if (resp.status !== 200) {
+            // handle error
+            return;
+          } //TODO, figure out how to handle a change in the sfs url from the
+          // clsp-jwt from the target url returned from decrypting the jwt
+          // token.
+          // Example:
+          //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
+          //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+          // --- due to the videojs architecture i don't see a clean way of doing this.
+          // ==============================================================================
+          //    The only way I can see doing this cleanly is to change videojs itself to
+          //    allow the 'canHandleSource' function in MqttSourceHandler to return a 
+          //    promise not a value, then ascychronously find out if it can play this
+          //    source after making the call to decrypt the jwt token.
+          // =============================================================================
+          // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+          // case what is now the sfs ip address in clsp url will always be the same it will
+          // be the public ip of cluster gateway.
 
-        xmlHttp.onreadystatechange = function () {
-          // handle reply to http call
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            // validate: get the actual streamName 
-            var clspUrl = xmlHttp.responseText; //TODO, figure out how to handle a change in the sfs url from the
-            // clsp-jwt from the target url returned from decrypting the jwt
-            // token.
-            // Example:
-            //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
-            //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-            // --- due to the videojs architecture i don't see a clean way of doing this.
-            // ==============================================================================
-            //    The only way I can see doing this cleanly is to change videojs itself to
-            //    allow the 'canHandleSource' function in MqttSourceHandler to return a 
-            //    promise not a value, then ascychronously find out if it can play this
-            //    source after making the call to decrypt the jwt token.
-            // =============================================================================
 
-            var t = clspUrl.split('/');
-            var streamName = t[t.length - 1];
-            player.iov.conduit.transaction("iov/video/" + window.btoa(streamName) + "/request", function () {
-              return player.onIovPlayTransaction.apply(player, arguments);
-            }, {
-              clientId: player.iov.config.clientId
-            });
-          }
-        };
+          var t = resp.target_url.split('/'); // get the actual stream name
 
-        xmlHttp.open("GET", url, true); // true for asynchronous 
+          var streamName = t[t.length - 1];
+          player.iov.conduit.transaction("iov/video/" + window.btoa(streamName) + "/request", function () {
+            return player.onIovPlayTransaction.apply(player, arguments);
+          }, {
+            clientId: player.iov.config.clientId
+          });
+        }; // start transaction, decrypt token
 
-        console.log("calling ", url);
-        xmlHttp.send();
+
+        this.iov.conduit.transaction(topic, callback, req);
       }
     }
   }, {

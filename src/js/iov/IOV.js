@@ -121,7 +121,7 @@ export default class IOV {
 
         b64_jwt_access_url = window.btoa(
             (useSSL === true) ? "clsps-jwt://": "clsp-jwt://" 
-            + hostname + ":" + parseInt(port) + "/" 
+            + hostname + ":" + parseInt(port) + "/jwt" 
             + "?Start="+query.Start
             + "&End="+query.End  
         );

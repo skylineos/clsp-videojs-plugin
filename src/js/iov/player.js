@@ -433,6 +433,7 @@ export default class IOVPlayer {
     // @todo - why doesn't this play/stop connect/disconnect work?
     // this.iov.conduit.connect();
 
+    
 
     if (this.iov.config.jwt.length === 0) {
 
@@ -448,6 +449,8 @@ export default class IOVPlayer {
             b64_access_url: this.iov.config.b64_jwt_access_url,
             token: this.iov.config.jwt
         };  
+        var player = this;
+
         var callback = function(resp) {
             //resp ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
 
@@ -473,14 +476,18 @@ export default class IOVPlayer {
             // case what is now the sfs ip address in clsp url will always be the same it will
             // be the public ip of cluster gateway.
             var t = resp.target_url.split('/');
+
+            // get the actual stream name
             var streamName = t[t.length-1];
                 
                 
             player.iov.conduit.transaction(
-                "iov/video/"+window.btoa(streamName)+"/request",
-                (...args) => player.onIovPlayTransaction(...args),
-                { clientId: player.iov.config.clientId }
+               "iov/video/"+window.btoa(streamName)+"/request",
+               (...args) => player.onIovPlayTransaction(...args),
+               { clientId: player.iov.config.clientId }
             );
+
+            
             
         };
 
