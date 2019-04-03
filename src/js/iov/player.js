@@ -433,11 +433,77 @@ export default class IOVPlayer {
     // @todo - why doesn't this play/stop connect/disconnect work?
     // this.iov.conduit.connect();
 
-    this.iov.conduit.transaction(
-      `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
-      (...args) => this.onIovPlayTransaction(...args),
-      { clientId: this.iov.config.clientId }
-    );
+    
+
+    if (this.iov.config.jwt.length === 0) {
+
+        this.iov.conduit.transaction(
+          `iov/video/${window.btoa(this.iov.config.streamName)}/request`,
+          (...args) => this.onIovPlayTransaction(...args),
+          { clientId: this.iov.config.clientId }
+        );
+
+    } else {
+        var topic = "iov/jwtValidate";
+        var req = {
+            b64_access_url: this.iov.config.b64_jwt_access_url,
+            token: this.iov.config.jwt
+        };  
+        var player = this;
+
+        var callback = function(resp) {
+            //resp ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+
+            if (resp.status !== 200) {
+                if (resp.status === 403) {
+                    throw new Error("JwtUnAuthorized");
+                } else {
+                    throw new Error("JwtInvalid");
+                }
+                return; // we are not returning but it doesn't hurt
+            }
+
+            //TODO, figure out how to handle a change in the sfs url from the
+            // clsp-jwt from the target url returned from decrypting the jwt
+            // token.
+            // Example:
+            //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
+            //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+            // --- due to the videojs architecture i don't see a clean way of doing this.
+            // ==============================================================================
+            //    The only way I can see doing this cleanly is to change videojs itself to
+            //    allow the 'canHandleSource' function in MqttSourceHandler to return a 
+            //    promise not a value, then ascychronously find out if it can play this
+            //    source after making the call to decrypt the jwt token.22
+            // =============================================================================
+            // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+            // case what is now the sfs ip address in clsp url will always be the same it will
+            // be the public ip of cluster gateway.
+            var t = resp.target_url.split('/');
+
+            // get the actual stream name
+            var streamName = t[t.length-1];
+                
+                
+            player.iov.conduit.transaction(
+               "iov/video/"+window.btoa(streamName)+"/request",
+               (...args) => player.onIovPlayTransaction(...args),
+               { clientId: player.iov.config.clientId }
+            );
+
+            
+            
+        };
+
+        // start transaction, decrypt token
+        this.iov.conduit.transaction(
+          topic,
+          callback,
+          req
+        );
+    }
+
+
   }
 
   stop () {
@@ -607,6 +673,7 @@ export default class IOVPlayer {
     this.iov.conduit.publish(`iov/video/${guid}/play`, {
       initSegmentTopic,
       clientId: this.iov.config.clientId,
+      jwt: this.iov.config.jwt
     });
   }
 

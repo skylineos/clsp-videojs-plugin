@@ -45,11 +45,27 @@ export default class IOV {
 
     let useSSL;
     let default_port;
+    let jwtUrl = false;
+    let b64_jwt_access_url ="";
+    let jwt_validation_url ="";
+    let jwt = "";
 
     // Chrome is the only browser that allows non-http protocols in
     // the anchor tag's href, so change them all to http here so we
     // get the benefits of the anchor tag's parsing
-    if (url.substring(0, 5).toLowerCase() === 'clsps') {
+    if (url.substring(0, 9).toLowerCase() === 'clsps-jwt') {
+      useSSL = true;
+      parser.href = url.replace('clsps-jwt', 'https');
+      default_port = 443;
+      jwtUrl = true;
+    }
+    else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
+      useSSL = false;
+      parser.href = url.replace('clsp-jwt', 'http');
+      default_port = 9001;
+      jwtUrl = true; 
+    }
+    else if (url.substring(0, 5).toLowerCase() === 'clsps') {
       useSSL = true;
       parser.href = url.replace('clsps', 'https');
       default_port = 443;
@@ -78,13 +94,55 @@ export default class IOV {
       hostname = window.location.hostname;
     }
 
+    // if jwt extract required url parameters.
+    if (jwtUrl === true) {
+
+         //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
+        var qp_offset = url.indexOf(parser.pathname)+parser.pathname.length
+
+        var i = 0;
+        var qr_args = url.substr(qp_offset).split('?')[1];
+        var query = {
+        };
+
+        var pairs = qr_args.split('&');
+        for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+        }
+
+        if (typeof query.Start === 'undefined') {
+           throw new Error("Required 'Start' query parameter not defined for a clsp[s]-jwt");
+        }
+        if (typeof query.End === 'undefined') {
+           throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
+        }
+
+
+        b64_jwt_access_url = window.btoa(
+            (useSSL === true) ? "clsps-jwt://": "clsp-jwt://" 
+            + hostname + ":" + parseInt(port) + "/jwt" 
+            + "?Start="+query.Start
+            + "&End="+query.End  
+        );
+        jwt = query.token; 
+         
+        
+
+    } // end if jwt
+
+
+
     return {
       // url,
       wsbroker: hostname,
       wsport: parseInt(port),
       streamName,
       useSSL,
+      b64_jwt_access_url,
+      jwt
     };
+
   }
 
   static factory (mqttConduitCollection, player, config = {}) {
@@ -120,6 +178,8 @@ export default class IOV {
       appStart: config.appStart,
       videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
+      jwt: config.jwt,
+      b64_jwt_access_url: config.b64_jwt_access_url
     };
 
     this.statsMsg = {

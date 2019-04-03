@@ -6478,11 +6478,25 @@ function () {
 
       var parser = document.createElement('a');
       var useSSL;
-      var default_port; // Chrome is the only browser that allows non-http protocols in
+      var default_port;
+      var jwtUrl = false;
+      var b64_jwt_access_url = "";
+      var jwt_validation_url = "";
+      var jwt = ""; // Chrome is the only browser that allows non-http protocols in
       // the anchor tag's href, so change them all to http here so we
       // get the benefits of the anchor tag's parsing
 
-      if (url.substring(0, 5).toLowerCase() === 'clsps') {
+      if (url.substring(0, 9).toLowerCase() === 'clsps-jwt') {
+        useSSL = true;
+        parser.href = url.replace('clsps-jwt', 'https');
+        default_port = 443;
+        jwtUrl = true;
+      } else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
+        useSSL = false;
+        parser.href = url.replace('clsp-jwt', 'http');
+        default_port = 9001;
+        jwtUrl = true;
+      } else if (url.substring(0, 5).toLowerCase() === 'clsps') {
         useSSL = true;
         parser.href = url.replace('clsps', 'https');
         default_port = 443;
@@ -6506,14 +6520,43 @@ function () {
 
       if (hostname === '@') {
         hostname = window.location.hostname;
-      }
+      } // if jwt extract required url parameters.
+
+
+      if (jwtUrl === true) {
+        //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
+        var qp_offset = url.indexOf(parser.pathname) + parser.pathname.length;
+        var i = 0;
+        var qr_args = url.substr(qp_offset).split('?')[1];
+        var query = {};
+        var pairs = qr_args.split('&');
+
+        for (var i = 0; i < pairs.length; i++) {
+          var pair = pairs[i].split('=');
+          query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+        }
+
+        if (typeof query.Start === 'undefined') {
+          throw new Error("Required 'Start' query parameter not defined for a clsp[s]-jwt");
+        }
+
+        if (typeof query.End === 'undefined') {
+          throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
+        }
+
+        b64_jwt_access_url = window.btoa(useSSL === true ? "clsps-jwt://" : "clsp-jwt://" + hostname + ":" + parseInt(port) + "/jwt" + "?Start=" + query.Start + "&End=" + query.End);
+        jwt = query.token;
+      } // end if jwt
+
 
       return {
         // url,
         wsbroker: hostname,
         wsport: parseInt(port),
         streamName: streamName,
-        useSSL: useSSL
+        useSSL: useSSL,
+        b64_jwt_access_url: b64_jwt_access_url,
+        jwt: jwt
       };
     }
   }, {
@@ -6549,7 +6592,9 @@ function () {
       streamName: config.streamName,
       appStart: config.appStart,
       videoElementParent: config.videoElementParent || null,
-      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT
+      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
+      jwt: config.jwt,
+      b64_jwt_access_url: config.b64_jwt_access_url
     };
     this.statsMsg = {
       byteCount: 0,
@@ -8371,11 +8416,56 @@ function () {
       this.stopped = false; // @todo - why doesn't this play/stop connect/disconnect work?
       // this.iov.conduit.connect();
 
-      this.iov.conduit.transaction("iov/video/".concat(window.btoa(this.iov.config.streamName), "/request"), function () {
-        return _this5.onIovPlayTransaction.apply(_this5, arguments);
-      }, {
-        clientId: this.iov.config.clientId
-      });
+      if (this.iov.config.jwt.length === 0) {
+        this.iov.conduit.transaction("iov/video/".concat(window.btoa(this.iov.config.streamName), "/request"), function () {
+          return _this5.onIovPlayTransaction.apply(_this5, arguments);
+        }, {
+          clientId: this.iov.config.clientId
+        });
+      } else {
+        var topic = "iov/jwtValidate";
+        var req = {
+          b64_access_url: this.iov.config.b64_jwt_access_url,
+          token: this.iov.config.jwt
+        };
+        var player = this;
+
+        var callback = function callback(resp) {
+          //resp ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+          if (resp.status !== 200) {
+            // handle error
+            return;
+          } //TODO, figure out how to handle a change in the sfs url from the
+          // clsp-jwt from the target url returned from decrypting the jwt
+          // token.
+          // Example:
+          //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
+          //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+          // --- due to the videojs architecture i don't see a clean way of doing this.
+          // ==============================================================================
+          //    The only way I can see doing this cleanly is to change videojs itself to
+          //    allow the 'canHandleSource' function in MqttSourceHandler to return a 
+          //    promise not a value, then ascychronously find out if it can play this
+          //    source after making the call to decrypt the jwt token.
+          // =============================================================================
+          // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+          // case what is now the sfs ip address in clsp url will always be the same it will
+          // be the public ip of cluster gateway.
+
+
+          var t = resp.target_url.split('/'); // get the actual stream name
+
+          var streamName = t[t.length - 1];
+          player.iov.conduit.transaction("iov/video/" + window.btoa(streamName) + "/request", function () {
+            return player.onIovPlayTransaction.apply(player, arguments);
+          }, {
+            clientId: player.iov.config.clientId
+          });
+        }; // start transaction, decrypt token
+
+
+        this.iov.conduit.transaction(topic, callback, req);
+      }
     }
   }, {
     key: "stop",
@@ -8532,7 +8622,8 @@ function () {
       }());
       this.iov.conduit.publish("iov/video/".concat(guid, "/play"), {
         initSegmentTopic: initSegmentTopic,
-        clientId: this.iov.config.clientId
+        clientId: this.iov.config.clientId,
+        jwt: this.iov.config.jwt
       });
     }
   }, {
@@ -8774,7 +8865,7 @@ clspPlugin.register();
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! /home/skyline/clsp-videojs-plugin/src/js/videojs-mse-over-clsp.js */"./src/js/videojs-mse-over-clsp.js");
+module.exports = __webpack_require__(/*! /home/skyline/vse-1967/clsp-videojs-plugin/src/js/videojs-mse-over-clsp.js */"./src/js/videojs-mse-over-clsp.js");
 
 
 /***/ }),
