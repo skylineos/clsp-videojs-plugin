@@ -118,7 +118,7 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
   >
   <link
     rel="stylesheet"
-    href="../dist/videojs-mse-over-clsp.min.css"
+    href="../dist/videojs-mse-over-clsp.css"
   >
   <script
     type="text/javascript"
@@ -155,7 +155,7 @@ See `dist/simple.html` for an example.
 </video>
 
 <script src="//vjs.zencdn.net/7.4.1/video.min.js"></script>
-<script src="//path/to/node_modules/videojs-mse-over-clsp/dist/videojs-mse-over-clsp.min.js"></script>
+<script src="../dist/videojs-mse-over-clsp.min.js"></script>
 
 <script>
   var player = videojs('my-video');
