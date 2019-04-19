@@ -1,6 +1,9 @@
 'use strict';
 
-import { version } from '../../package.json';
+import {
+  version,
+} from '../../package.json';
+import Logger from './logger';
 
 const PLUGIN_NAME = 'clsp';
 const MINIMUM_CHROME_VERSION = 52;
@@ -16,36 +19,41 @@ const MINIMUM_CHROME_VERSION = 52;
 // video/mp4; codecs="avc1.42E00D"
 const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
+const logger = Logger.factory();
+
 function browserIsCompatable () {
   const isChrome = Boolean(window.chrome);
-  const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1; 
+  const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 
-  
-  if (isFirefox === false && isChrome === false) {
-     return false;
+  if (!isFirefox && !isChrome) {
+    logger.debug('Unsupported browser');
+    return false;
   }
- 
+
   // For the MAC
   window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 
   if (!window.MediaSource) {
-    console.error('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
+    logger.error('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
 
     return false;
   }
 
   // no specific version of firefox required for now.
   if (isFirefox === true) {
+    logger.debug('Detected Firefox browser');
     return true;
-  } 
-
-  
+  }
 
   try {
-    return (parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10) >= MINIMUM_CHROME_VERSION);
+    const chromeVersion = parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10);
+
+    logger.debug(`Detected Chrome version ${chromeVersion}`);
+
+    return chromeVersion >= MINIMUM_CHROME_VERSION;
   }
   catch (error) {
-    console.error(error);
+    logger.error(error);
 
     return false;
   }
@@ -55,29 +63,39 @@ function isSupportedMimeType (mimeType) {
   return mimeType === SUPPORTED_MIME_TYPE;
 }
 
-let hiddenStateName;
-let visibilityChangeEventName;
+function _getWindowStateNames () {
+  logger.debug('Determining Page_Visibility_API property names.');
 
-function getWindowStateNames () {
-  if (!hiddenStateName) {
-    // @see - https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API
-    if (typeof document.hidden !== 'undefined') {
-      hiddenStateName = 'hidden';
-      visibilityChangeEventName = 'visibilitychange';
-    }
-    else if (typeof document.msHidden !== 'undefined') {
-      hiddenStateName = 'msHidden';
-      visibilityChangeEventName = 'msvisibilitychange';
-    }
-    else if (typeof document.webkitHidden !== 'undefined') {
-      hiddenStateName = 'webkitHidden';
-      visibilityChangeEventName = 'webkitvisibilitychange';
-    }
+  // @see - https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API
+  if (typeof document.hidden !== 'undefined') {
+    logger.debug('Using standard Page_Visibility_API property names.');
+    return {
+      hiddenStateName: 'hidden',
+      visibilityChangeEventName: 'visibilitychange',
+    };
   }
 
+  if (typeof document.msHidden !== 'undefined') {
+    logger.debug('Using Microsoft Page_Visibility_API property names.');
+    return {
+      hiddenStateName: 'msHidden',
+      visibilityChangeEventName: 'msvisibilitychange',
+    };
+  }
+
+  if (typeof document.webkitHidden !== 'undefined') {
+    logger.debug('Using Webkit Page_Visibility_API property names.');
+    return {
+      hiddenStateName: 'webkitHidden',
+      visibilityChangeEventName: 'webkitvisibilitychange',
+    };
+  }
+
+  logger.error('Unable to use the page visibility api - switching tabs and minimizing the page may result in slow downs and page crashes.');
+
   return {
-    hiddenStateName,
-    visibilityChangeEventName,
+    hiddenStateName: '',
+    visibilityChangeEventName: '',
   };
 }
 
@@ -86,5 +104,5 @@ export default {
   name: PLUGIN_NAME,
   supported: browserIsCompatable,
   isSupportedMimeType,
-  getWindowStateNames,
+  windowStateNames: _getWindowStateNames(),
 };

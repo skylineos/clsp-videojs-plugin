@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import Conduit from './conduit/Conduit';
 
 const DEBUG_PREFIX = 'skyline:clsp';
 
@@ -68,7 +69,7 @@ export default class MqttConduitCollection {
 
     const conduit = this.exists(iov.config.clientId)
       ? this.getById(iov.config.clientId)
-      : window.mqttConduit(iov);
+      : Conduit.attachIframe(iov);
 
     return this.set(iov.config.clientId, conduit);
   }

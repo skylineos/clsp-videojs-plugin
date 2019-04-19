@@ -92,12 +92,14 @@ export default class IOVPlayer {
     this.guid = null;
     this.mimeCodec = null;
 
-    const {
-      visibilityChangeEventName,
-    } = utils.getWindowStateNames();
+    const { visibilityChangeEventName } = utils.windowStateNames;
 
     if (visibilityChangeEventName) {
-      document.addEventListener(visibilityChangeEventName, this.onVisibilityChange, false);
+      document.addEventListener(
+        visibilityChangeEventName,
+        this.onVisibilityChange,
+        false
+      );
     }
   }
 
@@ -433,7 +435,7 @@ export default class IOVPlayer {
     // @todo - why doesn't this play/stop connect/disconnect work?
     // this.iov.conduit.connect();
 
-    
+
 
     if (this.iov.config.jwt.length === 0) {
 
@@ -448,7 +450,7 @@ export default class IOVPlayer {
         var req = {
             b64_access_url: this.iov.config.b64_jwt_access_url,
             token: this.iov.config.jwt
-        };  
+        };
         var player = this;
 
         var callback = function(resp) {
@@ -472,7 +474,7 @@ export default class IOVPlayer {
             // --- due to the videojs architecture i don't see a clean way of doing this.
             // ==============================================================================
             //    The only way I can see doing this cleanly is to change videojs itself to
-            //    allow the 'canHandleSource' function in MqttSourceHandler to return a 
+            //    allow the 'canHandleSource' function in MqttSourceHandler to return a
             //    promise not a value, then ascychronously find out if it can play this
             //    source after making the call to decrypt the jwt token.22
             // =============================================================================
@@ -483,16 +485,16 @@ export default class IOVPlayer {
 
             // get the actual stream name
             var streamName = t[t.length-1];
-                
-                
+
+
             player.iov.conduit.transaction(
                "iov/video/"+window.btoa(streamName)+"/request",
                (...args) => player.onIovPlayTransaction(...args),
                { clientId: player.iov.config.clientId }
             );
 
-            
-            
+
+
         };
 
         // start transaction, decrypt token
@@ -587,9 +589,7 @@ export default class IOVPlayer {
   }
 
   onVisibilityChange = () => {
-    const {
-      hiddenStateName,
-    } = utils.getWindowStateNames();
+    const { hiddenStateName } = utils.windowStateNames;
 
     if (document[hiddenStateName]) {
       // Stop playing when tab is hidden or window is minimized
@@ -601,7 +601,7 @@ export default class IOVPlayer {
       // issuing a timeout error
       this.visibilityChangeInterval = setInterval(async () => {
         this.playerInstance.trigger('timeupdate');
-      }, 2000)
+      }, 2000);
 
       return;
     }
@@ -746,9 +746,7 @@ export default class IOVPlayer {
     debug('disconnecting from server...');
     this.iov.conduit.disconnect();
 
-    const {
-      visibilityChangeEventName,
-    } = utils.getWindowStateNames();
+    const { visibilityChangeEventName } = utils.windowStateNames;
 
     if (visibilityChangeEventName) {
       document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
@@ -763,4 +761,4 @@ export default class IOVPlayer {
 
     debug('exiting destroy, asynchronous destroy logic in progress...');
   }
-};
+}

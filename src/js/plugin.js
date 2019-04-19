@@ -1,4 +1,3 @@
-
 'use strict';
 
 import Debug from 'debug';
@@ -8,17 +7,18 @@ import Debug from 'debug';
 import videojs from 'video.js';
 import Paho from 'paho-mqtt';
 
-import Conduit from './conduit/Conduit';
-
 import MqttSourceHandler from './MqttSourceHandler';
 import MqttConduitCollection from './MqttConduitCollection';
 import utils from './utils';
+import Logger from './logger';
 
 const Plugin = videojs.getPlugin('plugin');
 
 // Note that the value can never be zero!
 const VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN = 1;
 const VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MAX = 20;
+
+const logger = Logger.factory();
 
 export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   static VERSION = utils.version;
@@ -44,8 +44,12 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
     Conduit();
 
-    videojs.getTech('Html5').registerSourceHandler(MqttSourceHandler()('html5', MqttConduitCollection.factory()), 0);
+    const sourceHandler = MqttSourceHandler()('html5', MqttConduitCollection.factory());
+
+    videojs.getTech('Html5').registerSourceHandler(sourceHandler, 0);
     videojs.registerPlugin(utils.name, ClspPlugin);
+
+    logger.debug('plugin registered');
 
     return ClspPlugin;
   }
@@ -72,6 +76,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
     this.debug = Debug('skyline:clsp:plugin:ClspPlugin');
     this.debug('constructing...');
+    logger.debug('creating plugin instance');
 
     const playerOptions = player.options_;
 
@@ -136,6 +141,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
     // This is currently needed for autoplay.
     player.on('ready', () => {
+      logger.debug('the player is ready');
+
       if (this.autoplayEnabled) {
         // Even though the "ready" event has fired, it's not actually ready
         // until the "next tick"...
@@ -147,7 +154,11 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
     // @todo - this seems like we aren't using videojs properly
     player.on('error', async (event) => {
+      logger.debug('the player encountered an error');
+
       const retry = async () => {
+        logger.debug('retrying due to error');
+
         if (this.options.maxRetriesOnError === 0) {
           return;
         }

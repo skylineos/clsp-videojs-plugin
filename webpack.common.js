@@ -39,7 +39,14 @@ function generateJsRule (srcPath) {
     loader: 'babel-loader?cacheDirectory=true',
     options: {
       presets: [
-        '@babel/preset-env',
+        [
+          '@babel/preset-env',
+          {
+            exclude: [
+              '@babel/plugin-transform-typeof-symbol',
+            ],
+          },
+        ],
       ],
       plugins: [
         '@babel/plugin-syntax-dynamic-import',
@@ -100,7 +107,7 @@ function generateClspConfig () {
     entry: {
       // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
       [name]: [
-        path.resolve(srcPath, `${name}.js`),
+        path.resolve(srcPath, 'index.js'),
       ],
     },
     output: {
