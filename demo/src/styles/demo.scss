@@ -1,7 +1,7 @@
 $icon-font-path: '~videojs-font/fonts';
 @import 'node_modules/video.js/src/css/video-js.scss';
 
-@import '~/dist/videojs-mse-over-clsp.css';
+@import 'src/styles/videojs-mse-over-clsp.scss';
 
 * {
   box-sizing: border-box;
