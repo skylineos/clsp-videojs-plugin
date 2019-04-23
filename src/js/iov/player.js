@@ -68,7 +68,6 @@ export default class IOVPlayer {
       enableMetrics: false,
     });
 
-    this.state = 'initializing';
     this.firstFrameShown = false;
     this.stopped = false;
 
@@ -85,8 +84,6 @@ export default class IOVPlayer {
 
     this.mseWrapper = null;
     this.moovBox = null;
-    this.guid = null;
-    this.mimeCodec = null;
   }
 
   on (name, action) {
@@ -163,25 +160,6 @@ export default class IOVPlayer {
   _onError (type, message, error) {
     console.warn(type, ':', message);
     console.error(error);
-  }
-
-  assertMimeCodecSupported (mimeCodec) {
-    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
-      this.state = 'unsupported-mime-codec';
-
-      const message = `Unsupported mime codec: ${mimeCodec}`;
-
-      this.videoPlayer.errors.extend({
-        PLAYER_ERR_IOV: {
-          headline: 'Error Playing Stream',
-          message,
-        },
-      });
-
-      this.videoPlayer.error({ code: 'PLAYER_ERR_IOV' });
-
-      throw new Error(message);
-    }
   }
 
   async reinitializeMseWrapper (mimeCodec) {
@@ -297,6 +275,8 @@ export default class IOVPlayer {
         });
 
         this.trigger('videoInfoReceived');
+
+        // @todo - the moovBox is currently set in the IOV - do something else
         this.mseWrapper.appendMoov(this.moovBox);
       },
       onSourceEnded: async () => {
@@ -333,15 +313,27 @@ export default class IOVPlayer {
     this.play();
   }
 
+  onMoov = async (mimeCodec, moov) => {
+    this.moovBox = moov;
+
+    // this.trigger('firstChunk');
+
+    await this.reinitializeMseWrapper(mimeCodec);
+    this.resyncStream(mimeCodec);
+  };
+
+  onMoof = (mqttMessage) => {
+    this.trigger('videoReceived');
+    this.getSegmentIntervalMetrics();
+    this.mseWrapper.append(mqttMessage.payloadBytes);
+  };
+
   async play () {
     debug('play');
-    console.log('tryna play')
 
     this.stopped = false;
 
-    const response = await this.iov.play();
-
-    this.onIovPlayTransaction(response);
+    await this.iov.play(this.onMoov, this.onMoof);
   }
 
   stop () {
@@ -350,9 +342,7 @@ export default class IOVPlayer {
     this.stopped = true;
     this.moovBox = null;
 
-    if (this.guid) {
-      this.iov.stop(this.guid);
-    }
+    this.iov.stop();
 
     debug('stop about to finish synchronous operations and return promise...');
 
@@ -411,64 +401,6 @@ export default class IOVPlayer {
     }
   }
 
-  // @todo - there is much shared between this and onChangeSourceTransaction
-  onIovPlayTransaction ({ mimeCodec, guid }) {
-    if (this.stopped) {
-      return;
-    }
-
-    debug('onIovPlayTransaction');
-
-    this.assertMimeCodecSupported(mimeCodec);
-
-    const initSegmentTopic = `${this.iov.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
-
-    this.state = 'waiting-for-first-moov';
-
-    this.iov.conduit.subscribe(initSegmentTopic, async ({ payloadBytes }) => {
-      if (this.stopped) {
-        return;
-      }
-
-      debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
-      debug(`received moov of type "${typeof payloadBytes}" from server`);
-
-      const moov = payloadBytes;
-
-      this.state = 'waiting-for-first-moof';
-
-      this.iov.conduit.unsubscribe(initSegmentTopic);
-
-      const newTopic = `iov/video/${guid}/live`;
-
-      // subscribe to the live video topic.
-      this.iov.conduit.subscribe(newTopic, (mqtt_msg) => {
-        if (this.stopped) {
-          return;
-        }
-
-        this.trigger('videoReceived');
-        this.getSegmentIntervalMetrics();
-        this.mseWrapper.append(mqtt_msg.payloadBytes);
-      });
-
-      this.guid = guid;
-      this.moovBox = moov;
-      this.mimeCodec = mimeCodec;
-
-      // this.trigger('firstChunk');
-
-      await this.reinitializeMseWrapper(mimeCodec);
-      this.iov.resyncStream(mimeCodec);
-    });
-
-    this.iov.conduit.publish(`iov/video/${guid}/play`, {
-      initSegmentTopic,
-      clientId: this.iov.config.clientId,
-      jwt: this.iov.config.jwt
-    });
-  }
-
   _freeAllResources () {
     debug('_freeAllResources...');
 
@@ -476,7 +408,6 @@ export default class IOVPlayer {
     // probably not destroy the parent
     this.iov = null;
 
-    this.state = null;
     this.firstFrameShown = null;
 
     this.events = null;
@@ -490,9 +421,7 @@ export default class IOVPlayer {
     this.segmentInterval = null;
     this.segmentIntervals = null;
 
-    this.guid = null;
     this.moovBox = null;
-    this.mimeCodec = null;
 
     debug('_freeAllResources finished...');
   }
@@ -532,7 +461,7 @@ export default class IOVPlayer {
     // for, then we run the risk of the iframe being destroyed by the caller
     // before we can properly disconnect from the server.
     debug('disconnecting from server...');
-    this.iov.conduit.disconnect();
+    this.iov.disconnect();
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,

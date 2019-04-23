@@ -4,6 +4,7 @@ import uuidv4 from 'uuid/v4';
 import Conduit from '../conduit/Conduit';
 import MqttTopicHandlers from './MqttTopicHandlers';
 import IOVPlayer from './player';
+import MSEWrapper from './MSEWrapper';
 import utils from '../utils';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
@@ -366,11 +367,11 @@ export default class IOV {
       }
     });
 
-    if (!this.player.videoElementParent) {
+    if (!this.videoElementParent) {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
 
-    this.player.videoElementParent.appendChild(this.conduit.iframe);
+    this.videoElementParent.appendChild(this.conduit.iframe);
   }
 
   clone (config) {
@@ -545,69 +546,74 @@ export default class IOV {
     }
   }
 
-  play () {
-    console.log('iov play')
-    return new Promise((resolve, reject) => {
-      // @todo - why doesn't this play/stop connect/disconnect work?
-      // this.conduit.connect();
+  play (onMoov, onMoof) {
+    // @todo - why doesn't this play/stop connect/disconnect work?
+    // this.conduit.connect();
 
-      if (this.config.jwt.length === 0) {
-        this.conduit.requestStream(this.config.streamName, resolve);
-        return;
-      }
+    if (this.config.jwt.length === 0) {
+      this.conduit.requestStream(this.config.streamName, (response) => {
+        this.onPlayTransaction(response, onMoov, onMoof);
+      });
+      return;
+    }
 
-      // start transaction, decrypt token
-      this.conduit.validateJwt((response) => {
-        //response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+    // start transaction, decrypt token
+    this.conduit.validateJwt((response) => {
+      //response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
 
-        if (response.status !== 200) {
-          if (response.status === 403) {
-            return reject(new Error('JwtUnAuthorized'));
-          }
-
-          return reject(new Error('JwtInvalid'));
+      if (response.status !== 200) {
+        if (response.status === 403) {
+          throw new Error('JwtUnAuthorized');
         }
 
-        //TODO, figure out how to handle a change in the sfs url from the
-        // clsp-jwt from the target url returned from decrypting the jwt
-        // token.
-        // Example:
-        //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
-        //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-        // --- due to the videojs architecture i don't see a clean way of doing this.
-        // ==============================================================================
-        //    The only way I can see doing this cleanly is to change videojs itself to
-        //    allow the 'canHandleSource' function in MqttSourceHandler to return a
-        //    promise not a value, then ascychronously find out if it can play this
-        //    source after making the call to decrypt the jwt token.22
-        // =============================================================================
-        // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
-        // case what is now the sfs ip address in clsp url will always be the same it will
-        // be the public ip of cluster gateway.
-        var t = response.target_url.split('/');
+        throw new Error('JwtInvalid');
+      }
 
-        // get the actual stream name
-        var streamName = t[t.length - 1];
+      //TODO, figure out how to handle a change in the sfs url from the
+      // clsp-jwt from the target url returned from decrypting the jwt
+      // token.
+      // Example:
+      //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
+      //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+      // --- due to the videojs architecture i don't see a clean way of doing this.
+      // ==============================================================================
+      //    The only way I can see doing this cleanly is to change videojs itself to
+      //    allow the 'canHandleSource' function in MqttSourceHandler to return a
+      //    promise not a value, then ascychronously find out if it can play this
+      //    source after making the call to decrypt the jwt token.22
+      // =============================================================================
+      // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+      // case what is now the sfs ip address in clsp url will always be the same it will
+      // be the public ip of cluster gateway.
+      var t = response.target_url.split('/');
 
-        this.conduit.requestStream(streamName, resolve);
+      // get the actual stream name
+      var streamName = t[t.length - 1];
+
+      this.conduit.requestStream(streamName, (response) => {
+        this.onPlayTransaction(response, onMoov, onMoof);
       });
     });
   }
 
-  stop (guid) {
+  stop () {
+    if (!this.guid) {
+      return;
+    }
+
     // Stop listening for moofs
-    this.conduit.unsubscribe(`iov/video/${guid}/live`);
+    this.conduit.unsubscribe(`iov/video/${this.guid}/live`);
 
     // Stop listening for resync events
-    this.conduit.unsubscribe(`iov/video/${guid}/resync`);
+    this.conduit.unsubscribe(`iov/video/${this.guid}/resync`);
 
     // Tell the server we've stopped
-    this.conduit.publish(`iov/video/${guid}/stop`, {
+    this.conduit.publish(`iov/video/${this.guid}/stop`, {
       clientId: this.config.clientId,
     });
 
     // @todo - why doesn't this play/stop connect/disconnect work?
-    // this.iov.conduit.disconnect();
+    // this.conduit.disconnect();
   }
 
   resyncStream (mimeCodec) {
@@ -630,7 +636,82 @@ export default class IOV {
       });
     }
 
-    this.iov.statsMsg.byteCount += byteArray.length;
+    this.statsMsg.byteCount += byteArray.length;
+  }
+
+  assertMimeCodecSupported (mimeCodec) {
+    if (MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+      return;
+    }
+
+    const message = `Unsupported mime codec: ${mimeCodec}`;
+
+    this.videoPlayer.errors.extend({
+      PLAYER_ERR_IOV: {
+        headline: 'Error Playing Stream',
+        message,
+      },
+    });
+
+    this.videoPlayer.error({
+      code: 'PLAYER_ERR_IOV',
+    });
+
+    throw new Error(message);
+  }
+
+  onPlayTransaction ({ mimeCodec, guid }, onMoov, onMoof) {
+    if (this.player.stopped) {
+      return;
+    }
+
+    // debug('onIovPlayTransaction');
+
+    this.assertMimeCodecSupported(mimeCodec);
+
+    const initSegmentTopic = `${this.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
+
+    this.conduit.subscribe(initSegmentTopic, async ({ payloadBytes }) => {
+      if (this.player.stopped) {
+        return;
+      }
+
+      // debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
+      // debug(`received moov of type "${typeof payloadBytes}" from server`);
+
+      const moov = payloadBytes;
+
+      this.conduit.unsubscribe(initSegmentTopic);
+
+      const newTopic = `iov/video/${guid}/live`;
+
+      // subscribe to the live video topic.
+      this.conduit.subscribe(newTopic, (mqttMessage) => {
+        if (this.player.stopped) {
+          return;
+        }
+
+        if (onMoof) {
+          onMoof(mqttMessage);
+        }
+      });
+
+      this.guid = guid;
+
+      if (onMoov) {
+        onMoov(mimeCodec, moov);
+      }
+    });
+
+    this.conduit.publish(`iov/video/${guid}/play`, {
+      initSegmentTopic,
+      clientId: this.config.clientId,
+      jwt: this.config.jwt,
+    });
+  }
+
+  disconnect () {
+    this.conduit.disconnect();
   }
 
   destroy () {
