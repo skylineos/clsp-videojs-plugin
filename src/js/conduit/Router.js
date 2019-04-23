@@ -272,6 +272,10 @@ export default function () {
           this.disconnect();
           break;
         }
+        case 'send': {
+          this._publish(message.byteArray, message.topic);
+          break;
+        }
         default: {
           console.error('unknown message method: ' + message.method);
         }

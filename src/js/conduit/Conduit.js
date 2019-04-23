@@ -12,6 +12,15 @@
 import Router from './Router';
 import Logger from '../logger';
 
+import Paho from 'paho-mqtt';
+
+// Even though the export of paho-mqtt is { Client, Message }, there is an
+// internal reference that the library makes to itself, and it expects
+// itself to exist at Paho.MQTT.  FIRED!
+window.Paho = {
+  MQTT: Paho,
+};
+
 export default class Conduit {
   static factory (
     clientId,
@@ -158,6 +167,14 @@ export default class Conduit {
   disconnect () {
     this.command({
       method: 'disconnect',
+    });
+  }
+
+  directSend (topic, byteArray) {
+    this.command({
+      method: 'send',
+      topic,
+      byteArray,
     });
   }
 

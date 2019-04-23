@@ -4,6 +4,7 @@ import uuidv4 from 'uuid/v4';
 import Conduit from '../conduit/Conduit';
 import MqttTopicHandlers from './MqttTopicHandlers';
 import IOVPlayer from './player';
+import utils from '../utils';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 
@@ -246,7 +247,52 @@ export default class IOV {
 
       this.onMessage(event);
     });
+
+    const {
+      visibilityChangeEventName,
+    } = utils.windowStateNames;
+
+    if (visibilityChangeEventName) {
+      document.addEventListener(
+        visibilityChangeEventName,
+        this.onVisibilityChange,
+        false
+      );
+    }
   }
+
+  onVisibilityChange = () => {
+    const {
+      hiddenStateName,
+    } = utils.windowStateNames;
+
+    if (document[hiddenStateName]) {
+      // Stop playing when tab is hidden or window is minimized
+      this.visibilityChangeTimeout = setTimeout(async () => {
+        await this.player.stop();
+      }, 1000);
+
+      // Continue to update the time, which will prevent videojs-errors from
+      // issuing a timeout error
+      this.visibilityChangeInterval = setInterval(async () => {
+        this.playerInstance.trigger('timeupdate');
+      }, 2000);
+
+      return;
+    }
+
+    if (this.visibilityChangeTimeout) {
+      clearTimeout(this.visibilityChangeTimeout);
+    }
+
+    if (this.visibilityChangeInterval) {
+      clearInterval(this.visibilityChangeInterval);
+    }
+
+    if (this.player.stopped) {
+      this.player.play();
+    }
+  };
 
   initialize () {
     this.conduit = Conduit.factory(
@@ -258,7 +304,67 @@ export default class IOV {
       this.config.jwt
     );
 
-    this.player = IOVPlayer.factory(this, this.playerInstance);
+    this.eid = this.playerInstance.el().firstChild.id;
+    this.videoJsVideoElement = document.getElementById(this.eid);
+    console.log(this.videoJsVideoElement)
+
+    if (!this.videoJsVideoElement) {
+      throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
+    }
+
+    const videoId = `clsp-video-${this._id}`;
+
+    // when videojs initializes the video element (or something like that),
+    // it creates events and listeners on that element that it uses, however
+    // these events interfere with our ability to play clsp streams.  Cloning
+    // the element like this and reinserting it is a blunt instrument to remove
+    // all of the videojs events so that we are in control of the player.
+    // this.videoElement = this.videoJsVideoElement.cloneNode();
+    this.videoElement = this.videoJsVideoElement.cloneNode();
+    this.videoElement.setAttribute('id', videoId);
+    this.videoElement.classList.add('clsp-video');
+
+    this.videoElementParent = this.videoJsVideoElement.parentNode;
+    console.log(this.videoElementParent)
+
+    this.player = IOVPlayer.factory(this, this.videoElement);
+
+    this.player.on('firstFrameShown', () => {
+      // @todo - this may be overkill given the IOV changeSourceMaxWait...
+      // When the video is ready to be displayed, swap out the video player if
+      // the source has changed.  This is what allows tours to switch to the next
+      if (this.videoElementParent !== null) {
+        try {
+          this.videoElementParent.insertBefore(this.videoElement, this.videoJsVideoElement);
+
+          let videos = this.videoElementParent.getElementsByTagName('video');
+
+          for (let i = 0; i < videos.length; i++) {
+            let video = videos[i];
+            const id = video.getAttribute('id');
+
+            if (id !== this.eid && id !== videoId) {
+              // video.pause();
+              // video.removeAttribute('src');
+              // video.load();
+              // video.style.display = 'none';
+              this.videoElementParent.removeChild(video);
+              video.remove();
+              video = null;
+              videos = null;
+              break;
+            }
+          }
+
+          // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
+          // is there still a reference to this element?
+          // this.videoJsVideoElement = null;
+        }
+        catch (e) {
+          console.error(e);
+        }
+      }
+    });
 
     if (!this.player.videoElementParent) {
       throw new Error('There is no iframe container element to attach the iframe to!');
@@ -356,6 +462,7 @@ export default class IOV {
     this.onReadyAlreadyCalled = true;
 
     this.player.on('firstFrameShown', () => {
+      this.playerInstance.trigger('firstFrameShown');
       this.playerInstance.loadingSpinner.hide();
 
       videoTag.style.display = 'none';
@@ -438,36 +545,6 @@ export default class IOV {
     }
   }
 
-  destroy () {
-    this.debug('destroy');
-
-    if (this.destroyed) {
-      return;
-    }
-
-    this.destroyed = true;
-
-    clearInterval(this._statsTimer);
-
-    // this.playerInstanceEventListeners will not be defined if the iov is
-    // destroyed too early
-    if (this.playerInstanceEventListeners) {
-      this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
-    }
-
-    this.player.destroy();
-
-    this.playerInstance = null;
-    this.player = null;
-
-    this.conduit.destroy();
-    this.conduit = null;
-
-    const iframe = document.getElementById(this.config.clientId);
-    iframe.parentNode.removeChild(iframe);
-    iframe.srcdoc = '';
-  }
-
   play () {
     console.log('iov play')
     return new Promise((resolve, reject) => {
@@ -515,5 +592,82 @@ export default class IOV {
         this.conduit.requestStream(streamName, resolve);
       });
     });
+  }
+
+  stop (guid) {
+    // Stop listening for moofs
+    this.conduit.unsubscribe(`iov/video/${guid}/live`);
+
+    // Stop listening for resync events
+    this.conduit.unsubscribe(`iov/video/${guid}/resync`);
+
+    // Tell the server we've stopped
+    this.conduit.publish(`iov/video/${guid}/stop`, {
+      clientId: this.config.clientId,
+    });
+
+    // @todo - why doesn't this play/stop connect/disconnect work?
+    // this.iov.conduit.disconnect();
+  }
+
+  resyncStream (mimeCodec) {
+    // subscribe to a sync topic that will be called if the stream that is feeding
+    // the mse service dies and has to be restarted that this player should restart the stream
+    this.conduit.subscribe(`iov/video/${this.guid}/resync`, async () => {
+      // console.log('sync received re-initialize media source buffer');
+      await this.player.reinitializeMseWrapper(mimeCodec);
+    });
+  }
+
+  onAppendStart (byteArray) {
+    if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
+      // console.log(`Recording ${parseInt(byteArray.length)} bytes of data.`);
+
+      this.conduit.directSend({
+        method: 'send',
+        topic: this.LogSourceBufferTopic,
+        byteArray,
+      });
+    }
+
+    this.iov.statsMsg.byteCount += byteArray.length;
+  }
+
+  destroy () {
+    this.debug('destroy');
+
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    clearInterval(this._statsTimer);
+
+    const {
+      visibilityChangeEventName,
+    } = utils.windowStateNames;
+
+    if (visibilityChangeEventName) {
+      document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
+    }
+
+    // this.playerInstanceEventListeners will not be defined if the iov is
+    // destroyed too early
+    if (this.playerInstanceEventListeners) {
+      this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
+    }
+
+    this.player.destroy();
+
+    this.playerInstance = null;
+    this.player = null;
+
+    this.conduit.destroy();
+    this.conduit = null;
+
+    const iframe = document.getElementById(this.config.clientId);
+    iframe.parentNode.removeChild(iframe);
+    iframe.srcdoc = '';
   }
 }

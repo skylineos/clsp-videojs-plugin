@@ -5,7 +5,6 @@ import Debug from 'debug';
 // This is configured as an external library by webpack, so the caller must
 // provide videojs on `window`
 import videojs from 'video.js';
-import Paho from 'paho-mqtt';
 
 import MqttSourceHandler from './MqttSourceHandler';
 import utils from '../utils';
@@ -32,14 +31,6 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     if (videojs.getPlugin(utils.name)) {
       throw new Error('You can only register the clsp plugin once, and it has already been registered.');
     }
-
-    // Make it globally accessible to the conduit.
-    // Even though the export of paho-mqtt is { Client, Message }, there is an
-    // internal reference that the library makes to itself, and it expects
-    // itself to exist at Paho.MQTT.  FIRED!
-    window.Paho = {
-      MQTT: Paho,
-    };
 
     const sourceHandler = MqttSourceHandler()('html5');
 

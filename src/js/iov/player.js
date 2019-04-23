@@ -42,11 +42,11 @@ export default class IOVPlayer {
   static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
   static DRIFT_CORRECTION_CONSTANT = 2;
 
-  static factory (iov, playerInstance, options = {}) {
-    return new IOVPlayer(iov, playerInstance, options);
+  static factory (iov, videoElement, options = {}) {
+    return new IOVPlayer(iov, videoElement, options);
   }
 
-  constructor (iov, playerInstance, options) {
+  constructor (iov, videoElement, options) {
     debug('constructor');
 
     this.metrics = {};
@@ -60,12 +60,7 @@ export default class IOVPlayer {
 
     this._id = uuidv4();
     this.iov = iov;
-    this.playerInstance = playerInstance;
-    this.eid = this.playerInstance.el().firstChild.id;
-    this.id = this.eid.replace('_html5_api', '');
-
-    console.log('constructing!!')
-    this.initializeVideoElement();
+    this.videoElement = videoElement;
 
     this.options = defaults({}, options, {
       segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
@@ -92,16 +87,6 @@ export default class IOVPlayer {
     this.moovBox = null;
     this.guid = null;
     this.mimeCodec = null;
-
-    const { visibilityChangeEventName } = utils.windowStateNames;
-
-    if (visibilityChangeEventName) {
-      document.addEventListener(
-        visibilityChangeEventName,
-        this.onVisibilityChange,
-        false
-      );
-    }
   }
 
   on (name, action) {
@@ -199,83 +184,6 @@ export default class IOVPlayer {
     }
   }
 
-  initializeVideoElement () {
-    this.videoJsVideoElement = document.getElementById(this.eid);
-    console.log(this.videoJsVideoElement)
-
-    if (!this.videoJsVideoElement) {
-      throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
-    }
-
-    const videoId = `clsp-video-${this._id}`;
-
-    // when videojs initializes the video element (or something like that),
-    // it creates events and listeners on that element that it uses, however
-    // these events interfere with our ability to play clsp streams.  Cloning
-    // the element like this and reinserting it is a blunt instrument to remove
-    // all of the videojs events so that we are in control of the player.
-    // this.videoElement = this.videoJsVideoElement.cloneNode();
-    this.videoElement = this.videoJsVideoElement.cloneNode();
-    this.videoElement.setAttribute('id', videoId);
-    this.videoElement.classList.add('clsp-video');
-
-    this.videoElementParent = this.videoJsVideoElement.parentNode;
-    console.log(this.videoElementParent)
-
-    this.on('firstFrameShown', () => {
-      // @todo - this may be overkill given the IOV changeSourceMaxWait...
-      // When the video is ready to be displayed, swap out the video player if
-      // the source has changed.  This is what allows tours to switch to the next
-      if (this.videoElementParent !== null) {
-        try {
-          this.videoElementParent.insertBefore(this.videoElement, this.videoJsVideoElement);
-
-          let videos = this.videoElementParent.getElementsByTagName('video');
-
-          for (let i = 0; i < videos.length; i++) {
-            let video = videos[i];
-            const id = video.getAttribute('id');
-
-            if (id !== this.eid && id !== videoId) {
-              // video.pause();
-              // video.removeAttribute('src');
-              // video.load();
-              // video.style.display = 'none';
-              this.videoElementParent.removeChild(video);
-              video.remove();
-              video = null;
-              videos = null;
-              break;
-            }
-          }
-
-          // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
-          // is there still a reference to this element?
-          // this.videoJsVideoElement = null;
-        }
-        catch (e) {
-          console.error(e);
-        }
-      }
-      else {
-        let counter = 100;
-
-        var iframeAttachInterval = setInterval(() => {
-          console.log('looking for element...');
-          if (this.videoElement.parentNode !== null) {
-            this.videoElement.parentNode.appendChild(this.iframe);
-            this.videoElementParent = this.videoElement.parentNode;
-            clearInterval(iframeAttachInterval);
-          }
-
-          if (counter-- > 0) {
-            clearInterval(iframeAttachInterval);
-          }
-        }, 250);
-      }
-    });
-  }
-
   async reinitializeMseWrapper (mimeCodec) {
     if (this.mseWrapper) {
       await this.mseWrapper.destroy();
@@ -295,23 +203,13 @@ export default class IOVPlayer {
           onAppendStart: (byteArray) => {
             silly('On Append Start...');
 
-            if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
-              debug(`Recording ${parseInt(byteArray.length)} bytes of data.`);
-
-              const mqtt_msg = new window.Paho.MQTT.Message(byteArray);
-              mqtt_msg.destinationName = this.LogSourceBufferTopic;
-              // note that this is defined in the Conduit
-              window.MQTTClient.send(mqtt_msg);
-            }
-
-            this.iov.statsMsg.byteCount += byteArray.length;
+            this.iov.onAppendStart(byteArray);
           },
           onAppendFinish: (info) => {
             silly('On Append Finish...');
 
             if (!this.firstFrameShown) {
               this.firstFrameShown = true;
-              this.playerInstance.trigger('firstFrameShown');
               this.trigger('firstFrameShown');
             }
 
@@ -427,17 +325,6 @@ export default class IOVPlayer {
     this.mseWrapper.reinitializeVideoElementSrc();
   }
 
-  resyncStream (mimeCodec) {
-    // subscribe to a sync topic that will be called if the stream that is feeding
-    // the mse service dies and has to be restarted that this player should restart the stream
-    debug('Trying to resync stream...');
-
-    this.iov.conduit.subscribe(`iov/video/${this.guid}/resync`, async () => {
-      debug('sync received re-initialize media source buffer');
-      await this.reinitializeMseWrapper(mimeCodec);
-    });
-  }
-
   async restart () {
     debug('restart');
 
@@ -464,20 +351,7 @@ export default class IOVPlayer {
     this.moovBox = null;
 
     if (this.guid) {
-      // Stop listening for moofs
-      this.iov.conduit.unsubscribe(`iov/video/${this.guid}/live`);
-
-      // Stop listening for resync events
-      this.iov.conduit.unsubscribe(`iov/video/${this.guid}/resync`);
-
-      // Tell the server we've stopped
-      this.iov.conduit.publish(
-        `iov/video/${this.guid}/stop`,
-        { clientId: this.iov.config.clientId }
-      );
-
-      // @todo - why doesn't this play/stop connect/disconnect work?
-      // this.iov.conduit.disconnect();
+      this.iov.stop(this.guid);
     }
 
     debug('stop about to finish synchronous operations and return promise...');
@@ -537,37 +411,6 @@ export default class IOVPlayer {
     }
   }
 
-  onVisibilityChange = () => {
-    const { hiddenStateName } = utils.windowStateNames;
-
-    if (document[hiddenStateName]) {
-      // Stop playing when tab is hidden or window is minimized
-      this.visibilityChangeTimeout = setTimeout(async () => {
-        await this.stop();
-      }, 1000);
-
-      // Continue to update the time, which will prevent videojs-errors from
-      // issuing a timeout error
-      this.visibilityChangeInterval = setInterval(async () => {
-        this.playerInstance.trigger('timeupdate');
-      }, 2000);
-
-      return;
-    }
-
-    if (this.visibilityChangeTimeout) {
-      clearTimeout(this.visibilityChangeTimeout);
-    }
-
-    if (this.visibilityChangeInterval) {
-      clearInterval(this.visibilityChangeInterval);
-    }
-
-    if (this.stopped) {
-      this.play();
-    }
-  };
-
   // @todo - there is much shared between this and onChangeSourceTransaction
   onIovPlayTransaction ({ mimeCodec, guid }) {
     if (this.stopped) {
@@ -616,7 +459,7 @@ export default class IOVPlayer {
       // this.trigger('firstChunk');
 
       await this.reinitializeMseWrapper(mimeCodec);
-      this.resyncStream(mimeCodec);
+      this.iov.resyncStream(mimeCodec);
     });
 
     this.iov.conduit.publish(`iov/video/${guid}/play`, {
@@ -635,10 +478,6 @@ export default class IOVPlayer {
 
     this.state = null;
     this.firstFrameShown = null;
-
-    this.playerInstance = null;
-    this.videoJsVideoElement = null;
-    this.videoElementParent = null;
 
     this.events = null;
     this.metrics = null;
@@ -694,12 +533,6 @@ export default class IOVPlayer {
     // before we can properly disconnect from the server.
     debug('disconnecting from server...');
     this.iov.conduit.disconnect();
-
-    const { visibilityChangeEventName } = utils.windowStateNames;
-
-    if (visibilityChangeEventName) {
-      document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
-    }
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,
