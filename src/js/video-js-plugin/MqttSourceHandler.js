@@ -2,7 +2,7 @@ import Debug from 'debug';
 import videojs from 'video.js';
 
 import MqttHandler from './MqttHandler';
-import utils from './utils';
+import utils from '../utils';
 
 const DEBUG_PREFIX = 'skyline:clsp';
 const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
@@ -10,7 +10,7 @@ const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 export default function () {
   const debug = Debug(`${DEBUG_PREFIX}:MqttSourceHandler`);
 
-  return function (mode, mqttConduitCollection) {
+  return function (mode) {
     const obj = {
       canHandleSource: function (srcObj, options = {}) {
         debug('canHandleSource');
@@ -38,7 +38,7 @@ export default function () {
 
         const localOptions = videojs.mergeOptions(videojs.options, options, { mqtt: { mode } });
 
-        tech.mqtt = new MqttHandler(source, tech, mqttConduitCollection, localOptions);
+        tech.mqtt = new MqttHandler(source, tech, localOptions);
 
         return tech.mqtt;
       },

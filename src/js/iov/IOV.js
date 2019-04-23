@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 
+import Conduit from '../conduit/Conduit';
 import MqttTopicHandlers from './MqttTopicHandlers';
 import IOVPlayer from './player';
 
@@ -11,8 +12,6 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
  * deliver video content streamed through MQTT from distributed sources.
  */
 
-//  @todo - should this be the videojs component?  it seems like the
-// mqttHandler does nothing, and that this could replace it
 export default class IOV {
   static CHANGE_SOURCE_MAX_WAIT = 5000;
 
@@ -63,7 +62,7 @@ export default class IOV {
       useSSL = false;
       parser.href = url.replace('clsp-jwt', 'http');
       default_port = 9001;
-      jwtUrl = true; 
+      jwtUrl = true;
     }
     else if (url.substring(0, 5).toLowerCase() === 'clsps') {
       useSSL = true;
@@ -120,14 +119,14 @@ export default class IOV {
 
 
         b64_jwt_access_url = window.btoa(
-            (useSSL === true) ? "clsps-jwt://": "clsp-jwt://" 
-            + hostname + ":" + parseInt(port) + "/jwt" 
+            (useSSL === true) ? "clsps-jwt://": "clsp-jwt://"
+            + hostname + ":" + parseInt(port) + "/jwt"
             + "?Start="+query.Start
-            + "&End="+query.End  
+            + "&End="+query.End
         );
-        jwt = query.token; 
-         
-        
+        jwt = query.token;
+
+
 
     } // end if jwt
 
@@ -145,18 +144,19 @@ export default class IOV {
 
   }
 
-  static factory (mqttConduitCollection, player, config = {}) {
-    return new IOV(mqttConduitCollection, player, config);
+  static factory (player, config = {}) {
+    return new IOV(player, config);
   }
 
-  static fromUrl (url, mqttConduitCollection, player, config = {}) {
-    return IOV.factory(mqttConduitCollection, player, {
+  static fromUrl (url, player, config = {}) {
+    console.log('from url')
+    return IOV.factory(player, {
       ...config,
       ...IOV.generateConfigFromUrl(url),
     });
   }
 
-  constructor (mqttConduitCollection, player, config) {
+  constructor (player, config) {
     IOV.compatibilityCheck();
 
     this.id = uuidv4();
@@ -176,10 +176,9 @@ export default class IOV {
       useSSL: config.useSSL,
       streamName: config.streamName,
       appStart: config.appStart,
-      videoElementParent: config.videoElementParent || null,
       changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
       jwt: config.jwt,
-      b64_jwt_access_url: config.b64_jwt_access_url
+      b64_jwt_access_url: config.b64_jwt_access_url,
     };
 
     this.statsMsg = {
@@ -188,9 +187,6 @@ export default class IOV {
       host: document.location.host,
       clientId: this.config.clientId,
     };
-
-    // @todo - this needs to be a global service or something
-    this.mqttConduitCollection = mqttConduitCollection;
 
     // handle inbound messages from MQTT, including video
     // and distributes them to players.
@@ -214,26 +210,74 @@ export default class IOV {
         }
       },
     };
+
+    window.addEventListener('message', (event) => {
+      this.debug('window on message');
+
+      const clientId = event.data.clientId;
+
+      // @todo - this listener was originally centralized, meaning that there
+      // was only ever one listener.  Should this be moved to some centralized
+      // location?
+      // @todo - does the check for a non-existent client id need to be reimplemented?
+      //
+      // if (!this.exists(clientId)) {
+      //   // When the mqtt connection is interupted due to a listener being removed,
+      //   // a fail event is always sent.  It is not necessary to log this as an error
+      //   // in the console, because it is not an error.
+      //   if (!event.data.event === 'fail') {
+      //     console.error(`No conduit with id "${clientId}" exists!`);
+      //   }
+
+      //   return;
+      // }
+
+      if (this.id !== clientId) {
+        return;
+      }
+
+      // If the document is hidden, don't execute the onMessage handler.  If the
+      // handler is executed, for some reason, the conduit will continue to
+      // request/receive data from the server, which will eventually result in
+      // unconstrained resource utilization, and ultimately a browser crash
+      if (document.hidden) {
+        return;
+      }
+
+      this.onMessage(event);
+    });
   }
 
   initialize () {
-    this.conduit = this.mqttConduitCollection.addFromIov(this);
+    this.conduit = Conduit.factory(
+      this.config.clientId,
+      this.config.wsbroker,
+      this.config.wsport,
+      this.config.useSSL,
+      this.config.b64_jwt_access_url,
+      this.config.jwt
+    );
+
     this.player = IOVPlayer.factory(this, this.playerInstance);
+
+    if (!this.player.videoElementParent) {
+      throw new Error('There is no iframe container element to attach the iframe to!');
+    }
+
+    this.player.videoElementParent.appendChild(this.conduit.iframe);
   }
 
   clone (config) {
     this.debug('clone');
 
-    const cloneConfig = {
+    const clonedConfig = {
       ...config,
-      videoElementParent: this.config.videoElementParent,
     };
 
     // @todo - is it possible to reuse the iov player?
     return IOV.factory(
-      this.mqttConduitCollection,
       this.playerInstance,
-      cloneConfig
+      clonedConfig
     );
   }
 
@@ -250,7 +294,7 @@ export default class IOV {
   getAvailableStreams (callback) {
     this.debug('getAvailableStreams');
 
-    this.conduit.transaction('iov/video/list', callback, {});
+    this.conduit.getStreamList(callback);
   }
 
   onChangeSource (url) {
@@ -416,10 +460,60 @@ export default class IOV {
     this.playerInstance = null;
     this.player = null;
 
-    this.mqttConduitCollection.remove(this.id);
+    this.conduit.destroy();
+    this.conduit = null;
 
     const iframe = document.getElementById(this.config.clientId);
     iframe.parentNode.removeChild(iframe);
     iframe.srcdoc = '';
   }
-};
+
+  play () {
+    console.log('iov play')
+    return new Promise((resolve, reject) => {
+      // @todo - why doesn't this play/stop connect/disconnect work?
+      // this.conduit.connect();
+
+      if (this.config.jwt.length === 0) {
+        this.conduit.requestStream(this.config.streamName, resolve);
+        return;
+      }
+
+      // start transaction, decrypt token
+      this.conduit.validateJwt((response) => {
+        //response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+
+        if (response.status !== 200) {
+          if (response.status === 403) {
+            return reject(new Error('JwtUnAuthorized'));
+          }
+
+          return reject(new Error('JwtInvalid'));
+        }
+
+        //TODO, figure out how to handle a change in the sfs url from the
+        // clsp-jwt from the target url returned from decrypting the jwt
+        // token.
+        // Example:
+        //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
+        //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+        // --- due to the videojs architecture i don't see a clean way of doing this.
+        // ==============================================================================
+        //    The only way I can see doing this cleanly is to change videojs itself to
+        //    allow the 'canHandleSource' function in MqttSourceHandler to return a
+        //    promise not a value, then ascychronously find out if it can play this
+        //    source after making the call to decrypt the jwt token.22
+        // =============================================================================
+        // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+        // case what is now the sfs ip address in clsp url will always be the same it will
+        // be the public ip of cluster gateway.
+        var t = response.target_url.split('/');
+
+        // get the actual stream name
+        var streamName = t[t.length - 1];
+
+        this.conduit.requestStream(streamName, resolve);
+      });
+    });
+  }
+}

@@ -1,6 +1,8 @@
 'use strict';
 
 /**
+ * This is the lowest level controller of the actual mqtt connection.
+ *
  * Note that this is the code that gets duplicated in each iframe.
  * Keep the contents of the exported function light and ES5 only.
  *
@@ -105,13 +107,40 @@ export default function () {
   /**
    * @private
    *
-   * Send a message to the parent window which will in turn route to the correct
-   * player based on clientId.
+   * Post a "message" with the current `clientId` to the parent window.
    */
-  Router.prototype._sendToParent = function (mqttMessage) {
+  Router.prototype._sendToParent = function (message) {
     this.logger.debug('_sendToParent');
-    mqttMessage.clientId = this.clientId;
-    window.parent.postMessage(mqttMessage, '*');
+
+    if (typeof message !== 'object') {
+      throw new Error('_sendToParent must be passed an object!');
+    }
+
+    message.clientId = this.clientId;
+
+    switch (message.event) {
+      case 'ready': {
+        // no validation needed
+        break;
+      }
+      case 'data': {
+        if (!message.hasOwnProperty('destinationName') || !message.hasOwnProperty('payloadString') || !message.hasOwnProperty('payloadBytes')) {
+          throw new Error('improperly formatted "data" message sent to _sendToParent');
+        }
+        break;
+      }
+      case 'fail': {
+        if (!message.hasOwnProperty('reason')) {
+          throw new Error('improperly formatted "fail" message sent to _sendToParent');
+        }
+        break;
+      }
+      default: {
+        throw new Error(`Unknown event "${message.event}" sent to _sendToParent`);
+      }
+    }
+
+    window.parent.postMessage(message, '*');
   };
 
   /**

@@ -8,9 +8,8 @@ import videojs from 'video.js';
 import Paho from 'paho-mqtt';
 
 import MqttSourceHandler from './MqttSourceHandler';
-import MqttConduitCollection from './MqttConduitCollection';
-import utils from './utils';
-import Logger from './logger';
+import utils from '../utils';
+import Logger from '../logger';
 
 const Plugin = videojs.getPlugin('plugin');
 
@@ -42,9 +41,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       MQTT: Paho,
     };
 
-    Conduit();
-
-    const sourceHandler = MqttSourceHandler()('html5', MqttConduitCollection.factory());
+    const sourceHandler = MqttSourceHandler()('html5');
 
     videojs.getTech('Html5').registerSourceHandler(sourceHandler, 0);
     videojs.registerPlugin(utils.name, ClspPlugin);
@@ -147,6 +144,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
         // Even though the "ready" event has fired, it's not actually ready
         // until the "next tick"...
         setTimeout(() => {
+          console.log('tryna play')
           player.play();
         });
       }
