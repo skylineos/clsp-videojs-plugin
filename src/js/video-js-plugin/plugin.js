@@ -135,7 +135,6 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
         // Even though the "ready" event has fired, it's not actually ready
         // until the "next tick"...
         setTimeout(() => {
-          console.log('tryna play')
           player.play();
         });
       }
@@ -211,7 +210,39 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
         console.error(error);
       }
     });
+
+    const {
+      visibilityChangeEventName,
+    } = utils.windowStateNames;
+
+    if (visibilityChangeEventName) {
+      document.addEventListener(
+        visibilityChangeEventName,
+        this.onVisibilityChange,
+        false
+      );
+    }
   }
+
+  onVisibilityChange = () => {
+    const {
+      hiddenStateName,
+    } = utils.windowStateNames;
+
+    if (document[hiddenStateName]) {
+      // Continue to update the time, which will prevent videojs-errors from
+      // issuing a timeout error
+      this.visibilityChangeInterval = setInterval(async () => {
+        this.playerInstance.trigger('timeupdate');
+      }, 2000);
+
+      return;
+    }
+
+    if (this.visibilityChangeInterval) {
+      clearInterval(this.visibilityChangeInterval);
+    }
+  };
 
   getVideojsErrorsOptions () {
     return {
@@ -277,6 +308,14 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     const mqttHandler = this.player.tech(true).mqtt;
 
     mqttHandler.off('error', this.onMqttHandlerError);
+
+    const {
+      visibilityChangeEventName,
+    } = utils.windowStateNames;
+
+    if (visibilityChangeEventName) {
+      document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
+    }
 
     this._playerOptions = null;
     this.currentSourceIndex = null;

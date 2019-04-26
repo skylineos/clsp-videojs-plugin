@@ -24,14 +24,14 @@ export default class IovCollection {
     this.iovs = {};
   }
 
-  create (url, player) {
-    const iov = IOV.fromUrl(url, player);
+  create (url, videoElement) {
+    const iov = IOV.fromUrl(url, videoElement);
 
     iov.initialize();
 
     this.add(iov.id, iov);
 
-    return iov.id;
+    return iov;
   }
 
   add (id, iov) {

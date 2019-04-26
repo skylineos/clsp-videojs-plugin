@@ -319,7 +319,7 @@ export default class IOVPlayer {
     // this.trigger('firstChunk');
 
     await this.reinitializeMseWrapper(mimeCodec);
-    this.resyncStream(mimeCodec);
+    this.iov.resyncStream(mimeCodec);
   };
 
   onMoof = (mqttMessage) => {

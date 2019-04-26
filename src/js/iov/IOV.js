@@ -146,19 +146,18 @@ export default class IOV {
 
   }
 
-  static factory (player, config = {}) {
-    return new IOV(player, config);
+  static factory (videoElement, config = {}) {
+    return new IOV(videoElement, config);
   }
 
-  static fromUrl (url, player, config = {}) {
-    console.log('from url')
-    return IOV.factory(player, {
+  static fromUrl (url, videoElement, config = {}) {
+    return IOV.factory(videoElement, {
       ...config,
       ...IOV.generateConfigFromUrl(url),
     });
   }
 
-  constructor (player, config) {
+  constructor (videoElement, config) {
     IOV.compatibilityCheck();
 
     this.id = uuidv4();
@@ -168,8 +167,8 @@ export default class IOV {
 
     this.destroyed = false;
     this.onReadyAlreadyCalled = false;
-    this.playerInstance = player;
-    this.videoElement = this.playerInstance.el();
+    this.videoElement = videoElement;
+    this.eid = this.videoElement.id;
 
     this.config = {
       clientId: this.id,
@@ -273,21 +272,11 @@ export default class IOV {
         await this.player.stop();
       }, 1000);
 
-      // Continue to update the time, which will prevent videojs-errors from
-      // issuing a timeout error
-      this.visibilityChangeInterval = setInterval(async () => {
-        this.playerInstance.trigger('timeupdate');
-      }, 2000);
-
       return;
     }
 
     if (this.visibilityChangeTimeout) {
       clearTimeout(this.visibilityChangeTimeout);
-    }
-
-    if (this.visibilityChangeInterval) {
-      clearInterval(this.visibilityChangeInterval);
     }
 
     if (this.player.stopped) {
@@ -305,73 +294,55 @@ export default class IOV {
       this.config.jwt
     );
 
-    this.eid = this.playerInstance.el().firstChild.id;
-    this.videoJsVideoElement = document.getElementById(this.eid);
-    console.log(this.videoJsVideoElement)
-
-    if (!this.videoJsVideoElement) {
+    if (!this.videoElement) {
       throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
     }
 
-    const videoId = `clsp-video-${this._id}`;
-
-    // when videojs initializes the video element (or something like that),
-    // it creates events and listeners on that element that it uses, however
-    // these events interfere with our ability to play clsp streams.  Cloning
-    // the element like this and reinserting it is a blunt instrument to remove
-    // all of the videojs events so that we are in control of the player.
-    // this.videoElement = this.videoJsVideoElement.cloneNode();
-    this.videoElement = this.videoJsVideoElement.cloneNode();
-    this.videoElement.setAttribute('id', videoId);
     this.videoElement.classList.add('clsp-video');
-
-    this.videoElementParent = this.videoJsVideoElement.parentNode;
-    console.log(this.videoElementParent)
+    const videoElementParent = this.videoElement.parentNode;
 
     this.player = IOVPlayer.factory(this, this.videoElement);
 
+    // @todo - this seems to be videojs specific, and should be removed or moved
+    // somewhere else
     this.player.on('firstFrameShown', () => {
       // @todo - this may be overkill given the IOV changeSourceMaxWait...
       // When the video is ready to be displayed, swap out the video player if
       // the source has changed.  This is what allows tours to switch to the next
-      if (this.videoElementParent !== null) {
-        try {
-          this.videoElementParent.insertBefore(this.videoElement, this.videoJsVideoElement);
+      try {
+        let videos = videoElementParent.getElementsByTagName('video');
 
-          let videos = this.videoElementParent.getElementsByTagName('video');
+        for (let i = 0; i < videos.length; i++) {
+          let video = videos[i];
+          const id = video.getAttribute('id');
 
-          for (let i = 0; i < videos.length; i++) {
-            let video = videos[i];
-            const id = video.getAttribute('id');
-
-            if (id !== this.eid && id !== videoId) {
-              // video.pause();
-              // video.removeAttribute('src');
-              // video.load();
-              // video.style.display = 'none';
-              this.videoElementParent.removeChild(video);
-              video.remove();
-              video = null;
-              videos = null;
-              break;
-            }
+          if (id !== this.eid) {
+            // video.pause();
+            // video.removeAttribute('src');
+            // video.load();
+            // video.style.display = 'none';
+            videoElementParent.removeChild(video);
+            video.remove();
+            video = null;
+            videos = null;
+            break;
           }
+        }
 
-          // this.videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
-          // is there still a reference to this element?
-          // this.videoJsVideoElement = null;
-        }
-        catch (e) {
-          console.error(e);
-        }
+        // videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
+        // is there still a reference to this element?
+        // this.videoJsVideoElement = null;
+      }
+      catch (e) {
+        console.error(e);
       }
     });
 
-    if (!this.videoElementParent) {
+    if (!videoElementParent) {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
 
-    this.videoElementParent.appendChild(this.conduit.iframe);
+    videoElementParent.appendChild(this.conduit.iframe);
   }
 
   clone (config) {
@@ -382,10 +353,7 @@ export default class IOV {
     };
 
     // @todo - is it possible to reuse the iov player?
-    return IOV.factory(
-      this.playerInstance,
-      clonedConfig
-    );
+    return IOV.factory(this.videoElement, clonedConfig);
   }
 
   cloneFromUrl (url, config = {}) {
@@ -404,94 +372,17 @@ export default class IOV {
     this.conduit.getStreamList(callback);
   }
 
-  onChangeSource (url) {
-    this.debug(`changeSource on player "${this.id}""`);
-
-    if (!url) {
-      throw new Error('Unable to change source because there is no url!');
-    }
-
-    const clone = this.cloneFromUrl(url);
-
-    clone.initialize();
-
-    // When the tab is not in focus, chrome doesn't handle things the same
-    // way as when the tab is in focus, and it seems that the result of that
-    // is that the "firstFrameShown" event never fires.  Having the IOV be
-    // updated on a delay in case the "firstFrameShown" takes too long will
-    // ensure that the old IOVs are destroyed, ensuring that unnecessary
-    // socket connections, etc. are not being used, as this can cause the
-    // browser to crash.
-    // Note that if there is a better way to do this, it would likely reduce
-    // the number of try/catch blocks and null checks in the IOVPlayer and
-    // MSEWrapper, but I don't think that is likely to happen until the MSE
-    // is standardized, and even then, we may be subject to non-intuitive
-    // behavior based on tab switching, etc.
-    setTimeout(() => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-    }, clone.config.changeSourceMaxWait);
-
-    // Under normal circumstances, meaning when the tab is in focus, we want
-    // to respond by switching the IOV when the new IOV Player has something
-    // to display
-    clone.player.on('firstFrameShown', () => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-    });
-  }
-
   onReady (event) {
     this.debug('onReady');
-
-    // @todo - why is this necessary?
-    if (this.videoElement.parentNode !== null) {
-      this.config.videoElementParentId = this.videoElement.parentNode.id;
-    }
-
-    const videoTag = this.playerInstance.children()[0];
-
-    // @todo - there must be a better way to determine autoplay...
-    if (videoTag.getAttribute('autoplay') !== null) {
-      // playButton.trigger('click');
-      this.playerInstance.trigger('play', videoTag);
-    }
-
-    if (this.onReadyAlreadyCalled) {
-      console.warn('tried to use this player more than once...');
-      return;
-    }
-
-    this.onReadyAlreadyCalled = true;
-
-    this.player.on('firstFrameShown', () => {
-      this.playerInstance.trigger('firstFrameShown');
-      this.playerInstance.loadingSpinner.hide();
-
-      videoTag.style.display = 'none';
-    });
-
-    this.player.on('videoReceived', () => {
-      // reset the timeout monitor from videojs-errors
-      this.playerInstance.trigger('timeupdate');
-    });
-
-    this.player.on('videoInfoReceived', () => {
-      // reset the timeout monitor from videojs-errors
-      this.playerInstance.trigger('timeupdate');
-    });
-
-    this.playerInstanceEventListeners = {
-      changesrc: (event, { url }) => this.onChangeSource(url),
-    };
-
-    this.playerInstance.on('changesrc', this.playerInstanceEventListeners.changesrc);
 
     if (!document.hidden) {
       this.player.play();
     }
 
-    this.videoElement.addEventListener('mse-error-event', async (e) => {
-      await this.player.restart();
-    }, false);
+    // @todo - it doesn't appear that this error is defined anywhere
+    // this.videoElement.addEventListener('mse-error-event', async (e) => {
+    //   await this.player.restart();
+    // }, false);
 
     // the mse service will stop streaming to us if we don't send
     // a message to iov/stats within 1 minute.
@@ -513,7 +404,9 @@ export default class IOV {
     clearInterval(this._statsTimer);
 
     this.debug('network error', event.data.reason);
-    this.playerInstance.trigger('network-error', event.data.reason);
+
+    // @todo - should we show this in a console.error or something?
+    // this.playerInstance.trigger('network-error', event.data.reason);
   }
 
   onData (event) {
@@ -733,15 +626,8 @@ export default class IOV {
       document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
     }
 
-    // this.playerInstanceEventListeners will not be defined if the iov is
-    // destroyed too early
-    if (this.playerInstanceEventListeners) {
-      this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
-    }
-
     this.player.destroy();
 
-    this.playerInstance = null;
     this.player = null;
 
     this.conduit.destroy();

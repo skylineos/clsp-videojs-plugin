@@ -234,7 +234,6 @@ export default function () {
   Router.prototype._windowMessageEventHandler = function (event) {
     this.logger.debug('_windowMessageEventHandler');
     var message = event.data;
-    console.log(message.topic)
 
     try {
       switch (message.method) {
