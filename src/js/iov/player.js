@@ -3,7 +3,6 @@ import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
 
 import MSEWrapper from './MSEWrapper';
-import utils from '../utils';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
@@ -455,13 +454,6 @@ export default class IOVPlayer {
         this._freeAllResources();
         debug('destroy unsuccessfully finished...');
       });
-
-    // This MUST be executed immediately after the stop command issues its
-    // conduit commands.  If it is not, meaning the stop operation was waited
-    // for, then we run the risk of the iframe being destroyed by the caller
-    // before we can properly disconnect from the server.
-    debug('disconnecting from server...');
-    this.iov.disconnect();
 
     // Setting the src of the video element to an empty string is
     // the only reliable way we have found to ensure that MediaSource,

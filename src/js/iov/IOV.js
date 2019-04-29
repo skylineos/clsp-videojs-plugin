@@ -2,7 +2,6 @@ import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 
 import Conduit from '../conduit/Conduit';
-import MqttTopicHandlers from './MqttTopicHandlers';
 import IOVPlayer from './player';
 import MSEWrapper from './MSEWrapper';
 import utils from '../utils';
@@ -15,24 +14,12 @@ const DEBUG_PREFIX = 'skyline:clsp:iov';
  */
 
 export default class IOV {
-  static CHANGE_SOURCE_MAX_WAIT = 5000;
+  static EVENT_NAMES = [
+    'metric',
+    'unsupportedMimeCodec',
+  ];
 
-  static compatibilityCheck () {
-    // @todo - shouldn't this be done in the utils function?
-    // @todo - does this need to throw an error?
-    // For the MAC
-    var NoMediaSourceAlert = false;
-
-    window.MediaSource = window.MediaSource || window.WebKitMediaSource;
-
-    if (!window.MediaSource) {
-      if (NoMediaSourceAlert === false) {
-        window.alert('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
-      }
-
-      NoMediaSourceAlert = true;
-    }
-  }
+  static METRIC_TYPES = [];
 
   static generateConfigFromUrl (url) {
     if (!url) {
@@ -158,12 +145,22 @@ export default class IOV {
   }
 
   constructor (videoElement, config) {
-    IOV.compatibilityCheck();
+    utils.compatibilityCheck();
 
     this.id = uuidv4();
 
     this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
+    this.silly = Debug(`silly:${DEBUG_PREFIX}:${this.id}:main`);
     this.debug('constructor');
+
+    this.metrics = {};
+
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
+
+    for (let i = 0; i < IOV.EVENT_NAMES.length; i++) {
+      this.events[IOV.EVENT_NAMES[i]] = [];
+    }
 
     this.destroyed = false;
     this.onReadyAlreadyCalled = false;
@@ -177,7 +174,6 @@ export default class IOV {
       useSSL: config.useSSL,
       streamName: config.streamName,
       appStart: config.appStart,
-      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
       jwt: config.jwt,
       b64_jwt_access_url: config.b64_jwt_access_url,
     };
@@ -187,29 +183,6 @@ export default class IOV {
       inkbps: 0,
       host: document.location.host,
       clientId: this.config.clientId,
-    };
-
-    // handle inbound messages from MQTT, including video
-    // and distributes them to players.
-    this.mqttTopicHandlers = new MqttTopicHandlers(this.id, this);
-
-    this.events = {
-      connection_lost: (responseObject) => {
-        // @todo - close all players and display an error message
-        console.error('MQTT connection lost');
-        console.error(responseObject);
-      },
-
-      // @todo - does this ever get fired?
-      on_message: this.mqttTopicHandlers.msghandler,
-
-      // generic exception handler
-      exception: (text, e) => {
-        console.error(text);
-        if (typeof e !== 'undefined') {
-          console.error(e.stack);
-        }
-      },
     };
 
     window.addEventListener('message', (event) => {
@@ -261,6 +234,61 @@ export default class IOV {
     }
   }
 
+  on (name, action) {
+    this.debug(`Registering Listener for ${name} event...`);
+
+    if (!IOV.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
+    }
+
+    if (this.destroyed) {
+      return;
+    }
+
+    this.events[name].push(action);
+  }
+
+  trigger (name, value) {
+    const sillyMetrics = [];
+
+    if (sillyMetrics.includes(name)) {
+      this.silly(`Triggering ${name} event...`);
+    }
+    else {
+      this.debug(`Triggering ${name} event...`);
+    }
+
+    if (this.destroyed) {
+      return;
+    }
+
+    if (!IOV.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
+    }
+
+    for (let i = 0; i < this.events[name].length; i++) {
+      this.events[name][i](value, this);
+    }
+  }
+
+  metric (type, value) {
+    if (!this.options.enableMetrics) {
+      return;
+    }
+
+    if (!IOV.METRIC_TYPES.includes(type)) {
+      // @todo - should this throw?
+      return;
+    }
+
+    this.metrics[type] = value;
+
+    this.trigger('metric', {
+      type,
+      value: this.metrics[type],
+    });
+  }
+
   onVisibilityChange = () => {
     const {
       hiddenStateName,
@@ -306,7 +334,7 @@ export default class IOV {
     // @todo - this seems to be videojs specific, and should be removed or moved
     // somewhere else
     this.player.on('firstFrameShown', () => {
-      // @todo - this may be overkill given the IOV changeSourceMaxWait...
+      // @todo - this may be overkill given the changeSourceMaxWait...
       // When the video is ready to be displayed, swap out the video player if
       // the source has changed.  This is what allows tours to switch to the next
       try {
@@ -532,27 +560,6 @@ export default class IOV {
     this.statsMsg.byteCount += byteArray.length;
   }
 
-  assertMimeCodecSupported (mimeCodec) {
-    if (MSEWrapper.isMimeCodecSupported(mimeCodec)) {
-      return;
-    }
-
-    const message = `Unsupported mime codec: ${mimeCodec}`;
-
-    this.videoPlayer.errors.extend({
-      PLAYER_ERR_IOV: {
-        headline: 'Error Playing Stream',
-        message,
-      },
-    });
-
-    this.videoPlayer.error({
-      code: 'PLAYER_ERR_IOV',
-    });
-
-    throw new Error(message);
-  }
-
   onPlayTransaction ({ mimeCodec, guid }, onMoov, onMoof) {
     if (this.player.stopped) {
       return;
@@ -560,7 +567,10 @@ export default class IOV {
 
     // debug('onIovPlayTransaction');
 
-    this.assertMimeCodecSupported(mimeCodec);
+    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
+      return;
+    }
 
     const initSegmentTopic = `${this.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
 
@@ -603,10 +613,6 @@ export default class IOV {
     });
   }
 
-  disconnect () {
-    this.conduit.disconnect();
-  }
-
   destroy () {
     this.debug('destroy');
 
@@ -627,14 +633,12 @@ export default class IOV {
     }
 
     this.player.destroy();
-
     this.player = null;
 
     this.conduit.destroy();
     this.conduit = null;
 
-    const iframe = document.getElementById(this.config.clientId);
-    iframe.parentNode.removeChild(iframe);
-    iframe.srcdoc = '';
+    this.events = null;
+    this.metrics = null;
   }
 }

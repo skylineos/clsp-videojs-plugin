@@ -8,6 +8,8 @@ const Component = videojs.getComponent('Component');
 
 const DEBUG_PREFIX = 'skyline:clsp';
 
+const DEFAULT_CHANGE_SOURCE_MAX_WAIT = 5000;
+
 export default class MqttHandler extends Component {
   constructor (source, tech, options) {
     super(tech, options.mqtt);
@@ -20,6 +22,7 @@ export default class MqttHandler extends Component {
 
     // @todo - is there a better way to do this where we don't pollute the
     // top level namespace?
+    this.changeSourceMaxWait = options.changeSourceMaxWait || DEFAULT_CHANGE_SOURCE_MAX_WAIT;
     this.iov = null;
     this.player = null;
   }
@@ -49,7 +52,7 @@ export default class MqttHandler extends Component {
     // behavior based on tab switching, etc.
     setTimeout(() => {
       this.updateIOV(clone);
-    }, clone.config.changeSourceMaxWait);
+    }, this.changeSourceMaxWait);
 
     // Under normal circumstances, meaning when the tab is in focus, we want
     // to respond by switching the IOV when the new IOV Player has something
@@ -117,6 +120,19 @@ export default class MqttHandler extends Component {
     });
 
     this.updateIOV(iov);
+
+    this.iov.on('unsupportedMimeCodec', (error) => {
+      this.videoPlayer.errors.extend({
+        PLAYER_ERR_IOV: {
+          headline: 'Error Playing Stream',
+          message: error,
+        },
+      });
+
+      this.videoPlayer.error({
+        code: 'PLAYER_ERR_IOV',
+      });
+    });
   }
 
   updateIOV (iov) {

@@ -59,6 +59,22 @@ function browserIsCompatable () {
   }
 }
 
+function compatibilityCheck () {
+  // @todo - does this need to throw an error?
+  // For the MAC
+  var NoMediaSourceAlert = false;
+
+  window.MediaSource = window.MediaSource || window.WebKitMediaSource;
+
+  if (!window.MediaSource) {
+    if (NoMediaSourceAlert === false) {
+      window.alert('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
+    }
+
+    NoMediaSourceAlert = true;
+  }
+}
+
 function isSupportedMimeType (mimeType) {
   return mimeType === SUPPORTED_MIME_TYPE;
 }
@@ -103,6 +119,7 @@ export default {
   version,
   name: PLUGIN_NAME,
   supported: browserIsCompatable,
+  compatibilityCheck,
   isSupportedMimeType,
   windowStateNames: _getWindowStateNames(),
 };

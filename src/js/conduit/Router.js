@@ -102,8 +102,6 @@ export default function () {
     }
   }
 
-  // Router.prototype._
-
   /**
    * @private
    *

@@ -232,6 +232,26 @@ export default class Conduit {
   }
 
   destroy () {
-    // @todo
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    this.disconnect();
+
+    this.clientId = null;
+    this.wsbroker = null;
+    this.wsport = null;
+    this.useSSL = null;
+    this.b64_jwt_access_url = null;
+    this.jwt = null;
+
+    this.iframe.parentNode.removeChild(this.iframe);
+    // this.iframe.remove();
+    this.iframe.srcdoc = '';
+    this.iframe = null;
+
+    this.handlers = null;
   }
 }
