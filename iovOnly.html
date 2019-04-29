@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@babel/polyfill@7.2.5/dist/polyfill.min.js"
+    ></script>
+  <head>
+  <body>
+    <video
+      id="my-video"
+      width="352"
+      height="240"
+      controls
+    />
+
+    <script src="./dist/iovPlayer.min.js"></script>
+
+    <script>
+      var url = 'clsp://172.28.12.57:9001/FairfaxVideo0520';
+      var element = document.getElementById('my-video');
+
+      var iov = window.IOV.fromUrl(url, element);
+
+      iov.initialize();
+
+      console.log(iov);
+    </script>
+  </body>
+</html>

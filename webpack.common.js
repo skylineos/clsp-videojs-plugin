@@ -107,7 +107,18 @@ function generateClspConfig () {
     entry: {
       // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
       [name]: [
-        path.resolve(srcPath, 'video-js-plugin', 'index.js'),
+        path.resolve(
+          srcPath,
+          'video-js-plugin',
+          'index.js'
+        ),
+      ],
+      iovPlayer: [
+        path.resolve(
+          srcPath,
+          'iov',
+          'index.js'
+        ),
       ],
     },
     output: {
