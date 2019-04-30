@@ -472,13 +472,13 @@ export default class IOV {
     // this.conduit.connect();
 
     if (this.config.jwt.length === 0) {
-      this.conduit.requestStream(this.config.streamName, (response) => {
-        this.onPlayTransaction(response, onMoov, onMoof);
-      });
+      this._play(this.config.streamName, onMoov, onMoof);
       return;
     }
 
     // start transaction, decrypt token
+    // @todo - when validateJwt is implemented as an asynchronous method,
+    // `play` and `_play` can be easily merged.
     this.conduit.validateJwt((response) => {
       //response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
 
@@ -511,9 +511,7 @@ export default class IOV {
       // get the actual stream name
       var streamName = t[t.length - 1];
 
-      this.conduit.requestStream(streamName, (response) => {
-        this.onPlayTransaction(response, onMoov, onMoof);
-      });
+      this._play(streamName, onMoov, onMoof);
     });
   }
 
@@ -537,13 +535,10 @@ export default class IOV {
     // this.conduit.disconnect();
   }
 
-  resyncStream (mimeCodec) {
+  resyncStream (cb) {
     // subscribe to a sync topic that will be called if the stream that is feeding
     // the mse service dies and has to be restarted that this player should restart the stream
-    this.conduit.subscribe(`iov/video/${this.guid}/resync`, async () => {
-      // console.log('sync received re-initialize media source buffer');
-      await this.player.reinitializeMseWrapper(mimeCodec);
-    });
+    this.conduit.subscribe(`iov/video/${this.guid}/resync`, cb);
   }
 
   onAppendStart (byteArray) {
@@ -560,59 +555,92 @@ export default class IOV {
     this.statsMsg.byteCount += byteArray.length;
   }
 
-  onPlayTransaction ({ mimeCodec, guid }, onMoov, onMoof) {
-    if (this.player.stopped) {
-      return;
-    }
-
-    // debug('onIovPlayTransaction');
-
-    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
-      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
-      return;
-    }
-
-    const initSegmentTopic = `${this.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
-
-    this.conduit.subscribe(initSegmentTopic, async ({ payloadBytes }) => {
+  /**
+   * If the JWT is valid or if we are not using a JWT, perform the necessary
+   * conduit operations to retrieve stream segments (moofs).  The actual
+   * "playing" occurs in the player, since it involves taking those received
+   * stream segments and using MSE to display them.
+   *
+   * @param {string} streamName - the name of the stream to get segments for
+   * @param {IOV-onMoov} onMoov - the function that will handle the moov
+   * @param {IOV-onMoof} onMoof - the function that will handle the moof
+   */
+  _play (streamName, onMoov, onMoof) {
+    this.conduit.requestStream(streamName, ({ mimeCodec, guid }) => {
       if (this.player.stopped) {
         return;
       }
 
-      // debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
-      // debug(`received moov of type "${typeof payloadBytes}" from server`);
+      // debug('onIovPlayTransaction');
 
-      const moov = payloadBytes;
+      if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+        this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
+        return;
+      }
 
-      this.conduit.unsubscribe(initSegmentTopic);
+      const initSegmentTopic = `${this.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
 
-      const newTopic = `iov/video/${guid}/live`;
-
-      // subscribe to the live video topic.
-      this.conduit.subscribe(newTopic, (mqttMessage) => {
+      this.conduit.subscribe(initSegmentTopic, async ({ payloadBytes }) => {
         if (this.player.stopped) {
           return;
         }
 
-        if (onMoof) {
-          onMoof(mqttMessage);
+        // debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
+        // debug(`received moov of type "${typeof payloadBytes}" from server`);
+
+        const moov = payloadBytes;
+
+        this.conduit.unsubscribe(initSegmentTopic);
+
+        const newTopic = `iov/video/${guid}/live`;
+
+        // subscribe to the live video topic.
+        this.conduit.subscribe(newTopic, (mqttMessage) => {
+          if (this.player.stopped) {
+            return;
+          }
+
+          if (onMoof) {
+            onMoof(mqttMessage);
+          }
+        });
+
+        this.guid = guid;
+
+        if (onMoov) {
+          onMoov(mimeCodec, moov);
         }
       });
 
-      this.guid = guid;
-
-      if (onMoov) {
-        onMoov(mimeCodec, moov);
-      }
-    });
-
-    this.conduit.publish(`iov/video/${guid}/play`, {
-      initSegmentTopic,
-      clientId: this.config.clientId,
-      jwt: this.config.jwt,
+      this.conduit.publish(`iov/video/${guid}/play`, {
+        initSegmentTopic,
+        clientId: this.config.clientId,
+        jwt: this.config.jwt,
+      });
     });
   }
 
+  /**
+   * Called once, at the beginning, when the moov is received
+   *
+   * @callback IOV-onMoov
+   * @param {string} mimeCodec - the mimeCodec of the stream
+   * @param {any} moov - the moov for this stream
+   */
+
+  /**
+   * Called many times, each time a moof (segment) is received
+   *
+   * @callback IOV-onMoof
+   * @param {any} moof - a stream segment
+   */
+
+  /**
+   * Dereference the necessary properties, clear any intervals and timeouts, and
+   * remove any listeners.  Will also destroy the player and the conduit.
+   *
+   * @returns {void}
+   */
   destroy () {
     this.debug('destroy');
 

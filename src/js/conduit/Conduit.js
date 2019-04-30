@@ -60,10 +60,14 @@ export default class Conduit {
     this.handlers = {};
   }
 
-  _generateResponseTopic () {
-    return `${this.clientId}/response/${parseInt(Math.random() * 1000000)}`;
-  }
-
+  /**
+   * @private
+   *
+   * Generate an iframe with an embedded mqtt router.  The router will be what
+   * this Conduit instance communicates with in subsequent commands.
+   *
+   * @returns Element
+   */
   _generateIframe () {
     const iframe = document.createElement('iframe');
 
@@ -183,7 +187,7 @@ export default class Conduit {
     messageData = {},
     onSubscribe = () => {}
   ) {
-    messageData.resp_topic = this._generateResponseTopic();
+    messageData.resp_topic = `${this.clientId}/response/${parseInt(Math.random() * 1000000)}`;
 
     this.subscribe(messageData.resp_topic, (response) => {
       onSubscribe(JSON.parse(response.payloadString));
@@ -206,31 +210,50 @@ export default class Conduit {
   }
 
   /**
+   * Get the `guid` and `mimeCodec` for the stream
+   *
    * @todo - should this be renamed "play"?
+   *
+   * @param {string} streamName - the name of the stream
+   *
+   * @returns {void}
    */
-  requestStream (streamName, callback) {
+  requestStream (streamName, cb) {
     this.transaction(
       `iov/video/${window.btoa(streamName)}/request`,
       {
         clientId: this.clientId,
       },
-      callback
+      cb
     );
   }
 
   /**
-   * Get the list of available streams from the SFS
+   * Get the list of available CLSP streams from the SFS
    *
-   * @param {Function} callback
+   * @param {Conduit-getStreamListCallback} cb
+   *
+   * @returns {void}
    */
-  getStreamList (callback) {
+  getStreamList (cb) {
     this.transaction(
       'iov/video/list',
       {},
-      callback
+      cb
     );
   }
 
+  /**
+   * @callback Conduit-getStreamListCallback
+   * @param {any} - the list of available CLSP streams on the SFS
+   */
+
+  /**
+   * Clean up and dereference the necessary properties.  Will also disconnect
+   * and destroy the iframe.
+   *
+   * @returns {void}
+   */
   destroy () {
     if (this.destroyed) {
       return;
