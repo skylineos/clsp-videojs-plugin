@@ -185,42 +185,6 @@ export default class IOV {
       clientId: this.config.clientId,
     };
 
-    window.addEventListener('message', (event) => {
-      this.debug('window on message');
-
-      const clientId = event.data.clientId;
-
-      // @todo - this listener was originally centralized, meaning that there
-      // was only ever one listener.  Should this be moved to some centralized
-      // location?
-      // @todo - does the check for a non-existent client id need to be reimplemented?
-      //
-      // if (!this.exists(clientId)) {
-      //   // When the mqtt connection is interupted due to a listener being removed,
-      //   // a fail event is always sent.  It is not necessary to log this as an error
-      //   // in the console, because it is not an error.
-      //   if (!event.data.event === 'fail') {
-      //     console.error(`No conduit with id "${clientId}" exists!`);
-      //   }
-
-      //   return;
-      // }
-
-      if (this.id !== clientId) {
-        return;
-      }
-
-      // If the document is hidden, don't execute the onMessage handler.  If the
-      // handler is executed, for some reason, the conduit will continue to
-      // request/receive data from the server, which will eventually result in
-      // unconstrained resource utilization, and ultimately a browser crash
-      if (document.hidden) {
-        return;
-      }
-
-      this.onMessage(event);
-    });
-
     const {
       visibilityChangeEventName,
     } = utils.windowStateNames;
@@ -440,7 +404,7 @@ export default class IOV {
   onData (event) {
     this.debug('onData');
 
-    this.conduit.inboundHandler(event.data);
+    this.conduit.handleMessage(event.data);
   }
 
   onMessage (event) {

@@ -3,7 +3,7 @@
 import {
   version,
 } from '../../../package.json';
-import Logger from '../logger';
+import Logger from '../utils/logger';
 
 const PLUGIN_NAME = 'clsp';
 const MINIMUM_CHROME_VERSION = 52;

@@ -10,16 +10,7 @@
  */
 
 import Router from './Router';
-import Logger from '../logger';
-
-import Paho from 'paho-mqtt';
-
-// Even though the export of paho-mqtt is { Client, Message }, there is an
-// internal reference that the library makes to itself, and it expects
-// itself to exist at Paho.MQTT.  FIRED!
-window.Paho = {
-  MQTT: Paho,
-};
+import Logger from '../utils/logger';
 
 export default class Conduit {
   static factory (
@@ -40,6 +31,9 @@ export default class Conduit {
     );
   }
 
+  /**
+   * @private
+   */
   constructor (
     clientId,
     wsbroker,
@@ -48,6 +42,9 @@ export default class Conduit {
     b64_jwt_access_url,
     jwt
   ) {
+    this.logger = Logger.factory('Conduit');
+    this.logger.debug('Constructing...');
+
     this.clientId = clientId;
     this.wsbroker = wsbroker;
     this.wsport = wsport;
@@ -69,6 +66,8 @@ export default class Conduit {
    * @returns Element
    */
   _generateIframe () {
+    this.logger.debug('Generating Iframe...');
+
     const iframe = document.createElement('iframe');
 
     iframe.setAttribute('id', this.clientId);
@@ -111,6 +110,8 @@ export default class Conduit {
    * @param {Object} message
    */
   command (message) {
+    this.logger.debug('Sending a message to the iframe...');
+
     this.iframe.contentWindow.postMessage(message, '*');
 
     // if (iframe.contentWindow !== null) {
@@ -126,11 +127,20 @@ export default class Conduit {
     // }, 1000);
   }
 
-  inboundHandler (message) {
-    const handler = this.handlers[message.destinationName];
+
+  handleMessage (message) {
+    const topic = message.destinationName;
+
+    this.logger.debug(`Handling message for topic "${topic}"`);
+
+    if (!topic) {
+      throw new Error('Message contained no topic to handle!');
+    }
+
+    const handler = this.handlers[topic];
 
     if (!handler) {
-      throw new Error(`No handler for ${message.destinationName}`);
+      throw new Error(`No handler for ${topic}`);
     }
 
     handler(message);

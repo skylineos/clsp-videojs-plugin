@@ -21,10 +21,10 @@
       var url = 'clsp://172.28.12.57:9001/FairfaxVideo0520';
       var element = document.getElementById('my-video');
 
-      var iov = window.IOV.fromUrl(url, element);
+      var iovCollection = window.IovCollection.asSingleton();
+      var iov = iovCollection.create(url, element);
 
       iov.initialize();
-
     </script>
   </body>
 </html>

@@ -8,7 +8,7 @@ import videojs from 'video.js';
 
 import MqttSourceHandler from './MqttSourceHandler';
 import utils from '../utils';
-import Logger from '../logger';
+import Logger from '../utils/logger';
 
 const Plugin = videojs.getPlugin('plugin');
 

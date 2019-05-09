@@ -24,7 +24,9 @@ function registerGlobals () {
 
   // We will also set the value on the window so that other parts of the plugin
   // do not need to access localstorage.
-  window.skyline.clspPlugin = { logLevel };
+  window.skyline.clspPlugin = {
+    logLevel,
+  };
 }
 
 registerGlobals();

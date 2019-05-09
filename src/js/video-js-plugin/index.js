@@ -2,7 +2,7 @@
 
 import 'srcdoc-polyfill';
 
-import '../bootstrap';
+import '../utils/bootstrap';
 import '../utils/';
 import plugin from './plugin';
 import '../../styles/videojs-mse-over-clsp.scss';

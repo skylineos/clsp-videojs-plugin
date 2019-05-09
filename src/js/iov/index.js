@@ -2,9 +2,9 @@
 
 import 'srcdoc-polyfill';
 
-import '../bootstrap';
-import IOV from './IOV';
+import '../utils/bootstrap';
+import IovCollection from './collection';
 
-window.IOV = IOV;
+window.IovCollection = IovCollection;
 
-// export default IOV;
+export default IovCollection;
