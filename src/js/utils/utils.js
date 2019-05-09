@@ -2,8 +2,8 @@
 
 import {
   version,
-} from '../../package.json';
-import Logger from './logger';
+} from '../../../package.json';
+import Logger from '../logger';
 
 const PLUGIN_NAME = 'clsp';
 const MINIMUM_CHROME_VERSION = 52;
@@ -24,6 +24,7 @@ const logger = Logger.factory();
 function browserIsCompatable () {
   const isChrome = Boolean(window.chrome);
   const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+  // const isFirefox = false;
 
   if (!isFirefox && !isChrome) {
     logger.debug('Unsupported browser');

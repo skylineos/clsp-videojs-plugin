@@ -542,6 +542,8 @@ export default class IOV {
   }
 
   onAppendStart (byteArray) {
+    // @todo
+    // it appears that this is never used!
     if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
       // console.log(`Recording ${parseInt(byteArray.length)} bytes of data.`);
 
