@@ -2,38 +2,54 @@
 
 /* eslint no-console: off */
 
-export default class Logger {
-  static factory (prefix = '') {
-    return new Logger(prefix);
-  }
+/**
+ * We use this in the router as well, so keep it light and ES5!
+ */
 
-  constructor (prefix) {
+export default function (logLevel) {
+  function Logger (prefix) {
     this.prefix = prefix;
   }
 
-  _constructMessage (message) {
+  Logger.factory = function (prefix) {
+    return new Logger(prefix || '');
+  };
+
+  Logger.prototype._constructMessage = function (type, message) {
     if (!this.prefix) {
       return message;
     }
 
-    return `${this.prefix} ${message}`;
-  }
+    return this.prefix + ' (' + type + ')' + ' --> ' + message;
+  };
 
-  debug (message) {
-    if (window.skyline.clspPlugin.logLevel >= 3) {
-      console.log(this._constructMessage(message));
+  Logger.prototype.silly = function (message) {
+    if (logLevel >= 4) {
+      console.log(this._constructMessage('silly', message));
     }
-  }
+  };
 
-  warn (message) {
-    if (window.skyline.clspPlugin.logLevel >= 2) {
-      console.warn(this._constructMessage(message));
+  Logger.prototype.debug = function (message) {
+    if (logLevel >= 3) {
+      console.log(this._constructMessage('debug', message));
     }
-  }
+  };
 
-  error (message) {
-    if (window.skyline.clspPlugin.logLevel >= 1) {
-      console.error(this._constructMessage(message));
+  Logger.prototype.info = function (message) {
+    if (logLevel >= 2) {
+      console.log(this._constructMessage('info', message));
     }
-  }
+  };
+
+  Logger.prototype.warn = function (message) {
+    if (logLevel >= 1) {
+      console.warn(this._constructMessage('warn', message));
+    }
+  };
+
+  Logger.prototype.error = function (message) {
+    console.error(this._constructMessage('error', message));
+  };
+
+  return Logger;
 }

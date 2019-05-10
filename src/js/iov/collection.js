@@ -35,45 +35,57 @@ export default class IovCollection {
    * for segments using the same clientId.
    */
   constructor () {
-    this.logger = Logger.factory('IovCollection');
+    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory('IovCollection');
     this.logger.debug('Constructing...');
 
     this.iovs = {};
 
-    window.addEventListener('message', (event) => {
-      this.logger.debug('window on message');
+    window.addEventListener('message', this._onWindowMessage);
+  }
 
-      const clientId = event.data.clientId;
+  /**
+   * @private
+   */
+  _onWindowMessage = (event) => {
+    const clientId = event.data.clientId;
 
-      if (!this.has(clientId)) {
-        // When the mqtt connection is interupted due to a listener being removed,
-        // a fail event is always sent.  It is not necessary to log this as an error
-        // in the console, because it is not an error.
-        if (event.data.event === 'fail') {
-          return;
-        }
+    if (!clientId) {
+      // A window message was received that is not related to CLSP
+      return;
+    }
 
-        throw new Error(`Unable to route message for IOV with clientId "${clientId}".  An IOV for that clientId does not exist.`);
-      }
+    this.logger.debug('window on message');
 
-      // If the document is hidden, don't execute the onMessage handler.  If the
-      // handler is executed, for some reason, the conduit will continue to
-      // request/receive data from the server, which will eventually result in
-      // unconstrained resource utilization, and ultimately a browser crash
-      if (document.hidden) {
+    if (!this.has(clientId)) {
+      // When the mqtt connection is interupted due to a listener being removed,
+      // a fail event is always sent.  It is not necessary to log this as an error
+      // in the console, because it is not an error.
+      // @todo - the fail event no longer exists - what is the name of the new
+      // corresponding event?
+      if (event.data.event === 'fail') {
         return;
       }
 
-      this.get(clientId).onMessage(event);
-    });
-  }
+      throw new Error(`Unable to route message for IOV with clientId "${clientId}".  An IOV for that clientId does not exist.`);
+    }
 
-  create (url, videoElement) {
+    // If the document is hidden, don't execute the onMessage handler.  If the
+    // handler is executed, for some reason, the conduit will continue to
+    // request/receive data from the server, which will eventually result in
+    // unconstrained resource utilization, and ultimately a browser crash
+    if (document.hidden) {
+      return;
+    }
+
+    this.get(clientId).conduit.onMessage(event);
+  };
+
+  async create (url, videoElement) {
     const iov = IOV.fromUrl(url, videoElement);
 
-    iov.initialize();
-
     this.add(iov.id, iov);
+
+    await iov.initialize();
 
     return iov;
   }
@@ -107,6 +119,14 @@ export default class IovCollection {
   }
 
   destroy () {
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    window.removeEventListener('message', this._onWindowMessage);
+
     for (let id in this.iovs) {
       this.destroy(id);
     }

@@ -19,6 +19,38 @@
  * @see - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body
  * @see - https://www.eclipse.org/paho/files/jsdoc/index.html
  *
+ * The following events are sent to the parent window:
+ *
+ * router_created
+ *   when the router creation is finished.
+ *   can only happen at time of router instantiation.
+ * router_create_failure
+ *   when the router creation fails.
+ *   can only happen at time of router instantiation.
+ * mqtt_data
+ *   when a segment / moof is transmitted.
+ *   can happen for as long as the connection is open.
+ * connect_success
+ *   when the connection to the mqtt server is established.can only happen at time of connection.
+ * connect_failure
+ *   when trying to connect to the mqtt server fails.
+ *   can only happen at time of connection.
+ * connection_lost
+ *   when the connection to the mqtt server has been established, but is later lost.
+ *   can happen for as long as the connection is open.
+ * disconnect_success
+ *   when the connection to the mqtt server is terminated normally.
+ *   can only happen at time of disconnection.
+ * subscribe_failure
+ *   when trying to subscribe to a topic fails.
+ *   can only happen when a subscribe is attempted.
+ * unsubscribe_failure
+ *   when trying to unsubscribe from a topic fails.
+ *   can only happen when an unsubscribe is attempted.
+ * window_message_fail
+ *   when an error is encountered while processing window messages.
+ *   can happen any time.
+ *
  * @export - the function that provides the Router and constants
  */
 export default function () {
@@ -44,41 +76,14 @@ export default function () {
     useSSL
   ) {
     try {
+      this.logger = window.Logger(window.parent.skyline.clspPlugin.logLevel).factory('Router');
+
       this.clientId = clientId;
       this.ip = ip;
       this.port = port;
       this.useSSL = useSSL;
 
-      var self = this;
-
-      // @todo - it would be nice to be able to import this
-      this.logger = {
-        _format: function (logMessage) {
-          return self.clientId + ': ' + logMessage;
-        },
-        debug: function (logMessage) {
-          if (window.parent.skyline.clspPlugin.logLevel >= 4) {
-            console.log(self.logger._format(logMessage));
-          }
-        },
-        info: function (logMessage) {
-          if (window.parent.skyline.clspPlugin.logLevel >= 3) {
-            console.log(self.logger._format(logMessage));
-          }
-        },
-        warn: function (logMessage) {
-          if (window.parent.skyline.clspPlugin.logLevel >= 2) {
-            console.warn(self.logger._format(logMessage));
-          }
-        },
-        error: function (logMessage) {
-          if (window.parent.skyline.clspPlugin.logLevel >= 1) {
-            console.error(self.logger._format(logMessage));
-          }
-        },
-      };
-
-      this.logger.debug('Constructing router');
+      this.logger.debug('Constructing...');
 
       this.retryInterval = 2000;
       this.Reconnect = null;
@@ -95,10 +100,16 @@ export default function () {
       this.mqttClient.onMessageArrived = this._onMessageArrived.bind(this);
 
       this.boundWindowMessageEventHandler = this._windowMessageEventHandler.bind(this);
+
+      window.addEventListener(
+        'message',
+        this.boundWindowMessageEventHandler,
+        false
+      );
     }
-    catch (e) {
-      console.error('IFRAME error for clientId: ' + clientId);
-      console.error(e);
+    catch (error) {
+      this.logger.error('IFRAME error for clientId: ' + clientId);
+      this.logger.error(error);
     }
   }
 
@@ -108,33 +119,39 @@ export default function () {
    * Post a "message" with the current `clientId` to the parent window.
    */
   Router.prototype._sendToParent = function (message) {
-    this.logger.debug('_sendToParent');
+    this.logger.debug('Sending message to parent window...');
 
     if (typeof message !== 'object') {
-      throw new Error('_sendToParent must be passed an object!');
+      throw new Error('_sendToParent must be passed an object');
     }
 
     message.clientId = this.clientId;
 
     switch (message.event) {
-      case 'ready': {
+      case 'router_created':
+      case 'connect_success':
+      case 'disconnect_success': {
         // no validation needed
         break;
       }
-      case 'data': {
+      case 'mqtt_data': {
         if (!message.hasOwnProperty('destinationName') || !message.hasOwnProperty('payloadString') || !message.hasOwnProperty('payloadBytes')) {
           throw new Error('improperly formatted "data" message sent to _sendToParent');
         }
         break;
       }
-      case 'fail': {
+      case 'connect_failure':
+      case 'connection_lost':
+      case 'subscribe_failure':
+      case 'unsubscribe_failure':
+      case 'window_message_fail': {
         if (!message.hasOwnProperty('reason')) {
           throw new Error('improperly formatted "fail" message sent to _sendToParent');
         }
         break;
       }
       default: {
-        throw new Error(`Unknown event "${message.event}" sent to _sendToParent`);
+        throw new Error('Unknown event ' + message.event + ' sent to _sendToParent');
       }
     }
 
@@ -155,7 +172,8 @@ export default function () {
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    */
   Router.prototype._onMessageArrived = function (mqttMessage) {
-    this.logger.debug('_onMessageArrived');
+    this.logger.debug('Received MQTT message...');
+
     try {
       var payloadString = '';
 
@@ -171,14 +189,14 @@ export default function () {
       }
 
       this._sendToParent({
-        event: 'data',
+        event: 'mqtt_data',
         destinationName: mqttMessage.destinationName,
         payloadString: payloadString, // @todo - why is this necessary when it doesn't exist?
         payloadBytes: mqttMessage.payloadBytes || null,
       });
     }
-    catch (e) {
-      console.error(e);
+    catch (error) {
+      this.logger.error(error);
     }
   };
 
@@ -188,39 +206,26 @@ export default function () {
    * called when an mqttClient connection has been lost, or after a connect()
    * method has succeeded.
    *
-   * If the connection termination was not "proper", attempt to reconnect.
-   *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    */
   Router.prototype._onConnectionLost = function (responseObject) {
-    this.logger.debug('_onConnectionLost');
-    this.logger.info('_onConnectionLost');
+    this.logger.warn('MQTT connection lost!');
 
     var errorCode = parseInt(responseObject.errorCode);
 
     if (errorCode === 0) {
       // The connection was "properly" terminated
+      this._sendToParent({
+        event: 'disconnect_success',
+      });
+
       return;
     }
 
     this._sendToParent({
-      event: 'fail',
+      event: 'connection_lost',
       reason: 'connection lost error code ' + errorCode,
     });
-
-    if (this.Reconnect) {
-      // A reconnection attempt is already in progress
-      return;
-    }
-
-    var self = this;
-
-    this.Reconnect = setInterval(function () {
-      self.logger.info('connect_retrying');
-      self.connect();
-      clearInterval(self.Reconnect);
-      self.Reconnect = null;
-    }, this.retryInterval);
   };
 
   /**
@@ -230,11 +235,13 @@ export default function () {
    * the messages "method" property and taking the appropriate action.
    */
   Router.prototype._windowMessageEventHandler = function (event) {
-    this.logger.debug('_windowMessageEventHandler');
     var message = event.data;
+    var method = message.method;
+
+    this.logger.debug('Handling incoming window message for "' + method + '"...');
 
     try {
-      switch (message.method) {
+      switch (method) {
         case 'subscribe': {
           this._subscribe(message.topic);
           break;
@@ -250,8 +257,8 @@ export default function () {
             payload = JSON.stringify(message.data);
           }
           catch (error) {
-            console.error('ERROR: Unable to handle the "publish" window message event!')
-            console.error('json stringify error: ' + message.data);
+            this.logger.error('ERROR: Unable to handle the "publish" window message event!');
+            this.logger.error('json stringify error: ' + message.data);
 
             // @todo - should we throw here?
             // throw error;
@@ -274,18 +281,17 @@ export default function () {
           break;
         }
         default: {
-          console.error('unknown message method: ' + message.method);
+          this.logger.error('unknown message method: ' + method);
         }
       }
     }
-    catch (e) {
-      // we are dead!
+    catch (error) {
+      this.logger.error(error);
+
       this._sendToParent({
-        event: 'fail',
+        event: 'window_message_fail',
         reason: 'window message event failure',
       });
-
-      this.disconnect();
     }
   };
 
@@ -293,33 +299,17 @@ export default function () {
    * @private
    *
    * Success handler for "connect".  Registers the window message event handler,
-   * and notifies the parent window that this client is "ready".  All subsequent
-   * reconnection attempts will be cancelled.
+   * and notifies the parent window that this client is "ready".
    *
    * @todo - track the "connected" status to prevent multiple window message
    * event handlers from being attached
    */
   Router.prototype._connect_onSuccess = function () {
-    this.logger.debug('_connect_onSuccess');
-    this.logger.info('_connect_onSuccess');
-
-    // Remove any existing listeners
-    window.removeEventListener('message', this.boundWindowMessageEventHandler);
-
-    window.addEventListener(
-      'message',
-      this.boundWindowMessageEventHandler,
-      false
-    );
+    this.logger.info('Successfully established MQTT connection');
 
     this._sendToParent({
-      event: 'ready',
+      event: 'connect_success',
     });
-
-    if (this.Reconnect) {
-      clearInterval(this.Reconnect);
-      this.Reconnect = null;
-    }
   };
 
   /**
@@ -329,10 +319,9 @@ export default function () {
    * window
    */
   Router.prototype._connect_onFailure = function (message) {
-    this.logger.debug('_connect_onFailure');
-    this.logger.info('_connect_onFailure');
+    this.logger.info('MQTT Connection Failure!');
     this._sendToParent({
-      event: 'fail',
+      event: 'connect_failure',
       reason: 'Error code ' + parseInt(message.errorCode) + ': ' + message.errorMessage,
     });
   };
@@ -342,8 +331,8 @@ export default function () {
    *
    * Success handler for "subscribe".
    */
-  Router.prototype._subscribe_onSuccess = function (message) {
-    this.logger.debug('_subscribe_onSuccess');
+  Router.prototype._subscribe_onSuccess = function (topic, message) {
+    this.logger.debug('Successfully subscribed to topic "' + topic + '"');
     // @todo
   };
 
@@ -353,10 +342,11 @@ export default function () {
    * Failure handler for "subscribe".  Sends a "fail" message to the parent
    * window
    */
-  Router.prototype._subscribe_onFailure = function (message) {
-    this.logger.debug('_subscribe_onFailure');
+  Router.prototype._subscribe_onFailure = function (topic, message) {
+    this.logger.error('Failed to subscribe to topic "' + topic + '"');
+
     this._sendToParent({
-      event: 'fail',
+      event: 'subscribe_failure',
       reason: 'subscribe failed',
     });
   };
@@ -367,14 +357,15 @@ export default function () {
    * Start receiving messages for the given topic
    */
   Router.prototype._subscribe = function (topic) {
-    this.logger.debug('_subscribe');
+    this.logger.debug('Subscribing to topic "' + topic + '"');
+
     if (!topic) {
       throw new Error('topic is a required argument when subscribing');
     }
 
     this.mqttClient.subscribe(topic, {
-      onSuccess: this._subscribe_onSuccess.bind(this),
-      onFailure: this._subscribe_onFailure.bind(this),
+      onSuccess: this._subscribe_onSuccess.bind(this, topic),
+      onFailure: this._subscribe_onFailure.bind(this, topic),
     });
   };
 
@@ -383,8 +374,8 @@ export default function () {
    *
    * Success handler for "unsubscribe".
    */
-  Router.prototype._unsubscribe_onSuccess = function (message) {
-    this.logger.debug('_unsubscribe_onSuccess');
+  Router.prototype._unsubscribe_onSuccess = function (topic, message) {
+    this.logger.debug('Successfully unsubscribed from topic "' + topic + '"');
     // @todo
   };
 
@@ -394,10 +385,11 @@ export default function () {
    * Failure handler for "unsubscribe".  Sends a "fail" message to the parent
    * window
    */
-  Router.prototype._unsubscribe_onFailure = function (message) {
-    this.logger.debug('_unsubscribe_onFailure');
+  Router.prototype._unsubscribe_onFailure = function (topic, message) {
+    this.logger.debug('Failed to unsubscribe from topic "' + topic + '"');
+
     this._sendToParent({
-      event: 'fail',
+      event: 'unsubscribe_failure',
       reason: 'unsubscribe failed',
     });
   };
@@ -408,14 +400,15 @@ export default function () {
    * Stop receiving messages for the given topic
    */
   Router.prototype._unsubscribe = function (topic) {
-    this.logger.debug('_unsubscribe');
+    this.logger.debug('Unsubscribing from topic "' + topic + '"');
+
     if (!topic) {
       throw new Error('topic is a required argument when unsubscribing');
     }
 
     this.mqttClient.unsubscribe(topic, {
-      onSuccess: this._unsubscribe_onSuccess.bind(this),
-      onFailure: this._unsubscribe_onFailure.bind(this),
+      onSuccess: this._unsubscribe_onSuccess.bind(this, topic),
+      onFailure: this._unsubscribe_onFailure.bind(this, topic),
     });
   };
 
@@ -425,7 +418,8 @@ export default function () {
    * Publish a message to the clients that are listening for the given topic
    */
   Router.prototype._publish = function (payload, topic) {
-    this.logger.debug('_publish');
+    this.logger.debug('Publishing to topic "' + topic + '"');
+
     if (!payload) {
       throw new Error('payload is a required argument when publishing');
     }
@@ -445,8 +439,8 @@ export default function () {
    * Connect this Messaging client to its server
    */
   Router.prototype.connect = function () {
-    this.logger.debug('connect');
-    this.logger.info('connect');
+    this.logger.info('Connecting...');
+
     // last will message sent on disconnect
     var willMessage = new Paho.MQTT.Message(JSON.stringify({
       clientId: this.clientId,
@@ -467,7 +461,7 @@ export default function () {
 
     try {
       this.mqttClient.connect(connectionOptions);
-      this.logger.info('connected');
+      this.logger.info('Connected');
     }
     catch (error) {
       if (error.message.startsWith(PAHO_MQTT_ERROR_CODE_ALREADY_CONNECTED)) {
@@ -475,11 +469,11 @@ export default function () {
         return;
       }
 
-      console.error('connect failed', error);
+      this.logger.error('Failed to connect', error);
 
       this._sendToParent({
-        event: 'fail',
-        reason: 'connect failed',
+        event: 'connect_failure',
+        reason: 'General error when trying to connect.',
       });
     }
   };
@@ -488,7 +482,7 @@ export default function () {
    * Disconnect the messaging client from the server
    */
   Router.prototype.disconnect = function () {
-    this.logger.debug('disconnect');
+    this.logger.info('Disconnecting');
     try {
       this.mqttClient.disconnect();
     }
@@ -499,8 +493,8 @@ export default function () {
         return;
       }
 
-      console.error('ERROR while disconnecting');
-      console.error(error);
+      this.logger.error('ERROR while disconnecting');
+      this.logger.error(error);
 
       throw error;
     }
@@ -511,16 +505,29 @@ export default function () {
   // "body" tag.
   return {
     onload: function () {
-      window.router = new Router(
-        window.mqttRouterConfig.clientId,
-        window.mqttRouterConfig.ip,
-        window.mqttRouterConfig.port,
-        window.mqttRouterConfig.useSSL,
-      );
+      try {
+        window.router = new Router(
+          window.mqttRouterConfig.clientId,
+          window.mqttRouterConfig.ip,
+          window.mqttRouterConfig.port,
+          window.mqttRouterConfig.useSSL,
+        );
 
-      window.router.logger.info('Router created in onload');
+        window.router._sendToParent({
+          event: 'router_created',
+        });
 
-      window.router.connect();
+        window.router.logger.info('onload - Router created');
+      }
+      catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(error);
+
+        window.parent.postMessage({
+          event: 'router_create_failure',
+          reason: error,
+        }, '*');
+      }
     },
     onunload: function () {
       if (!window.router) {
@@ -528,9 +535,9 @@ export default function () {
       }
 
       try {
-        window.router.logger.info('Router disconnecting in onunload...');
+        window.router.logger.info('onunload - Router disconnecting in onunload...');
         window.router.disconnect();
-        window.router.logger.info('Router disconnected in onunload');
+        window.router.logger.info('onunload - Router disconnected in onunload');
       }
       catch (error) {
         if (error.message.startsWith(PAHO_MQTT_ERROR_CODE_NOT_CONNECTED)) {
@@ -538,24 +545,8 @@ export default function () {
           return;
         }
 
-        console.error(error);
+        window.router.logger.error(error);
       }
-    },
-    ononline: function () {
-      if (!window.router) {
-        return;
-      }
-
-      window.router.logger.info('Router trying to connect in ononline...');
-      window.router.connect();
-    },
-    onoffline: function () {
-      if (!window.router) {
-        return;
-      }
-
-      window.router.logger.info('Router trying to disconnect in onoffline...');
-      window.router.disconnect();
     },
   };
 }

@@ -12,8 +12,9 @@
   <body>
     <video
       id="my-video"
+      muted
       controls
-    />
+    ></video>
 
     <script src="../dist/iovPlayer.min.js"></script>
 
@@ -22,9 +23,14 @@
       var element = document.getElementById('my-video');
 
       var iovCollection = window.IovCollection.asSingleton();
-      var iov = iovCollection.create(url, element);
-
-      iov.initialize();
+      iovCollection.create(url, element)
+        .then(function (iov) {
+          window.iov = iov;
+          iov.play();
+        })
+        .catch(function (error) {
+          console.error(error);
+        });
     </script>
   </body>
 </html>

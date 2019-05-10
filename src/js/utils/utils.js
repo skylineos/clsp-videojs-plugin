@@ -19,7 +19,7 @@ const MINIMUM_CHROME_VERSION = 52;
 // video/mp4; codecs="avc1.42E00D"
 const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
-const logger = Logger.factory();
+const logger = Logger(window.skyline.clspPlugin.logLevel).factory();
 
 function browserIsCompatable () {
   const isChrome = Boolean(window.chrome);

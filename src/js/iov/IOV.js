@@ -1,12 +1,10 @@
-import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 
 import Conduit from '../conduit/Conduit';
 import IOVPlayer from './player';
 import MSEWrapper from './MSEWrapper';
 import utils from '../utils';
-
-const DEBUG_PREFIX = 'skyline:clsp:iov';
+import Logger from '../utils/logger';
 
 /**
  * Internet of Video client. This module uses the MediaSource API to
@@ -33,10 +31,9 @@ export default class IOV {
 
     let useSSL;
     let default_port;
-    let jwtUrl = false;
-    let b64_jwt_access_url ="";
-    let jwt_validation_url ="";
-    let jwt = "";
+    let jwtUrl;
+    let b64_jwt_access_url = '';
+    let jwt = '';
 
     // Chrome is the only browser that allows non-http protocols in
     // the anchor tag's href, so change them all to http here so we
@@ -57,11 +54,13 @@ export default class IOV {
       useSSL = true;
       parser.href = url.replace('clsps', 'https');
       default_port = 443;
+      jwtUrl = false;
     }
     else if (url.substring(0, 4).toLowerCase() === 'clsp') {
       useSSL = false;
       parser.href = url.replace('clsp', 'http');
       default_port = 9001;
+      jwtUrl = false;
     }
     else {
       throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
@@ -77,6 +76,8 @@ export default class IOV {
       port = default_port;
     }
 
+    port = parseInt(port);
+
     // @ is a special address meaning the server that loaded the web page.
     if (hostname === '@') {
       hostname = window.location.hostname;
@@ -84,60 +85,55 @@ export default class IOV {
 
     // if jwt extract required url parameters.
     if (jwtUrl === true) {
+      // Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
+      const qp_offset = url.indexOf(parser.pathname)+parser.pathname.length;
 
-         //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
-        var qp_offset = url.indexOf(parser.pathname)+parser.pathname.length
+      const qr_args = url.substr(qp_offset).split('?')[1];
+      const query = {};
 
-        var i = 0;
-        var qr_args = url.substr(qp_offset).split('?')[1];
-        var query = {
-        };
+      const pairs = qr_args.split('&');
+      for (let i = 0; i < pairs.length; i++) {
+        const pair = pairs[i].split('=');
+        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+      }
 
-        var pairs = qr_args.split('&');
-        for (var i = 0; i < pairs.length; i++) {
-            var pair = pairs[i].split('=');
-            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
-        }
+      if (typeof query.Start === 'undefined') {
+        throw new Error("Required 'Start' query parameter not defined for a clsp[s]-jwt");
+      }
 
-        if (typeof query.Start === 'undefined') {
-           throw new Error("Required 'Start' query parameter not defined for a clsp[s]-jwt");
-        }
-        if (typeof query.End === 'undefined') {
-           throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
-        }
+      if (typeof query.End === 'undefined') {
+        throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
+      }
 
+      const protocol = useSSL
+        ? 'clsps-jwt'
+        : 'clsp-jwt';
 
-        b64_jwt_access_url = window.btoa(
-            (useSSL === true) ? "clsps-jwt://": "clsp-jwt://"
-            + hostname + ":" + parseInt(port) + "/jwt"
-            + "?Start="+query.Start
-            + "&End="+query.End
-        );
-        jwt = query.token;
+      const url = `${protocol}://${hostname}:${port}/jwt?Start=${query.Start}&End=${query.End}`;
 
-
-
-    } // end if jwt
-
-
+      b64_jwt_access_url = window.btoa(url);
+      jwt = query.token;
+    }
 
     return {
-      // url,
       wsbroker: hostname,
-      wsport: parseInt(port),
+      wsport: port,
       streamName,
       useSSL,
       b64_jwt_access_url,
-      jwt
+      jwt,
     };
-
   }
 
   static factory (videoElement, config = {}) {
     return new IOV(videoElement, config);
   }
 
-  static fromUrl (url, videoElement, config = {}) {
+  static fromUrl (
+    url,
+    videoElement,
+    config = {}
+  ) {
     return IOV.factory(videoElement, {
       ...config,
       ...IOV.generateConfigFromUrl(url),
@@ -149,9 +145,9 @@ export default class IOV {
 
     this.id = uuidv4();
 
-    this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
-    this.silly = Debug(`silly:${DEBUG_PREFIX}:${this.id}:main`);
-    this.debug('constructor');
+    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory('Iov');
+
+    this.logger.debug('Constructing...');
 
     this.metrics = {};
 
@@ -178,13 +174,6 @@ export default class IOV {
       b64_jwt_access_url: config.b64_jwt_access_url,
     };
 
-    this.statsMsg = {
-      byteCount: 0,
-      inkbps: 0,
-      host: document.location.host,
-      clientId: this.config.clientId,
-    };
-
     const {
       visibilityChangeEventName,
     } = utils.windowStateNames;
@@ -196,10 +185,22 @@ export default class IOV {
         false
       );
     }
+
+    window.addEventListener(
+      'online',
+      this.onConnectionChange,
+      false
+    );
+
+    window.addEventListener(
+      'offline',
+      this.onConnectionChange,
+      false
+    );
   }
 
   on (name, action) {
-    this.debug(`Registering Listener for ${name} event...`);
+    this.logger.debug(`Registering Listener for ${name} event...`);
 
     if (!IOV.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
@@ -216,10 +217,10 @@ export default class IOV {
     const sillyMetrics = [];
 
     if (sillyMetrics.includes(name)) {
-      this.silly(`Triggering ${name} event...`);
+      this.logger.silly(`Triggering ${name} event...`);
     }
     else {
-      this.debug(`Triggering ${name} event...`);
+      this.logger.debug(`Triggering ${name} event...`);
     }
 
     if (this.destroyed) {
@@ -253,6 +254,23 @@ export default class IOV {
     });
   }
 
+  onConnectionChange = () => {
+    if (window.navigator.onLine) {
+      this.logger.debug('Back online...');
+      if (this.player.stopped) {
+        // Without this timeout, the video appears blank.  Not sure if there is
+        // some race condition...
+        setTimeout(() => {
+          this.play();
+        }, 2000);
+      }
+    }
+    else {
+      this.logger.debug('Offline!');
+      this.stop();
+    }
+  };
+
   onVisibilityChange = () => {
     const {
       hiddenStateName,
@@ -261,7 +279,8 @@ export default class IOV {
     if (document[hiddenStateName]) {
       // Stop playing when tab is hidden or window is minimized
       this.visibilityChangeTimeout = setTimeout(async () => {
-        await this.player.stop();
+        this.logger.debug('Stopping because tab is not visible...');
+        await this.stop();
       }, 1000);
 
       return;
@@ -272,26 +291,25 @@ export default class IOV {
     }
 
     if (this.player.stopped) {
-      this.player.play();
+      this.logger.debug('Playing because tab became visible...');
+      this.play();
     }
   };
 
-  initialize () {
-    this.conduit = Conduit.factory(
-      this.config.clientId,
-      this.config.wsbroker,
-      this.config.wsport,
-      this.config.useSSL,
-      this.config.b64_jwt_access_url,
-      this.config.jwt
-    );
+  async initialize () {
+    this.logger.debug('Initializing...');
 
     if (!this.videoElement) {
       throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
     }
 
     this.videoElement.classList.add('clsp-video');
+
     const videoElementParent = this.videoElement.parentNode;
+
+    if (!videoElementParent) {
+      throw new Error('There is no iframe container element to attach the iframe to!');
+    }
 
     this.player = IOVPlayer.factory(this, this.videoElement);
 
@@ -325,20 +343,24 @@ export default class IOV {
         // is there still a reference to this element?
         // this.videoJsVideoElement = null;
       }
-      catch (e) {
-        console.error(e);
+      catch (error) {
+        this.logger.error(error);
       }
     });
 
-    if (!videoElementParent) {
-      throw new Error('There is no iframe container element to attach the iframe to!');
-    }
+    this.conduit = Conduit.factory(this.config.clientId, {
+      wsbroker: this.config.wsbroker,
+      wsport: this.config.wsport,
+      useSSL: this.config.useSSL,
+      b64_jwt_access_url: this.config.b64_jwt_access_url,
+      jwt: this.config.jwt,
+    });
 
-    videoElementParent.appendChild(this.conduit.iframe);
+    await this.conduit.initialize(videoElementParent);
   }
 
   clone (config) {
-    this.debug('clone');
+    this.logger.debug('clone');
 
     const clonedConfig = {
       ...config,
@@ -349,7 +371,7 @@ export default class IOV {
   }
 
   cloneFromUrl (url, config = {}) {
-    this.debug('cloneFromUrl');
+    this.logger.debug('cloneFromUrl');
 
     return this.clone({
       ...IOV.generateConfigFromUrl(url),
@@ -357,249 +379,46 @@ export default class IOV {
     });
   }
 
-  // query remote server and get a list of all stream names
-  getAvailableStreams (callback) {
-    this.debug('getAvailableStreams');
-
-    this.conduit.getStreamList(callback);
+  async play () {
+    await this.player.play();
   }
 
-  onReady (event) {
-    this.debug('onReady');
-
-    if (!document.hidden) {
-      this.player.play();
-    }
-
-    // @todo - it doesn't appear that this error is defined anywhere
-    // this.videoElement.addEventListener('mse-error-event', async (e) => {
-    //   await this.player.restart();
-    // }, false);
-
-    // the mse service will stop streaming to us if we don't send
-    // a message to iov/stats within 1 minute.
-    this._statsTimer = setInterval(() => {
-      this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / 30000.0;
-      this.statsMsg.byteCount = 0;
-
-      this.conduit.publish('iov/stats', this.statsMsg);
-
-      this.debug('iov status', this.statsMsg);
-    }, 5000);
+  async stop () {
+    await this.player.stop();
   }
 
-  onFail (event) {
-    this.debug('onFail');
-
-    // when a stream fails, it no longer needs to send stats to the
-    // server, and it may not even be connected to the server
-    clearInterval(this._statsTimer);
-
-    this.debug('network error', event.data.reason);
-
-    // @todo - should we show this in a console.error or something?
-    // this.playerInstance.trigger('network-error', event.data.reason);
-  }
-
-  onData (event) {
-    this.debug('onData');
-
-    this.conduit.handleMessage(event.data);
-  }
-
-  onMessage (event) {
-    const eventType = event.data.event;
-
-    this.debug('onMessage', eventType);
-
-    switch (eventType) {
-      case 'ready': {
-        this.onReady(event);
-        break;
-      }
-      case 'fail': {
-        this.onFail(event);
-        break;
-      }
-      case 'data': {
-        this.onData(event);
-        break;
-      }
-      default: {
-        console.error(`No match for event: ${eventType}`);
-      }
-    }
-  }
-
-  play (onMoov, onMoof) {
-    // @todo - why doesn't this play/stop connect/disconnect work?
-    // this.conduit.connect();
-
-    if (this.config.jwt.length === 0) {
-      this._play(this.config.streamName, onMoov, onMoof);
+  async _play (onMoov, onMoof) {
+    if (this.player.stopped) {
       return;
     }
 
-    // start transaction, decrypt token
-    // @todo - when validateJwt is implemented as an asynchronous method,
-    // `play` and `_play` can be easily merged.
-    this.conduit.validateJwt((response) => {
-      //response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+    const {
+      // guid,
+      mimeCodec,
+      moov,
+    } = await this.conduit.play(this.config.streamName, onMoof);
 
-      if (response.status !== 200) {
-        if (response.status === 403) {
-          throw new Error('JwtUnAuthorized');
-        }
-
-        throw new Error('JwtInvalid');
-      }
-
-      //TODO, figure out how to handle a change in the sfs url from the
-      // clsp-jwt from the target url returned from decrypting the jwt
-      // token.
-      // Example:
-      //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
-      //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-      // --- due to the videojs architecture i don't see a clean way of doing this.
-      // ==============================================================================
-      //    The only way I can see doing this cleanly is to change videojs itself to
-      //    allow the 'canHandleSource' function in MqttSourceHandler to return a
-      //    promise not a value, then ascychronously find out if it can play this
-      //    source after making the call to decrypt the jwt token.22
-      // =============================================================================
-      // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
-      // case what is now the sfs ip address in clsp url will always be the same it will
-      // be the public ip of cluster gateway.
-      var t = response.target_url.split('/');
-
-      // get the actual stream name
-      var streamName = t[t.length - 1];
-
-      this._play(streamName, onMoov, onMoof);
-    });
-  }
-
-  stop () {
-    if (!this.guid) {
-      return;
+    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
+      this.stop();
     }
 
-    // Stop listening for moofs
-    this.conduit.unsubscribe(`iov/video/${this.guid}/live`);
+    if (onMoov) {
+      onMoov(mimeCodec, moov);
+    }
+  }
 
-    // Stop listening for resync events
-    this.conduit.unsubscribe(`iov/video/${this.guid}/resync`);
-
-    // Tell the server we've stopped
-    this.conduit.publish(`iov/video/${this.guid}/stop`, {
-      clientId: this.config.clientId,
-    });
-
-    // @todo - why doesn't this play/stop connect/disconnect work?
-    // this.conduit.disconnect();
+  _stop () {
+    this.conduit.stop();
   }
 
   resyncStream (cb) {
-    // subscribe to a sync topic that will be called if the stream that is feeding
-    // the mse service dies and has to be restarted that this player should restart the stream
-    this.conduit.subscribe(`iov/video/${this.guid}/resync`, cb);
+    this.conduit.resyncStream(cb);
   }
 
   onAppendStart (byteArray) {
-    // @todo
-    // it appears that this is never used!
-    if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
-      // console.log(`Recording ${parseInt(byteArray.length)} bytes of data.`);
-
-      this.conduit.directSend({
-        method: 'send',
-        topic: this.LogSourceBufferTopic,
-        byteArray,
-      });
-    }
-
-    this.statsMsg.byteCount += byteArray.length;
+    this.conduit.segmentUsed(byteArray);
   }
-
-  /**
-   * If the JWT is valid or if we are not using a JWT, perform the necessary
-   * conduit operations to retrieve stream segments (moofs).  The actual
-   * "playing" occurs in the player, since it involves taking those received
-   * stream segments and using MSE to display them.
-   *
-   * @param {string} streamName - the name of the stream to get segments for
-   * @param {IOV-onMoov} onMoov - the function that will handle the moov
-   * @param {IOV-onMoof} onMoof - the function that will handle the moof
-   */
-  _play (streamName, onMoov, onMoof) {
-    this.conduit.requestStream(streamName, ({ mimeCodec, guid }) => {
-      if (this.player.stopped) {
-        return;
-      }
-
-      // debug('onIovPlayTransaction');
-
-      if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
-        this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
-        return;
-      }
-
-      const initSegmentTopic = `${this.config.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
-
-      this.conduit.subscribe(initSegmentTopic, async ({ payloadBytes }) => {
-        if (this.player.stopped) {
-          return;
-        }
-
-        // debug(`onIovPlayTransaction ${initSegmentTopic} listener fired`);
-        // debug(`received moov of type "${typeof payloadBytes}" from server`);
-
-        const moov = payloadBytes;
-
-        this.conduit.unsubscribe(initSegmentTopic);
-
-        const newTopic = `iov/video/${guid}/live`;
-
-        // subscribe to the live video topic.
-        this.conduit.subscribe(newTopic, (mqttMessage) => {
-          if (this.player.stopped) {
-            return;
-          }
-
-          if (onMoof) {
-            onMoof(mqttMessage);
-          }
-        });
-
-        this.guid = guid;
-
-        if (onMoov) {
-          onMoov(mimeCodec, moov);
-        }
-      });
-
-      this.conduit.publish(`iov/video/${guid}/play`, {
-        initSegmentTopic,
-        clientId: this.config.clientId,
-        jwt: this.config.jwt,
-      });
-    });
-  }
-
-  /**
-   * Called once, at the beginning, when the moov is received
-   *
-   * @callback IOV-onMoov
-   * @param {string} mimeCodec - the mimeCodec of the stream
-   * @param {any} moov - the moov for this stream
-   */
-
-  /**
-   * Called many times, each time a moof (segment) is received
-   *
-   * @callback IOV-onMoof
-   * @param {any} moof - a stream segment
-   */
 
   /**
    * Dereference the necessary properties, clear any intervals and timeouts, and
@@ -608,15 +427,13 @@ export default class IOV {
    * @returns {void}
    */
   destroy () {
-    this.debug('destroy');
+    this.logger.debug('destroy');
 
     if (this.destroyed) {
       return;
     }
 
     this.destroyed = true;
-
-    clearInterval(this._statsTimer);
 
     const {
       visibilityChangeEventName,
@@ -625,6 +442,9 @@ export default class IOV {
     if (visibilityChangeEventName) {
       document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
     }
+
+    window.removeEventListener('online', this.onConnectionChange);
+    window.removeEventListener('offline', this.onConnectionChange);
 
     this.player.destroy();
     this.player = null;

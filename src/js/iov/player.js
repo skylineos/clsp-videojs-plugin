@@ -1,12 +1,8 @@
-import Debug from 'debug';
 import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
 
 import MSEWrapper from './MSEWrapper';
-
-const DEBUG_PREFIX = 'skyline:clsp:iov';
-const debug = Debug(`${DEBUG_PREFIX}:IOVPlayer`);
-const silly = Debug(`silly:${DEBUG_PREFIX}:IOVPlayer`);
+import Logger from '../utils/logger';
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -41,12 +37,26 @@ export default class IOVPlayer {
   static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
   static DRIFT_CORRECTION_CONSTANT = 2;
 
-  static factory (iov, videoElement, options = {}) {
-    return new IOVPlayer(iov, videoElement, options);
+  static factory (
+    iov,
+    videoElement,
+    options = {}
+  ) {
+    return new IOVPlayer(
+      iov,
+      videoElement,
+      options
+    );
   }
 
-  constructor (iov, videoElement, options) {
-    debug('constructor');
+  constructor (
+    iov,
+    videoElement,
+    options
+  ) {
+    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory('Player');
+
+    this.logger.debug('constructor');
 
     this.metrics = {};
 
@@ -61,11 +71,15 @@ export default class IOVPlayer {
     this.iov = iov;
     this.videoElement = videoElement;
 
-    this.options = defaults({}, options, {
-      segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
-      driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
-      enableMetrics: false,
-    });
+    this.options = defaults(
+      {},
+      options,
+      {
+        segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
+        driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
+        enableMetrics: false,
+      }
+    );
 
     this.firstFrameShown = false;
     this.stopped = false;
@@ -86,7 +100,7 @@ export default class IOVPlayer {
   }
 
   on (name, action) {
-    debug(`Registering Listener for ${name} event...`);
+    this.logger.debug(`Registering Listener for ${name} event...`);
 
     if (!IOVPlayer.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
@@ -106,10 +120,10 @@ export default class IOVPlayer {
     ];
 
     if (sillyMetrics.includes(name)) {
-      silly(`Triggering ${name} event...`);
+      this.logger.silly(`Triggering ${name} event...`);
     }
     else {
-      debug(`Triggering ${name} event...`);
+      this.logger.debug(`Triggering ${name} event...`);
     }
 
     if (this.destroyed) {
@@ -156,9 +170,41 @@ export default class IOVPlayer {
     });
   }
 
-  _onError (type, message, error) {
-    console.warn(type, ':', message);
-    console.error(error);
+  _onError (
+    type,
+    message,
+    error
+  ) {
+    this.logger.warn(
+      type,
+      ':',
+      message
+    );
+    this.logger.error(error);
+  }
+
+  _html5Play () {
+    // @see - https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play
+    try {
+      const promise = this.videoElement.play();
+
+      if (typeof promise !== 'undefined') {
+        promise.catch((error) => {
+          this._onError(
+            'play.promise',
+            'Error while trying to play clsp video',
+            error
+          );
+        });
+      }
+    }
+    catch (error) {
+      this._onError(
+        'play.notPromise',
+        'Error while trying to play clsp video - the play operation was NOT a promise!',
+        error
+      );
+    }
   }
 
   async reinitializeMseWrapper (mimeCodec) {
@@ -168,22 +214,28 @@ export default class IOVPlayer {
 
     this.mseWrapper = MSEWrapper.factory(this.videoElement);
 
-    this.mseWrapper.on('metric', ({ type, value }) => {
-      this.trigger('metric', { type, value });
+    this.mseWrapper.on('metric', ({
+      type,
+      value,
+    }) => {
+      this.trigger('metric', {
+        type,
+        value,
+      });
     });
 
     this.mseWrapper.initializeMediaSource({
       onSourceOpen: async () => {
-        debug('on mediaSource sourceopen');
+        this.logger.debug('on mediaSource sourceopen');
 
         await this.mseWrapper.initializeSourceBuffer(mimeCodec, {
           onAppendStart: (byteArray) => {
-            silly('On Append Start...');
+            this.logger.silly('On Append Start...');
 
             this.iov.onAppendStart(byteArray);
           },
           onAppendFinish: (info) => {
-            silly('On Append Finish...');
+            this.logger.silly('On Append Finish...');
 
             if (!this.firstFrameShown) {
               this.firstFrameShown = true;
@@ -202,32 +254,13 @@ export default class IOVPlayer {
             }
 
             if (this.videoElement.paused === true) {
-              debug('Video is paused!');
+              this.logger.debug('Video is paused!');
 
-              try {
-                const promise = this.videoElement.play();
-
-                if (typeof promise !== 'undefined') {
-                  promise.catch((error) => {
-                    this._onError(
-                      'videojs.play.promise',
-                      'Error while trying to play videojs player',
-                      error
-                    );
-                  });
-                }
-              }
-              catch (error) {
-                this._onError(
-                  'videojs.play.notPromise',
-                  'Error while trying to play videojs player',
-                  error
-                );
-              }
+              this._html5Play();
             }
           },
           onRemoveFinish: (info) => {
-            debug('onRemoveFinish');
+            this.logger.debug('onRemoveFinish');
           },
           onAppendError: async (error) => {
             // internal error, this has been observed to happen the tab
@@ -258,7 +291,7 @@ export default class IOVPlayer {
             );
           },
           onStreamFrozen: async () => {
-            debug('stream appears to be frozen - reinitializing...');
+            this.logger.debug('stream appears to be frozen - reinitializing...');
 
             await this.reinitializeMseWrapper(mimeCodec);
           },
@@ -279,7 +312,7 @@ export default class IOVPlayer {
         this.mseWrapper.appendMoov(this.moovBox);
       },
       onSourceEnded: async () => {
-        debug('on mediaSource sourceended');
+        this.logger.debug('on mediaSource sourceended');
 
         await this.stop();
       },
@@ -305,7 +338,7 @@ export default class IOVPlayer {
   }
 
   async restart () {
-    debug('restart');
+    this.logger.debug('restart');
 
     await this.stop();
 
@@ -313,6 +346,11 @@ export default class IOVPlayer {
   }
 
   onMoov = async (mimeCodec, moov) => {
+    // @todo - this seems like a hack...
+    if (this.stopped) {
+      return;
+    }
+
     this.moovBox = moov;
 
     // this.trigger('firstChunk');
@@ -326,28 +364,33 @@ export default class IOVPlayer {
   };
 
   onMoof = (mqttMessage) => {
+    // @todo - this seems like a hack...
+    if (this.stopped) {
+      return;
+    }
+
     this.trigger('videoReceived');
     this.getSegmentIntervalMetrics();
     this.mseWrapper.append(mqttMessage.payloadBytes);
   };
 
   async play () {
-    debug('play');
+    this.logger.debug('play');
 
     this.stopped = false;
 
-    await this.iov.play(this.onMoov, this.onMoof);
+    await this.iov._play(this.onMoov, this.onMoof);
   }
 
   stop () {
-    debug('stop...');
+    this.logger.debug('stop...');
 
     this.stopped = true;
     this.moovBox = null;
 
-    this.iov.stop();
+    this.iov._stop();
 
-    debug('stop about to finish synchronous operations and return promise...');
+    this.logger.debug('stop about to finish synchronous operations and return promise...');
 
     // The logic above MUST be run synchronously when called, therefore,
     // we cannot use async to define the stop method, and must return a
@@ -361,12 +404,12 @@ export default class IOVPlayer {
         this.mseWrapper.destroy()
           .then(() => {
             this.mseWrapper = null;
-            debug('stop succeeded asynchronously...');
+            this.logger.debug('stop succeeded asynchronously...');
             resolve();
           })
           .catch((error) => {
             this.mseWrapper = null;
-            debug('stop failed asynchronously...');
+            this.logger.debug('stop failed asynchronously...');
             reject(error);
           });
       }
@@ -405,7 +448,7 @@ export default class IOVPlayer {
   }
 
   _freeAllResources () {
-    debug('_freeAllResources...');
+    this.logger.debug('_freeAllResources...');
 
     // Note you will need to destroy the iov yourself.  The child should
     // probably not destroy the parent
@@ -426,11 +469,11 @@ export default class IOVPlayer {
 
     this.moovBox = null;
 
-    debug('_freeAllResources finished...');
+    this.logger.debug('_freeAllResources finished...');
   }
 
   destroy () {
-    debug('destroy...');
+    this.logger.debug('destroy...');
 
     if (this.destroyed) {
       return;
@@ -444,19 +487,19 @@ export default class IOVPlayer {
     // allows us to properly support client side libraries and frameworks that
     // do not support asynchronous destruction.  See the comments in the destroy
     // method on the MSEWrapper for a more detailed explanation.
-    debug('about to stop...');
+    this.logger.debug('about to stop...');
     this.stop()
       .then(() => {
-        debug('stopped successfully...');
+        this.logger.debug('stopped successfully...');
         this._freeAllResources();
-        debug('destroy successfully finished...');
+        this.logger.debug('destroy successfully finished...');
       })
       .catch((error) => {
-        debug('stopped unsuccessfully...');
-        console.error('Error while destroying the iov player!');
-        console.error(error);
+        this.logger.debug('stopped unsuccessfully...');
+        this.logger.error('Error while destroying the iov player!');
+        this.logger.error(error);
         this._freeAllResources();
-        debug('destroy unsuccessfully finished...');
+        this.logger.debug('destroy unsuccessfully finished...');
       });
 
     // Setting the src of the video element to an empty string is
@@ -466,6 +509,6 @@ export default class IOVPlayer {
     this.videoElement.src = '';
     this.videoElement = null;
 
-    debug('exiting destroy, asynchronous destroy logic in progress...');
+    this.logger.debug('exiting destroy, asynchronous destroy logic in progress...');
   }
 }
