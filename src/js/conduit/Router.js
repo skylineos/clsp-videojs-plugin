@@ -70,13 +70,15 @@ export default function () {
    * that the conduit can identify what client the message is for.
    */
   function Router (
+    iovId,
     clientId,
     ip,
     port,
     useSSL
   ) {
     try {
-      this.logger = window.Logger(window.parent.skyline.clspPlugin.logLevel).factory('Router');
+      this.iovId = iovId;
+      this.logger = window.Logger(window.parent.skyline.clspPlugin.logLevel).factory(`Router ${this.iovId}`);
 
       this.clientId = clientId;
       this.ip = ip;
@@ -507,6 +509,7 @@ export default function () {
     onload: function () {
       try {
         window.router = new Router(
+          window.mqttRouterConfig.iovId,
           window.mqttRouterConfig.clientId,
           window.mqttRouterConfig.ip,
           window.mqttRouterConfig.port,

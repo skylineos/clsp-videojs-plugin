@@ -1,6 +1,7 @@
 'use strict';
 
 import Paho from 'paho-mqtt';
+
 import IOV from './IOV';
 import Logger from '../utils/logger';
 
@@ -11,6 +12,7 @@ window.Paho = {
   MQTT: Paho,
 };
 
+let totalIovCount = 0;
 let collection;
 
 export default class IovCollection {
@@ -81,7 +83,9 @@ export default class IovCollection {
   };
 
   async create (url, videoElement) {
-    const iov = IOV.fromUrl(url, videoElement);
+    const iov = IOV.fromUrl(url, videoElement, {
+      id: ++totalIovCount,
+    });
 
     this.add(iov.id, iov);
 

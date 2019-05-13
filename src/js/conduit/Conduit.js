@@ -14,6 +14,7 @@ import Logger from '../utils/logger';
 
 export default class Conduit {
   static factory (clientId, {
+    iovId,
     wsbroker,
     wsport,
     useSSL,
@@ -21,7 +22,7 @@ export default class Conduit {
     jwt,
   }) {
     return new Conduit(clientId, {
-      clientId,
+      iovId,
       wsbroker,
       wsport,
       useSSL,
@@ -34,13 +35,16 @@ export default class Conduit {
    * @private
    */
   constructor (clientId, {
+    iovId,
     wsbroker,
     wsport,
     useSSL,
     b64_jwt_access_url,
     jwt,
   }) {
-    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory('Conduit');
+    this.iovId = iovId;
+
+    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory(`Conduit ${this.iovId}`);
     this.logger.debug('Constructing...');
 
     this.clientId = clientId;
@@ -72,6 +76,18 @@ export default class Conduit {
 
     return new Promise((resolve, reject) => {
       this._onRouterCreate = (event) => {
+        const clientId = event.data.clientId;
+
+        if (!clientId) {
+          // A window message was received that is not related to CLSP
+          return;
+        }
+
+        if (this.clientId.toString() !== clientId) {
+          // This message was intended for another conduit
+          return;
+        }
+
         const eventType = event.data.event;
 
         // Filter out all other window messages
@@ -109,6 +125,18 @@ export default class Conduit {
 
     return new Promise((resolve, reject) => {
       this._onConnect = (event) => {
+        const clientId = event.data.clientId;
+
+        if (!clientId) {
+          // A window message was received that is not related to CLSP
+          return;
+        }
+
+        if (this.clientId.toString() !== clientId) {
+          // This message was intended for another conduit
+          return;
+        }
+
         const eventType = event.data.event;
 
         // Filter out all other window messages
@@ -583,6 +611,7 @@ export default class Conduit {
 
             // Configure the CLSP properties
             window.mqttRouterConfig = {
+              iovId: '${this.iovId}',
               clientId: '${this.clientId}',
               ip: '${this.wsbroker}',
               port: ${this.wsport},

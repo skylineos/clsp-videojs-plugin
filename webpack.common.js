@@ -143,13 +143,12 @@ function generateClspConfig () {
   };
 }
 
-function generateDemoConfig () {
-  const name = 'demo';
+function generateAdvancedWithVideoJsDemoConfig() {
+  const name = 'advancedWithVideoJs';
   const srcPath = path.resolve(
     __dirname,
     'demo',
-    'src',
-    'js'
+    'advancedWithVideoJs'
   );
 
   const extractSass = generateExtractSassPlugin();
@@ -159,7 +158,7 @@ function generateDemoConfig () {
     entry: {
       // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
       [name]: [
-        path.resolve(srcPath, `${name}.js`),
+        path.resolve(srcPath, 'main.js'),
       ],
     },
     output: {
@@ -174,16 +173,6 @@ function generateDemoConfig () {
     },
     resolve: {
       alias: {
-        '~': path.resolve(
-          __dirname,
-          'src',
-          'js'
-        ),
-        '~styles': path.resolve(
-          __dirname,
-          'src',
-          'styles'
-        ),
         '~root': __dirname,
         'video.js$': path.resolve(
           __dirname,
@@ -200,9 +189,51 @@ function generateDemoConfig () {
   };
 }
 
+function generateAdvancedStandaloneDemoConfig () {
+  const name = 'advancedStandalone';
+  const srcPath = path.resolve(
+    __dirname,
+    'demo',
+    'advancedStandalone'
+  );
+
+  const extractSass = generateExtractSassPlugin();
+
+  return {
+    name,
+    entry: {
+      // @see - https://github.com/webpack-contrib/webpack-serve/issues/27
+      [name]: [
+        path.resolve(srcPath, 'main.js'),
+      ],
+    },
+    output: {
+      filename: '[name].js',
+      path: DESTINATION_PATH,
+    },
+    module: {
+      rules: [
+        generateJsRule(srcPath),
+        ...generateStyleRules(extractSass),
+      ],
+    },
+    resolve: {
+      alias: {
+        '~root': __dirname,
+      },
+    },
+    plugins: [
+      generateProgressBarPlugin(name),
+      extractSass,
+      generateWriteFilePlugin(),
+    ],
+  };
+}
+
 module.exports = function () {
   return [
     generateClspConfig(),
-    generateDemoConfig(),
+    generateAdvancedWithVideoJsDemoConfig(),
+    generateAdvancedStandaloneDemoConfig(),
   ];
 };

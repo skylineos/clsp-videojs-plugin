@@ -1,3 +1,5 @@
+'use strict';
+
 import uuidv4 from 'uuid/v4';
 
 import Conduit from '../conduit/Conduit';
@@ -146,9 +148,9 @@ export default class IOV {
   constructor (videoElement, config) {
     utils.compatibilityCheck();
 
-    this.id = uuidv4();
+    this.id = config.id || uuidv4();
 
-    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory('Iov');
+    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory(`IOV ${this.id}`);
 
     this.logger.debug('Constructing...');
 
@@ -314,7 +316,7 @@ export default class IOV {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
 
-    this.player = IOVPlayer.factory(this, this.videoElement);
+    this.player = IOVPlayer.factory(this, this.videoElement, { id: this.id });
 
     // @todo - this seems to be videojs specific, and should be removed or moved
     // somewhere else
@@ -362,6 +364,7 @@ export default class IOV {
     });
 
     this.conduit = Conduit.factory(this.config.clientId, {
+      iovId: this.id,
       wsbroker: this.config.wsbroker,
       wsport: this.config.wsport,
       useSSL: this.config.useSSL,

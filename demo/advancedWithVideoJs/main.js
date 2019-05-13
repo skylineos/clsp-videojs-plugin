@@ -1,6 +1,6 @@
 'use strict';
 
-import '../styles/demo.scss';
+import './styles.scss';
 
 import '@babel/polyfill';
 
@@ -12,13 +12,6 @@ import 'videojs-errors';
 import { version as videojsErrorsVersion } from 'videojs-errors/package.json';
 
 import packageJson from '~root/package.json';
-
-// import ClspPlugin from '~/plugin/ClspPlugin';
-// import IOV from '~/iov/IOV';
-// import Conduit from '~/iov/Conduit';
-// import IOVPlayer from '~/iov/Player';
-// import MediaSourceWrapper from '~/mse/MediaSourceWrapper';
-// import SourceBufferWrapper from '~/mse/SourceBufferWrapper';
 
 window.videojs = videojs;
 
@@ -177,7 +170,7 @@ function initializeWall () {
           autoplay: true,
           muted: true,
           preload: 'auto',
-          poster: 'skyline_logo.png',
+          poster: '../skyline_logo.png',
           controls: true,
           sources: [
             {
@@ -386,7 +379,7 @@ function initializeTour () {
         autoplay: true,
         muted: true,
         preload: 'auto',
-        poster: 'skyline_logo.png',
+        poster: '../skyline_logo.png',
         controls: true,
         sources,
         clsp: {
@@ -483,5 +476,5 @@ $(() => {
   window.HELP_IMPROVE_VIDEOJS = false;
 
   initializeWall();
-  initializeTour();
+  // initializeTour();
 });
