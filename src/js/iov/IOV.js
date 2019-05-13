@@ -420,6 +420,27 @@ export default class IOV {
     this.conduit.segmentUsed(byteArray);
   }
 
+  enterFullscreen () {
+    if (!document.fullscreenElement) {
+      this.videoElement.requestFullscreen();
+    }
+  }
+
+  exitFullscreen () {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+
+  toggleFullscreen () {
+    if (!document.fullscreenElement) {
+      this.enterFullscreen();
+    }
+    else {
+      this.exitFullscreen();
+    }
+  }
+
   /**
    * Dereference the necessary properties, clear any intervals and timeouts, and
    * remove any listeners.  Will also destroy the player and the conduit.

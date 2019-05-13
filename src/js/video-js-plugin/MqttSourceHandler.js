@@ -16,13 +16,12 @@ export default function () {
         debug('canHandleSource');
 
         if (!srcObj.src) {
-          console.error('srcObj doesn\'t contain src');
-          debug(srcObj);
+          debug("srcObj doesn't contain src");
           return false;
         }
 
         if (!srcObj.src.startsWith('clsp')) {
-          console.error('srcObj.src is not clsp protocol');
+          debug('srcObj.src is not clsp protocol');
           return false;
         }
 
@@ -33,12 +32,28 @@ export default function () {
 
         return obj.canPlayType(srcObj.type);
       },
-      handleSource: function (source, tech, options = {}) {
+      handleSource: function (
+        source,
+        tech,
+        options = {}
+      ) {
         debug('handleSource');
 
-        const localOptions = videojs.mergeOptions(videojs.options, options, { mqtt: { mode } });
+        const localOptions = videojs.mergeOptions(
+          videojs.options,
+          options,
+          {
+            mqtt: {
+              mode,
+            },
+          }
+        );
 
-        tech.mqtt = new MqttHandler(source, tech, localOptions);
+        tech.mqtt = new MqttHandler(
+          source,
+          tech,
+          localOptions
+        );
 
         return tech.mqtt;
       },
@@ -49,6 +64,7 @@ export default function () {
           return 'maybe';
         }
 
+        // eslint-disable-next-line no-console
         console.error(`clsp type='${type}' rejected`);
 
         return '';
