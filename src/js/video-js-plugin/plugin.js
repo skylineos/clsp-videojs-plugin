@@ -156,11 +156,11 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
           const iov = this.getIov();
 
           // @todo - investigate how this can be called when the iov has been destroyed
-          if (!iov || iov.destroyed || !iov.player) {
+          if (!iov || iov.destroyed) {
             await this.initializeIOV(player);
           }
           else {
-            await iov.player.restart();
+            await iov.restart();
           }
         }
       };

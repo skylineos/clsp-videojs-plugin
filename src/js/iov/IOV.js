@@ -15,6 +15,9 @@ export default class IOV {
   static EVENT_NAMES = [
     'metric',
     'unsupportedMimeCodec',
+    'firstFrameShown',
+    'videoReceived',
+    'videoInfoReceived',
   ];
 
   static METRIC_TYPES = [];
@@ -346,6 +349,16 @@ export default class IOV {
       catch (error) {
         this.logger.error(error);
       }
+
+      this.trigger('firstFrameShown');
+    });
+
+    this.player.on('videoReceived', () => {
+      this.trigger('videoReceived');
+    });
+
+    this.player.on('videoInfoReceived', () => {
+      this.trigger('videoInfoReceived');
     });
 
     this.conduit = Conduit.factory(this.config.clientId, {

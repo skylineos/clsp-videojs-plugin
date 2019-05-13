@@ -102,18 +102,18 @@ export default class MqttHandler extends Component {
         this.player.trigger('play', videoTag);
       }
 
-      iov.player.on('firstFrameShown', () => {
+      iov.on('firstFrameShown', () => {
         this.player.trigger('firstFrameShown');
 
         videoTag.style.display = 'none';
       });
 
-      iov.player.on('videoReceived', () => {
+      iov.on('videoReceived', () => {
         // reset the timeout monitor from videojs-errors
         this.player.trigger('timeupdate');
       });
 
-      iov.player.on('videoInfoReceived', () => {
+      iov.on('videoInfoReceived', () => {
         // reset the timeout monitor from videojs-errors
         this.player.trigger('timeupdate');
       });
