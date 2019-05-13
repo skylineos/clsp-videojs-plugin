@@ -13,7 +13,8 @@
         box-sizing: border-box;
       }
 
-      html, body {
+      html,
+      body {
         background-color: black;
         width: 100%;
         height: 100%;
@@ -28,8 +29,11 @@
         justify-content: center;
       }
 
-      video {
+      .video-container {
         margin: 0 auto;
+        border: solid 2px white;
+        padding: 1rem;
+        border-radius: 1rem;
       }
 
       .controls {
@@ -44,13 +48,14 @@
         font-size: 1.5rem;
       }
     </style>
-  <head>
+  </head>
   <body>
-    <video
-      id="my-video"
-      controls
-      muted
-    ></video>
+    <div class="video-container">
+      <video
+        id="my-video"
+        muted
+      ></video>
+    </div>
     <div class="controls">
       <button onclick="onPlay()">Play</button>
       <button onclick="onStop()">Stop</button>
@@ -60,7 +65,7 @@
     <script src="../dist/iovPlayer.min.js"></script>
 
     <script>
-      var url = 'clsp://172.28.12.57:9001/FairfaxVideo0520';
+      var url = 'clsp://172.28.12.57/FairfaxVideo0520';
       var element = document.getElementById('my-video');
 
       var iovCollection = window.IovCollection.asSingleton();
@@ -78,7 +83,7 @@
           return;
         }
 
-        iov.play();
+        window.iov.play();
       }
 
       function onStop () {
@@ -86,7 +91,7 @@
           return;
         }
 
-        iov.stop();
+        window.iov.stop();
       }
 
       function onFullscreen () {
@@ -94,7 +99,7 @@
           return;
         }
 
-        iov.toggleFullscreen();
+        window.iov.toggleFullscreen();
       }
     </script>
   </body>

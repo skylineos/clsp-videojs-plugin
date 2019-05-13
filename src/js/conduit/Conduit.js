@@ -438,6 +438,11 @@ export default class Conduit {
         this.disconnect();
         break;
       }
+      case 'router_created':
+      case 'connect_success':
+      case 'disconnect_success': {
+        break;
+      }
       default: {
         this.logger.error(`No match for event: ${eventType}`);
       }

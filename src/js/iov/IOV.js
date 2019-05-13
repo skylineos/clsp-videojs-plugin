@@ -387,6 +387,11 @@ export default class IOV {
     await this.player.stop();
   }
 
+  async restart () {
+    await this.stop();
+    await this.play();
+  }
+
   async _play (onMoov, onMoof) {
     if (this.player.stopped) {
       return;

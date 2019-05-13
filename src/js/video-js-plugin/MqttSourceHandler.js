@@ -1,32 +1,35 @@
-import Debug from 'debug';
+'use strict';
+
+// This is configured as an external library by webpack, so the caller must
+// provide videojs on `window`
 import videojs from 'video.js';
 
+import Logger from '../utils/logger';
 import MqttHandler from './MqttHandler';
 import utils from '../utils';
 
-const DEBUG_PREFIX = 'skyline:clsp';
 const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
 export default function () {
-  const debug = Debug(`${DEBUG_PREFIX}:MqttSourceHandler`);
+  const logger = Logger(window.skyline.clspPlugin.logLevel).factory('MqttSourceHandler');
 
   return function (mode) {
     const obj = {
       canHandleSource: function (srcObj, options = {}) {
-        debug('canHandleSource');
+        logger.debug('canHandleSource');
 
         if (!srcObj.src) {
-          debug("srcObj doesn't contain src");
+          logger.debug("srcObj doesn't contain src");
           return false;
         }
 
         if (!srcObj.src.startsWith('clsp')) {
-          debug('srcObj.src is not clsp protocol');
+          logger.debug('srcObj.src is not clsp protocol');
           return false;
         }
 
         if (!utils.supported()) {
-          debug('Browser not supported. Chrome 52+ is required.');
+          logger.debug('Browser not supported. Chrome 52+ is required.');
           return false;
         }
 
@@ -37,7 +40,7 @@ export default function () {
         tech,
         options = {}
       ) {
-        debug('handleSource');
+        logger.debug('handleSource');
 
         const localOptions = videojs.mergeOptions(
           videojs.options,
@@ -58,7 +61,7 @@ export default function () {
         return tech.mqtt;
       },
       canPlayType: function (type) {
-        debug('canPlayType');
+        logger.debug('canPlayType');
 
         if (type === SUPPORTED_MIME_TYPE) {
           return 'maybe';

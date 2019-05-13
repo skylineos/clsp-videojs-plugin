@@ -340,9 +340,8 @@ export default class IOVPlayer {
   async restart () {
     this.logger.debug('restart');
 
-    await this.stop();
-
-    this.play();
+    await this.iov.stop();
+    await this.iov.play();
   }
 
   onMoov = async (mimeCodec, moov) => {
@@ -409,11 +408,12 @@ export default class IOVPlayer {
           })
           .catch((error) => {
             this.mseWrapper = null;
-            this.logger.debug('stop failed asynchronously...');
+            this.logger.error('stop failed asynchronously...');
             reject(error);
           });
       }
       else {
+        this.logger.debug('stop succeeded asynchronously...');
         resolve();
       }
     });

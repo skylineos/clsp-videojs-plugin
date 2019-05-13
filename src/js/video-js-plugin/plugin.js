@@ -1,7 +1,5 @@
 'use strict';
 
-import Debug from 'debug';
-
 // This is configured as an external library by webpack, so the caller must
 // provide videojs on `window`
 import videojs from 'video.js';
@@ -16,7 +14,7 @@ const Plugin = videojs.getPlugin('plugin');
 const VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN = 1;
 const VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MAX = 20;
 
-const logger = Logger(window.skyline.clspPlugin.logLevel).factory();
+const logger = Logger(window.skyline.clspPlugin.logLevel).factory('clsp-videojs-plugin');
 
 export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   static VERSION = utils.version;
@@ -62,8 +60,6 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   constructor (player, options) {
     super(player, options);
 
-    this.debug = Debug('skyline:clsp:plugin:ClspPlugin');
-    this.debug('constructing...');
     logger.debug('creating plugin instance');
 
     const playerOptions = player.options_;
@@ -157,11 +153,11 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
           this.resetErrors(player);
 
-          const iov = player.tech(true).mqtt.iov;
+          const iov = this.getIov();
 
           // @todo - investigate how this can be called when the iov has been destroyed
           if (!iov || iov.destroyed || !iov.player) {
-            this.initializeIOV(player);
+            await this.initializeIOV(player);
           }
           else {
             await iov.player.restart();
@@ -188,21 +184,31 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       }
     });
 
-    // @todo - we are currently creating the IOV for this player on `firstplay`
-    // but we could do it on the `ready` event.  However, in order to support
-    // this, we need to make the IOV and its player able to be instantiated
-    // without automatically playing AND without automatically listening via
-    // a conduit
-    player.on('firstplay', (event) => {
-      this.debug('on player firstplay');
+    player.on('play', async () => {
+      logger.debug('on player play event');
 
-      this.initializeIOV(player);
+      // @todo - it is probably unnecessary to have to completely tear down the
+      // existing iov and create a new one.  But for now, this works
+      await this.initializeIOV(player);
+
+      // @todo - this hides it permanently.  it should be re-enabled when the
+      // player stops or pauses.  This will likely involve using some videojs
+      // classes rather than using the .hide method
+      this.player.loadingSpinner.hide();
+    });
+
+    // the "pause" event gets triggered for some reason in scenarios where I do
+    // not expect it to be triggered.  Therefore, we will create our own "stop"
+    // event to be able to better control the player to stop.
+    player.on('stop', () => {
+      this.player.pause();
+      this.getIov().stop();
     });
 
     player.on('dispose', () => {
       // @todo - destroy the tech, since it is a player-specific instance
       try {
-        player.tech(true).mqtt.iov.destroy();
+        this.getIov().destroy();
       }
       catch (error) {
         // @todo - need to improve iov destroy logic...
@@ -271,8 +277,16 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     }
   }
 
+  getMqttHandler () {
+    return this.player.tech(true).mqtt;
+  }
+
+  getIov () {
+    return this.getMqttHandler().iov;
+  }
+
   onMqttHandlerError = () => {
-    const mqttHandler = this.player.tech(true).mqtt;
+    const mqttHandler = this.getMqttHandler();
 
     mqttHandler.destroy();
 
@@ -285,8 +299,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     });
   };
 
-  initializeIOV (player) {
-    const mqttHandler = player.tech(true).mqtt;
+  async initializeIOV (player) {
+    const mqttHandler = this.getMqttHandler();
 
     if (!mqttHandler) {
       throw new Error(`VideoJS Player ${player.id()} does not have mqtt tech!`);
@@ -295,17 +309,19 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     mqttHandler.off('error', this.onMqttHandlerError);
     mqttHandler.on('error', this.onMqttHandlerError);
 
-    mqttHandler.createIOV(player, {
+    await mqttHandler.createIOV(player, {
       enableMetrics: this.options.enableMetrics,
       defaultNonSslPort: this.options.defaultNonSslPort,
       defaultSslPort: this.options.defaultSslPort,
     });
+
+    await this.getIov().restart();
   }
 
   destroy () {
-    this.debug('destroying...');
+    logger.debug('destroying...');
 
-    const mqttHandler = this.player.tech(true).mqtt;
+    const mqttHandler = this.getMqttHandler();
 
     mqttHandler.off('error', this.onMqttHandlerError);
 
@@ -319,6 +335,5 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
     this._playerOptions = null;
     this.currentSourceIndex = null;
-    this.debug = null;
   }
 };
