@@ -16,7 +16,7 @@ export default class MqttHandler extends Component {
   constructor (source, tech, options) {
     super(tech, options.mqtt);
 
-    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory('MqttHandler');
+    this.logger = Logger().factory('MqttHandler');
 
     this.logger.debug('constructor');
 

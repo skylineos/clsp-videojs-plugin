@@ -14,7 +14,7 @@ const Plugin = videojs.getPlugin('plugin');
 const VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN = 1;
 const VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MAX = 20;
 
-const logger = Logger(window.skyline.clspPlugin.logLevel).factory('clsp-videojs-plugin');
+const logger = Logger().factory('clsp-videojs-plugin');
 
 export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   static VERSION = utils.version;

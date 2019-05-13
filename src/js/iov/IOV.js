@@ -150,7 +150,7 @@ export default class IOV {
 
     this.id = config.id || uuidv4();
 
-    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory(`IOV ${this.id}`);
+    this.logger = Logger().factory(`IOV ${this.id}`);
 
     this.logger.debug('Constructing...');
 

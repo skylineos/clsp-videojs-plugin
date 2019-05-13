@@ -37,7 +37,7 @@ export default class IovCollection {
    * for segments using the same clientId.
    */
   constructor () {
-    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory('IovCollection');
+    this.logger = Logger().factory('IovCollection');
     this.logger.debug('Constructing...');
 
     this.iovs = {};

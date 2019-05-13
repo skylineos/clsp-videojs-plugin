@@ -8,6 +8,17 @@
 
 export default function (logLevel) {
   function Logger (prefix) {
+    if (logLevel === undefined) {
+      // The logLevel may be set in localstorage
+      // e.g. localStorage.setItem('skyline.clspPlugin.logLevel', 3), then refresh
+      logLevel = isNaN(Number(window.localStorage.getItem('skyline.clspPlugin.logLevel'))) ?
+        1 :
+        Number(window.localStorage.getItem('skyline.clspPlugin.logLevel'));
+
+      window.localStorage.setItem('skyline.clspPlugin.logLevel', logLevel);
+    }
+
+    this.logLevel = logLevel;
     this.prefix = prefix;
   }
 
@@ -24,25 +35,25 @@ export default function (logLevel) {
   };
 
   Logger.prototype.silly = function (message) {
-    if (logLevel >= 4) {
+    if (this.logLevel >= 4) {
       console.log(this._constructMessage('silly', message));
     }
   };
 
   Logger.prototype.debug = function (message) {
-    if (logLevel >= 3) {
+    if (this.logLevel >= 3) {
       console.log(this._constructMessage('debug', message));
     }
   };
 
   Logger.prototype.info = function (message) {
-    if (logLevel >= 2) {
+    if (this.logLevel >= 2) {
       console.log(this._constructMessage('info', message));
     }
   };
 
   Logger.prototype.warn = function (message) {
-    if (logLevel >= 1) {
+    if (this.logLevel >= 1) {
       console.warn(this._constructMessage('warn', message));
     }
   };

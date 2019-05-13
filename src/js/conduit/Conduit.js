@@ -44,7 +44,7 @@ export default class Conduit {
   }) {
     this.iovId = iovId;
 
-    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory(`Conduit ${this.iovId}`);
+    this.logger = Logger().factory(`Conduit ${this.iovId}`);
     this.logger.debug('Constructing...');
 
     this.clientId = clientId;

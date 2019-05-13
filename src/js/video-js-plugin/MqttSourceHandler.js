@@ -11,7 +11,7 @@ import utils from '../utils';
 const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
 export default function () {
-  const logger = Logger(window.skyline.clspPlugin.logLevel).factory('MqttSourceHandler');
+  const logger = Logger().factory('MqttSourceHandler');
 
   return function (mode) {
     const obj = {

@@ -78,7 +78,7 @@ export default function () {
   ) {
     try {
       this.iovId = iovId;
-      this.logger = window.Logger(window.parent.skyline.clspPlugin.logLevel).factory(`Router ${this.iovId}`);
+      this.logger = window.Logger().factory(`Router ${this.iovId}`);
 
       this.clientId = clientId;
       this.ip = ip;

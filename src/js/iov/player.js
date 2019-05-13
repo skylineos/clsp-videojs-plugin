@@ -54,7 +54,7 @@ export default class IOVPlayer {
     videoElement,
     options
   ) {
-    this.logger = Logger(window.skyline.clspPlugin.logLevel).factory(`IOV Player ${iov.id}`);
+    this.logger = Logger().factory(`IOV Player ${iov.id}`);
 
     this.logger.debug('constructor');
 
