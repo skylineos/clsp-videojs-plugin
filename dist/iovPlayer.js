@@ -5384,7 +5384,7 @@ module.exports = function(module) {
 /*! exports provided: name, title, version, description, main, keywords, author, license, generator-videojs-plugin, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.0-1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.0-2","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -5461,7 +5461,7 @@ function () {
     _classCallCheck(this, Conduit);
 
     this.iovId = iovId;
-    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"])(window.skyline.clspPlugin.logLevel).factory("Conduit ".concat(this.iovId));
+    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"])().factory("Conduit ".concat(this.iovId));
     this.logger.debug('Constructing...');
     this.clientId = clientId;
     this.wsbroker = wsbroker;
@@ -6250,7 +6250,7 @@ __webpack_require__.r(__webpack_exports__);
   function Router(iovId, clientId, ip, port, useSSL) {
     try {
       this.iovId = iovId;
-      this.logger = window.Logger(window.parent.skyline.clspPlugin.logLevel).factory("Router ".concat(this.iovId));
+      this.logger = window.Logger().factory("Router ".concat(this.iovId));
       this.clientId = clientId;
       this.ip = ip;
       this.port = port;
@@ -6952,7 +6952,7 @@ function () {
 
     _utils__WEBPACK_IMPORTED_MODULE_4__["default"].compatibilityCheck();
     this.id = config.id || uuid_v4__WEBPACK_IMPORTED_MODULE_0___default()();
-    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_5__["default"])(window.skyline.clspPlugin.logLevel).factory("IOV ".concat(this.id));
+    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_5__["default"])().factory("IOV ".concat(this.id));
     this.logger.debug('Constructing...');
     this.metrics = {}; // @todo - there must be a more proper way to do events than this...
 
@@ -8270,7 +8270,7 @@ function () {
       _this.get(clientId).conduit.onMessage(event);
     });
 
-    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_2__["default"])(window.skyline.clspPlugin.logLevel).factory('IovCollection');
+    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_2__["default"])().factory('IovCollection');
     this.logger.debug('Constructing...');
     this.iovs = {};
     window.addEventListener('message', this._onWindowMessage);
@@ -8380,16 +8380,13 @@ function () {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! srcdoc-polyfill */ "./node_modules/srcdoc-polyfill/srcdoc-polyfill.js");
 /* harmony import */ var srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(srcdoc_polyfill__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _utils_bootstrap__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils/bootstrap */ "./src/js/utils/bootstrap.js");
-/* harmony import */ var _utils_bootstrap__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_utils_bootstrap__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _collection__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./collection */ "./src/js/iov/collection.js");
+/* harmony import */ var _collection__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./collection */ "./src/js/iov/collection.js");
 
 
 
 
-
-window.IovCollection = _collection__WEBPACK_IMPORTED_MODULE_2__["default"];
-/* harmony default export */ __webpack_exports__["default"] = (_collection__WEBPACK_IMPORTED_MODULE_2__["default"]);
+window.IovCollection = _collection__WEBPACK_IMPORTED_MODULE_1__["default"];
+/* harmony default export */ __webpack_exports__["default"] = (_collection__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 /***/ }),
 
@@ -8510,7 +8507,7 @@ function () {
       _this.mseWrapper.append(mqttMessage.payloadBytes);
     });
 
-    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])(window.skyline.clspPlugin.logLevel).factory("IOV Player ".concat(iov.id));
+    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().factory("IOV Player ".concat(iov.id));
     this.logger.debug('constructor');
     this.metrics = {}; // @todo - there must be a more proper way to do events than this...
 
@@ -9107,45 +9104,6 @@ _defineProperty(IOVPlayer, "DRIFT_CORRECTION_CONSTANT", 2);
 
 /***/ }),
 
-/***/ "./src/js/utils/bootstrap.js":
-/*!***********************************!*\
-  !*** ./src/js/utils/bootstrap.js ***!
-  \***********************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var areGlobalsRegistered = false;
-
-function registerGlobals() {
-  if (areGlobalsRegistered) {
-    return;
-  } // The logLevel may be set in localstorage
-  // e.g. localStorage.setItem('skyline.clspPlugin.logLevel', 3), then refresh
-
-
-  var logLevel = isNaN(Number(window.localStorage.getItem('skyline.clspPlugin.logLevel'))) ? 1 : Number(window.localStorage.getItem('skyline.clspPlugin.logLevel'));
-  window.localStorage.setItem('skyline.clspPlugin.logLevel', logLevel); // @todo - use proper state management
-  // Namespace our globals, and allow for the fact that another application may
-  // be using our top level namespace
-
-  if (!window.skyline) {
-    window.skyline = {};
-  } // We will also set the value on the window so that other parts of the plugin
-  // do not need to access localstorage.
-
-
-  window.skyline.clspPlugin = {
-    logLevel: logLevel
-  };
-}
-
-registerGlobals();
-
-/***/ }),
-
 /***/ "./src/js/utils/index.js":
 /*!*******************************!*\
   !*** ./src/js/utils/index.js ***!
@@ -9186,6 +9144,14 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = (function (logLevel) {
   function Logger(prefix) {
+    if (logLevel === undefined) {
+      // The logLevel may be set in localstorage
+      // e.g. localStorage.setItem('skyline.clspPlugin.logLevel', 3), then refresh
+      logLevel = isNaN(Number(window.localStorage.getItem('skyline.clspPlugin.logLevel'))) ? 1 : Number(window.localStorage.getItem('skyline.clspPlugin.logLevel'));
+      window.localStorage.setItem('skyline.clspPlugin.logLevel', logLevel);
+    }
+
+    this.logLevel = logLevel;
     this.prefix = prefix;
   }
 
@@ -9202,25 +9168,25 @@ __webpack_require__.r(__webpack_exports__);
   };
 
   Logger.prototype.silly = function (message) {
-    if (logLevel >= 4) {
+    if (this.logLevel >= 4) {
       console.log(this._constructMessage('silly', message));
     }
   };
 
   Logger.prototype.debug = function (message) {
-    if (logLevel >= 3) {
+    if (this.logLevel >= 3) {
       console.log(this._constructMessage('debug', message));
     }
   };
 
   Logger.prototype.info = function (message) {
-    if (logLevel >= 2) {
+    if (this.logLevel >= 2) {
       console.log(this._constructMessage('info', message));
     }
   };
 
   Logger.prototype.warn = function (message) {
-    if (logLevel >= 1) {
+    if (this.logLevel >= 1) {
       console.warn(this._constructMessage('warn', message));
     }
   };
@@ -9262,7 +9228,7 @@ var MINIMUM_CHROME_VERSION = 52; // @todo - this mime type, though used in the v
 // video/mp4; codecs="avc1.42E00D"
 
 var SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
-var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"])(window.skyline.clspPlugin.logLevel).factory();
+var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"])().factory();
 
 function browserIsCompatable() {
   var isChrome = Boolean(window.chrome);
