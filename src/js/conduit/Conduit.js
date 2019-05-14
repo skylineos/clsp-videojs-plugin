@@ -655,10 +655,17 @@ export default class Conduit {
   _command (message) {
     this.logger.debug('Sending a message to the iframe...');
 
-    // @todo - we should not be dispatching to '*' - we should provide the SFS
-    // host here instead
-    // @see - https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-    this.iframe.contentWindow.postMessage(message, '*');
+    try {
+      // @todo - we should not be dispatching to '*' - we should provide the SFS
+      // host here instead
+      // @see - https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+      this.iframe.contentWindow.postMessage(message, '*');
+    }
+    catch (error) {
+      // @todo - we should probably throw here...
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
   }
 
   /**
