@@ -74,13 +74,13 @@ export default class Conduit {
       this._onRouterCreate = (event) => {
         const clientId = event.data.clientId;
 
+        // A window message was received that is not related to CLSP
         if (!clientId) {
-          // A window message was received that is not related to CLSP
           return;
         }
 
-        if (this.clientId.toString() !== clientId) {
-          // This message was intended for another conduit
+        // This message was intended for another conduit
+        if (this.clientId !== clientId) {
           return;
         }
 
@@ -93,16 +93,15 @@ export default class Conduit {
 
         this.logger.debug(`Message received for "${eventType}" event`);
 
-        if (eventType === 'router_created') {
-          resolve();
-        }
-
-        if (eventType === 'router_create_failure') {
-          reject(event.data.reason);
-        }
-
+        // Whether success or failure, remove the event listener
         window.removeEventListener('message', this._onRouterCreate);
         this._onRouterCreate = null;
+
+        if (eventType === 'router_create_failure') {
+          return reject(event.data.reason);
+        }
+
+        resolve();
       };
 
       window.addEventListener('message', this._onRouterCreate);
@@ -123,13 +122,13 @@ export default class Conduit {
       this._onConnect = (event) => {
         const clientId = event.data.clientId;
 
+        // A window message was received that is not related to CLSP
         if (!clientId) {
-          // A window message was received that is not related to CLSP
           return;
         }
 
-        if (this.clientId.toString() !== clientId) {
-          // This message was intended for another conduit
+        // This message was intended for another conduit
+        if (this.clientId !== clientId) {
           return;
         }
 
@@ -142,17 +141,9 @@ export default class Conduit {
 
         this.logger.debug(`Message received for "${eventType}" event`);
 
-        if (eventType === 'connect_success') {
-          // the mse service will stop streaming to us if we don't send
-          // a message to iov/stats within 1 minute.
-          this._statsTimer = setInterval(() => {
-            this._publishStats();
-          }, 5000);
-
-          this.connected = true;
-
-          resolve();
-        }
+        // Whether success or failure, remove the event listener
+        window.removeEventListener('message', this._onConnect);
+        this._onConnect = null;
 
         if (eventType === 'connect_failure') {
           this.logger.error(new Error(event.data.reason));
@@ -160,11 +151,19 @@ export default class Conduit {
           this._reconnect()
             .then(resolve)
             .catch(reject);
+
+          return;
         }
 
-        // When we're done with success or failure, remove the event listener
-        window.removeEventListener('message', this._onConnect);
-        this._onConnect = null;
+        // the mse service will stop streaming to us if we don't send
+        // a message to iov/stats within 1 minute.
+        this._statsTimer = setInterval(() => {
+          this._publishStats();
+        }, 5000);
+
+        this.connected = true;
+
+        resolve();
       };
 
       window.addEventListener('message', this._onConnect);

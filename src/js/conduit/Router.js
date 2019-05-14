@@ -156,7 +156,21 @@ export default function () {
       }
     }
 
-    window.parent.postMessage(message, '*');
+    try {
+      window.parent.postMessage(message, '*');
+    }
+    catch (error) {
+      // When the connection to the SFS fails, and the conduit is destroyed,
+      // there is still a message that is attempted to be sent to the parent.
+      // In this case, the only way this "orphaned" iframe object can
+      // communicate with the console is by throwing an error.  Therefore, it is
+      // difficult to debug and I do not know what the final message is.  Having
+      // the error written to the console here will still allow errors under
+      // "normal" operations to be written to the console, but will suppress the
+      // final unwanted error.
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
   };
 
   /**
