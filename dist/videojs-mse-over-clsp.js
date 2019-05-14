@@ -5384,7 +5384,7 @@ module.exports = function(module) {
 /*! exports provided: name, title, version, description, main, keywords, author, license, generator-videojs-plugin, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.0-2","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.0-3","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -5429,14 +5429,12 @@ function () {
   _createClass(Conduit, null, [{
     key: "factory",
     value: function factory(clientId, _ref) {
-      var iovId = _ref.iovId,
-          wsbroker = _ref.wsbroker,
+      var wsbroker = _ref.wsbroker,
           wsport = _ref.wsport,
           useSSL = _ref.useSSL,
           b64_jwt_access_url = _ref.b64_jwt_access_url,
           jwt = _ref.jwt;
       return new Conduit(clientId, {
-        iovId: iovId,
         wsbroker: wsbroker,
         wsport: wsport,
         useSSL: useSSL,
@@ -5451,8 +5449,7 @@ function () {
   }]);
 
   function Conduit(clientId, _ref2) {
-    var iovId = _ref2.iovId,
-        wsbroker = _ref2.wsbroker,
+    var wsbroker = _ref2.wsbroker,
         wsport = _ref2.wsport,
         useSSL = _ref2.useSSL,
         b64_jwt_access_url = _ref2.b64_jwt_access_url,
@@ -5460,10 +5457,9 @@ function () {
 
     _classCallCheck(this, Conduit);
 
-    this.iovId = iovId;
-    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"])().factory("Conduit ".concat(this.iovId));
-    this.logger.debug('Constructing...');
     this.clientId = clientId;
+    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"])().factory("Conduit ".concat(this.clientId));
+    this.logger.debug('Constructing...');
     this.wsbroker = wsbroker;
     this.wsport = wsport;
     this.useSSL = useSSL;
@@ -6074,7 +6070,7 @@ function () {
       iframe.width = 0;
       iframe.height = 0;
       iframe.setAttribute('style', 'display:none;');
-      iframe.srcdoc = "\n      <html>\n        <head>\n          <script type=\"text/javascript\">\n            // Include the logger\n            window.Logger = ".concat(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"].toString(), ";\n\n            // Configure the CLSP properties\n            window.mqttRouterConfig = {\n              iovId: '").concat(this.iovId, "',\n              clientId: '").concat(this.clientId, "',\n              ip: '").concat(this.wsbroker, "',\n              port: ").concat(this.wsport, ",\n              useSSL: ").concat(this.useSSL, ",\n            };\n\n            window.iframeEventHandlers = ").concat(_Router__WEBPACK_IMPORTED_MODULE_0__["default"].toString(), "();\n          </script>\n        </head>\n        <body\n          onload=\"window.iframeEventHandlers.onload();\"\n          onunload=\"window.iframeEventHandlers.onunload();\"\n        >\n          <div id=\"message\"></div>\n        </body>\n      </html>\n    ");
+      iframe.srcdoc = "\n      <html>\n        <head>\n          <script type=\"text/javascript\">\n            // Include the logger\n            window.Logger = ".concat(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"].toString(), ";\n\n            // Configure the CLSP properties\n            window.mqttRouterConfig = {\n              clientId: '").concat(this.clientId, "',\n              ip: '").concat(this.wsbroker, "',\n              port: ").concat(this.wsport, ",\n              useSSL: ").concat(this.useSSL, ",\n            };\n\n            window.iframeEventHandlers = ").concat(_Router__WEBPACK_IMPORTED_MODULE_0__["default"].toString(), "();\n          </script>\n        </head>\n        <body\n          onload=\"window.iframeEventHandlers.onload();\"\n          onunload=\"window.iframeEventHandlers.onunload();\"\n        >\n          <div id=\"message\"></div>\n        </body>\n      </html>\n    ");
       return iframe;
     }
   }, {
@@ -6247,11 +6243,10 @@ __webpack_require__.r(__webpack_exports__);
    * that the conduit can identify what client the message is for.
    */
 
-  function Router(iovId, clientId, ip, port, useSSL) {
+  function Router(clientId, ip, port, useSSL) {
     try {
-      this.iovId = iovId;
-      this.logger = window.Logger().factory("Router ".concat(this.iovId));
       this.clientId = clientId;
+      this.logger = window.Logger().factory("Router ".concat(this.clientId));
       this.ip = ip;
       this.port = port;
       this.useSSL = useSSL;
@@ -6689,7 +6684,7 @@ __webpack_require__.r(__webpack_exports__);
   return {
     onload: function onload() {
       try {
-        window.router = new Router(window.mqttRouterConfig.iovId, window.mqttRouterConfig.clientId, window.mqttRouterConfig.ip, window.mqttRouterConfig.port, window.mqttRouterConfig.useSSL);
+        window.router = new Router(window.mqttRouterConfig.clientId, window.mqttRouterConfig.ip, window.mqttRouterConfig.port, window.mqttRouterConfig.useSSL);
 
         window.router._sendToParent({
           event: 'router_created'
@@ -7120,7 +7115,6 @@ function () {
                   _this2.trigger('videoInfoReceived');
                 });
                 this.conduit = _conduit_Conduit__WEBPACK_IMPORTED_MODULE_1__["default"].factory(this.config.clientId, {
-                  iovId: this.id,
                   wsbroker: this.config.wsbroker,
                   wsport: this.config.wsport,
                   useSSL: this.config.useSSL,
@@ -8254,6 +8248,13 @@ function () {
         // corresponding event?
         if (event.data.event === 'fail') {
           return;
+        } // Don't show an error for iovs that have been deleted
+
+
+        if (_this.deletedIovIds.includes(clientId)) {
+          _this.logger.warn("Received a message for deleted iov ".concat(clientId));
+
+          return;
         }
 
         throw new Error("Unable to route message for IOV with clientId \"".concat(clientId, "\".  An IOV for that clientId does not exist."));
@@ -8273,6 +8274,7 @@ function () {
     this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_2__["default"])().factory('IovCollection');
     this.logger.debug('Constructing...');
     this.iovs = {};
+    this.deletedIovIds = [];
     window.addEventListener('message', this._onWindowMessage);
   }
   /**
@@ -8292,7 +8294,7 @@ function () {
             switch (_context.prev = _context.next) {
               case 0:
                 iov = _IOV__WEBPACK_IMPORTED_MODULE_1__["default"].fromUrl(url, videoElement, {
-                  id: ++totalIovCount
+                  id: (++totalIovCount).toString()
                 });
                 this.add(iov.id, iov);
                 _context.next = 4;
@@ -8342,6 +8344,7 @@ function () {
 
       iov.destroy();
       delete this.iovs[id];
+      this.deletedIovIds.push(id);
       return this;
     }
   }, {
@@ -9535,6 +9538,7 @@ function (_Component) {
         this.player.off('changesrc', this.onChangeSource);
       }
 
+      _iov_collection__WEBPACK_IMPORTED_MODULE_2__["default"].asSingleton().remove(this.iov.id);
       this.iov = null;
       this.player = null;
     }
@@ -10002,7 +10006,7 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
       player.on('dispose', function () {
         // @todo - destroy the tech, since it is a player-specific instance
         try {
-          _this.getIov().destroy();
+          _this.getMqttHandler(player).destroy();
         } catch (error) {
           // @todo - need to improve iov destroy logic...
           console.error('Error while destroying clsp plugin instance!');
@@ -10048,7 +10052,8 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
     }, {
       key: "getMqttHandler",
       value: function getMqttHandler() {
-        return this.player.tech(true).mqtt;
+        var player = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.player;
+        return player.tech(true).mqtt;
       }
     }, {
       key: "getIov",
