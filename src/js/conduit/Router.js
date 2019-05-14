@@ -70,17 +70,16 @@ export default function () {
    * that the conduit can identify what client the message is for.
    */
   function Router (
-    iovId,
     clientId,
     ip,
     port,
     useSSL
   ) {
     try {
-      this.iovId = iovId;
-      this.logger = window.Logger().factory(`Router ${this.iovId}`);
-
       this.clientId = clientId;
+
+      this.logger = window.Logger().factory(`Router ${this.clientId}`);
+
       this.ip = ip;
       this.port = port;
       this.useSSL = useSSL;
@@ -509,7 +508,6 @@ export default function () {
     onload: function () {
       try {
         window.router = new Router(
-          window.mqttRouterConfig.iovId,
           window.mqttRouterConfig.clientId,
           window.mqttRouterConfig.ip,
           window.mqttRouterConfig.port,

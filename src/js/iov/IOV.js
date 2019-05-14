@@ -364,7 +364,6 @@ export default class IOV {
     });
 
     this.conduit = Conduit.factory(this.config.clientId, {
-      iovId: this.id,
       wsbroker: this.config.wsbroker,
       wsport: this.config.wsport,
       useSSL: this.config.useSSL,

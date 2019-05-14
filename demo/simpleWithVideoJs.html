@@ -110,6 +110,7 @@
       <button onclick="onPlay()" title="play"><i class="fas fa-play"></i></button>
       <button onclick="onStop()" title="stop"><i class="fas fa-stop"></i></button>
       <button onclick="onFullscreen()" title="fullscreen"><i class="fas fa-expand"></i></button>
+      <button onclick="onDestroy()" title="destroy"><i class="fas fa-bomb"></i></button>
     </div>
 
     <script src="../dist/videojs-mse-over-clsp.min.js"></script>
@@ -156,6 +157,15 @@
         }
 
         player.requestFullscreen();
+      }
+
+      function onDestroy() {
+        if (!player) {
+          return;
+        }
+
+        player.dispose();
+        player = null;
       }
     </script>
   </body>

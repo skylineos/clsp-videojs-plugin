@@ -41,6 +41,7 @@ export default class IovCollection {
     this.logger.debug('Constructing...');
 
     this.iovs = {};
+    this.deletedIovIds = [];
 
     window.addEventListener('message', this._onWindowMessage);
   }
@@ -68,6 +69,12 @@ export default class IovCollection {
         return;
       }
 
+      // Don't show an error for iovs that have been deleted
+      if (this.deletedIovIds.includes(clientId)) {
+        this.logger.warn(`Received a message for deleted iov ${clientId}`);
+        return;
+      }
+
       throw new Error(`Unable to route message for IOV with clientId "${clientId}".  An IOV for that clientId does not exist.`);
     }
 
@@ -84,7 +91,7 @@ export default class IovCollection {
 
   async create (url, videoElement) {
     const iov = IOV.fromUrl(url, videoElement, {
-      id: ++totalIovCount,
+      id: (++totalIovCount).toString(),
     });
 
     this.add(iov.id, iov);
@@ -118,6 +125,8 @@ export default class IovCollection {
     iov.destroy();
 
     delete this.iovs[id];
+
+    this.deletedIovIds.push(id);
 
     return this;
   }

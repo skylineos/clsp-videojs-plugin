@@ -167,6 +167,8 @@ export default class MqttHandler extends Component {
       this.player.off('changesrc', this.onChangeSource);
     }
 
+    IovCollection.asSingleton().remove(this.iov.id);
+
     this.iov = null;
     this.player = null;
   }

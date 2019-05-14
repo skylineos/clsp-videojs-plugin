@@ -71,10 +71,6 @@ function initializeWall () {
     $container.attr('id', `wall-container-${index}`);
     $container.find('.video-stream .index').text(index);
     $container.find('.video-stream .url').text(url);
-    $container.find('.video-stream .close').on('click', () => {
-      $('#wallTotalVideos').text(parseInt($('#wallTotalVideos').text(), 10) - 1);
-      player.destroy();
-    });
 
     const $videoMetrics = $container.find('.wall-video-metrics');
 
@@ -119,6 +115,11 @@ function initializeWall () {
     //     .attr('title', metric.value)
     //     .html(metric.value);
     // });
+
+    $container.find('.video-stream .close').on('click', () => {
+      $('#wallTotalVideos').text(parseInt($('#wallTotalVideos').text(), 10) - 1);
+      iovCollection.remove(iov.id);
+    });
   }
 
   const $controls = $('.wall .controls');

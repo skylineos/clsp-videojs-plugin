@@ -208,7 +208,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     player.on('dispose', () => {
       // @todo - destroy the tech, since it is a player-specific instance
       try {
-        this.getIov().destroy();
+        this.getMqttHandler(player).destroy();
       }
       catch (error) {
         // @todo - need to improve iov destroy logic...
@@ -277,8 +277,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     }
   }
 
-  getMqttHandler () {
-    return this.player.tech(true).mqtt;
+  getMqttHandler (player = this.player) {
+    return player.tech(true).mqtt;
   }
 
   getIov () {
