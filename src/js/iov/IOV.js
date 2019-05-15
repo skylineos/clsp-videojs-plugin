@@ -151,6 +151,7 @@ export default class IOV {
     }
 
     this.id = config.id || uuidv4();
+    this.clientId = config.clientId || uuidv4();
 
     this.logger = Logger().factory(`IOV ${this.id}`);
 
@@ -171,7 +172,7 @@ export default class IOV {
     this.eid = this.videoElement.id;
 
     this.config = {
-      clientId: this.id,
+      clientId: this.clientId,
       wsbroker: config.wsbroker,
       wsport: config.wsport,
       useSSL: config.useSSL,
@@ -318,13 +319,7 @@ export default class IOV {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
 
-    this.player = IOVPlayer.factory(
-      this,
-      this.videoElement,
-      {
-        id: this.id,
-      }
-    );
+    this.player = IOVPlayer.factory(this, this.videoElement);
 
     // @todo - this seems to be videojs specific, and should be removed or moved
     // somewhere else
@@ -371,7 +366,8 @@ export default class IOV {
       this.trigger('videoInfoReceived');
     });
 
-    this.conduit = Conduit.factory(this.config.clientId, {
+    this.conduit = Conduit.factory(this.clientId, {
+      iovId: this.id,
       wsbroker: this.config.wsbroker,
       wsport: this.config.wsport,
       useSSL: this.config.useSSL,

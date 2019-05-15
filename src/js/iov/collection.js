@@ -1,6 +1,7 @@
 'use strict';
 
 import Paho from 'paho-mqtt';
+import uuidv4 from 'uuid/v4';
 
 import IOV from './IOV';
 import Logger from '../utils/logger';
@@ -41,6 +42,7 @@ export default class IovCollection {
     this.logger.debug('Constructing...');
 
     this.iovs = {};
+    this.iovsByClientId = {};
     this.deletedIovIds = [];
 
     window.addEventListener('message', this._onWindowMessage);
@@ -59,7 +61,7 @@ export default class IovCollection {
 
     this.logger.debug('window on message');
 
-    if (!this.has(clientId)) {
+    if (!this.hasByClientId(clientId)) {
       // When the mqtt connection is interupted due to a listener being removed,
       // a fail event is always sent.  It is not necessary to log this as an error
       // in the console, because it is not an error.
@@ -86,23 +88,28 @@ export default class IovCollection {
       return;
     }
 
-    this.get(clientId).conduit.onMessage(event);
+    this.getByClientId(clientId).conduit.onMessage(event);
   };
 
   async create (url, videoElement) {
     const iov = IOV.fromUrl(url, videoElement, {
       id: (++totalIovCount).toString(),
+      clientId: uuidv4(),
     });
 
-    this.add(iov.id, iov);
+    this.add(iov);
 
     await iov.initialize();
 
     return iov;
   }
 
-  add (id, iov) {
+  add (iov) {
+    const id = iov.id;
+    const clientId = iov.clientId;
+
     this.iovs[id] = iov;
+    this.iovsByClientId[clientId] = iov;
 
     return this;
   }
@@ -111,8 +118,16 @@ export default class IovCollection {
     return this.iovs.hasOwnProperty(id);
   }
 
+  hasByClientId (clientId) {
+    return this.iovsByClientId.hasOwnProperty(clientId);
+  }
+
   get (id) {
     return this.iovs[id];
+  }
+
+  getByClientId (clientId) {
+    return this.iovsByClientId[clientId];
   }
 
   remove (id) {

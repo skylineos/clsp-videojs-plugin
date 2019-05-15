@@ -14,6 +14,7 @@ import Logger from '../utils/logger';
 
 export default class Conduit {
   static factory (clientId, {
+    iovId,
     wsbroker,
     wsport,
     useSSL,
@@ -21,6 +22,7 @@ export default class Conduit {
     jwt,
   }) {
     return new Conduit(clientId, {
+      iovId,
       wsbroker,
       wsport,
       useSSL,
@@ -33,15 +35,17 @@ export default class Conduit {
    * @private
    */
   constructor (clientId, {
+    iovId,
     wsbroker,
     wsport,
     useSSL,
     b64_jwt_access_url,
     jwt,
   }) {
+    this.iovId = iovId;
     this.clientId = clientId;
 
-    this.logger = Logger().factory(`Conduit ${this.clientId}`);
+    this.logger = Logger().factory(`Conduit ${this.iovId}`);
     this.logger.debug('Constructing...');
 
     this.wsbroker = wsbroker;
@@ -606,6 +610,7 @@ export default class Conduit {
 
             // Configure the CLSP properties
             window.mqttRouterConfig = {
+              iovId: '${this.iovId}',
               clientId: '${this.clientId}',
               ip: '${this.wsbroker}',
               port: ${this.wsport},

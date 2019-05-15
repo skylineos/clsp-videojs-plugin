@@ -64,6 +64,8 @@ yarn install
 
 `@babel/polyfill` and `video.js` MUST be sourced/included prior to the plugin.
 
+See `demo/simpleWithVideoJs.html` for a full example.
+
 ### `<head>` Tag
 
 In the `<head>` of your page, include a line for the videojs and the clsp plugin styles:
@@ -124,8 +126,6 @@ Here is a sample video element that defines a CLSP and an HLS stream
 ### `<script>` Tag
 
 This is the simplest case. Get the script in whatever way you prefer and include the plugin _after_ you include [video.js][videojs], so that the `videojs` global is available.
-
-See `dist/simple.html` for an example.
 
 ```html
 <!-- VideoJS -->
