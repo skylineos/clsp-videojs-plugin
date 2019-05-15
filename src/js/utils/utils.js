@@ -22,31 +22,51 @@ const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 const logger = Logger().factory();
 
 function browserIsCompatable () {
-  const isChrome = Boolean(window.chrome);
-  const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-  // const isFirefox = false;
-
-  if (!isFirefox && !isChrome) {
-    logger.debug('Unsupported browser');
-    return false;
+  try {
+    mediaSourceExtensionsCheck();
   }
-
-  // For the MAC
-  window.MediaSource = window.MediaSource || window.WebKitMediaSource;
-
-  if (!window.MediaSource) {
-    logger.error('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
+  catch (error) {
+    logger.error(error);
 
     return false;
   }
 
+  // We don't support Internet Explorer
+  const isInternetExplorer = navigator.userAgent.toLowerCase().indexOf('trident') > -1;
+
+  if (isInternetExplorer) {
+    logger.debug('Detected Internet Explorer browser');
+    return false;
+  }
+
+  // We don't support Edge (yet)
+  const isEdge = navigator.userAgent.toLowerCase().indexOf('edge') > -1;
+
+  if (isEdge) {
+    logger.debug('Detected Edge browser');
+    return false;
+  }
+
+  // We support a limited number of streams in Firefox
   // no specific version of firefox required for now.
-  if (isFirefox === true) {
+  const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+
+  if (isFirefox) {
     logger.debug('Detected Firefox browser');
     return true;
   }
 
+  // Most browsers have "Chrome" in their user agent.  The above filters rule
+  // out Internet Explorer and Edge, so we are going to assume that if we're at
+  // this point, we're really dealing with Chrome.
+  const isChrome = Boolean(window.chrome);
+
+  if (!isChrome) {
+    return false;
+  }
+
   try {
+    // Rather than accounting for match returning null, we'll catch the error
     const chromeVersion = parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10);
 
     logger.debug(`Detected Chrome version ${chromeVersion}`);
@@ -60,19 +80,12 @@ function browserIsCompatable () {
   }
 }
 
-function compatibilityCheck () {
-  // @todo - does this need to throw an error?
+function mediaSourceExtensionsCheck () {
   // For the MAC
-  var NoMediaSourceAlert = false;
-
   window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 
   if (!window.MediaSource) {
-    if (NoMediaSourceAlert === false) {
-      window.alert('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
-    }
-
-    NoMediaSourceAlert = true;
+    throw new Error('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
   }
 }
 
@@ -120,7 +133,7 @@ export default {
   version,
   name: PLUGIN_NAME,
   supported: browserIsCompatable,
-  compatibilityCheck,
+  mediaSourceExtensionsCheck,
   isSupportedMimeType,
   windowStateNames: _getWindowStateNames(),
 };

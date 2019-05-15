@@ -28,10 +28,12 @@ export default function () {
           return false;
         }
 
-        if (!utils.supported()) {
-          logger.debug('Browser not supported. Chrome 52+ is required.');
-          return false;
-        }
+        // Note that we used to do a browser compatibility check here, but if
+        // we return false when the browser does not support CLSP, videojs's
+        // failover mechanisms do not continue.  Meaning, if we return false
+        // here, and a second HLS source is supplied in the video tag (for
+        // example), videojs will never try to play the HLS url with the HLS
+        // tech.
 
         return obj.canPlayType(srcObj.type);
       },

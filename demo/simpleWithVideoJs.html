@@ -128,7 +128,7 @@
       player.on('ready', function () {
         // Even though the "ready" event has fired, it's not actually ready
         // until the "next tick"...
-        setTimeout(() => {
+        setTimeout(function () {
           player.play();
         });
       });

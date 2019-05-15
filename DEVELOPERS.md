@@ -76,10 +76,12 @@ The generated files will be available in the `dist` directory.
 
 ## @todos
 
+* every time a stream plays via videojs, a generic error is shown in the console: Uncaught (in promise) DOMException - it seems that claris player can supress this error message
+* when stopped, if the tab is switched, the stream resumes playing - it should remain stopped
+* make the advanced demo logic shared between the two advanced demos
 * implement linter
 * create dispose methods for all classes
 * make iov initialize execute once, and by default
-* create demo for failover
 * minify css
 * hot reload?
 * hash in filenames via webpack?

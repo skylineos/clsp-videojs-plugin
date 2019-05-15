@@ -13,7 +13,11 @@ const Component = videojs.getComponent('Component');
 const DEFAULT_CHANGE_SOURCE_MAX_WAIT = 5000;
 
 export default class MqttHandler extends Component {
-  constructor (source, tech, options) {
+  constructor (
+    source,
+    tech,
+    options
+  ) {
     super(tech, options.mqtt);
 
     this.logger = Logger().factory('MqttHandler');
@@ -88,7 +92,7 @@ export default class MqttHandler extends Component {
 
     this.player.on('ready', () => {
       if (this.onReadyAlreadyCalled) {
-        console.warn('tried to use this player more than once...');
+        this.logger.warn('tried to use this player more than once...');
         return;
       }
 

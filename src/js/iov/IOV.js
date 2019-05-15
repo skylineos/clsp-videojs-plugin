@@ -146,7 +146,9 @@ export default class IOV {
   }
 
   constructor (videoElement, config) {
-    utils.compatibilityCheck();
+    if (!utils.supported()) {
+      throw new Error('You are using an unsupported browser - Unable to play CLSP video');
+    }
 
     this.id = config.id || uuidv4();
 
@@ -316,7 +318,13 @@ export default class IOV {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
 
-    this.player = IOVPlayer.factory(this, this.videoElement, { id: this.id });
+    this.player = IOVPlayer.factory(
+      this,
+      this.videoElement,
+      {
+        id: this.id,
+      }
+    );
 
     // @todo - this seems to be videojs specific, and should be removed or moved
     // somewhere else
