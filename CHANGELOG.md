@@ -1,6 +1,29 @@
 
 # CLSP Changelog
 
+## v0.16.0 - 2019-05-15 - Recommended
+
+* Remove debug statements appearing as console errors
+* Update all outdated npm dependencies
+* Rearchitected interfaces between most classes, and among the videojs plugin components
+* Added IOV Collection class to manage IOV instances
+* De-coupled the CLSP-playing logic from videojs
+* IOV is now the only class that communicates with the Conduit and the IOV Player
+* Removed the requirement of videojs for playing CLSP streams
+* Added explicit play, stop, fullscreen, and destroy methods to the CLSP player (IOV)
+* Added explicit stop and destroy methods to the CLSP plugin
+* Improved destroy logic
+* Added support for `ononline` and `onoffline` window events
+* Added new logging system
+* Improved logging
+* Created demo wall for CLSP player
+* Created demo player for CLSP player
+* Created demo player for CLSP plugin
+* Created demo landing page
+* Include code examples for common use cases in README
+* Moved internal-developer-specific stuff from the README into DEVELOPERS.md
+
+
 ## v0.15.0 - 2018-12-07 - Critical
 
 * update to node 10.15
