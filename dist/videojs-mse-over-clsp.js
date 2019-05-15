@@ -5384,7 +5384,7 @@ module.exports = function(module) {
 /*! exports provided: name, title, version, description, main, keywords, author, license, generator-videojs-plugin, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.0-5","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.0-6","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -5429,12 +5429,14 @@ function () {
   _createClass(Conduit, null, [{
     key: "factory",
     value: function factory(clientId, _ref) {
-      var wsbroker = _ref.wsbroker,
+      var iovId = _ref.iovId,
+          wsbroker = _ref.wsbroker,
           wsport = _ref.wsport,
           useSSL = _ref.useSSL,
           b64_jwt_access_url = _ref.b64_jwt_access_url,
           jwt = _ref.jwt;
       return new Conduit(clientId, {
+        iovId: iovId,
         wsbroker: wsbroker,
         wsport: wsport,
         useSSL: useSSL,
@@ -5449,7 +5451,8 @@ function () {
   }]);
 
   function Conduit(clientId, _ref2) {
-    var wsbroker = _ref2.wsbroker,
+    var iovId = _ref2.iovId,
+        wsbroker = _ref2.wsbroker,
         wsport = _ref2.wsport,
         useSSL = _ref2.useSSL,
         b64_jwt_access_url = _ref2.b64_jwt_access_url,
@@ -5457,8 +5460,9 @@ function () {
 
     _classCallCheck(this, Conduit);
 
+    this.iovId = iovId;
     this.clientId = clientId;
-    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"])().factory("Conduit ".concat(this.clientId));
+    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"])().factory("Conduit ".concat(this.iovId));
     this.logger.debug('Constructing...');
     this.wsbroker = wsbroker;
     this.wsport = wsport;
@@ -6067,7 +6071,7 @@ function () {
       iframe.width = 0;
       iframe.height = 0;
       iframe.setAttribute('style', 'display:none;');
-      iframe.srcdoc = "\n      <html>\n        <head>\n          <script type=\"text/javascript\">\n            // Include the logger\n            window.Logger = ".concat(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"].toString(), ";\n\n            // Configure the CLSP properties\n            window.mqttRouterConfig = {\n              clientId: '").concat(this.clientId, "',\n              ip: '").concat(this.wsbroker, "',\n              port: ").concat(this.wsport, ",\n              useSSL: ").concat(this.useSSL, ",\n            };\n\n            window.iframeEventHandlers = ").concat(_Router__WEBPACK_IMPORTED_MODULE_0__["default"].toString(), "();\n          </script>\n        </head>\n        <body\n          onload=\"window.iframeEventHandlers.onload();\"\n          onunload=\"window.iframeEventHandlers.onunload();\"\n        >\n          <div id=\"message\"></div>\n        </body>\n      </html>\n    ");
+      iframe.srcdoc = "\n      <html>\n        <head>\n          <script type=\"text/javascript\">\n            // Include the logger\n            window.Logger = ".concat(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"].toString(), ";\n\n            // Configure the CLSP properties\n            window.mqttRouterConfig = {\n              iovId: '").concat(this.iovId, "',\n              clientId: '").concat(this.clientId, "',\n              ip: '").concat(this.wsbroker, "',\n              port: ").concat(this.wsport, ",\n              useSSL: ").concat(this.useSSL, ",\n            };\n\n            window.iframeEventHandlers = ").concat(_Router__WEBPACK_IMPORTED_MODULE_0__["default"].toString(), "();\n          </script>\n        </head>\n        <body\n          onload=\"window.iframeEventHandlers.onload();\"\n          onunload=\"window.iframeEventHandlers.onunload();\"\n        >\n          <div id=\"message\"></div>\n        </body>\n      </html>\n    ");
       return iframe;
     }
   }, {
@@ -6247,10 +6251,11 @@ __webpack_require__.r(__webpack_exports__);
    * that the conduit can identify what client the message is for.
    */
 
-  function Router(clientId, ip, port, useSSL) {
+  function Router(iovId, clientId, ip, port, useSSL) {
     try {
+      this.iovId = iovId;
+      this.logger = window.Logger().factory("Router ".concat(this.iovId));
       this.clientId = clientId;
-      this.logger = window.Logger().factory("Router ".concat(this.clientId));
       this.ip = ip;
       this.port = port;
       this.useSSL = useSSL;
@@ -6701,7 +6706,7 @@ __webpack_require__.r(__webpack_exports__);
   return {
     onload: function onload() {
       try {
-        window.router = new Router(window.mqttRouterConfig.clientId, window.mqttRouterConfig.ip, window.mqttRouterConfig.port, window.mqttRouterConfig.useSSL);
+        window.router = new Router(window.mqttRouterConfig.iovId, window.mqttRouterConfig.clientId, window.mqttRouterConfig.ip, window.mqttRouterConfig.port, window.mqttRouterConfig.useSSL);
 
         window.router._sendToParent({
           event: 'router_created'
@@ -6962,8 +6967,12 @@ function () {
       }
     });
 
-    _utils__WEBPACK_IMPORTED_MODULE_4__["default"].compatibilityCheck();
+    if (!_utils__WEBPACK_IMPORTED_MODULE_4__["default"].supported()) {
+      throw new Error('You are using an unsupported browser - Unable to play CLSP video');
+    }
+
     this.id = config.id || uuid_v4__WEBPACK_IMPORTED_MODULE_0___default()();
+    this.clientId = config.clientId || uuid_v4__WEBPACK_IMPORTED_MODULE_0___default()();
     this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_5__["default"])().factory("IOV ".concat(this.id));
     this.logger.debug('Constructing...');
     this.metrics = {}; // @todo - there must be a more proper way to do events than this...
@@ -6979,7 +6988,7 @@ function () {
     this.videoElement = videoElement;
     this.eid = this.videoElement.id;
     this.config = {
-      clientId: this.id,
+      clientId: this.clientId,
       wsbroker: config.wsbroker,
       wsport: config.wsport,
       useSSL: config.useSSL,
@@ -7088,9 +7097,7 @@ function () {
                 throw new Error('There is no iframe container element to attach the iframe to!');
 
               case 7:
-                this.player = _player__WEBPACK_IMPORTED_MODULE_2__["default"].factory(this, this.videoElement, {
-                  id: this.id
-                }); // @todo - this seems to be videojs specific, and should be removed or moved
+                this.player = _player__WEBPACK_IMPORTED_MODULE_2__["default"].factory(this, this.videoElement); // @todo - this seems to be videojs specific, and should be removed or moved
                 // somewhere else
 
                 this.player.on('firstFrameShown', function () {
@@ -7131,7 +7138,8 @@ function () {
                 this.player.on('videoInfoReceived', function () {
                   _this2.trigger('videoInfoReceived');
                 });
-                this.conduit = _conduit_Conduit__WEBPACK_IMPORTED_MODULE_1__["default"].factory(this.config.clientId, {
+                this.conduit = _conduit_Conduit__WEBPACK_IMPORTED_MODULE_1__["default"].factory(this.clientId, {
+                  iovId: this.id,
                   wsbroker: this.config.wsbroker,
                   wsport: this.config.wsport,
                   useSSL: this.config.useSSL,
@@ -8186,8 +8194,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return IovCollection; });
 /* harmony import */ var paho_mqtt__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! paho-mqtt */ "./node_modules/paho-mqtt/paho-mqtt.js");
 /* harmony import */ var paho_mqtt__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(paho_mqtt__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _IOV__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./IOV */ "./src/js/iov/IOV.js");
-/* harmony import */ var _utils_logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/logger */ "./src/js/utils/logger.js");
+/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
+/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _IOV__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./IOV */ "./src/js/iov/IOV.js");
+/* harmony import */ var _utils_logger__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/logger */ "./src/js/utils/logger.js");
 
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
@@ -8201,6 +8211,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 
 
 
@@ -8257,7 +8268,7 @@ function () {
 
       _this.logger.debug('window on message');
 
-      if (!_this.has(clientId)) {
+      if (!_this.hasByClientId(clientId)) {
         // When the mqtt connection is interupted due to a listener being removed,
         // a fail event is always sent.  It is not necessary to log this as an error
         // in the console, because it is not an error.
@@ -8285,12 +8296,13 @@ function () {
         return;
       }
 
-      _this.get(clientId).conduit.onMessage(event);
+      _this.getByClientId(clientId).conduit.onMessage(event);
     });
 
-    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_2__["default"])().factory('IovCollection');
+    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().factory('IovCollection');
     this.logger.debug('Constructing...');
     this.iovs = {};
+    this.iovsByClientId = {};
     this.deletedIovIds = [];
     window.addEventListener('message', this._onWindowMessage);
   }
@@ -8310,10 +8322,11 @@ function () {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                iov = _IOV__WEBPACK_IMPORTED_MODULE_1__["default"].fromUrl(url, videoElement, {
-                  id: (++totalIovCount).toString()
+                iov = _IOV__WEBPACK_IMPORTED_MODULE_2__["default"].fromUrl(url, videoElement, {
+                  id: (++totalIovCount).toString(),
+                  clientId: uuid_v4__WEBPACK_IMPORTED_MODULE_1___default()()
                 });
-                this.add(iov.id, iov);
+                this.add(iov);
                 _context.next = 4;
                 return iov.initialize();
 
@@ -8336,8 +8349,11 @@ function () {
     }()
   }, {
     key: "add",
-    value: function add(id, iov) {
+    value: function add(iov) {
+      var id = iov.id;
+      var clientId = iov.clientId;
       this.iovs[id] = iov;
+      this.iovsByClientId[clientId] = iov;
       return this;
     }
   }, {
@@ -8346,9 +8362,19 @@ function () {
       return this.iovs.hasOwnProperty(id);
     }
   }, {
+    key: "hasByClientId",
+    value: function hasByClientId(clientId) {
+      return this.iovsByClientId.hasOwnProperty(clientId);
+    }
+  }, {
     key: "get",
     value: function get(id) {
       return this.iovs[id];
+    }
+  }, {
+    key: "getByClientId",
+    value: function getByClientId(clientId) {
+      return this.iovsByClientId[clientId];
     }
   }, {
     key: "remove",
@@ -9230,29 +9256,49 @@ var SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"])().factory();
 
 function browserIsCompatable() {
-  var isChrome = Boolean(window.chrome);
-  var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1; // const isFirefox = false;
-
-  if (!isFirefox && !isChrome) {
-    logger.debug('Unsupported browser');
+  try {
+    mediaSourceExtensionsCheck();
+  } catch (error) {
+    logger.error(error);
     return false;
-  } // For the MAC
+  } // We don't support Internet Explorer
 
 
-  window.MediaSource = window.MediaSource || window.WebKitMediaSource;
+  var isInternetExplorer = navigator.userAgent.toLowerCase().indexOf('trident') > -1;
 
-  if (!window.MediaSource) {
-    logger.error('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
+  if (isInternetExplorer) {
+    logger.debug('Detected Internet Explorer browser');
     return false;
-  } // no specific version of firefox required for now.
+  } // We don't support Edge (yet)
 
 
-  if (isFirefox === true) {
+  var isEdge = navigator.userAgent.toLowerCase().indexOf('edge') > -1;
+
+  if (isEdge) {
+    logger.debug('Detected Edge browser');
+    return false;
+  } // We support a limited number of streams in Firefox
+  // no specific version of firefox required for now.
+
+
+  var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+
+  if (isFirefox) {
     logger.debug('Detected Firefox browser');
     return true;
+  } // Most browsers have "Chrome" in their user agent.  The above filters rule
+  // out Internet Explorer and Edge, so we are going to assume that if we're at
+  // this point, we're really dealing with Chrome.
+
+
+  var isChrome = Boolean(window.chrome);
+
+  if (!isChrome) {
+    return false;
   }
 
   try {
+    // Rather than accounting for match returning null, we'll catch the error
     var chromeVersion = parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10);
     logger.debug("Detected Chrome version ".concat(chromeVersion));
     return chromeVersion >= MINIMUM_CHROME_VERSION;
@@ -9262,18 +9308,12 @@ function browserIsCompatable() {
   }
 }
 
-function compatibilityCheck() {
-  // @todo - does this need to throw an error?
+function mediaSourceExtensionsCheck() {
   // For the MAC
-  var NoMediaSourceAlert = false;
   window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 
   if (!window.MediaSource) {
-    if (NoMediaSourceAlert === false) {
-      window.alert('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
-    }
-
-    NoMediaSourceAlert = true;
+    throw new Error('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
   }
 }
 
@@ -9319,7 +9359,7 @@ function _getWindowStateNames() {
   version: _package_json__WEBPACK_IMPORTED_MODULE_0__["version"],
   name: PLUGIN_NAME,
   supported: browserIsCompatable,
-  compatibilityCheck: compatibilityCheck,
+  mediaSourceExtensionsCheck: mediaSourceExtensionsCheck,
   isSupportedMimeType: isSupportedMimeType,
   windowStateNames: _getWindowStateNames()
 });
@@ -9468,7 +9508,8 @@ function (_Component) {
                 iov = _context.sent;
                 this.player.on('ready', function () {
                   if (_this2.onReadyAlreadyCalled) {
-                    console.warn('tried to use this player more than once...');
+                    _this2.logger.warn('tried to use this player more than once...');
+
                     return;
                   }
 
@@ -9606,12 +9647,13 @@ var SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
         if (!srcObj.src.startsWith('clsp')) {
           logger.debug('srcObj.src is not clsp protocol');
           return false;
-        }
+        } // Note that we used to do a browser compatibility check here, but if
+        // we return false when the browser does not support CLSP, videojs's
+        // failover mechanisms do not continue.  Meaning, if we return false
+        // here, and a second HLS source is supplied in the video tag (for
+        // example), videojs will never try to play the HLS url with the HLS
+        // tech.
 
-        if (!_utils__WEBPACK_IMPORTED_MODULE_3__["default"].supported()) {
-          logger.debug('Browser not supported. Chrome 52+ is required.');
-          return false;
-        }
 
         return obj.canPlayType(srcObj.type);
       },
