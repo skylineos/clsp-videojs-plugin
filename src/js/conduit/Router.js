@@ -9,6 +9,8 @@
  * @todo - have a custom loader for webpack that can convert this to ES5 and
  * minify it in a self-contained way at the time it is required so that we can
  * use ES6 and multiple files.
+ *
+ * @todo - should all thrown errors send a message to the parent Conduit?
  */
 
 /**
@@ -65,14 +67,25 @@ export default function () {
    * a change the way webpack processes the file though...
    *
    * A Router that can be used to set up an MQTT connection to the specified
-   * ip and port, using a conduit-provided clientId that will be a part of every
+   * host and port, using a conduit-provided clientId that will be a part of every
    * message that is passed from this iframe window to the parent window, so
    * that the conduit can identify what client the message is for.
+   *
+   * @param {String} iovId
+   *   the ID of the parent iov, used for logging purposes
+   * @param {String} clientId
+   *   the guid to be used to construct the topic
+   * @param {String} host
+   *   the host (url or ip) of the SFS that is providing the stream
+   * @param {Number} port
+   *   the port the stream is served over
+   * @param {Boolean} useSSL
+   *   true to request the stream over clsps, false to request the stream over clsp
    */
   function Router (
     iovId,
     clientId,
-    ip,
+    host,
     port,
     useSSL
   ) {
@@ -83,7 +96,7 @@ export default function () {
 
       this.clientId = clientId;
 
-      this.ip = ip;
+      this.host = host;
       this.port = port;
       this.useSSL = useSSL;
 
@@ -94,7 +107,7 @@ export default function () {
       this.connectionTimeout = 120;
 
       this.mqttClient = new Paho.MQTT.Client(
-        this.ip,
+        this.host,
         this.port,
         '/mqtt',
         this.clientId
@@ -121,6 +134,11 @@ export default function () {
    * @private
    *
    * Post a "message" with the current `clientId` to the parent window.
+   *
+   * @param {Object} message
+   *   The message to send to the parent window
+   *
+   * @returns {void}
    */
   Router.prototype._sendToParent = function (message) {
     this.logger.debug('Sending message to parent window...');
@@ -179,7 +197,7 @@ export default function () {
   /**
    * @private
    *
-   * Called when a message has arrived in this Paho.MQTT.client
+   * To be called when a message has arrived in this Paho.MQTT.client
    *
    * The idea here is that when the server sends an mqtt message, whether a
    * moof, moov, or something else, that data needs to be sent to the appropriate
@@ -188,6 +206,11 @@ export default function () {
    * for passing it to the appropriate player.
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} mqttMessage
+   *   The incoming message
+   *
+   * @returns {void}
    */
   Router.prototype._onMessageArrived = function (mqttMessage) {
     this.logger.debug('Received MQTT message...');
@@ -225,11 +248,16 @@ export default function () {
    * method has succeeded.
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
-  Router.prototype._onConnectionLost = function (responseObject) {
+  Router.prototype._onConnectionLost = function (response) {
     this.logger.warn('MQTT connection lost!');
 
-    var errorCode = parseInt(responseObject.errorCode);
+    var errorCode = parseInt(response.errorCode);
 
     if (errorCode === 0) {
       // The connection was "properly" terminated
@@ -242,7 +270,7 @@ export default function () {
 
     this._sendToParent({
       event: 'connection_lost',
-      reason: 'connection lost error code ' + errorCode,
+      reason: 'connection lost error code "' + errorCode + '" with message: ' + response.errorMessage,
     });
   };
 
@@ -251,6 +279,11 @@ export default function () {
    *
    * Any time a "message" event occurs on the window respond to it by inspecting
    * the messages "method" property and taking the appropriate action.
+   *
+   * @param {Object} event
+   *   The window message event
+   *
+   * @returns {void}
    */
   Router.prototype._windowMessageEventHandler = function (event) {
     var message = event.data;
@@ -321,8 +354,15 @@ export default function () {
    *
    * @todo - track the "connected" status to prevent multiple window message
    * event handlers from being attached
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
-  Router.prototype._connect_onSuccess = function () {
+  Router.prototype._connect_onSuccess = function (response) {
     this.logger.info('Successfully established MQTT connection');
 
     this._sendToParent({
@@ -335,12 +375,19 @@ export default function () {
    *
    * Failure handler for "connect".  Sends a "fail" message to the parent
    * window
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
-  Router.prototype._connect_onFailure = function (message) {
+  Router.prototype._connect_onFailure = function (response) {
     this.logger.info('MQTT Connection Failure!');
     this._sendToParent({
       event: 'connect_failure',
-      reason: 'Error code ' + parseInt(message.errorCode) + ': ' + message.errorMessage,
+      reason: 'Connection Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
     });
   };
 
@@ -348,8 +395,17 @@ export default function () {
    * @private
    *
    * Success handler for "subscribe".
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was successfully subscribed to
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
-  Router.prototype._subscribe_onSuccess = function (topic, message) {
+  Router.prototype._subscribe_onSuccess = function (topic, response) {
     this.logger.debug('Successfully subscribed to topic "' + topic + '"');
     // @todo
   };
@@ -359,13 +415,22 @@ export default function () {
    *
    * Failure handler for "subscribe".  Sends a "fail" message to the parent
    * window
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was attempted to be subscribed to
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
-  Router.prototype._subscribe_onFailure = function (topic, message) {
+  Router.prototype._subscribe_onFailure = function (topic, response) {
     this.logger.error('Failed to subscribe to topic "' + topic + '"');
 
     this._sendToParent({
       event: 'subscribe_failure',
-      reason: 'subscribe failed',
+      reason: 'Subscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
     });
   };
 
@@ -373,6 +438,13 @@ export default function () {
    * @private
    *
    * Start receiving messages for the given topic
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic to subscribe to
+   *
+   * @returns {void}
    */
   Router.prototype._subscribe = function (topic) {
     this.logger.debug('Subscribing to topic "' + topic + '"');
@@ -391,8 +463,17 @@ export default function () {
    * @private
    *
    * Success handler for "unsubscribe".
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was successfully unsubscribed from
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
-  Router.prototype._unsubscribe_onSuccess = function (topic, message) {
+  Router.prototype._unsubscribe_onSuccess = function (topic, response) {
     this.logger.debug('Successfully unsubscribed from topic "' + topic + '"');
     // @todo
   };
@@ -402,13 +483,22 @@ export default function () {
    *
    * Failure handler for "unsubscribe".  Sends a "fail" message to the parent
    * window
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was successfully subscribed to
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
-  Router.prototype._unsubscribe_onFailure = function (topic, message) {
+  Router.prototype._unsubscribe_onFailure = function (topic, response) {
     this.logger.debug('Failed to unsubscribe from topic "' + topic + '"');
 
     this._sendToParent({
       event: 'unsubscribe_failure',
-      reason: 'unsubscribe failed',
+      reason: 'Unsubscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
     });
   };
 
@@ -416,6 +506,13 @@ export default function () {
    * @private
    *
    * Stop receiving messages for the given topic
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic to unsubscribe from
+   *
+   * @returns {void}
    */
   Router.prototype._unsubscribe = function (topic) {
     this.logger.debug('Unsubscribing from topic "' + topic + '"');
@@ -434,6 +531,15 @@ export default function () {
    * @private
    *
    * Publish a message to the clients that are listening for the given topic
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Message.html
+   *
+   * @param {String|ArrayBuffer} payload
+   *   The message data to be sent
+   * @param {String} topic
+   *   The topic to publish to
+   *
+   * @returns {void}
    */
   Router.prototype._publish = function (payload, topic) {
     this.logger.debug('Publishing to topic "' + topic + '"');
@@ -455,6 +561,11 @@ export default function () {
 
   /**
    * Connect this Messaging client to its server
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Message.html
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @returns {void}
    */
   Router.prototype.connect = function () {
     this.logger.info('Connecting...');
@@ -498,6 +609,10 @@ export default function () {
 
   /**
    * Disconnect the messaging client from the server
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @returns {void}
    */
   Router.prototype.disconnect = function () {
     this.logger.info('Disconnecting');
@@ -527,7 +642,7 @@ export default function () {
         window.router = new Router(
           window.mqttRouterConfig.iovId,
           window.mqttRouterConfig.clientId,
-          window.mqttRouterConfig.ip,
+          window.mqttRouterConfig.host,
           window.mqttRouterConfig.port,
           window.mqttRouterConfig.useSSL,
         );
@@ -553,6 +668,8 @@ export default function () {
         return;
       }
 
+      // @todo - do we need destroy logic?  or does the destruction of the
+      // iframe handle all dereferences for us?
       try {
         window.router.logger.info('onunload - Router disconnecting in onunload...');
         window.router.disconnect();

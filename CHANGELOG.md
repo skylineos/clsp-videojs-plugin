@@ -13,9 +13,12 @@
 * Added explicit play, stop, fullscreen, and destroy methods to the CLSP player (IOV)
 * Added explicit stop and destroy methods to the CLSP plugin
 * Improved destroy logic
+* Identify additional browsers
+* Implement successful failover to HLS, if available
 * Added support for `ononline` and `onoffline` window events
 * Added new logging system
 * Improved logging
+* Improve jsdocs
 * Created demo wall for CLSP player
 * Created demo player for CLSP player
 * Created demo player for CLSP plugin

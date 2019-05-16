@@ -33,6 +33,14 @@ export default class Conduit {
 
   /**
    * @private
+   *
+   * clientId - the guid to be used to construct the topic
+   * iovId - the ID of the parent iov, used for logging purposes
+   * wsbroker - the host (url or ip) of the SFS that is providing the stream
+   * wsport - the port the stream is served over
+   * useSSL - true to request the stream over clsps, false to request the stream over clsp
+   * [b64_jwt_access_url] - the "tokenized" url
+   * [jwt] - the access token
    */
   constructor (clientId, {
     iovId,
@@ -69,7 +77,12 @@ export default class Conduit {
   }
 
   /**
+   * After constructing, call this to initialize the conduit, which will create
+   * the iframe and the Router needed to get the stream from the server.
+   *
    * @returns Promise
+   *   Resolves when the Router has been successfully created.
+   *   Rejects upon failure to create the Router.
    */
   initialize (videoElementParent) {
     this.logger.debug('Initializing...');
@@ -108,6 +121,8 @@ export default class Conduit {
         resolve();
       };
 
+      // When the Router in the iframe connects, it will broadcast a message
+      // letting us know it connected, or letting us know it failed.
       window.addEventListener('message', this._onRouterCreate);
 
       this.iframe = this._generateIframe();
@@ -117,7 +132,14 @@ export default class Conduit {
   }
 
   /**
+   * After initialization, call this to establish the connection to the server.
+   *
+   * Note that this is called within the play method, so you shouldn't ever need
+   * to manually call `connect`.
+   *
    * @returns Promise
+   *   Resolves when the connection is successfully established.
+   *   Rejects upon failure to connect after a number of retries.
    */
   connect () {
     this.logger.debug('Connecting to MQTT server...');
@@ -195,40 +217,12 @@ export default class Conduit {
    * @param {Conduit-onMoof} onMoof - the function that will handle the moof
    */
   async play (streamName, onMoof) {
+    // @todo - should we have a check to confirm that the conduit has been initialized?
+    // @todo - should connect be called here?
     await this.connect();
 
     if (this.jwt.length > 0) {
-      // start transaction, decrypt token
-      const response = await this.validateJwt();
-
-      if (response.status !== 200) {
-        if (response.status === 403) {
-          throw new Error('JwtUnAuthorized');
-        }
-
-        throw new Error('JwtInvalid');
-      }
-
-      //TODO, figure out how to handle a change in the sfs url from the
-      // clsp-jwt from the target url returned from decrypting the jwt
-      // token.
-      // Example:
-      //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
-      //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-      // --- due to the videojs architecture i don't see a clean way of doing this.
-      // ==============================================================================
-      //    The only way I can see doing this cleanly is to change videojs itself to
-      //    allow the 'canHandleSource' function in MqttSourceHandler to return a
-      //    promise not a value, then ascychronously find out if it can play this
-      //    source after making the call to decrypt the jwt token.22
-      // =============================================================================
-      // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
-      // case what is now the sfs ip address in clsp url will always be the same it will
-      // be the public ip of cluster gateway.
-      const t = response.target_url.split('/');
-
-      // get the actual stream name
-      streamName = t[t.length - 1];
+      streamName = await this.validateJwt();
     }
 
     return new Promise((resolve, reject) => {
@@ -279,6 +273,11 @@ export default class Conduit {
     });
   }
 
+  /**
+   * Disconnect from the mqtt server
+   *
+   * @todo - return a promise that resolves when the disconnection is complete
+   */
   disconnect () {
     this.logger.debug('Disconnecting...');
 
@@ -293,6 +292,12 @@ export default class Conduit {
     });
   }
 
+  /**
+   * Stop the playing stream
+   *
+   * @todo - make this async and await the disconnection, and maybe even the
+   * unsubscribes
+   */
   stop () {
     this.logger.debug('Stopping stream...');
 
@@ -317,6 +322,10 @@ export default class Conduit {
 
   /**
    * Validate the jwt that this conduit was constructed with.
+   *
+   * @returns Promise
+   *   Resolves the streamName when the response is received AND is successful.
+   *   Rejects if the transaction fails or if the response code is not 200.
    */
   validateJwt () {
     this.logger.debug('Validating JWT...');
@@ -330,8 +339,38 @@ export default class Conduit {
             token: this.jwt,
           },
           (response) => {
-            //response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
-            resolve(response);
+            // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+
+            if (response.status !== 200) {
+              if (response.status === 403) {
+                return reject(new Error('JwtUnAuthorized'));
+              }
+
+              return reject(new Error('JwtInvalid'));
+            }
+
+            //TODO, figure out how to handle a change in the sfs url from the
+            // clsp-jwt from the target url returned from decrypting the jwt
+            // token.
+            // Example:
+            //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
+            //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+            // --- due to the videojs architecture i don't see a clean way of doing this.
+            // ==============================================================================
+            //    The only way I can see doing this cleanly is to change videojs itself to
+            //    allow the 'canHandleSource' function in MqttSourceHandler to return a
+            //    promise not a value, then ascychronously find out if it can play this
+            //    source after making the call to decrypt the jwt token.22
+            // =============================================================================
+            // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+            // case what is now the sfs ip address in clsp url will always be the same it will
+            // be the public ip of cluster gateway.
+            const t = response.target_url.split('/');
+
+            // get the actual stream name
+            const streamName = t[t.length - 1];
+
+            resolve(streamName);
           }
         );
       }
@@ -344,7 +383,7 @@ export default class Conduit {
   /**
    * Get the `guid` and `mimeCodec` for the stream
    *
-   * @todo - should this be renamed "play"?
+   * @todo - return a Promise
    *
    * @param {string} streamName - the name of the stream
    * @param {Conduit-requestStreamCallback} cb
@@ -363,6 +402,19 @@ export default class Conduit {
     );
   }
 
+  /**
+   * @callback Conduit-resyncStreamCb
+   * @param {any} - @todo - document this
+   */
+
+  /**
+   * @todo - provide method description
+   *
+   * @todo - return a Promise
+   *
+   * @param {Conduit-resyncStreamCb} cb
+   *   The callback for the resync operation
+   */
   resyncStream (cb) {
     // subscribe to a sync topic that will be called if the stream that is feeding
     // the mse service dies and has to be restarted that this player should restart the stream
@@ -376,6 +428,8 @@ export default class Conduit {
 
   /**
    * Get the list of available CLSP streams from the SFS
+   *
+   * @todo - return a Promise
    *
    * @param {Conduit-getStreamListCallback} cb
    *
@@ -393,6 +447,10 @@ export default class Conduit {
   /**
    * Clean up and dereference the necessary properties.  Will also disconnect
    * and destroy the iframe.
+   *
+   * @todo - return a Promise, but do not wait for the promise to resolve to
+   * continue the destroy logic.  the promise should resolve/reject based on
+   * the disconnect method call
    *
    * @returns {void}
    */
@@ -521,6 +579,16 @@ export default class Conduit {
     handler(message);
   }
 
+  /**
+   * @todo - provide method description
+   *
+   * @todo - return a Promise
+   *
+   * @param {String} topic
+   *   The topic to subscribe to
+   * @param {Conduit-subscribeCb} cb
+   *   The callback for the subscribe operation
+   */
   subscribe (topic, handler) {
     this.logger.debug(`Subscribing to topic "${topic}"`);
 
@@ -532,6 +600,14 @@ export default class Conduit {
     });
   }
 
+  /**
+   * @todo - provide method description
+   *
+   * @todo - return a Promise
+   *
+   * @param {String} topic
+   *   The topic to unsubscribe from
+   */
   unsubscribe (topic) {
     this.logger.debug(`Unsubscribing from topic "${topic}"`);
 
@@ -543,6 +619,16 @@ export default class Conduit {
     });
   }
 
+  /**
+   * @todo - provide method description
+   *
+   * @todo - return a Promise
+   *
+   * @param {String} topic
+   *   The topic to publish to
+   * @param {Object} data
+   *   The data to publish
+   */
   publish (topic, data) {
     this.logger.debug(`Publishing to topic "${topic}"`);
 
@@ -553,6 +639,16 @@ export default class Conduit {
     });
   }
 
+  /**
+   * @todo - provide method description
+   *
+   * @todo - return a Promise
+   *
+   * @param {String} topic
+   *   The topic to send to
+   * @param {Array} byteArray
+   *   The raw data to send
+   */
   directSend (topic, byteArray) {
     this.logger.debug('directSend...');
 
@@ -563,17 +659,30 @@ export default class Conduit {
     });
   }
 
+  /**
+   * @todo - provide method description
+   *
+   * @todo - return a Promise
+   *
+   * @param {String} topic
+   *   The topic to perform a transaction on
+   * @param {Object} messageData
+   *   The data to be published
+   * @param {Conduit-transactionCb} cb
+   */
   transaction (
     topic,
     messageData = {},
-    onSubscribe = () => {}
+    cb
   ) {
     this.logger.debug('transaction...');
 
     messageData.resp_topic = `${this.clientId}/response/${parseInt(Math.random() * 1000000)}`;
 
     this.subscribe(messageData.resp_topic, (response) => {
-      onSubscribe(JSON.parse(response.payloadString));
+      if (cb) {
+        cb(JSON.parse(response.payloadString));
+      }
 
       this.unsubscribe(messageData.resp_topic);
     });
@@ -632,6 +741,13 @@ export default class Conduit {
     return iframe;
   }
 
+  /**
+   * Attempt to reconnect a certain number of times
+   *
+   * @returns Promise
+   *   Resolves when the connection is successfully established
+   *   Rejects when the connection fails
+   */
   async _reconnect () {
     this.reconnectionAttempts++;
 

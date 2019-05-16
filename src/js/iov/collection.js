@@ -16,6 +16,14 @@ window.Paho = {
 let totalIovCount = 0;
 let collection;
 
+/**
+ * The IOV Collection is meant ot be a singleton, and is meant to manage all
+ * IOVs in a given browser window/document.  There are certain centralized
+ * functions it is meant to perform, such as generating the guids that are
+ * needed to establish a connection to a unique topic on the SFS, and to listen
+ * to window messages and route the relevant messages to the appropriate IOV
+ * instance.
+ */
 export default class IovCollection {
   static asSingleton () {
     if (!collection) {
@@ -50,6 +58,17 @@ export default class IovCollection {
 
   /**
    * @private
+   *
+   * The listener for the "message" event on the window.  It's job is to
+   * identify messages that are intended for an IOV and route them to the
+   * correct one.  The most common example of this is when a Router receives
+   * a moof/segment from a server, and posts a message to the window.  This
+   * listener will route that moof/segment to the IOV it was intended for.
+   *
+   * @param {Object} event
+   *   The window message event
+   *
+   * @returns {void}
    */
   _onWindowMessage = (event) => {
     const clientId = event.data.clientId;
@@ -91,11 +110,25 @@ export default class IovCollection {
     this.getByClientId(clientId).conduit.onMessage(event);
   };
 
+  /**
+   * Create an IOV for a specific stream, and add it to this collection.
+   *
+   * @param {String} url
+   *   The url to the clsp stream
+   * @param {DOMNode} videoElement
+   *   The video element that will serve as the video player in the DOM
+   *
+   * @returns {IOV}
+   */
   async create (url, videoElement) {
-    const iov = IOV.fromUrl(url, videoElement, {
-      id: (++totalIovCount).toString(),
-      clientId: uuidv4(),
-    });
+    const iov = IOV.fromUrl(
+      url,
+      videoElement,
+      {
+        id: (++totalIovCount).toString(),
+        clientId: uuidv4(),
+      }
+    );
 
     this.add(iov);
 
@@ -104,6 +137,15 @@ export default class IovCollection {
     return iov;
   }
 
+  /**
+   * Add an IOV instance to this collection.  It can then be accessed by its id
+   * or its clientId.
+   *
+   * @param {IOV} iov
+   *   The iov instance to add
+   *
+   * @returns {this}
+   */
   add (iov) {
     const id = iov.id;
     const clientId = iov.clientId;
@@ -114,22 +156,70 @@ export default class IovCollection {
     return this;
   }
 
+  /**
+   * Determine whether or not an iov with the passed id exists in this
+   * collection.
+   *
+   * @param {String} id
+   *   The id of the iov to find
+   *
+   * @returns {Boolean}
+   *   True if the iov with the given id exists
+   *   False if the iov with the given id does not exist
+   */
   has (id) {
     return this.iovs.hasOwnProperty(id);
   }
 
+  /**
+   * Determine whether or not an iov with the passed clientId exists in this
+   * collection.
+   *
+   * @param {String} clientId
+   *   The clientId of the iov to find
+   *
+   * @returns {Boolean}
+   *   True if the iov with the given clientId exists
+   *   False if the iov with the given clientId does not exist
+   */
   hasByClientId (clientId) {
     return this.iovsByClientId.hasOwnProperty(clientId);
   }
 
+  /**
+   * Get an iov with the passed id from this collection.
+   *
+   * @param {String} id
+   *   The id of the iov instance to get
+   *
+   * @returns {IOV|undefined}
+   *   If an iov with this id doest not exist, undefined is returned.
+   */
   get (id) {
     return this.iovs[id];
   }
 
+  /**
+   * Get an iov with the passed clientId from this collection.
+   *
+   * @param {String} clientId
+   *   The clientId of the iov instance to get
+   *
+   * @returns {IOV|undefined}
+   *   If an iov with this clientId doest not exist, undefined is returned.
+   */
   getByClientId (clientId) {
     return this.iovsByClientId[clientId];
   }
 
+  /**
+   * Remove an iov instance from this collection and destroy it.
+   *
+   * @param {String} id
+   *   The id of the iov to remove and destroy
+   *
+   * @returns {this}
+   */
   remove (id) {
     const iov = this.get(id);
 
@@ -137,15 +227,21 @@ export default class IovCollection {
       return;
     }
 
-    iov.destroy();
-
     delete this.iovs[id];
+    delete this.iovsByClientId[iov.clientId];
+
+    iov.destroy();
 
     this.deletedIovIds.push(id);
 
     return this;
   }
 
+  /**
+   * Destroy this collection and destroy all iov instances in this collection.
+   *
+   * @returns {void}
+   */
   destroy () {
     if (this.destroyed) {
       return;
@@ -156,9 +252,10 @@ export default class IovCollection {
     window.removeEventListener('message', this._onWindowMessage);
 
     for (let id in this.iovs) {
-      this.destroy(id);
+      this.remove(id);
     }
 
     this.iovs = null;
+    this.iovsByClientId = null;
   }
 }

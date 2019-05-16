@@ -151,6 +151,12 @@ export default class IOV {
     }
 
     this.id = config.id || uuidv4();
+
+    // This MUST be globally unique!  The MQTT server will broadcast the stream
+    // to a topic that contains this id, so if there is ANY other client
+    // connected that has the same id anywhere in the world, the stream to all
+    // clients that use that topic will fail.  This is why we use guids rather
+    // than an incrementing integer.
     this.clientId = config.clientId || uuidv4();
 
     this.logger = Logger().factory(`IOV ${this.id}`);
