@@ -1,37 +1,28 @@
-import Debug from 'debug';
+'use strict';
+
 import uuidv4 from 'uuid/v4';
 
-import MqttTopicHandlers from './MqttTopicHandlers';
+import Conduit from '../conduit/Conduit';
 import IOVPlayer from './player';
-
-const DEBUG_PREFIX = 'skyline:clsp:iov';
+import MSEWrapper from './MSEWrapper';
+import utils from '../utils';
+import Logger from '../utils/logger';
 
 /**
  * Internet of Video client. This module uses the MediaSource API to
  * deliver video content streamed through MQTT from distributed sources.
  */
 
-//  @todo - should this be the videojs component?  it seems like the
-// mqttHandler does nothing, and that this could replace it
 export default class IOV {
-  static CHANGE_SOURCE_MAX_WAIT = 5000;
+  static EVENT_NAMES = [
+    'metric',
+    'unsupportedMimeCodec',
+    'firstFrameShown',
+    'videoReceived',
+    'videoInfoReceived',
+  ];
 
-  static compatibilityCheck () {
-    // @todo - shouldn't this be done in the utils function?
-    // @todo - does this need to throw an error?
-    // For the MAC
-    var NoMediaSourceAlert = false;
-
-    window.MediaSource = window.MediaSource || window.WebKitMediaSource;
-
-    if (!window.MediaSource) {
-      if (NoMediaSourceAlert === false) {
-        window.alert('Media Source Extensions not supported in your browser: Claris Live Streaming will not work!');
-      }
-
-      NoMediaSourceAlert = true;
-    }
-  }
+  static METRIC_TYPES = [];
 
   static generateConfigFromUrl (url) {
     if (!url) {
@@ -45,10 +36,9 @@ export default class IOV {
 
     let useSSL;
     let default_port;
-    let jwtUrl = false;
-    let b64_jwt_access_url ="";
-    let jwt_validation_url ="";
-    let jwt = "";
+    let jwtUrl;
+    let b64_jwt_access_url = '';
+    let jwt = '';
 
     // Chrome is the only browser that allows non-http protocols in
     // the anchor tag's href, so change them all to http here so we
@@ -63,17 +53,19 @@ export default class IOV {
       useSSL = false;
       parser.href = url.replace('clsp-jwt', 'http');
       default_port = 9001;
-      jwtUrl = true; 
+      jwtUrl = true;
     }
     else if (url.substring(0, 5).toLowerCase() === 'clsps') {
       useSSL = true;
       parser.href = url.replace('clsps', 'https');
       default_port = 443;
+      jwtUrl = false;
     }
     else if (url.substring(0, 4).toLowerCase() === 'clsp') {
       useSSL = false;
       parser.href = url.replace('clsp', 'http');
       default_port = 9001;
+      jwtUrl = false;
     }
     else {
       throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
@@ -89,6 +81,8 @@ export default class IOV {
       port = default_port;
     }
 
+    port = parseInt(port);
+
     // @ is a special address meaning the server that loaded the web page.
     if (hostname === '@') {
       hostname = window.location.hostname;
@@ -96,149 +90,313 @@ export default class IOV {
 
     // if jwt extract required url parameters.
     if (jwtUrl === true) {
+      // Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
+      const qp_offset = url.indexOf(parser.pathname)+parser.pathname.length;
 
-         //Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
-        var qp_offset = url.indexOf(parser.pathname)+parser.pathname.length
+      const qr_args = url.substr(qp_offset).split('?')[1];
+      const query = {};
 
-        var i = 0;
-        var qr_args = url.substr(qp_offset).split('?')[1];
-        var query = {
-        };
+      const pairs = qr_args.split('&');
+      for (let i = 0; i < pairs.length; i++) {
+        const pair = pairs[i].split('=');
+        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+      }
 
-        var pairs = qr_args.split('&');
-        for (var i = 0; i < pairs.length; i++) {
-            var pair = pairs[i].split('=');
-            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
-        }
+      if (typeof query.Start === 'undefined') {
+        throw new Error("Required 'Start' query parameter not defined for a clsp[s]-jwt");
+      }
 
-        if (typeof query.Start === 'undefined') {
-           throw new Error("Required 'Start' query parameter not defined for a clsp[s]-jwt");
-        }
-        if (typeof query.End === 'undefined') {
-           throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
-        }
+      if (typeof query.End === 'undefined') {
+        throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
+      }
 
+      const protocol = useSSL
+        ? 'clsps-jwt'
+        : 'clsp-jwt';
 
-        b64_jwt_access_url = window.btoa(
-            (useSSL === true) ? "clsps-jwt://": "clsp-jwt://" 
-            + hostname + ":" + parseInt(port) + "/jwt" 
-            + "?Start="+query.Start
-            + "&End="+query.End  
-        );
-        jwt = query.token; 
-         
-        
+      const url = `${protocol}://${hostname}:${port}/jwt?Start=${query.Start}&End=${query.End}`;
 
-    } // end if jwt
-
-
+      b64_jwt_access_url = window.btoa(url);
+      jwt = query.token;
+    }
 
     return {
-      // url,
       wsbroker: hostname,
-      wsport: parseInt(port),
+      wsport: port,
       streamName,
       useSSL,
       b64_jwt_access_url,
-      jwt
+      jwt,
     };
-
   }
 
-  static factory (mqttConduitCollection, player, config = {}) {
-    return new IOV(mqttConduitCollection, player, config);
+  static factory (videoElement, config = {}) {
+    return new IOV(videoElement, config);
   }
 
-  static fromUrl (url, mqttConduitCollection, player, config = {}) {
-    return IOV.factory(mqttConduitCollection, player, {
+  static fromUrl (
+    url,
+    videoElement,
+    config = {}
+  ) {
+    return IOV.factory(videoElement, {
       ...config,
       ...IOV.generateConfigFromUrl(url),
     });
   }
 
-  constructor (mqttConduitCollection, player, config) {
-    IOV.compatibilityCheck();
+  constructor (videoElement, config) {
+    if (!utils.supported()) {
+      throw new Error('You are using an unsupported browser - Unable to play CLSP video');
+    }
 
-    this.id = uuidv4();
+    this.id = config.id || uuidv4();
 
-    this.debug = Debug(`${DEBUG_PREFIX}:${this.id}:main`);
-    this.debug('constructor');
+    // This MUST be globally unique!  The MQTT server will broadcast the stream
+    // to a topic that contains this id, so if there is ANY other client
+    // connected that has the same id anywhere in the world, the stream to all
+    // clients that use that topic will fail.  This is why we use guids rather
+    // than an incrementing integer.
+    this.clientId = config.clientId || uuidv4();
+
+    this.logger = Logger().factory(`IOV ${this.id}`);
+
+    this.logger.debug('Constructing...');
+
+    this.metrics = {};
+
+    // @todo - there must be a more proper way to do events than this...
+    this.events = {};
+
+    for (let i = 0; i < IOV.EVENT_NAMES.length; i++) {
+      this.events[IOV.EVENT_NAMES[i]] = [];
+    }
 
     this.destroyed = false;
     this.onReadyAlreadyCalled = false;
-    this.playerInstance = player;
-    this.videoElement = this.playerInstance.el();
+    this.videoElement = videoElement;
+    this.eid = this.videoElement.id;
 
     this.config = {
-      clientId: this.id,
+      clientId: this.clientId,
       wsbroker: config.wsbroker,
       wsport: config.wsport,
       useSSL: config.useSSL,
       streamName: config.streamName,
       appStart: config.appStart,
-      videoElementParent: config.videoElementParent || null,
-      changeSourceMaxWait: config.changeSourceMaxWait || IOV.CHANGE_SOURCE_MAX_WAIT,
       jwt: config.jwt,
-      b64_jwt_access_url: config.b64_jwt_access_url
+      b64_jwt_access_url: config.b64_jwt_access_url,
     };
 
-    this.statsMsg = {
-      byteCount: 0,
-      inkbps: 0,
-      host: document.location.host,
-      clientId: this.config.clientId,
-    };
+    const {
+      visibilityChangeEventName,
+    } = utils.windowStateNames;
 
-    // @todo - this needs to be a global service or something
-    this.mqttConduitCollection = mqttConduitCollection;
+    if (visibilityChangeEventName) {
+      document.addEventListener(
+        visibilityChangeEventName,
+        this.onVisibilityChange,
+        false
+      );
+    }
 
-    // handle inbound messages from MQTT, including video
-    // and distributes them to players.
-    this.mqttTopicHandlers = new MqttTopicHandlers(this.id, this);
+    window.addEventListener(
+      'online',
+      this.onConnectionChange,
+      false
+    );
 
-    this.events = {
-      connection_lost: (responseObject) => {
-        // @todo - close all players and display an error message
-        console.error('MQTT connection lost');
-        console.error(responseObject);
-      },
-
-      // @todo - does this ever get fired?
-      on_message: this.mqttTopicHandlers.msghandler,
-
-      // generic exception handler
-      exception: (text, e) => {
-        console.error(text);
-        if (typeof e !== 'undefined') {
-          console.error(e.stack);
-        }
-      },
-    };
-  }
-
-  initialize () {
-    this.conduit = this.mqttConduitCollection.addFromIov(this);
-    this.player = IOVPlayer.factory(this, this.playerInstance);
-  }
-
-  clone (config) {
-    this.debug('clone');
-
-    const cloneConfig = {
-      ...config,
-      videoElementParent: this.config.videoElementParent,
-    };
-
-    // @todo - is it possible to reuse the iov player?
-    return IOV.factory(
-      this.mqttConduitCollection,
-      this.playerInstance,
-      cloneConfig
+    window.addEventListener(
+      'offline',
+      this.onConnectionChange,
+      false
     );
   }
 
+  on (name, action) {
+    this.logger.debug(`Registering Listener for ${name} event...`);
+
+    if (!IOV.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
+    }
+
+    if (this.destroyed) {
+      return;
+    }
+
+    this.events[name].push(action);
+  }
+
+  trigger (name, value) {
+    const sillyMetrics = [];
+
+    if (sillyMetrics.includes(name)) {
+      this.logger.silly(`Triggering ${name} event...`);
+    }
+    else {
+      this.logger.debug(`Triggering ${name} event...`);
+    }
+
+    if (this.destroyed) {
+      return;
+    }
+
+    if (!IOV.EVENT_NAMES.includes(name)) {
+      throw new Error(`"${name}" is not a valid event."`);
+    }
+
+    for (let i = 0; i < this.events[name].length; i++) {
+      this.events[name][i](value, this);
+    }
+  }
+
+  metric (type, value) {
+    if (!this.options.enableMetrics) {
+      return;
+    }
+
+    if (!IOV.METRIC_TYPES.includes(type)) {
+      // @todo - should this throw?
+      return;
+    }
+
+    this.metrics[type] = value;
+
+    this.trigger('metric', {
+      type,
+      value: this.metrics[type],
+    });
+  }
+
+  onConnectionChange = () => {
+    if (window.navigator.onLine) {
+      this.logger.debug('Back online...');
+      if (this.player.stopped) {
+        // Without this timeout, the video appears blank.  Not sure if there is
+        // some race condition...
+        setTimeout(() => {
+          this.play();
+        }, 2000);
+      }
+    }
+    else {
+      this.logger.debug('Offline!');
+      this.stop();
+    }
+  };
+
+  onVisibilityChange = () => {
+    const {
+      hiddenStateName,
+    } = utils.windowStateNames;
+
+    if (document[hiddenStateName]) {
+      // Stop playing when tab is hidden or window is minimized
+      this.visibilityChangeTimeout = setTimeout(async () => {
+        this.logger.debug('Stopping because tab is not visible...');
+        await this.stop();
+      }, 1000);
+
+      return;
+    }
+
+    if (this.visibilityChangeTimeout) {
+      clearTimeout(this.visibilityChangeTimeout);
+    }
+
+    if (this.player.stopped) {
+      this.logger.debug('Playing because tab became visible...');
+      this.play();
+    }
+  };
+
+  async initialize () {
+    this.logger.debug('Initializing...');
+
+    if (!this.videoElement) {
+      throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
+    }
+
+    this.videoElement.classList.add('clsp-video');
+
+    const videoElementParent = this.videoElement.parentNode;
+
+    if (!videoElementParent) {
+      throw new Error('There is no iframe container element to attach the iframe to!');
+    }
+
+    this.player = IOVPlayer.factory(this, this.videoElement);
+
+    // @todo - this seems to be videojs specific, and should be removed or moved
+    // somewhere else
+    this.player.on('firstFrameShown', () => {
+      // @todo - this may be overkill given the changeSourceMaxWait...
+      // When the video is ready to be displayed, swap out the video player if
+      // the source has changed.  This is what allows tours to switch to the next
+      try {
+        let videos = videoElementParent.getElementsByTagName('video');
+
+        for (let i = 0; i < videos.length; i++) {
+          let video = videos[i];
+          const id = video.getAttribute('id');
+
+          if (id !== this.eid) {
+            // video.pause();
+            // video.removeAttribute('src');
+            // video.load();
+            // video.style.display = 'none';
+            videoElementParent.removeChild(video);
+            video.remove();
+            video = null;
+            videos = null;
+            break;
+          }
+        }
+
+        // videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
+        // is there still a reference to this element?
+        // this.videoJsVideoElement = null;
+      }
+      catch (error) {
+        this.logger.error(error);
+      }
+
+      this.trigger('firstFrameShown');
+    });
+
+    this.player.on('videoReceived', () => {
+      this.trigger('videoReceived');
+    });
+
+    this.player.on('videoInfoReceived', () => {
+      this.trigger('videoInfoReceived');
+    });
+
+    this.conduit = Conduit.factory(this.clientId, {
+      iovId: this.id,
+      wsbroker: this.config.wsbroker,
+      wsport: this.config.wsport,
+      useSSL: this.config.useSSL,
+      b64_jwt_access_url: this.config.b64_jwt_access_url,
+      jwt: this.config.jwt,
+    });
+
+    await this.conduit.initialize(videoElementParent);
+  }
+
+  clone (config) {
+    this.logger.debug('clone');
+
+    const clonedConfig = {
+      ...config,
+    };
+
+    // @todo - is it possible to reuse the iov player?
+    return IOV.factory(this.videoElement, clonedConfig);
+  }
+
   cloneFromUrl (url, config = {}) {
-    this.debug('cloneFromUrl');
+    this.logger.debug('cloneFromUrl');
 
     return this.clone({
       ...IOV.generateConfigFromUrl(url),
@@ -246,156 +404,81 @@ export default class IOV {
     });
   }
 
-  // query remote server and get a list of all stream names
-  getAvailableStreams (callback) {
-    this.debug('getAvailableStreams');
-
-    this.conduit.transaction('iov/video/list', callback, {});
+  async play () {
+    await this.player.play();
   }
 
-  onChangeSource (url) {
-    this.debug(`changeSource on player "${this.id}""`);
-
-    if (!url) {
-      throw new Error('Unable to change source because there is no url!');
-    }
-
-    const clone = this.cloneFromUrl(url);
-
-    clone.initialize();
-
-    // When the tab is not in focus, chrome doesn't handle things the same
-    // way as when the tab is in focus, and it seems that the result of that
-    // is that the "firstFrameShown" event never fires.  Having the IOV be
-    // updated on a delay in case the "firstFrameShown" takes too long will
-    // ensure that the old IOVs are destroyed, ensuring that unnecessary
-    // socket connections, etc. are not being used, as this can cause the
-    // browser to crash.
-    // Note that if there is a better way to do this, it would likely reduce
-    // the number of try/catch blocks and null checks in the IOVPlayer and
-    // MSEWrapper, but I don't think that is likely to happen until the MSE
-    // is standardized, and even then, we may be subject to non-intuitive
-    // behavior based on tab switching, etc.
-    setTimeout(() => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-    }, clone.config.changeSourceMaxWait);
-
-    // Under normal circumstances, meaning when the tab is in focus, we want
-    // to respond by switching the IOV when the new IOV Player has something
-    // to display
-    clone.player.on('firstFrameShown', () => {
-      clone.playerInstance.tech(true).mqtt.updateIOV(clone);
-    });
+  async stop () {
+    await this.player.stop();
   }
 
-  onReady (event) {
-    this.debug('onReady');
+  async restart () {
+    await this.stop();
+    await this.play();
+  }
 
-    // @todo - why is this necessary?
-    if (this.videoElement.parentNode !== null) {
-      this.config.videoElementParentId = this.videoElement.parentNode.id;
-    }
-
-    const videoTag = this.playerInstance.children()[0];
-
-    // @todo - there must be a better way to determine autoplay...
-    if (videoTag.getAttribute('autoplay') !== null) {
-      // playButton.trigger('click');
-      this.playerInstance.trigger('play', videoTag);
-    }
-
-    if (this.onReadyAlreadyCalled) {
-      console.warn('tried to use this player more than once...');
+  async _play (onMoov, onMoof) {
+    if (this.player.stopped) {
       return;
     }
 
-    this.onReadyAlreadyCalled = true;
+    const {
+      // guid,
+      mimeCodec,
+      moov,
+    } = await this.conduit.play(this.config.streamName, onMoof);
 
-    this.player.on('firstFrameShown', () => {
-      this.playerInstance.loadingSpinner.hide();
-
-      videoTag.style.display = 'none';
-    });
-
-    this.player.on('videoReceived', () => {
-      // reset the timeout monitor from videojs-errors
-      this.playerInstance.trigger('timeupdate');
-    });
-
-    this.player.on('videoInfoReceived', () => {
-      // reset the timeout monitor from videojs-errors
-      this.playerInstance.trigger('timeupdate');
-    });
-
-    this.playerInstanceEventListeners = {
-      changesrc: (event, { url }) => this.onChangeSource(url),
-    };
-
-    this.playerInstance.on('changesrc', this.playerInstanceEventListeners.changesrc);
-
-    if (!document.hidden) {
-      this.player.play();
+    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
+      this.stop();
     }
 
-    this.videoElement.addEventListener('mse-error-event', async (e) => {
-      await this.player.restart();
-    }, false);
-
-    // the mse service will stop streaming to us if we don't send
-    // a message to iov/stats within 1 minute.
-    this._statsTimer = setInterval(() => {
-      this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / 30000.0;
-      this.statsMsg.byteCount = 0;
-
-      this.conduit.publish('iov/stats', this.statsMsg);
-
-      this.debug('iov status', this.statsMsg);
-    }, 5000);
-  }
-
-  onFail (event) {
-    this.debug('onFail');
-
-    // when a stream fails, it no longer needs to send stats to the
-    // server, and it may not even be connected to the server
-    clearInterval(this._statsTimer);
-
-    this.debug('network error', event.data.reason);
-    this.playerInstance.trigger('network-error', event.data.reason);
-  }
-
-  onData (event) {
-    this.debug('onData');
-
-    this.conduit.inboundHandler(event.data);
-  }
-
-  onMessage (event) {
-    const eventType = event.data.event;
-
-    this.debug('onMessage', eventType);
-
-    switch (eventType) {
-      case 'ready': {
-        this.onReady(event);
-        break;
-      }
-      case 'fail': {
-        this.onFail(event);
-        break;
-      }
-      case 'data': {
-        this.onData(event);
-        break;
-      }
-      default: {
-        console.error(`No match for event: ${eventType}`);
-      }
+    if (onMoov) {
+      onMoov(mimeCodec, moov);
     }
   }
 
+  _stop () {
+    this.conduit.stop();
+  }
+
+  resyncStream (cb) {
+    this.conduit.resyncStream(cb);
+  }
+
+  onAppendStart (byteArray) {
+    this.conduit.segmentUsed(byteArray);
+  }
+
+  enterFullscreen () {
+    if (!document.fullscreenElement) {
+      this.videoElement.requestFullscreen();
+    }
+  }
+
+  exitFullscreen () {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+
+  toggleFullscreen () {
+    if (!document.fullscreenElement) {
+      this.enterFullscreen();
+    }
+    else {
+      this.exitFullscreen();
+    }
+  }
+
+  /**
+   * Dereference the necessary properties, clear any intervals and timeouts, and
+   * remove any listeners.  Will also destroy the player and the conduit.
+   *
+   * @returns {void}
+   */
   destroy () {
-    this.debug('destroy');
+    this.logger.debug('destroy');
 
     if (this.destroyed) {
       return;
@@ -403,23 +486,24 @@ export default class IOV {
 
     this.destroyed = true;
 
-    clearInterval(this._statsTimer);
+    const {
+      visibilityChangeEventName,
+    } = utils.windowStateNames;
 
-    // this.playerInstanceEventListeners will not be defined if the iov is
-    // destroyed too early
-    if (this.playerInstanceEventListeners) {
-      this.playerInstance.off('changesrc', this.playerInstanceEventListeners.changesrc);
+    if (visibilityChangeEventName) {
+      document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
     }
 
-    this.player.destroy();
+    window.removeEventListener('online', this.onConnectionChange);
+    window.removeEventListener('offline', this.onConnectionChange);
 
-    this.playerInstance = null;
+    this.player.destroy();
     this.player = null;
 
-    this.mqttConduitCollection.remove(this.id);
+    this.conduit.destroy();
+    this.conduit = null;
 
-    const iframe = document.getElementById(this.config.clientId);
-    iframe.parentNode.removeChild(iframe);
-    iframe.srcdoc = '';
+    this.events = null;
+    this.metrics = null;
   }
-};
+}

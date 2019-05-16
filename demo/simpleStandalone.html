@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Simple CLSP Standalone Demo</title>
+    <link rel="shortcut icon" href="./favicon.ico">
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+      integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay"
+      crossorigin="anonymous"
+    >
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@babel/polyfill@7.4.4/dist/polyfill.min.js"
+    ></script>
+    <style type="text/css">
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        background-color: black;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+        justify-content: center;
+      }
+
+      h1 {
+        color: white;
+        margin: 0 auto;
+      }
+
+      h3 {
+        color: white;
+        margin: 0 auto;
+      }
+
+      .video-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        margin: 0 auto;
+        margin-top: 2rem;
+        border: solid 2px white;
+        padding: 1rem;
+        border-radius: 1rem;
+        width: 50%;
+        height: 50%;
+      }
+
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+      }
+
+      #browser-not-supported {
+        display: none;
+        background-color: white;
+        border-radius: 1rem;
+        padding: 1rem;
+      }
+
+      .controls {
+        display: flex;
+        width: 50%;
+        margin: 1rem auto;
+        justify-content: space-around;
+      }
+
+      .controls button {
+        padding: 1rem 2rem;
+        font-size: 1.5rem;
+        border-radius: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Simple CLSP Standalone Demo</h1>
+    <h3 id="version">v</h3>
+    <div class="video-container">
+      <span id="browser-not-supported">This browser is not supported</span>
+      <video
+        id="my-video"
+        muted
+      >
+        <source
+          src="clsp://172.28.12.57/FairfaxVideo0520"
+          type="video/mp4; codecs='avc1.42E01E'"
+        />
+      </video>
+    </div>
+    <div class="controls">
+      <button onclick="onPlay()" title="play"><i class="fas fa-play"></i></button>
+      <button onclick="onStop()" title="stop"><i class="fas fa-stop"></i></button>
+      <button onclick="onFullscreen()" title="fullscreen"><i class="fas fa-expand"></i></button>
+      <button onclick="onDestroy()" title="destroy"><i class="fas fa-bomb"></i></button>
+    </div>
+
+    <script src="../dist/iovPlayer.min.js"></script>
+
+    <script>
+      document.getElementById('version').innerHTML += window.clspUtils.version;
+
+      var element = document.getElementById('my-video');
+      var url = element.children[0].getAttribute('src');
+      var iovCollection = window.IovCollection.asSingleton();
+
+      iovCollection.create(url, element)
+        .then(function (iov) {
+          window.iov = iov;
+          iov.play();
+        })
+        .catch(function (error) {
+          document.getElementById('browser-not-supported').style.display = 'block';
+          document.getElementById('my-video').style.display = 'none';
+          console.error(error);
+        });
+
+      function onPlay () {
+        if (!window.iov) {
+          return;
+        }
+
+        window.iov.play();
+      }
+
+      function onStop () {
+        if (!window.iov) {
+          return;
+        }
+
+        window.iov.stop();
+      }
+
+      function onFullscreen () {
+        if (!window.iov) {
+          return;
+        }
+
+        window.iov.toggleFullscreen();
+      }
+
+      function onDestroy() {
+        if (!window.iov) {
+          return;
+        }
+
+        iovCollection.remove(iov.id);
+        window.iov = null;
+      }
+    </script>
+  </body>
+</html>

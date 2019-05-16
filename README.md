@@ -1,79 +1,58 @@
 # videojs-mse-over-clsp
 
 A videojs plugin that adds support for video served over the `clsp` protocol.
-Currently, this protocol is available only via Skyline SFS solutions.
+Currently, this protocol is available only via Skyline's SFS solutions.
 
-Note - this plugin currently only works in Chrome.
-Note - this highest keyframe/iframe segment frequency this plugin currently supports is 2 per second.
-
-The new network protocol is handled by specifying the following URI format:
-
-`clsp:// sfs-ip-address : port-number-of-web-socket / stream-id`
-
-* the ip address is that of the SFS
-* the web socket port is 9001
-* the stream name as defined on the SFS
-
-On the HTML `video` tag, the `type` attribute must be the following:
-
-```
-video/mp4; codecs='avc1.42E01E'
-```
-
-This tells the browser exactly what codec to use to decode and play the video.
-H.264 baseline 3.0 is a least common denominator codec supported on all browsers
-(according to the MSE development page).
-
+Note - this plugin currently only works in Chrome and Firefox.  Chrome is recommended for performance.
+Note - this highest h.264 keyframe/iframe segment frequency this plugin currently supports is 2 per second.  This is different from frames per second.
 
 ## Table of Contents
 
-- [Requirements](#requirements)
+- [URL structure](#url-structure)
 - [Installation](#installation)
+  - [Via NPM](#via-npm)
+  - [Via Git](#via-git)
 - [Usage](#usage)
-  - [`<style>` Tag](#style-tag)
+  - [`<head>` Tag](#head-tag)
+  - [`<video>` Tag](#video-tag)
   - [`<script>` Tag](#script-tag)
-  - [Webpack](#webpack)
-  - [Browserify/CommonJS](#browserifycommonjs)
-  - [RequireJS/AMD](#requirejsamd)
+- [Supported Browsers](#supported-browsers)
+- [Dependencies](#dependencies)
 - [License](#license)
-- [@todos](#@todos)
 
+## URL Structure
 
-## Requirements
+The new network protocol is handled by specifying the following URI format:
 
-### Browsers
+`[clsp protocol] :// [sfs-ip-address] : [port-number-of-web-socket] / [stream-id]`
 
-Chrome 52+ is required to run this videojs extension.  All other browsers are currently not supported.
+* clsp or clsps
+* the ip address is that of the SFS
+* the port is not necessary unless it is something other than 80 or 443
+* the stream name as defined on the SFS
 
+Example stream url:
 
-### Dependencies
-
-`@babel/polyfill` `7.2.5` is required.
-
-`video.js` `7.4.1` is the recommended version.  Version `6.x` is not recommended due to it being less performant over time.
-
-If using `videojs-errors`, which is recommended, `4.2.0` is the recommended version, as it allows us to re-register successive errors to respond to successfive failures as necessary to support stream recovery.
-
-
-### Development Environment
-
-Node 10.15.x is required to run the necessary build and development scripts.
-
-One option for installing node in a development environment is to use the node version manager ["n"](https://github.com/tj/n).  If you're using Windows, you can get an installer from [Node's website](https://nodejs.org/en/download/).
-
-#### Vagrant
-
-1. `cp scripts/deploy/Vagrantfile ..`
-1. `vagrant destroy -f && vagrant up && vagrant ssh`
-1. `cd /vagrant/clsp-videojs-plugin`
-1. `rm -rf node_modules`
-1. `sudo scripts/deploy/provision-bootstrap.sh`
-1. `yarn install`
-1. `yarn run serve:vagrant`
-1. [http://5.5.5.4:8080](http://5.5.5.4:8080)
+`clsp://172.28.12.57:9001/FairfaxVideo0520`
 
 
 ## Installation
+
+### Via NPM
+
+Add the following entry to your `package.json` `dependencies` object:
+
+```javascript
+"dependencies": {
+  // ...
+  "videojs-mse-over-clsp": "git+https://github.com/skylineos/clsp-videojs-plugin.git#v0.15.0",
+}
+```
+
+This plugin is not currently published on NPM.  We will be publishing it soon.
+
+
+### Via Git
 
 ```
 git clone https://github.com/skylineos/clsp-videojs-plugin.git
@@ -81,176 +60,106 @@ cd clsp-videojs-plugin
 yarn install
 ```
 
-## Build
-
-Note: If you ae installing on ubuntu the package for nodejs is way out of date, you will need to follow the instructions here to upgrade node: https://github.com/tj/n
-
-After making changes to the plugin, build the project to generate a distributable, standalone file:
-
-```
-yarn run build
-```
-
-The generated files will be available in the `dist` directory.
-
-
-## Run test server
-
-1. `yarn run serve`
-1. navigate to [http://localhost:8080](http://localhost:8080) in Chrome
-1. add a `clsp` url to any of the inputs, then click submit
-1. click play on the video element (if not using an autoplay player)
-
-
 ## Usage
 
-To include videojs-mse-over-clsp on your website or web application, use any of the following methods.
+`@babel/polyfill` and `video.js` MUST be sourced/included prior to the plugin.
 
-### `<style>` Tag
+See `demo/simpleWithVideoJs.html` for a full example.
+
+### `<head>` Tag
 
 In the `<head>` of your page, include a line for the videojs and the clsp plugin styles:
 
 ```html
 <head>
+  <!-- VideoJS styles -->
   <link
     rel="stylesheet"
-    href="//vjs.zencdn.net/7.4.1/video-js.min.css"
+    href="//vjs.zencdn.net/7.5.4/video-js.min.css"
   >
+  <!-- CLSP styles -->
   <link
     rel="stylesheet"
     href="../dist/videojs-mse-over-clsp.css"
   >
+  <!-- Babel Polyfill -->
   <script
     type="text/javascript"
-    src="//cdn.jsdelivr.net/npm/@babel/polyfill@7.2.5/dist/polyfill.min.js"
+    src="//cdn.jsdelivr.net/npm/@babel/polyfill@7.4.4/dist/polyfill.min.js"
   ></script>
 <head>
 ```
+
+
+### `<video>` tag
+
+On the HTML `video` tag, the `type` attribute must be the following:
+
+`video/mp4; codecs='avc1.42E01E'`
+
+This tells the browser exactly what codec to use to decode and play the video.
+H.264 baseline 3.0 is a least common denominator codec supported on all browsers
+(according to the MSE development page).
+
+Here is a sample video element that defines a CLSP and an HLS stream
+
+```html
+<video
+  id="my-video"
+  class="video-js vjs-default-skin"
+  controls
+>
+  <!-- CLSP Stream -->
+  <source
+    src="clsp://8.15.251.53/FairfaxVideo0510"
+    type="video/mp4; codecs='avc1.42E01E'"
+  />
+  <!-- HLS Stream -->
+  <source
+    src="http://8.15.251.53:1935/rtplive/FairfaxVideo0510/playlist.m3u8"
+    type="application/x-mpegURL"
+  />
+</video>
+```
+
 
 ### `<script>` Tag
 
 This is the simplest case. Get the script in whatever way you prefer and include the plugin _after_ you include [video.js][videojs], so that the `videojs` global is available.
 
-See `dist/simple.html` for an example.
-
 ```html
-<video
-  id="my-video"
-  width="352"
-  height="240"
-  class="video-js vjs-default-skin"
-  controls
->
-  <!-- standard streaming over TCP port 9001 -->
-  <source
-    src="clsp://<SFS IP address>:9001/<stream name>"
-    type="video/mp4; codecs='avc1.42E01E'"
-  />
-
-  <!-- or for secure clsp -->
-  <source
-    src="clsps://<SFS IP address>[:443]/<stream name>"
-    type="video/mp4; codecs='avc1.42E01E'"
-  />
-</video>
-
-<script src="//vjs.zencdn.net/7.4.1/video.min.js"></script>
+<!-- VideoJS -->
+<script src="//vjs.zencdn.net/7.5.4/video.min.js"></script>
+<!-- CLSP Plugin -->
 <script src="../dist/videojs-mse-over-clsp.min.js"></script>
 
 <script>
+  // construct the player
   var player = videojs('my-video');
 
-  player.clsp();
+  // Only use CLSP if in a supported browser
+  if (window.clspUtils.supported()) {
+    // Note - This must be executed prior to playing the video for CLSP streams
+    player.clsp();
+  }
 </script>
 ```
 
-### Webpack
 
-When using with Webpack, you will need to register the global videojs in your webpack config file:
+## Supported Browsers
 
-```javascript
-{
-  // ...
-  alias: {
-    'video.js$': path.resolve(__dirname, 'node_modules', 'video.js'),
-  }
-}
-```
+Chrome 52+ or Firefox are the browsers that this plugin currently supports.  All other browsers are currently not supported.
 
-In your code, you will need to set videojs on the window prior to requiring this plugin:
 
-```javascript
-import '@babel/polyfill';
-import videojs from 'video.js';
+## Dependencies
 
-window.videojs = videojs;
+`@babel/polyfill` `7.4.4` is required.
 
-// The actual plugin function is exported by this module, but it is also
-// attached to the `Player.prototype`; so, there is no need to assign it
-// to a variable.
-require('videojs-mse-over-clsp');
+`video.js` `7.5.4` is the recommended version.  Version `6.x` is not recommended due to it being less performant over time.
 
-const player = videojs('my-video');
+If using `videojs-errors`, which is recommended, `4.2.0` is the recommended version, as it allows us to re-register successive errors to respond to successfive failures as necessary to support stream recovery.
 
-player.clsp();
-```
-
-### Browserify/CommonJS
-
-When using with Browserify, install videojs-mse-over-clsp via yarn or npm and `require` the plugin as you would any other module.
-
-```javascript
-require('@babel/polyfill');
-
-const videojs = require('video.js');
-
-// The actual plugin function is exported by this module, but it is also
-// attached to the `Player.prototype`; so, there is no need to assign it
-// to a variable.
-require('videojs-mse-over-clsp');
-
-var player = videojs('my-video');
-
-player.clsp();
-```
-
-### RequireJS/AMD
-
-When using with RequireJS (or another AMD library), get the script in whatever way you prefer and `require` the plugin as you normally would:
-
-```js
-require(['video.js', '@babel/polyfill', 'videojs-mse-over-clsp'], function(videojs) {
-  var player = videojs('my-video');
-
-  player.clsp();
-});
-```
 
 ## License
 
 See the LICENSE file at the root of this repository.
-
-
-## @todos
-
-* implement linter
-* create dispose methods for all classes
-* make iov initialize execute once, and by default
-* create demo for failover
-* minify css
-* hot reload?
-* hash in filenames via webpack?
-
-From 0.14
-
-* minify conduit
-* decouple mqtt conduit logic
-* decouple the MSE abstraction by creating separate mediasource and sourcebuffer abstractions
-* file / class restructure
-* decrease coupling between classes
-* decrease coupling between videojs and iovPlayer
-* improve metrics
-* improve memory management
-* implement destroy method for all classes
-* fix destroy logic
-* improve error handling

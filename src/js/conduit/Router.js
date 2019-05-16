@@ -1,217 +1,687 @@
 'use strict';
 
-// Note that this is the code that gets duplicated in each iframe.
-// Keep the contents of the exported function light and ES5 only.
+/**
+ * This is the lowest level controller of the actual mqtt connection.
+ *
+ * Note that this is the code that gets duplicated in each iframe.
+ * Keep the contents of the exported function light and ES5 only.
+ *
+ * @todo - have a custom loader for webpack that can convert this to ES5 and
+ * minify it in a self-contained way at the time it is required so that we can
+ * use ES6 and multiple files.
+ *
+ * @todo - should all thrown errors send a message to the parent Conduit?
+ */
 
-export default function Router () {
+/**
+ * This router will manage an MQTT connection for a given clientId, and pass
+ * the relevant data and messages back up to the conduit.
+ *
+ * @see - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe
+ * @see - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body
+ * @see - https://www.eclipse.org/paho/files/jsdoc/index.html
+ *
+ * The following events are sent to the parent window:
+ *
+ * router_created
+ *   when the router creation is finished.
+ *   can only happen at time of router instantiation.
+ * router_create_failure
+ *   when the router creation fails.
+ *   can only happen at time of router instantiation.
+ * mqtt_data
+ *   when a segment / moof is transmitted.
+ *   can happen for as long as the connection is open.
+ * connect_success
+ *   when the connection to the mqtt server is established.can only happen at time of connection.
+ * connect_failure
+ *   when trying to connect to the mqtt server fails.
+ *   can only happen at time of connection.
+ * connection_lost
+ *   when the connection to the mqtt server has been established, but is later lost.
+ *   can happen for as long as the connection is open.
+ * disconnect_success
+ *   when the connection to the mqtt server is terminated normally.
+ *   can only happen at time of disconnection.
+ * subscribe_failure
+ *   when trying to subscribe to a topic fails.
+ *   can only happen when a subscribe is attempted.
+ * unsubscribe_failure
+ *   when trying to unsubscribe from a topic fails.
+ *   can only happen when an unsubscribe is attempted.
+ * window_message_fail
+ *   when an error is encountered while processing window messages.
+ *   can happen any time.
+ *
+ * @export - the function that provides the Router and constants
+ */
+export default function () {
+  // The error code from paho mqtt that represents the socket not being
+  // connected
+  var PAHO_MQTT_ERROR_CODE_NOT_CONNECTED = 'AMQJS0011E';
+  var PAHO_MQTT_ERROR_CODE_ALREADY_CONNECTED = 'AMQJS0011E';
+  var Paho = window.parent.Paho;
+
+  /**
+   * @todo - define this as a class, and in a different file.  This will require
+   * a change the way webpack processes the file though...
+   *
+   * A Router that can be used to set up an MQTT connection to the specified
+   * host and port, using a conduit-provided clientId that will be a part of every
+   * message that is passed from this iframe window to the parent window, so
+   * that the conduit can identify what client the message is for.
+   *
+   * @param {String} iovId
+   *   the ID of the parent iov, used for logging purposes
+   * @param {String} clientId
+   *   the guid to be used to construct the topic
+   * @param {String} host
+   *   the host (url or ip) of the SFS that is providing the stream
+   * @param {Number} port
+   *   the port the stream is served over
+   * @param {Boolean} useSSL
+   *   true to request the stream over clsps, false to request the stream over clsp
+   */
+  function Router (
+    iovId,
+    clientId,
+    host,
+    port,
+    useSSL
+  ) {
+    try {
+      this.iovId = iovId;
+
+      this.logger = window.Logger().factory(`Router ${this.iovId}`);
+
+      this.clientId = clientId;
+
+      this.host = host;
+      this.port = port;
+      this.useSSL = useSSL;
+
+      this.logger.debug('Constructing...');
+
+      this.retryInterval = 2000;
+      this.Reconnect = null;
+      this.connectionTimeout = 120;
+
+      this.mqttClient = new Paho.MQTT.Client(
+        this.host,
+        this.port,
+        '/mqtt',
+        this.clientId
+      );
+
+      this.mqttClient.onConnectionLost = this._onConnectionLost.bind(this);
+      this.mqttClient.onMessageArrived = this._onMessageArrived.bind(this);
+
+      this.boundWindowMessageEventHandler = this._windowMessageEventHandler.bind(this);
+
+      window.addEventListener(
+        'message',
+        this.boundWindowMessageEventHandler,
+        false
+      );
+    }
+    catch (error) {
+      this.logger.error('IFRAME error for clientId: ' + clientId);
+      this.logger.error(error);
+    }
+  }
+
+  /**
+   * @private
+   *
+   * Post a "message" with the current `clientId` to the parent window.
+   *
+   * @param {Object} message
+   *   The message to send to the parent window
+   *
+   * @returns {void}
+   */
+  Router.prototype._sendToParent = function (message) {
+    this.logger.debug('Sending message to parent window...');
+
+    if (typeof message !== 'object') {
+      throw new Error('_sendToParent must be passed an object');
+    }
+
+    message.clientId = this.clientId;
+
+    switch (message.event) {
+      case 'router_created':
+      case 'connect_success':
+      case 'disconnect_success': {
+        // no validation needed
+        break;
+      }
+      case 'mqtt_data': {
+        if (!message.hasOwnProperty('destinationName') || !message.hasOwnProperty('payloadString') || !message.hasOwnProperty('payloadBytes')) {
+          throw new Error('improperly formatted "data" message sent to _sendToParent');
+        }
+        break;
+      }
+      case 'connect_failure':
+      case 'connection_lost':
+      case 'subscribe_failure':
+      case 'unsubscribe_failure':
+      case 'window_message_fail': {
+        if (!message.hasOwnProperty('reason')) {
+          throw new Error('improperly formatted "fail" message sent to _sendToParent');
+        }
+        break;
+      }
+      default: {
+        throw new Error('Unknown event ' + message.event + ' sent to _sendToParent');
+      }
+    }
+
+    try {
+      window.parent.postMessage(message, '*');
+    }
+    catch (error) {
+      // When the connection to the SFS fails, and the conduit is destroyed,
+      // there is still a message that is attempted to be sent to the parent.
+      // In this case, the only way this "orphaned" iframe object can
+      // communicate with the console is by throwing an error.  Therefore, it is
+      // difficult to debug and I do not know what the final message is.  Having
+      // the error written to the console here will still allow errors under
+      // "normal" operations to be written to the console, but will suppress the
+      // final unwanted error.
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
+  };
+
+  /**
+   * @private
+   *
+   * To be called when a message has arrived in this Paho.MQTT.client
+   *
+   * The idea here is that when the server sends an mqtt message, whether a
+   * moof, moov, or something else, that data needs to be sent to the appropriate
+   * player (client).  So when this router gets that chunk of data, it sends it
+   * back to the conduit with the clientId, and the conduit is then responsible
+   * for passing it to the appropriate player.
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} mqttMessage
+   *   The incoming message
+   *
+   * @returns {void}
+   */
+  Router.prototype._onMessageArrived = function (mqttMessage) {
+    this.logger.debug('Received MQTT message...');
+
+    try {
+      var payloadString = '';
+
+      try {
+        payloadString = mqttMessage.payloadString;
+      }
+      catch (error) {
+        // I have no idea what is going on here, but every single time we do the
+        // assignment above, an error is thrown.  When I console.log(payloadString)
+        // it appears to be an empty string.  However, if that assignment is not
+        // done, no video gets displayed!!
+        // There should be some way to only use the payloadBytes here...
+      }
+
+      this._sendToParent({
+        event: 'mqtt_data',
+        destinationName: mqttMessage.destinationName,
+        payloadString: payloadString, // @todo - why is this necessary when it doesn't exist?
+        payloadBytes: mqttMessage.payloadBytes || null,
+      });
+    }
+    catch (error) {
+      this.logger.error(error);
+    }
+  };
+
+  /**
+   * @private
+   *
+   * called when an mqttClient connection has been lost, or after a connect()
+   * method has succeeded.
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
+   */
+  Router.prototype._onConnectionLost = function (response) {
+    this.logger.warn('MQTT connection lost!');
+
+    var errorCode = parseInt(response.errorCode);
+
+    if (errorCode === 0) {
+      // The connection was "properly" terminated
+      this._sendToParent({
+        event: 'disconnect_success',
+      });
+
+      return;
+    }
+
+    this._sendToParent({
+      event: 'connection_lost',
+      reason: 'connection lost error code "' + errorCode + '" with message: ' + response.errorMessage,
+    });
+  };
+
+  /**
+   * @private
+   *
+   * Any time a "message" event occurs on the window respond to it by inspecting
+   * the messages "method" property and taking the appropriate action.
+   *
+   * @param {Object} event
+   *   The window message event
+   *
+   * @returns {void}
+   */
+  Router.prototype._windowMessageEventHandler = function (event) {
+    var message = event.data;
+    var method = message.method;
+
+    this.logger.debug('Handling incoming window message for "' + method + '"...');
+
+    try {
+      switch (method) {
+        case 'subscribe': {
+          this._subscribe(message.topic);
+          break;
+        }
+        case 'unsubscribe': {
+          this._unsubscribe(message.topic);
+          break;
+        }
+        case 'publish': {
+          var payload = null;
+
+          try {
+            payload = JSON.stringify(message.data);
+          }
+          catch (error) {
+            this.logger.error('ERROR: Unable to handle the "publish" window message event!');
+            this.logger.error('json stringify error: ' + message.data);
+
+            // @todo - should we throw here?
+            // throw error;
+            return;
+          }
+
+          this._publish(payload, message.topic);
+          break;
+        }
+        case 'connect': {
+          this.connect();
+          break;
+        }
+        case 'disconnect': {
+          this.disconnect();
+          break;
+        }
+        case 'send': {
+          this._publish(message.byteArray, message.topic);
+          break;
+        }
+        default: {
+          this.logger.error('unknown message method: ' + method);
+        }
+      }
+    }
+    catch (error) {
+      this.logger.error(error);
+
+      this._sendToParent({
+        event: 'window_message_fail',
+        reason: 'window message event failure',
+      });
+    }
+  };
+
+  /**
+   * @private
+   *
+   * Success handler for "connect".  Registers the window message event handler,
+   * and notifies the parent window that this client is "ready".
+   *
+   * @todo - track the "connected" status to prevent multiple window message
+   * event handlers from being attached
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
+   */
+  Router.prototype._connect_onSuccess = function (response) {
+    this.logger.info('Successfully established MQTT connection');
+
+    this._sendToParent({
+      event: 'connect_success',
+    });
+  };
+
+  /**
+   * @private
+   *
+   * Failure handler for "connect".  Sends a "fail" message to the parent
+   * window
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
+   */
+  Router.prototype._connect_onFailure = function (response) {
+    this.logger.info('MQTT Connection Failure!');
+    this._sendToParent({
+      event: 'connect_failure',
+      reason: 'Connection Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
+    });
+  };
+
+  /**
+   * @private
+   *
+   * Success handler for "subscribe".
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was successfully subscribed to
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
+   */
+  Router.prototype._subscribe_onSuccess = function (topic, response) {
+    this.logger.debug('Successfully subscribed to topic "' + topic + '"');
+    // @todo
+  };
+
+  /**
+   * @private
+   *
+   * Failure handler for "subscribe".  Sends a "fail" message to the parent
+   * window
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was attempted to be subscribed to
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
+   */
+  Router.prototype._subscribe_onFailure = function (topic, response) {
+    this.logger.error('Failed to subscribe to topic "' + topic + '"');
+
+    this._sendToParent({
+      event: 'subscribe_failure',
+      reason: 'Subscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
+    });
+  };
+
+  /**
+   * @private
+   *
+   * Start receiving messages for the given topic
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic to subscribe to
+   *
+   * @returns {void}
+   */
+  Router.prototype._subscribe = function (topic) {
+    this.logger.debug('Subscribing to topic "' + topic + '"');
+
+    if (!topic) {
+      throw new Error('topic is a required argument when subscribing');
+    }
+
+    this.mqttClient.subscribe(topic, {
+      onSuccess: this._subscribe_onSuccess.bind(this, topic),
+      onFailure: this._subscribe_onFailure.bind(this, topic),
+    });
+  };
+
+  /**
+   * @private
+   *
+   * Success handler for "unsubscribe".
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was successfully unsubscribed from
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
+   */
+  Router.prototype._unsubscribe_onSuccess = function (topic, response) {
+    this.logger.debug('Successfully unsubscribed from topic "' + topic + '"');
+    // @todo
+  };
+
+  /**
+   * @private
+   *
+   * Failure handler for "unsubscribe".  Sends a "fail" message to the parent
+   * window
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was successfully subscribed to
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
+   */
+  Router.prototype._unsubscribe_onFailure = function (topic, response) {
+    this.logger.debug('Failed to unsubscribe from topic "' + topic + '"');
+
+    this._sendToParent({
+      event: 'unsubscribe_failure',
+      reason: 'Unsubscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
+    });
+  };
+
+  /**
+   * @private
+   *
+   * Stop receiving messages for the given topic
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic to unsubscribe from
+   *
+   * @returns {void}
+   */
+  Router.prototype._unsubscribe = function (topic) {
+    this.logger.debug('Unsubscribing from topic "' + topic + '"');
+
+    if (!topic) {
+      throw new Error('topic is a required argument when unsubscribing');
+    }
+
+    this.mqttClient.unsubscribe(topic, {
+      onSuccess: this._unsubscribe_onSuccess.bind(this, topic),
+      onFailure: this._unsubscribe_onFailure.bind(this, topic),
+    });
+  };
+
+  /**
+   * @private
+   *
+   * Publish a message to the clients that are listening for the given topic
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Message.html
+   *
+   * @param {String|ArrayBuffer} payload
+   *   The message data to be sent
+   * @param {String} topic
+   *   The topic to publish to
+   *
+   * @returns {void}
+   */
+  Router.prototype._publish = function (payload, topic) {
+    this.logger.debug('Publishing to topic "' + topic + '"');
+
+    if (!payload) {
+      throw new Error('payload is a required argument when publishing');
+    }
+
+    if (!topic) {
+      throw new Error('topic is a required argument when publishing');
+    }
+
+    var mqttMessage = new Paho.MQTT.Message(payload);
+
+    mqttMessage.destinationName = topic;
+
+    this.mqttClient.send(mqttMessage);
+  };
+
+  /**
+   * Connect this Messaging client to its server
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Message.html
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @returns {void}
+   */
+  Router.prototype.connect = function () {
+    this.logger.info('Connecting...');
+
+    // last will message sent on disconnect
+    var willMessage = new Paho.MQTT.Message(JSON.stringify({
+      clientId: this.clientId,
+    }));
+
+    willMessage.destinationName = 'iov/clientDisconnect';
+
+    var connectionOptions = {
+      timeout: this.connectionTimeout,
+      onSuccess: this._connect_onSuccess.bind(this),
+      onFailure: this._connect_onFailure.bind(this),
+      willMessage: willMessage,
+    };
+
+    if (this.useSSL === true) {
+      connectionOptions.useSSL = true;
+    }
+
+    try {
+      this.mqttClient.connect(connectionOptions);
+      this.logger.info('Connected');
+    }
+    catch (error) {
+      if (error.message.startsWith(PAHO_MQTT_ERROR_CODE_ALREADY_CONNECTED)) {
+        // if we're already connected, there's no error to report
+        return;
+      }
+
+      this.logger.error('Failed to connect', error);
+
+      this._sendToParent({
+        event: 'connect_failure',
+        reason: 'General error when trying to connect.',
+      });
+    }
+  };
+
+  /**
+   * Disconnect the messaging client from the server
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @returns {void}
+   */
+  Router.prototype.disconnect = function () {
+    this.logger.info('Disconnecting');
+    try {
+      this.mqttClient.disconnect();
+    }
+    catch (error) {
+      if (error.message.startsWith(PAHO_MQTT_ERROR_CODE_NOT_CONNECTED)) {
+        // if we're not connected when we attempted to disconnect, there's no
+        // error to report
+        return;
+      }
+
+      this.logger.error('ERROR while disconnecting');
+      this.logger.error(error);
+
+      throw error;
+    }
+  };
+
+  // This is a series of "controllers" to keep the conduit's iframe as dumb as
+  // possible.  Call each of these in the corresponding attribute on the
+  // "body" tag.
   return {
-    clspRouter: function clspRouter () {
-      function send (m) {
-        // route message to parent which will in turn route to the correct
-        // player based on clientId.
-        m.clientId = window.MqttClientId;
-        window.parent.postMessage(m, '*');
-      }
-
-      function routeInbound (message) {
-        var pstring = '';
-
-        try {
-          pstring = message.payloadString;
-        }
-        catch (e) {
-          // bogus excepton?
-        }
-
-        send({
-          event: 'data',
-          destinationName: message.destinationName,
-          payloadString: pstring,
-          payloadBytes: message.payloadBytes || null,
-        });
-      }
-
-      function disconnect () {
-        var ERROR_CODE_NOT_CONNECTED = 'AMQJS0011E';
-
-        try {
-          window.MQTTClient.disconnect();
-        }
-        catch (e) {
-          if (!e.message.startsWith(ERROR_CODE_NOT_CONNECTED)) {
-            console.error(e);
-          }
-        }
-      }
-
-      function eventHandler (evt) {
-        var m = evt.data;
-
-        try {
-          if (m.method === 'subscribe') {
-            window.MQTTClient.subscribe(m.topic);
-          }
-          else if (m.method === 'unsubscribe') {
-            window.MQTTClient.unsubscribe(m.topic);
-          }
-          else if (m.method === 'publish') {
-            var mqtt_payload = null;
-
-            try {
-              mqtt_payload = JSON.stringify(m.data);
-            }
-            catch (json_error) {
-              console.error('json stringify error: ' + m.data);
-              return;
-            }
-
-            var mqtt_msg = new window.parent.Paho.MQTT.Message(mqtt_payload);
-            mqtt_msg.destinationName = m.topic;
-            window.MQTTClient.send(mqtt_msg);
-          }
-          else if (m.method === 'connect') {
-            connect();
-          }
-          else if (m.method === 'disconnect') {
-            disconnect();
-          }
-        }
-        catch (e) {
-          // we are dead!
-          send({
-            event: 'fail',
-            reason: 'network failure',
-          });
-
-          disconnect();
-        }
-      }
-
-      function AppReady () {
-        window.removeEventListener('message', eventHandler);
-        window.addEventListener(
-          'message',
-          eventHandler,
-          false
+    onload: function () {
+      try {
+        window.router = new Router(
+          window.mqttRouterConfig.iovId,
+          window.mqttRouterConfig.clientId,
+          window.mqttRouterConfig.host,
+          window.mqttRouterConfig.port,
+          window.mqttRouterConfig.useSSL,
         );
 
-        send({
-          event: 'ready',
+        window.router._sendToParent({
+          event: 'router_created',
         });
 
-        if (Reconnect !== -1) {
-          clearInterval(Reconnect);
-          Reconnect = -1;
-        }
+        window.router.logger.info('onload - Router created');
+      }
+      catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(error);
+
+        window.parent.postMessage({
+          event: 'router_create_failure',
+          reason: error,
+        }, '*');
+      }
+    },
+    onunload: function () {
+      if (!window.router) {
+        return;
       }
 
-      function AppFail (message) {
-        var e = 'Error code ' + parseInt(message.errorCode) + ': ' + message.errorMessage;
-        send({
-          event: 'fail',
-          reason: e,
-        });
+      // @todo - do we need destroy logic?  or does the destruction of the
+      // iframe handle all dereferences for us?
+      try {
+        window.router.logger.info('onunload - Router disconnecting in onunload...');
+        window.router.disconnect();
+        window.router.logger.info('onunload - Router disconnected in onunload');
       }
-
-      /*
-        * Callback which gets called when the connection is lost
-        */
-      function onConnectionLost (message) {
-        if (message.errorCode === 0) {
+      catch (error) {
+        if (error.message.startsWith(PAHO_MQTT_ERROR_CODE_NOT_CONNECTED)) {
+          // if there wasn't a connection, do not show an error
           return;
         }
 
-        send({
-          event: 'fail',
-          reason: 'connection lost error code ' + parseInt(message.errorCode),
-        });
-        if (Reconnect === -1) {
-          Reconnect = setInterval(function () {
-            connect();
-          }, 2000);
-        }
-      }
-
-      /**
-       * Connect to MQTT...
-       */
-      function connect () {
-        // setup connection options
-        var options = {
-          timeout: 120,
-          onSuccess: AppReady,
-          onFailure: AppFail,
-        };
-        // last will message sent on disconnect
-        var willmsg = new window.parent.Paho.MQTT.Message(JSON.stringify({
-          clientId: window.MqttClientId,
-        }));
-        willmsg.destinationName = 'iov/clientDisconnect';
-        options.willMessage = willmsg;
-
-        if (window.MqttUseSSL === true) {
-          options.useSSL = true;
-        }
-
-        try {
-          window.MQTTClient.connect(options);
-        }
-        catch (e) {
-          var ERROR_CODE_ALREADY_CONNECTED = 'AMQJS0011E';
-
-          if (!e.message.startsWith(ERROR_CODE_ALREADY_CONNECTED)) {
-            console.error('connect failed', e);
-            send({
-              event: 'fail',
-              reason: 'connect failed',
-            });
-          }
-        }
-      }
-
-      try {
-        window.MQTTClient = new window.parent.Paho.MQTT.Client(
-          window.MqttIp,
-          window.MqttPort,
-          window.MqttClientId
-        );
-
-        /*
-         * Hold the id of the reconnect interval task
-         */
-        var Reconnect = -1;
-
-        window.MQTTClient.onConnectionLost = onConnectionLost;
-
-        // perhaps the busiest function in this module ;)
-        window.MQTTClient.onMessageArrived = function (message) {
-          try {
-            routeInbound(message);
-          }
-          catch (e) {
-            if (e) {
-              console.error(e);
-            }
-          }
-        };
-
-        connect();
-      }
-      catch (e) {
-        console.error('IFRAME error');
-        console.error(e);
-      }
-    },
-    onunload: function onunload () {
-      if (typeof window.MQTTClient !== 'undefined') {
-        try {
-          window.MQTTClient.disconnect();
-        }
-        catch (e) {
-          if (!e.message.startsWith('AMQJS0011E')) {
-            console.error(e);
-          }
-        }
+        window.router.logger.error(error);
       }
     },
   };

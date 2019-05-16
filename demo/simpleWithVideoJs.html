@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Simple CLSP with VideoJs Plugin Demo</title>
+    <link rel="shortcut icon" href="./favicon.ico">
+    <link
+      rel="stylesheet"
+      href="https://vjs.zencdn.net/7.5.4/video-js.min.css"
+    >
+    <link
+      rel="stylesheet"
+      href="../dist/videojs-mse-over-clsp.css"
+    >
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+      integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay"
+      crossorigin="anonymous"
+    >
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@babel/polyfill@7.4.4/dist/polyfill.min.js"
+    ></script>
+    <script src="https://vjs.zencdn.net/7.5.4/video.min.js"></script>
+    <style type="text/css">
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        background-color: black;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+        justify-content: center;
+      }
+
+      h1 {
+        color: white;
+        margin: 0 auto;
+      }
+
+      h3 {
+        color: white;
+        margin: 0 auto;
+      }
+
+      .video-container {
+        margin: 0 auto;
+        margin-top: 2rem;
+        border: solid 2px white;
+        padding: 1rem;
+        border-radius: 1rem;
+        width: 50%;
+        height: 50%;
+      }
+
+      .video-js {
+        width: 100%;
+        height: 100%;
+      }
+
+      video {
+        object-fit: fill;
+      }
+
+      .controls {
+        display: flex;
+        width: 50%;
+        margin: 1rem auto;
+        justify-content: space-around;
+      }
+
+      .controls button {
+        padding: 1rem 2rem;
+        font-size: 1.5rem;
+        border-radius: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Simple CLSP with VideoJs Plugin Demo</h1>
+    <h3 id="version">v</h3>
+    <div class="video-container">
+      <video
+        id="my-video"
+        class="video-js vjs-default-skin"
+        muted
+      >
+        <source
+          src="clsp://172.28.12.57/FairfaxVideo0520"
+          type="video/mp4; codecs='avc1.42E01E'"
+        />
+        <source
+          src="http://8.15.251.53:1935/rtplive/FairfaxVideo0510/playlist.m3u8"
+          type="application/x-mpegURL"
+        />
+      </video>
+    </div>
+    <div class="controls">
+      <button onclick="onPlay()" title="play"><i class="fas fa-play"></i></button>
+      <button onclick="onStop()" title="stop"><i class="fas fa-stop"></i></button>
+      <button onclick="onFullscreen()" title="fullscreen"><i class="fas fa-expand"></i></button>
+      <button onclick="onDestroy()" title="destroy"><i class="fas fa-bomb"></i></button>
+    </div>
+
+    <script src="../dist/videojs-mse-over-clsp.min.js"></script>
+
+    <script>
+      document.getElementById('version').innerHTML += window.clspUtils.version;
+
+      var player = videojs('my-video');
+
+      if (window.clspUtils.supported()) {
+        console.log('found clsp')
+        player.clsp();
+      }
+
+      player.on('ready', function () {
+        // Even though the "ready" event has fired, it's not actually ready
+        // until the "next tick"...
+        setTimeout(function () {
+          player.play();
+        });
+      });
+
+      function onPlay () {
+        if (!player) {
+          return;
+        }
+
+        player.play();
+      }
+
+      function onStop () {
+        if (!player) {
+          return;
+        }
+
+        // We use a custom event here because the pause event is not a viable
+        // option
+        player.trigger('stop');
+      }
+
+      function onFullscreen () {
+        if (!player) {
+          return;
+        }
+
+        player.requestFullscreen();
+      }
+
+      function onDestroy() {
+        if (!player) {
+          return;
+        }
+
+        player.dispose();
+        player = null;
+      }
+    </script>
+  </body>
+</html>
