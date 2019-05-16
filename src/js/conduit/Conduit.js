@@ -12,6 +12,8 @@
 import Router from './Router';
 import Logger from '../utils/logger';
 
+const MAX_RECONNECTION_ATTEMPTS = 200;
+
 export default class Conduit {
   static factory (clientId, {
     iovId,
@@ -751,7 +753,7 @@ export default class Conduit {
   async _reconnect () {
     this.reconnectionAttempts++;
 
-    if (this.reconnectionAttempts > 20) {
+    if (this.reconnectionAttempts > MAX_RECONNECTION_ATTEMPTS) {
       throw new Error(`Failed to reconnect after ${this.reconnectionAttempts} attempts.`);
     }
 
