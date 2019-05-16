@@ -721,7 +721,7 @@ export default class Conduit {
             window.mqttRouterConfig = {
               iovId: '${this.iovId}',
               clientId: '${this.clientId}',
-              ip: '${this.wsbroker}',
+              host: '${this.wsbroker}',
               port: ${this.wsport},
               useSSL: ${this.useSSL},
             };
