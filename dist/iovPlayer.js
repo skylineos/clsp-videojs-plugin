@@ -5384,7 +5384,7 @@ module.exports = function(module) {
 /*! exports provided: name, title, version, description, main, keywords, author, license, generator-videojs-plugin, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.0-6","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.0-7","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -5422,6 +5422,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
+var MAX_RECONNECTION_ATTEMPTS = 200;
 
 var Conduit =
 /*#__PURE__*/
@@ -5446,6 +5447,14 @@ function () {
     }
     /**
      * @private
+     *
+     * clientId - the guid to be used to construct the topic
+     * iovId - the ID of the parent iov, used for logging purposes
+     * wsbroker - the host (url or ip) of the SFS that is providing the stream
+     * wsport - the port the stream is served over
+     * useSSL - true to request the stream over clsps, false to request the stream over clsp
+     * [b64_jwt_access_url] - the "tokenized" url
+     * [jwt] - the access token
      */
 
   }]);
@@ -5480,7 +5489,12 @@ function () {
     this.connected = false;
   }
   /**
+   * After constructing, call this to initialize the conduit, which will create
+   * the iframe and the Router needed to get the stream from the server.
+   *
    * @returns Promise
+   *   Resolves when the Router has been successfully created.
+   *   Rejects upon failure to create the Router.
    */
 
 
@@ -5520,7 +5534,9 @@ function () {
           }
 
           resolve();
-        };
+        }; // When the Router in the iframe connects, it will broadcast a message
+        // letting us know it connected, or letting us know it failed.
+
 
         window.addEventListener('message', _this._onRouterCreate);
         _this.iframe = _this._generateIframe();
@@ -5528,7 +5544,14 @@ function () {
       });
     }
     /**
+     * After initialization, call this to establish the connection to the server.
+     *
+     * Note that this is called within the play method, so you shouldn't ever need
+     * to manually call `connect`.
+     *
      * @returns Promise
+     *   Resolves when the connection is successfully established.
+     *   Rejects upon failure to connect after a number of retries.
      */
 
   }, {
@@ -5611,7 +5634,6 @@ function () {
       regeneratorRuntime.mark(function _callee2(streamName, onMoof) {
         var _this3 = this;
 
-        var response, t;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
@@ -5621,7 +5643,7 @@ function () {
 
               case 2:
                 if (!(this.jwt.length > 0)) {
-                  _context2.next = 12;
+                  _context2.next = 6;
                   break;
                 }
 
@@ -5629,45 +5651,9 @@ function () {
                 return this.validateJwt();
 
               case 5:
-                response = _context2.sent;
+                streamName = _context2.sent;
 
-                if (!(response.status !== 200)) {
-                  _context2.next = 10;
-                  break;
-                }
-
-                if (!(response.status === 403)) {
-                  _context2.next = 9;
-                  break;
-                }
-
-                throw new Error('JwtUnAuthorized');
-
-              case 9:
-                throw new Error('JwtInvalid');
-
-              case 10:
-                //TODO, figure out how to handle a change in the sfs url from the
-                // clsp-jwt from the target url returned from decrypting the jwt
-                // token.
-                // Example:
-                //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
-                //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-                // --- due to the videojs architecture i don't see a clean way of doing this.
-                // ==============================================================================
-                //    The only way I can see doing this cleanly is to change videojs itself to
-                //    allow the 'canHandleSource' function in MqttSourceHandler to return a
-                //    promise not a value, then ascychronously find out if it can play this
-                //    source after making the call to decrypt the jwt token.22
-                // =============================================================================
-                // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
-                // case what is now the sfs ip address in clsp url will always be the same it will
-                // be the public ip of cluster gateway.
-                t = response.target_url.split('/'); // get the actual stream name
-
-                streamName = t[t.length - 1];
-
-              case 12:
+              case 6:
                 return _context2.abrupt("return", new Promise(function (resolve, reject) {
                   try {
                     _this3.requestStream(streamName, function (_ref3) {
@@ -5731,7 +5717,7 @@ function () {
                   }
                 }));
 
-              case 13:
+              case 7:
               case "end":
                 return _context2.stop();
             }
@@ -5745,6 +5731,12 @@ function () {
 
       return play;
     }()
+    /**
+     * Disconnect from the mqtt server
+     *
+     * @todo - return a promise that resolves when the disconnection is complete
+     */
+
   }, {
     key: "disconnect",
     value: function disconnect() {
@@ -5758,6 +5750,13 @@ function () {
         method: 'disconnect'
       });
     }
+    /**
+     * Stop the playing stream
+     *
+     * @todo - make this async and await the disconnection, and maybe even the
+     * unsubscribes
+     */
+
   }, {
     key: "stop",
     value: function stop() {
@@ -5780,6 +5779,10 @@ function () {
     }
     /**
      * Validate the jwt that this conduit was constructed with.
+     *
+     * @returns Promise
+     *   Resolves the streamName when the response is received AND is successful.
+     *   Rejects if the transaction fails or if the response code is not 200.
      */
 
   }, {
@@ -5794,8 +5797,35 @@ function () {
             b64_access_url: _this4.b64_jwt_access_url,
             token: _this4.jwt
           }, function (response) {
-            //response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
-            resolve(response);
+            // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+            if (response.status !== 200) {
+              if (response.status === 403) {
+                return reject(new Error('JwtUnAuthorized'));
+              }
+
+              return reject(new Error('JwtInvalid'));
+            } //TODO, figure out how to handle a change in the sfs url from the
+            // clsp-jwt from the target url returned from decrypting the jwt
+            // token.
+            // Example:
+            //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
+            //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+            // --- due to the videojs architecture i don't see a clean way of doing this.
+            // ==============================================================================
+            //    The only way I can see doing this cleanly is to change videojs itself to
+            //    allow the 'canHandleSource' function in MqttSourceHandler to return a
+            //    promise not a value, then ascychronously find out if it can play this
+            //    source after making the call to decrypt the jwt token.22
+            // =============================================================================
+            // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+            // case what is now the sfs ip address in clsp url will always be the same it will
+            // be the public ip of cluster gateway.
+
+
+            var t = response.target_url.split('/'); // get the actual stream name
+
+            var streamName = t[t.length - 1];
+            resolve(streamName);
           });
         } catch (error) {
           reject(error);
@@ -5805,7 +5835,7 @@ function () {
     /**
      * Get the `guid` and `mimeCodec` for the stream
      *
-     * @todo - should this be renamed "play"?
+     * @todo - return a Promise
      *
      * @param {string} streamName - the name of the stream
      * @param {Conduit-requestStreamCallback} cb
@@ -5821,6 +5851,20 @@ function () {
         clientId: this.clientId
       }, cb);
     }
+    /**
+     * @callback Conduit-resyncStreamCb
+     * @param {any} - @todo - document this
+     */
+
+    /**
+     * @todo - provide method description
+     *
+     * @todo - return a Promise
+     *
+     * @param {Conduit-resyncStreamCb} cb
+     *   The callback for the resync operation
+     */
+
   }, {
     key: "resyncStream",
     value: function resyncStream(cb) {
@@ -5836,6 +5880,8 @@ function () {
     /**
      * Get the list of available CLSP streams from the SFS
      *
+     * @todo - return a Promise
+     *
      * @param {Conduit-getStreamListCallback} cb
      *
      * @returns {void}
@@ -5850,6 +5896,10 @@ function () {
     /**
      * Clean up and dereference the necessary properties.  Will also disconnect
      * and destroy the iframe.
+     *
+     * @todo - return a Promise, but do not wait for the promise to resolve to
+     * continue the destroy logic.  the promise should resolve/reject based on
+     * the disconnect method call
      *
      * @returns {void}
      */
@@ -5992,6 +6042,17 @@ function () {
 
       handler(message);
     }
+    /**
+     * @todo - provide method description
+     *
+     * @todo - return a Promise
+     *
+     * @param {String} topic
+     *   The topic to subscribe to
+     * @param {Conduit-subscribeCb} cb
+     *   The callback for the subscribe operation
+     */
+
   }, {
     key: "subscribe",
     value: function subscribe(topic, handler) {
@@ -6003,6 +6064,15 @@ function () {
         topic: topic
       });
     }
+    /**
+     * @todo - provide method description
+     *
+     * @todo - return a Promise
+     *
+     * @param {String} topic
+     *   The topic to unsubscribe from
+     */
+
   }, {
     key: "unsubscribe",
     value: function unsubscribe(topic) {
@@ -6014,6 +6084,17 @@ function () {
         topic: topic
       });
     }
+    /**
+     * @todo - provide method description
+     *
+     * @todo - return a Promise
+     *
+     * @param {String} topic
+     *   The topic to publish to
+     * @param {Object} data
+     *   The data to publish
+     */
+
   }, {
     key: "publish",
     value: function publish(topic, data) {
@@ -6025,6 +6106,17 @@ function () {
         data: data
       });
     }
+    /**
+     * @todo - provide method description
+     *
+     * @todo - return a Promise
+     *
+     * @param {String} topic
+     *   The topic to send to
+     * @param {Array} byteArray
+     *   The raw data to send
+     */
+
   }, {
     key: "directSend",
     value: function directSend(topic, byteArray) {
@@ -6036,17 +6128,31 @@ function () {
         byteArray: byteArray
       });
     }
+    /**
+     * @todo - provide method description
+     *
+     * @todo - return a Promise
+     *
+     * @param {String} topic
+     *   The topic to perform a transaction on
+     * @param {Object} messageData
+     *   The data to be published
+     * @param {Conduit-transactionCb} cb
+     */
+
   }, {
     key: "transaction",
     value: function transaction(topic) {
       var _this5 = this;
 
       var messageData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      var onSubscribe = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function () {};
+      var cb = arguments.length > 2 ? arguments[2] : undefined;
       this.logger.debug('transaction...');
       messageData.resp_topic = "".concat(this.clientId, "/response/").concat(parseInt(Math.random() * 1000000));
       this.subscribe(messageData.resp_topic, function (response) {
-        onSubscribe(JSON.parse(response.payloadString));
+        if (cb) {
+          cb(JSON.parse(response.payloadString));
+        }
 
         _this5.unsubscribe(messageData.resp_topic);
       });
@@ -6071,9 +6177,17 @@ function () {
       iframe.width = 0;
       iframe.height = 0;
       iframe.setAttribute('style', 'display:none;');
-      iframe.srcdoc = "\n      <html>\n        <head>\n          <script type=\"text/javascript\">\n            // Include the logger\n            window.Logger = ".concat(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"].toString(), ";\n\n            // Configure the CLSP properties\n            window.mqttRouterConfig = {\n              iovId: '").concat(this.iovId, "',\n              clientId: '").concat(this.clientId, "',\n              ip: '").concat(this.wsbroker, "',\n              port: ").concat(this.wsport, ",\n              useSSL: ").concat(this.useSSL, ",\n            };\n\n            window.iframeEventHandlers = ").concat(_Router__WEBPACK_IMPORTED_MODULE_0__["default"].toString(), "();\n          </script>\n        </head>\n        <body\n          onload=\"window.iframeEventHandlers.onload();\"\n          onunload=\"window.iframeEventHandlers.onunload();\"\n        >\n          <div id=\"message\"></div>\n        </body>\n      </html>\n    ");
+      iframe.srcdoc = "\n      <html>\n        <head>\n          <script type=\"text/javascript\">\n            // Include the logger\n            window.Logger = ".concat(_utils_logger__WEBPACK_IMPORTED_MODULE_1__["default"].toString(), ";\n\n            // Configure the CLSP properties\n            window.mqttRouterConfig = {\n              iovId: '").concat(this.iovId, "',\n              clientId: '").concat(this.clientId, "',\n              host: '").concat(this.wsbroker, "',\n              port: ").concat(this.wsport, ",\n              useSSL: ").concat(this.useSSL, ",\n            };\n\n            window.iframeEventHandlers = ").concat(_Router__WEBPACK_IMPORTED_MODULE_0__["default"].toString(), "();\n          </script>\n        </head>\n        <body\n          onload=\"window.iframeEventHandlers.onload();\"\n          onunload=\"window.iframeEventHandlers.onunload();\"\n        >\n          <div id=\"message\"></div>\n        </body>\n      </html>\n    ");
       return iframe;
     }
+    /**
+     * Attempt to reconnect a certain number of times
+     *
+     * @returns Promise
+     *   Resolves when the connection is successfully established
+     *   Rejects when the connection fails
+     */
+
   }, {
     key: "_reconnect",
     value: function () {
@@ -6086,7 +6200,7 @@ function () {
               case 0:
                 this.reconnectionAttempts++;
 
-                if (!(this.reconnectionAttempts > 20)) {
+                if (!(this.reconnectionAttempts > MAX_RECONNECTION_ATTEMPTS)) {
                   _context3.next = 3;
                   break;
                 }
@@ -6190,6 +6304,8 @@ __webpack_require__.r(__webpack_exports__);
  * @todo - have a custom loader for webpack that can convert this to ES5 and
  * minify it in a self-contained way at the time it is required so that we can
  * use ES6 and multiple files.
+ *
+ * @todo - should all thrown errors send a message to the parent Conduit?
  */
 
 /**
@@ -6246,24 +6362,35 @@ __webpack_require__.r(__webpack_exports__);
    * a change the way webpack processes the file though...
    *
    * A Router that can be used to set up an MQTT connection to the specified
-   * ip and port, using a conduit-provided clientId that will be a part of every
+   * host and port, using a conduit-provided clientId that will be a part of every
    * message that is passed from this iframe window to the parent window, so
    * that the conduit can identify what client the message is for.
+   *
+   * @param {String} iovId
+   *   the ID of the parent iov, used for logging purposes
+   * @param {String} clientId
+   *   the guid to be used to construct the topic
+   * @param {String} host
+   *   the host (url or ip) of the SFS that is providing the stream
+   * @param {Number} port
+   *   the port the stream is served over
+   * @param {Boolean} useSSL
+   *   true to request the stream over clsps, false to request the stream over clsp
    */
 
-  function Router(iovId, clientId, ip, port, useSSL) {
+  function Router(iovId, clientId, host, port, useSSL) {
     try {
       this.iovId = iovId;
       this.logger = window.Logger().factory("Router ".concat(this.iovId));
       this.clientId = clientId;
-      this.ip = ip;
+      this.host = host;
       this.port = port;
       this.useSSL = useSSL;
       this.logger.debug('Constructing...');
       this.retryInterval = 2000;
       this.Reconnect = null;
       this.connectionTimeout = 120;
-      this.mqttClient = new Paho.MQTT.Client(this.ip, this.port, '/mqtt', this.clientId);
+      this.mqttClient = new Paho.MQTT.Client(this.host, this.port, '/mqtt', this.clientId);
       this.mqttClient.onConnectionLost = this._onConnectionLost.bind(this);
       this.mqttClient.onMessageArrived = this._onMessageArrived.bind(this);
       this.boundWindowMessageEventHandler = this._windowMessageEventHandler.bind(this);
@@ -6277,6 +6404,11 @@ __webpack_require__.r(__webpack_exports__);
    * @private
    *
    * Post a "message" with the current `clientId` to the parent window.
+   *
+   * @param {Object} message
+   *   The message to send to the parent window
+   *
+   * @returns {void}
    */
 
 
@@ -6344,7 +6476,7 @@ __webpack_require__.r(__webpack_exports__);
   /**
    * @private
    *
-   * Called when a message has arrived in this Paho.MQTT.client
+   * To be called when a message has arrived in this Paho.MQTT.client
    *
    * The idea here is that when the server sends an mqtt message, whether a
    * moof, moov, or something else, that data needs to be sent to the appropriate
@@ -6353,6 +6485,11 @@ __webpack_require__.r(__webpack_exports__);
    * for passing it to the appropriate player.
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} mqttMessage
+   *   The incoming message
+   *
+   * @returns {void}
    */
 
 
@@ -6389,12 +6526,17 @@ __webpack_require__.r(__webpack_exports__);
    * method has succeeded.
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
 
 
-  Router.prototype._onConnectionLost = function (responseObject) {
+  Router.prototype._onConnectionLost = function (response) {
     this.logger.warn('MQTT connection lost!');
-    var errorCode = parseInt(responseObject.errorCode);
+    var errorCode = parseInt(response.errorCode);
 
     if (errorCode === 0) {
       // The connection was "properly" terminated
@@ -6407,7 +6549,7 @@ __webpack_require__.r(__webpack_exports__);
 
     this._sendToParent({
       event: 'connection_lost',
-      reason: 'connection lost error code ' + errorCode
+      reason: 'connection lost error code "' + errorCode + '" with message: ' + response.errorMessage
     });
   };
   /**
@@ -6415,6 +6557,11 @@ __webpack_require__.r(__webpack_exports__);
    *
    * Any time a "message" event occurs on the window respond to it by inspecting
    * the messages "method" property and taking the appropriate action.
+   *
+   * @param {Object} event
+   *   The window message event
+   *
+   * @returns {void}
    */
 
 
@@ -6499,10 +6646,17 @@ __webpack_require__.r(__webpack_exports__);
    *
    * @todo - track the "connected" status to prevent multiple window message
    * event handlers from being attached
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
 
 
-  Router.prototype._connect_onSuccess = function () {
+  Router.prototype._connect_onSuccess = function (response) {
     this.logger.info('Successfully established MQTT connection');
 
     this._sendToParent({
@@ -6514,25 +6668,41 @@ __webpack_require__.r(__webpack_exports__);
    *
    * Failure handler for "connect".  Sends a "fail" message to the parent
    * window
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
 
 
-  Router.prototype._connect_onFailure = function (message) {
+  Router.prototype._connect_onFailure = function (response) {
     this.logger.info('MQTT Connection Failure!');
 
     this._sendToParent({
       event: 'connect_failure',
-      reason: 'Error code ' + parseInt(message.errorCode) + ': ' + message.errorMessage
+      reason: 'Connection Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage
     });
   };
   /**
    * @private
    *
    * Success handler for "subscribe".
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was successfully subscribed to
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
 
 
-  Router.prototype._subscribe_onSuccess = function (topic, message) {
+  Router.prototype._subscribe_onSuccess = function (topic, response) {
     this.logger.debug('Successfully subscribed to topic "' + topic + '"'); // @todo
   };
   /**
@@ -6540,21 +6710,37 @@ __webpack_require__.r(__webpack_exports__);
    *
    * Failure handler for "subscribe".  Sends a "fail" message to the parent
    * window
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was attempted to be subscribed to
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
 
 
-  Router.prototype._subscribe_onFailure = function (topic, message) {
+  Router.prototype._subscribe_onFailure = function (topic, response) {
     this.logger.error('Failed to subscribe to topic "' + topic + '"');
 
     this._sendToParent({
       event: 'subscribe_failure',
-      reason: 'subscribe failed'
+      reason: 'Subscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage
     });
   };
   /**
    * @private
    *
    * Start receiving messages for the given topic
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic to subscribe to
+   *
+   * @returns {void}
    */
 
 
@@ -6574,10 +6760,19 @@ __webpack_require__.r(__webpack_exports__);
    * @private
    *
    * Success handler for "unsubscribe".
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was successfully unsubscribed from
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
 
 
-  Router.prototype._unsubscribe_onSuccess = function (topic, message) {
+  Router.prototype._unsubscribe_onSuccess = function (topic, response) {
     this.logger.debug('Successfully unsubscribed from topic "' + topic + '"'); // @todo
   };
   /**
@@ -6585,21 +6780,37 @@ __webpack_require__.r(__webpack_exports__);
    *
    * Failure handler for "unsubscribe".  Sends a "fail" message to the parent
    * window
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic that was successfully subscribed to
+   * @param {Object} response
+   *   The response object
+   *
+   * @returns {void}
    */
 
 
-  Router.prototype._unsubscribe_onFailure = function (topic, message) {
+  Router.prototype._unsubscribe_onFailure = function (topic, response) {
     this.logger.debug('Failed to unsubscribe from topic "' + topic + '"');
 
     this._sendToParent({
       event: 'unsubscribe_failure',
-      reason: 'unsubscribe failed'
+      reason: 'Unsubscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage
     });
   };
   /**
    * @private
    *
    * Stop receiving messages for the given topic
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {String} topic
+   *   The topic to unsubscribe from
+   *
+   * @returns {void}
    */
 
 
@@ -6619,6 +6830,15 @@ __webpack_require__.r(__webpack_exports__);
    * @private
    *
    * Publish a message to the clients that are listening for the given topic
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Message.html
+   *
+   * @param {String|ArrayBuffer} payload
+   *   The message data to be sent
+   * @param {String} topic
+   *   The topic to publish to
+   *
+   * @returns {void}
    */
 
 
@@ -6639,6 +6859,11 @@ __webpack_require__.r(__webpack_exports__);
   };
   /**
    * Connect this Messaging client to its server
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Message.html
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @returns {void}
    */
 
 
@@ -6679,6 +6904,10 @@ __webpack_require__.r(__webpack_exports__);
   };
   /**
    * Disconnect the messaging client from the server
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @returns {void}
    */
 
 
@@ -6706,7 +6935,7 @@ __webpack_require__.r(__webpack_exports__);
   return {
     onload: function onload() {
       try {
-        window.router = new Router(window.mqttRouterConfig.iovId, window.mqttRouterConfig.clientId, window.mqttRouterConfig.ip, window.mqttRouterConfig.port, window.mqttRouterConfig.useSSL);
+        window.router = new Router(window.mqttRouterConfig.iovId, window.mqttRouterConfig.clientId, window.mqttRouterConfig.host, window.mqttRouterConfig.port, window.mqttRouterConfig.useSSL);
 
         window.router._sendToParent({
           event: 'router_created'
@@ -6725,7 +6954,9 @@ __webpack_require__.r(__webpack_exports__);
     onunload: function onunload() {
       if (!window.router) {
         return;
-      }
+      } // @todo - do we need destroy logic?  or does the destruction of the
+      // iframe handle all dereferences for us?
+
 
       try {
         window.router.logger.info('onunload - Router disconnecting in onunload...');
@@ -6971,7 +7202,12 @@ function () {
       throw new Error('You are using an unsupported browser - Unable to play CLSP video');
     }
 
-    this.id = config.id || uuid_v4__WEBPACK_IMPORTED_MODULE_0___default()();
+    this.id = config.id || uuid_v4__WEBPACK_IMPORTED_MODULE_0___default()(); // This MUST be globally unique!  The MQTT server will broadcast the stream
+    // to a topic that contains this id, so if there is ANY other client
+    // connected that has the same id anywhere in the world, the stream to all
+    // clients that use that topic will fail.  This is why we use guids rather
+    // than an incrementing integer.
+
     this.clientId = config.clientId || uuid_v4__WEBPACK_IMPORTED_MODULE_0___default()();
     this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_5__["default"])().factory("IOV ".concat(this.id));
     this.logger.debug('Constructing...');
@@ -8224,6 +8460,14 @@ window.Paho = {
 };
 var totalIovCount = 0;
 var collection;
+/**
+ * The IOV Collection is meant ot be a singleton, and is meant to manage all
+ * IOVs in a given browser window/document.  There are certain centralized
+ * functions it is meant to perform, such as generating the guids that are
+ * needed to establish a connection to a unique topic on the SFS, and to listen
+ * to window messages and route the relevant messages to the appropriate IOV
+ * instance.
+ */
 
 var IovCollection =
 /*#__PURE__*/
@@ -8308,11 +8552,33 @@ function () {
   }
   /**
    * @private
+   *
+   * The listener for the "message" event on the window.  It's job is to
+   * identify messages that are intended for an IOV and route them to the
+   * correct one.  The most common example of this is when a Router receives
+   * a moof/segment from a server, and posts a message to the window.  This
+   * listener will route that moof/segment to the IOV it was intended for.
+   *
+   * @param {Object} event
+   *   The window message event
+   *
+   * @returns {void}
    */
 
 
   _createClass(IovCollection, [{
     key: "create",
+
+    /**
+     * Create an IOV for a specific stream, and add it to this collection.
+     *
+     * @param {String} url
+     *   The url to the clsp stream
+     * @param {DOMNode} videoElement
+     *   The video element that will serve as the video player in the DOM
+     *
+     * @returns {IOV}
+     */
     value: function () {
       var _create = _asyncToGenerator(
       /*#__PURE__*/
@@ -8347,6 +8613,16 @@ function () {
 
       return create;
     }()
+    /**
+     * Add an IOV instance to this collection.  It can then be accessed by its id
+     * or its clientId.
+     *
+     * @param {IOV} iov
+     *   The iov instance to add
+     *
+     * @returns {this}
+     */
+
   }, {
     key: "add",
     value: function add(iov) {
@@ -8356,26 +8632,79 @@ function () {
       this.iovsByClientId[clientId] = iov;
       return this;
     }
+    /**
+     * Determine whether or not an iov with the passed id exists in this
+     * collection.
+     *
+     * @param {String} id
+     *   The id of the iov to find
+     *
+     * @returns {Boolean}
+     *   True if the iov with the given id exists
+     *   False if the iov with the given id does not exist
+     */
+
   }, {
     key: "has",
     value: function has(id) {
       return this.iovs.hasOwnProperty(id);
     }
+    /**
+     * Determine whether or not an iov with the passed clientId exists in this
+     * collection.
+     *
+     * @param {String} clientId
+     *   The clientId of the iov to find
+     *
+     * @returns {Boolean}
+     *   True if the iov with the given clientId exists
+     *   False if the iov with the given clientId does not exist
+     */
+
   }, {
     key: "hasByClientId",
     value: function hasByClientId(clientId) {
       return this.iovsByClientId.hasOwnProperty(clientId);
     }
+    /**
+     * Get an iov with the passed id from this collection.
+     *
+     * @param {String} id
+     *   The id of the iov instance to get
+     *
+     * @returns {IOV|undefined}
+     *   If an iov with this id doest not exist, undefined is returned.
+     */
+
   }, {
     key: "get",
     value: function get(id) {
       return this.iovs[id];
     }
+    /**
+     * Get an iov with the passed clientId from this collection.
+     *
+     * @param {String} clientId
+     *   The clientId of the iov instance to get
+     *
+     * @returns {IOV|undefined}
+     *   If an iov with this clientId doest not exist, undefined is returned.
+     */
+
   }, {
     key: "getByClientId",
     value: function getByClientId(clientId) {
       return this.iovsByClientId[clientId];
     }
+    /**
+     * Remove an iov instance from this collection and destroy it.
+     *
+     * @param {String} id
+     *   The id of the iov to remove and destroy
+     *
+     * @returns {this}
+     */
+
   }, {
     key: "remove",
     value: function remove(id) {
@@ -8385,11 +8714,18 @@ function () {
         return;
       }
 
-      iov.destroy();
       delete this.iovs[id];
+      delete this.iovsByClientId[iov.clientId];
+      iov.destroy();
       this.deletedIovIds.push(id);
       return this;
     }
+    /**
+     * Destroy this collection and destroy all iov instances in this collection.
+     *
+     * @returns {void}
+     */
+
   }, {
     key: "destroy",
     value: function destroy() {
@@ -8401,10 +8737,11 @@ function () {
       window.removeEventListener('message', this._onWindowMessage);
 
       for (var id in this.iovs) {
-        this.destroy(id);
+        this.remove(id);
       }
 
       this.iovs = null;
+      this.iovsByClientId = null;
     }
   }]);
 
