@@ -1,6 +1,13 @@
 # videojs-mse-over-clsp Developer Notes
 
-### Webpack
+## Getting Started
+
+1. Install node 10.15 via nvm or tj/n
+1. Install yarn via yvm
+1. `yarn install`
+1. `yarn run serve`
+
+## Webpack
 
 When using with Webpack, you will need to register the global videojs in your webpack config file:
 
@@ -35,7 +42,7 @@ if (window.clspUtils.supported()) {
 }
 ```
 
-### Development Environment
+## Development Environment
 
 Node 10.15.x is required to run the necessary build and development scripts.
 
@@ -62,7 +69,7 @@ The generated files will be available in the `dist` directory.
 1. click play on the video element (if not using an autoplay player)
 
 
-#### Vagrant
+## Vagrant
 
 1. `cp scripts/deploy/Vagrantfile ..`
 1. `vagrant destroy -f && vagrant up && vagrant ssh`
@@ -86,12 +93,7 @@ The generated files will be available in the `dist` directory.
 * hot reload?
 * hash in filenames via webpack?
 * when switching tabs, if a videojs player hasn't played the clsp stream yet, we get the following error: `Uncaught (in promise) TypeError: Cannot read property 'trigger' of undefined`
-
-From 0.14
-
 * decouple the MSE abstraction by creating separate mediasource and sourcebuffer abstractions
 * improve metrics
 * improve memory management
-* implement destroy method for all classes
-* fix destroy logic
 * improve error handling
