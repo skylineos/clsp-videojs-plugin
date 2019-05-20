@@ -60,19 +60,19 @@ export default class IOV {
       jwtUrl = true;
       hashUrl = false;
     }
-    else if (url.substring(0, 9).toLowerCase() === 'clsps-hash') {
+    else if (url.substring(0, 10).toLowerCase() === 'clsps-hash') {
       useSSL = true;
       parser.href = url.replace('clsps-hash', 'https');
       default_port = 443;
-      jwtUrl = true;
-      hashUrl = false;
+      jwtUrl = false;
+      hashUrl = true;
     }
-    else if (url.substring(0, 8).toLowerCase() === 'clsp-hash') {
+    else if (url.substring(0, 9).toLowerCase() === 'clsp-hash') {
       useSSL = false;
       parser.href = url.replace('clsp-hash', 'http');
       default_port = 9001;
-      jwtUrl = true;
-      hashUrl = false;
+      jwtUrl = false;
+      hashUrl = true;
     }
     else if (url.substring(0, 5).toLowerCase() === 'clsps') {
       useSSL = true;
@@ -131,13 +131,17 @@ export default class IOV {
         throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
       }
 
+      if (typeof query.token === 'undefined') {
+        throw new Error("Required 'token' query parameter not defined for a clsp[s]-jwt");
+      }
+
       const protocol = useSSL
         ? 'clsps-jwt'
         : 'clsp-jwt';
 
-      const url = `${protocol}://${hostname}:${port}/jwt?Start=${query.Start}&End=${query.End}`;
+      const jwtUrl = `${protocol}://${hostname}:${port}/jwt?Start=${query.Start}&End=${query.End}`;
 
-      b64_jwt_access_url = window.btoa(url);
+      b64_jwt_access_url = window.btoa(jwtUrl);
       jwt = query.token;
     } else if (hashUrl === true) {
         // URL: clsp[s]-hash://<sfs-addr>[:9001]/<stream>?start=...&end=...&token=...
@@ -168,9 +172,9 @@ export default class IOV {
           ? 'clsps-hash'
           : 'clsp-hash';
 
-        const url = `${protocol}://${hostname}:${port}/hash?start=${query.start}&end=${query.end}`
+        const hashUrl = `${protocol}://${hostname}:${port}/hash?start=${query.start}&end=${query.end}&token=${query.token}`
 
-        b64_hash_access_url = window.btoa(url);
+        b64_hash_access_url = window.btoa(hashUrl);
         hash = query.token;
     }
 
@@ -242,6 +246,8 @@ export default class IOV {
       appStart: config.appStart,
       jwt: config.jwt,
       b64_jwt_access_url: config.b64_jwt_access_url,
+      hash: config.hash,
+      b64_hash_access_url: config.b64_hash_access_url,
     };
 
     const {
@@ -435,6 +441,8 @@ export default class IOV {
       useSSL: this.config.useSSL,
       b64_jwt_access_url: this.config.b64_jwt_access_url,
       jwt: this.config.jwt,
+      b64_hash_access_url: this.config.b64_hash_access_url,
+      hash: this.config.hash,
     });
 
     await this.conduit.initialize(videoElementParent);
