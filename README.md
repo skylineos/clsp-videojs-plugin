@@ -145,6 +145,26 @@ This is the simplest case. Get the script in whatever way you prefer and include
 </script>
 ```
 
+## Token Authentication
+
+### JWT
+
+TODO: add jwt documentation when JWT functionality is complete.
+
+### Hash
+
+In order to play a video stream that has Hash authentication enabed, there are 3 query parameters you need to pass
+along with your URL. Here is the structure of a clsp/clsps hash enabled url.
+
+```
+clsps-hash://<host>[:port]/stream?start={epoch_seconds}&end={epoch_seconds}&token={hashed_url}
+
+clsp-hash://<host>[:port]/stream?start={epoch_seconds}&end={epoch_seconds}&token={hashed_url}
+```
+
+- `start` contains the earliest time you want the stream to become available.
+- `end` contains the latest time you want the stream to become available.
+- `token` contains the entire url sans token, md5 + secret
 
 ## Supported Browsers
 
