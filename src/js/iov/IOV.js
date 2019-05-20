@@ -37,8 +37,11 @@ export default class IOV {
     let useSSL;
     let default_port;
     let jwtUrl;
+    let hashUrl;
     let b64_jwt_access_url = '';
     let jwt = '';
+    let b64_hash_access_url = '';
+    let hash = '';
 
     // Chrome is the only browser that allows non-http protocols in
     // the anchor tag's href, so change them all to http here so we
@@ -48,24 +51,42 @@ export default class IOV {
       parser.href = url.replace('clsps-jwt', 'https');
       default_port = 443;
       jwtUrl = true;
+      hashUrl = false;
     }
     else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
       useSSL = false;
       parser.href = url.replace('clsp-jwt', 'http');
       default_port = 9001;
       jwtUrl = true;
+      hashUrl = false;
+    }
+    else if (url.substring(0, 9).toLowerCase() === 'clsps-hash') {
+      useSSL = true;
+      parser.href = url.replace('clsps-hash', 'https');
+      default_port = 443;
+      jwtUrl = true;
+      hashUrl = false;
+    }
+    else if (url.substring(0, 8).toLowerCase() === 'clsp-hash') {
+      useSSL = false;
+      parser.href = url.replace('clsp-hash', 'http');
+      default_port = 9001;
+      jwtUrl = true;
+      hashUrl = false;
     }
     else if (url.substring(0, 5).toLowerCase() === 'clsps') {
       useSSL = true;
       parser.href = url.replace('clsps', 'https');
       default_port = 443;
       jwtUrl = false;
+      hashUrl = false;
     }
     else if (url.substring(0, 4).toLowerCase() === 'clsp') {
       useSSL = false;
       parser.href = url.replace('clsp', 'http');
       default_port = 9001;
       jwtUrl = false;
+      hashUrl = false;
     }
     else {
       throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
@@ -118,6 +139,39 @@ export default class IOV {
 
       b64_jwt_access_url = window.btoa(url);
       jwt = query.token;
+    } else if (hashUrl === true) {
+        // URL: clsp[s]-hash://<sfs-addr>[:9001]/<stream>?start=...&end=...&token=...
+        const qp_offset = url.indexOf(parser.pathname)+parser.pathname.length;
+
+        const qr_args = url.substr(qp_offset).split('?')[1];
+        const query = {};
+
+        const pairs = qr_args.split('&');
+        for (let i = 0; i < pairs.length; i++) {
+          const pair = pairs[i].split('=');
+          query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+        }
+
+        if (typeof query.start === 'undefined') {
+          throw new Error("Required 'start' query parameter not defined for a clsp[s]-hash");
+        }
+
+        if (typeof query.end === 'undefined') {
+          throw new Error("Required 'end' query parameter not defined for a clsp[s]-hash");
+        }
+
+        if (typeof query.token === 'undefined') {
+          throw new Error("Required 'token' query parameter not defined for a clsp[s]-hash");
+        }
+
+        const protocol = useSSL
+          ? 'clsps-hash'
+          : 'clsp-hash';
+
+        const url = `${protocol}://${hostname}:${port}/hash?start=${query.start}&end=${query.end}`
+
+        b64_hash_access_url = window.btoa(url);
+        hash = query.token;
     }
 
     return {
@@ -127,6 +181,8 @@ export default class IOV {
       useSSL,
       b64_jwt_access_url,
       jwt,
+      b64_hash_access_url,
+      hash,
     };
   }
 
