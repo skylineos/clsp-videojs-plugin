@@ -3,7 +3,9 @@
 ## Getting Started
 
 1. Install node 10.15 via nvm or tj/n
-1. Install yarn via yvm
+1. Install yarn using one of the following methods:
+    * via yarn's site - [https://yarnpkg.com/en/docs/install](https://yarnpkg.com/en/docs/install)
+    * via yvm - [https://yvm.js.org/docs/overview](https://yvm.js.org/docs/overview)
 1. `yarn install`
 1. `yarn run serve`
 
