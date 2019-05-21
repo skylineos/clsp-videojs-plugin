@@ -1,6 +1,3 @@
-$icon-font-path: '~videojs-font/fonts';
-@import 'node_modules/video.js/src/css/video-js.scss';
-
 @import 'src/styles/videojs-mse-over-clsp.scss';
 
 * {
@@ -19,8 +16,10 @@ html, body {
   background-color: black;
 }
 
-.video-js {
+video {
   width: 100%;
+  height: 100%;
+  object-fit: fill;
 }
 
 .tour,

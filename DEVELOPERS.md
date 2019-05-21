@@ -83,6 +83,7 @@ The generated files will be available in the `dist` directory.
 
 ## @todos
 
+* get rid of vagrant, use docker for development environment
 * every time a stream plays via videojs, a generic error is shown in the console: Uncaught (in promise) DOMException - it seems that claris player can supress this error message
 * when stopped, if the tab is switched, the stream resumes playing - it should remain stopped
 * make the advanced demo logic shared between the two advanced demos
