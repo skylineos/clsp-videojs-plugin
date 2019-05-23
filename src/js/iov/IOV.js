@@ -172,7 +172,7 @@ export default class IOV {
           ? 'clsps-hash'
           : 'clsp-hash';
 
-        const hashUrl = `${protocol}://${hostname}:${port}/hash?start=${query.start}&end=${query.end}&token=${query.token}`
+        const hashUrl = `${protocol}://${hostname}:${port}/${streamName}?start=${query.start}&end=${query.end}&token=${query.token}`
 
         b64_hash_access_url = window.btoa(hashUrl);
         hash = query.token;
