@@ -35,6 +35,41 @@ Example stream url:
 
 `clsp://172.28.12.57:9001/FairfaxVideo0520`
 
+### Tokenization
+
+With the latest version of the CLSP plugin, you are able to control stream
+access with two diferent token methods.
+
+#### JWT
+
+JSON Web Tokens provide the ability to attach a payload with authentication.
+To use JWT, use the following URI format:
+
+`[clsp protocol]-jwt://[sfs-ip-address]:[port-number-of-web-socket]/[stream-id]?token=[jwt-token]`
+
+For our spec, we requrire a bas64 encoded access url, base 64 stream url, and a
+time in minutes when the token should expire.
+```
+{
+    "b64accessUrl": "URL the user will use to access the stream",
+    "b64url": "URL of the stream you want to view on the server",
+    "expires": "Time in minutes you want to allow the user to view the stream"
+}
+```
+
+To learn more about JWT, please check out [jwt.io](https://jwt.io).
+
+#### Hash
+
+The MD5 hash authentication method provides authentication as well as stream
+access time.
+
+`[clsp protocol]-hash://[sfs-ip-address]:[port-number-of-web-socket]/[stream-id]?start=[time-epoch-seconds]&end=[time-epoch-seconds]&token=[hash-token]`
+
+The token is created by appeneding a shared secret to the url when you MD5. To
+use this functionality, contact us to establish a shared secret.
+
+> NOTE: When using the Hash method of autentication, the `[port-number-of-web-socket]` is a `REQUIRED` parameter.
 
 ## Installation
 
