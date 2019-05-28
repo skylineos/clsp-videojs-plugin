@@ -239,7 +239,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       // Continue to update the time, which will prevent videojs-errors from
       // issuing a timeout error
       this.visibilityChangeInterval = setInterval(async () => {
-        this.playerInstance.trigger('timeupdate');
+        this.player.trigger('timeupdate');
       }, 2000);
 
       return;
