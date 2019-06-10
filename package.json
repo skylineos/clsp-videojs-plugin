@@ -8,11 +8,7 @@
     "videojs",
     "videojs-plugin"
   ],
-  "author": "dschere@skylinenet.net",
   "license": "MIT",
-  "generator-videojs-plugin": {
-    "version": "5.0.0"
-  },
   "scripts": {
     "build": "./scripts/build.sh",
     "serve": "./scripts/serve.sh",

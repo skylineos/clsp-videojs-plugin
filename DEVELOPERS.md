@@ -83,6 +83,13 @@ The generated files will be available in the `dist` directory.
 1. [http://5.5.5.4:8080](http://5.5.5.4:8080)
 
 
+## References
+
+1. [https://github.com/videojs/generator-videojs-plugin](https://github.com/videojs/generator-videojs-plugin)
+1. [https://github.com/videojs/Video.js/blob/master/docs/guides/plugins.md](https://github.com/videojs/Video.js/blob/master/docs/guides/plugins.md)
+1. [https://github.com/videojs/generator-videojs-plugin/blob/master/docs/conventions.md](https://github.com/videojs/generator-videojs-plugin/blob/master/docs/conventions.md)
+
+
 ## @todos
 
 * get rid of vagrant, use docker for development environment
