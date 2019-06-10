@@ -22,6 +22,8 @@ export default class Conduit {
     useSSL,
     b64_jwt_access_url,
     jwt,
+    b64_hash_access_url,
+    hash,
   }) {
     return new Conduit(clientId, {
       iovId,
@@ -30,6 +32,8 @@ export default class Conduit {
       useSSL,
       b64_jwt_access_url,
       jwt,
+      b64_hash_access_url,
+      hash,
     });
   }
 
@@ -51,6 +55,8 @@ export default class Conduit {
     useSSL,
     b64_jwt_access_url,
     jwt,
+    b64_hash_access_url,
+    hash,
   }) {
     this.iovId = iovId;
     this.clientId = clientId;
@@ -63,6 +69,8 @@ export default class Conduit {
     this.useSSL = useSSL;
     this.b64_jwt_access_url = b64_jwt_access_url;
     this.jwt = jwt;
+    this.b64_hash_access_url = b64_hash_access_url;
+    this.hash = hash;
 
     this.statsMsg = {
       byteCount: 0,
@@ -225,6 +233,8 @@ export default class Conduit {
 
     if (this.jwt.length > 0) {
       streamName = await this.validateJwt();
+    } else if (this.hash.length > 0) {
+      streamName = await this.validateHash();
     }
 
     return new Promise((resolve, reject) => {
@@ -363,6 +373,65 @@ export default class Conduit {
             //    allow the 'canHandleSource' function in MqttSourceHandler to return a
             //    promise not a value, then ascychronously find out if it can play this
             //    source after making the call to decrypt the jwt token.22
+            // =============================================================================
+            // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+            // case what is now the sfs ip address in clsp url will always be the same it will
+            // be the public ip of cluster gateway.
+            const t = response.target_url.split('/');
+
+            // get the actual stream name
+            const streamName = t[t.length - 1];
+
+            resolve(streamName);
+          }
+        );
+      }
+      catch (error) {
+        reject(error);
+      }
+    });
+  }
+  /**
+   * Validate the hash that this conduit was constructed with.
+   *
+   * @returns Promise
+   *   Resolves the streamName when the response is received AND is successful.
+   *   Rejects if the transaction fails or if the response code is not 200.
+   */
+  validateHash () {
+    this.logger.debug('Validating Hash...');
+
+    return new Promise((resolve, reject) => {
+      try {
+        this.transaction(
+          'iov/hashValidate',
+          {
+            b64HashURL: this.b64_hash_access_url,
+            token: this.hash,
+          },
+          (response) => {
+            // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+
+            if (response.status !== 200) {
+              if (response.status === 403) {
+                return reject(new Error('HashUnAuthorized'));
+              }
+
+              return reject(new Error('HashInvalid'));
+            }
+
+            //TODO, figure out how to handle a change in the sfs url from the
+            // clsp-hash from the target url returned from decrypting the hash
+            // token.
+            // Example:
+            //    user enters 'clsp-hash://sfs1/hash?start=0&end=...&token=...' for source
+            //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+            // --- due to the videojs architecture i don't see a clean way of doing this.
+            // ==============================================================================
+            //    The only way I can see doing this cleanly is to change videojs itself to
+            //    allow the 'canHandleSource' function in MqttSourceHandler to return a
+            //    promise not a value, then ascychronously find out if it can play this
+            //    source after making the call to decrypt the hash token.22
             // =============================================================================
             // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
             // case what is now the sfs ip address in clsp url will always be the same it will

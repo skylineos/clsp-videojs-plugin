@@ -24,7 +24,7 @@ Note - this highest h.264 keyframe/iframe segment frequency this plugin currentl
 
 The new network protocol is handled by specifying the following URI format:
 
-`[clsp protocol] :// [sfs-ip-address] : [port-number-of-web-socket] / [stream-id]`
+`[clsp protocol] :// [sfs-ip-address] : [port-number-of-web-socket] / [stream-name]`
 
 * clsp or clsps
 * the ip address is that of the SFS
@@ -35,6 +35,36 @@ Example stream url:
 
 `clsp://172.28.12.57:9001/FairfaxVideo0520`
 
+### Tokenization
+
+With the latest version of the CLSP plugin, you are able to control stream
+access with two diferent token methods.
+
+#### Hash
+
+The MD5 hash authentication method provides authentication as well as stream
+access time.
+
+`[clsp protocol]-hash://[sfs-ip-address]:[port-number-of-web-socket]/[stream-name]?start=[time-epoch-seconds]&end=[time-epoch-seconds]&token=[hash-token]`
+
+The token is created by appending a shared secret to the url. That new string is
+used to create an MD5 hash. The shared secret must first be set up on the SFS and
+the stream-requesting application.
+
+> NOTE: When using the Hash method of authentication, the `[port-number-of-web-socket]` is a `REQUIRED` parameter.
+
+In order to play a video stream that has Hash authentication enabed, there are 3 query parameters you need to pass
+along with your URL. Here is the structure of a clsp/clsps hash enabled url.
+
+```
+clsps-hash://<host>[:port]/stream?start={epoch_seconds}&end={epoch_seconds}&token={hashed_url}
+
+clsp-hash://<host>[:port]/stream?start={epoch_seconds}&end={epoch_seconds}&token={hashed_url}
+```
+
+- `start` contains the earliest time you want the stream to become available.
+- `end` contains the latest time you want the stream to become available.
+- `token` contains the entire url sans token, md5 + secret
 
 ## Installation
 
@@ -144,7 +174,6 @@ This is the simplest case. Get the script in whatever way you prefer and include
   }
 </script>
 ```
-
 
 ## Supported Browsers
 
