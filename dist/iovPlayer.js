@@ -5365,10 +5365,10 @@ module.exports = function(module) {
 /*!**********************!*\
   !*** ./package.json ***!
   \**********************/
-/*! exports provided: name, title, version, description, main, keywords, author, license, generator-videojs-plugin, scripts, dependencies, devDependencies, default */
+/*! exports provided: name, title, version, description, main, keywords, license, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.0","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"author":"dschere@skylinenet.net","license":"MIT","generator-videojs-plugin":{"version":"5.0.0"},"scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.1-1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"license":"MIT","scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -5419,14 +5419,18 @@ function () {
           wsport = _ref.wsport,
           useSSL = _ref.useSSL,
           b64_jwt_access_url = _ref.b64_jwt_access_url,
-          jwt = _ref.jwt;
+          jwt = _ref.jwt,
+          b64_hash_access_url = _ref.b64_hash_access_url,
+          hash = _ref.hash;
       return new Conduit(clientId, {
         iovId: iovId,
         wsbroker: wsbroker,
         wsport: wsport,
         useSSL: useSSL,
         b64_jwt_access_url: b64_jwt_access_url,
-        jwt: jwt
+        jwt: jwt,
+        b64_hash_access_url: b64_hash_access_url,
+        hash: hash
       });
     }
     /**
@@ -5449,7 +5453,9 @@ function () {
         wsport = _ref2.wsport,
         useSSL = _ref2.useSSL,
         b64_jwt_access_url = _ref2.b64_jwt_access_url,
-        jwt = _ref2.jwt;
+        jwt = _ref2.jwt,
+        b64_hash_access_url = _ref2.b64_hash_access_url,
+        hash = _ref2.hash;
 
     _classCallCheck(this, Conduit);
 
@@ -5462,6 +5468,8 @@ function () {
     this.useSSL = useSSL;
     this.b64_jwt_access_url = b64_jwt_access_url;
     this.jwt = jwt;
+    this.b64_hash_access_url = b64_hash_access_url;
+    this.hash = hash;
     this.statsMsg = {
       byteCount: 0,
       inkbps: 0,
@@ -5627,7 +5635,7 @@ function () {
 
               case 2:
                 if (!(this.jwt.length > 0)) {
-                  _context2.next = 6;
+                  _context2.next = 8;
                   break;
                 }
 
@@ -5636,8 +5644,22 @@ function () {
 
               case 5:
                 streamName = _context2.sent;
+                _context2.next = 12;
+                break;
 
-              case 6:
+              case 8:
+                if (!(this.hash.length > 0)) {
+                  _context2.next = 12;
+                  break;
+                }
+
+                _context2.next = 11;
+                return this.validateHash();
+
+              case 11:
+                streamName = _context2.sent;
+
+              case 12:
                 return _context2.abrupt("return", new Promise(function (resolve, reject) {
                   try {
                     _this3.requestStream(streamName, function (_ref3) {
@@ -5701,7 +5723,7 @@ function () {
                   }
                 }));
 
-              case 7:
+              case 13:
               case "end":
                 return _context2.stop();
             }
@@ -5800,6 +5822,61 @@ function () {
             //    allow the 'canHandleSource' function in MqttSourceHandler to return a
             //    promise not a value, then ascychronously find out if it can play this
             //    source after making the call to decrypt the jwt token.22
+            // =============================================================================
+            // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+            // case what is now the sfs ip address in clsp url will always be the same it will
+            // be the public ip of cluster gateway.
+
+
+            var t = response.target_url.split('/'); // get the actual stream name
+
+            var streamName = t[t.length - 1];
+            resolve(streamName);
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+    /**
+     * Validate the hash that this conduit was constructed with.
+     *
+     * @returns Promise
+     *   Resolves the streamName when the response is received AND is successful.
+     *   Rejects if the transaction fails or if the response code is not 200.
+     */
+
+  }, {
+    key: "validateHash",
+    value: function validateHash() {
+      var _this5 = this;
+
+      this.logger.debug('Validating Hash...');
+      return new Promise(function (resolve, reject) {
+        try {
+          _this5.transaction('iov/hashValidate', {
+            b64HashURL: _this5.b64_hash_access_url,
+            token: _this5.hash
+          }, function (response) {
+            // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+            if (response.status !== 200) {
+              if (response.status === 403) {
+                return reject(new Error('HashUnAuthorized'));
+              }
+
+              return reject(new Error('HashInvalid'));
+            } //TODO, figure out how to handle a change in the sfs url from the
+            // clsp-hash from the target url returned from decrypting the hash
+            // token.
+            // Example:
+            //    user enters 'clsp-hash://sfs1/hash?start=0&end=...&token=...' for source
+            //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+            // --- due to the videojs architecture i don't see a clean way of doing this.
+            // ==============================================================================
+            //    The only way I can see doing this cleanly is to change videojs itself to
+            //    allow the 'canHandleSource' function in MqttSourceHandler to return a
+            //    promise not a value, then ascychronously find out if it can play this
+            //    source after making the call to decrypt the hash token.22
             // =============================================================================
             // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
             // case what is now the sfs ip address in clsp url will always be the same it will
@@ -6127,7 +6204,7 @@ function () {
   }, {
     key: "transaction",
     value: function transaction(topic) {
-      var _this5 = this;
+      var _this6 = this;
 
       var messageData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var cb = arguments.length > 2 ? arguments[2] : undefined;
@@ -6138,7 +6215,7 @@ function () {
           cb(JSON.parse(response.payloadString));
         }
 
-        _this5.unsubscribe(messageData.resp_topic);
+        _this6.unsubscribe(messageData.resp_topic);
       });
       this.publish(topic, messageData);
     }
@@ -7021,8 +7098,11 @@ function () {
       var useSSL;
       var default_port;
       var jwtUrl;
+      var hashUrl;
       var b64_jwt_access_url = '';
-      var jwt = ''; // Chrome is the only browser that allows non-http protocols in
+      var jwt = '';
+      var b64_hash_access_url = '';
+      var hash = ''; // Chrome is the only browser that allows non-http protocols in
       // the anchor tag's href, so change them all to http here so we
       // get the benefits of the anchor tag's parsing
 
@@ -7031,21 +7111,37 @@ function () {
         parser.href = url.replace('clsps-jwt', 'https');
         default_port = 443;
         jwtUrl = true;
+        hashUrl = false;
       } else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
         useSSL = false;
         parser.href = url.replace('clsp-jwt', 'http');
         default_port = 9001;
         jwtUrl = true;
+        hashUrl = false;
+      } else if (url.substring(0, 10).toLowerCase() === 'clsps-hash') {
+        useSSL = true;
+        parser.href = url.replace('clsps-hash', 'https');
+        default_port = 443;
+        jwtUrl = false;
+        hashUrl = true;
+      } else if (url.substring(0, 9).toLowerCase() === 'clsp-hash') {
+        useSSL = false;
+        parser.href = url.replace('clsp-hash', 'http');
+        default_port = 9001;
+        jwtUrl = false;
+        hashUrl = true;
       } else if (url.substring(0, 5).toLowerCase() === 'clsps') {
         useSSL = true;
         parser.href = url.replace('clsps', 'https');
         default_port = 443;
         jwtUrl = false;
+        hashUrl = false;
       } else if (url.substring(0, 4).toLowerCase() === 'clsp') {
         useSSL = false;
         parser.href = url.replace('clsp', 'http');
         default_port = 9001;
         jwtUrl = false;
+        hashUrl = false;
       } else {
         throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
       }
@@ -7068,10 +7164,8 @@ function () {
 
       if (jwtUrl === true) {
         // Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
-        var qp_offset = _url.indexOf(parser.pathname) + parser.pathname.length;
-
-        var qr_args = _url.substr(qp_offset).split('?')[1];
-
+        var qp_offset = url.indexOf(parser.pathname) + parser.pathname.length;
+        var qr_args = url.substr(qp_offset).split('?')[1];
         var query = {};
         var pairs = qr_args.split('&');
 
@@ -7088,12 +7182,49 @@ function () {
           throw new Error("Required 'End' query parameter not defined for a clsp[s]-jwt");
         }
 
+        if (typeof query.token === 'undefined') {
+          throw new Error("Required 'token' query parameter not defined for a clsp[s]-jwt");
+        }
+
         var protocol = useSSL ? 'clsps-jwt' : 'clsp-jwt';
 
-        var _url = "".concat(protocol, "://").concat(hostname, ":").concat(port, "/jwt?Start=").concat(query.Start, "&End=").concat(query.End);
+        var _jwtUrl = "".concat(protocol, "://").concat(hostname, ":").concat(port, "/jwt?Start=").concat(query.Start, "&End=").concat(query.End);
 
-        b64_jwt_access_url = window.btoa(_url);
+        b64_jwt_access_url = window.btoa(_jwtUrl);
         jwt = query.token;
+      } else if (hashUrl === true) {
+        // URL: clsp[s]-hash://<sfs-addr>[:9001]/<stream>?start=...&end=...&token=...
+        var _qp_offset = url.indexOf(parser.pathname) + parser.pathname.length;
+
+        var _qr_args = url.substr(_qp_offset).split('?')[1];
+        var _query = {};
+
+        var _pairs = _qr_args.split('&');
+
+        for (var _i = 0; _i < _pairs.length; _i++) {
+          var _pair = _pairs[_i].split('=');
+
+          _query[decodeURIComponent(_pair[0])] = decodeURIComponent(_pair[1] || '');
+        }
+
+        if (typeof _query.start === 'undefined') {
+          throw new Error("Required 'start' query parameter not defined for a clsp[s]-hash");
+        }
+
+        if (typeof _query.end === 'undefined') {
+          throw new Error("Required 'end' query parameter not defined for a clsp[s]-hash");
+        }
+
+        if (typeof _query.token === 'undefined') {
+          throw new Error("Required 'token' query parameter not defined for a clsp[s]-hash");
+        }
+
+        var _protocol = useSSL ? 'clsps-hash' : 'clsp-hash';
+
+        var _hashUrl = "".concat(_protocol, "://").concat(hostname, ":").concat(port, "/").concat(streamName, "?start=").concat(_query.start, "&end=").concat(_query.end, "&token=").concat(_query.token);
+
+        b64_hash_access_url = window.btoa(_hashUrl);
+        hash = _query.token;
       }
 
       return {
@@ -7102,7 +7233,9 @@ function () {
         streamName: streamName,
         useSSL: useSSL,
         b64_jwt_access_url: b64_jwt_access_url,
-        jwt: jwt
+        jwt: jwt,
+        b64_hash_access_url: b64_hash_access_url,
+        hash: hash
       };
     }
   }, {
@@ -7215,7 +7348,9 @@ function () {
       streamName: config.streamName,
       appStart: config.appStart,
       jwt: config.jwt,
-      b64_jwt_access_url: config.b64_jwt_access_url
+      b64_jwt_access_url: config.b64_jwt_access_url,
+      hash: config.hash,
+      b64_hash_access_url: config.b64_hash_access_url
     };
     var visibilityChangeEventName = _utils__WEBPACK_IMPORTED_MODULE_4__["default"].windowStateNames.visibilityChangeEventName;
 
@@ -7364,7 +7499,9 @@ function () {
                   wsport: this.config.wsport,
                   useSSL: this.config.useSSL,
                   b64_jwt_access_url: this.config.b64_jwt_access_url,
-                  jwt: this.config.jwt
+                  jwt: this.config.jwt,
+                  b64_hash_access_url: this.config.b64_hash_access_url,
+                  hash: this.config.hash
                 });
                 _context2.next = 14;
                 return this.conduit.initialize(videoElementParent);
@@ -9715,7 +9852,7 @@ function _getWindowStateNames() {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! /home/user/vagrant/clsp/clsp-videojs-plugin/src/js/iov/index.js */"./src/js/iov/index.js");
+module.exports = __webpack_require__(/*! /home/user/projects/clsp/clsp-videojs-plugin/src/js/iov/index.js */"./src/js/iov/index.js");
 
 
 /***/ })
