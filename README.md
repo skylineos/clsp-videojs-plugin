@@ -47,7 +47,7 @@ To use JWT, use the following URI format:
 
 `[clsp protocol]-jwt://[sfs-ip-address]:[port-number-of-web-socket]/[stream-id]?token=[jwt-token]`
 
-For our spec, we requrire a bas64 encoded access url, base 64 stream url, and a
+For our spec, we requrire a base 64 encoded access url, base 64 encoded stream url, and a
 time in minutes when the token should expire.
 ```
 {
@@ -66,10 +66,11 @@ access time.
 
 `[clsp protocol]-hash://[sfs-ip-address]:[port-number-of-web-socket]/[stream-id]?start=[time-epoch-seconds]&end=[time-epoch-seconds]&token=[hash-token]`
 
-The token is created by appeneding a shared secret to the url when you MD5. To
-use this functionality, contact us to establish a shared secret.
+The token is created by appending a shared secret to the url. That new string is
+used to create an MD5 hash. The shared secret must first be set up on the SFS and
+the stream-requesting application.
 
-> NOTE: When using the Hash method of autentication, the `[port-number-of-web-socket]` is a `REQUIRED` parameter.
+> NOTE: When using the Hash method of authentication, the `[port-number-of-web-socket]` is a `REQUIRED` parameter.
 
 ## Installation
 
