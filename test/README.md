@@ -36,6 +36,8 @@ The monitoring output will be a csv file that gets created in the directory in w
 
 ### Data Visualization
 
+Note that the jupyter notebook was deleted due to it's size.  It is still available in versions `0.16.0` and below.
+
 Info:
 * For our visualization solution we are using a Jupyter Notebook to parse the data and export it.
 * Installation of Jupyter occurs through Miniconda.
@@ -74,7 +76,7 @@ conda install pandas
 ```
 1. From here you can run your reports with the following command:
 ```
-jupyter nbconvert --to html [path to notebook file] 
+jupyter nbconvert --to html [path to notebook file]
 ```
 This will dump out an html file with the report in it.
 
