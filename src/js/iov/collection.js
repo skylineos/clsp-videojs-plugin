@@ -13,6 +13,7 @@ window.Paho = {
   MQTT: Paho,
 };
 
+// @todo - this could cause an overflow!
 let totalIovCount = 0;
 let collection;
 
@@ -72,6 +73,7 @@ export default class IovCollection {
    */
   _onWindowMessage = (event) => {
     const clientId = event.data.clientId;
+    const eventType = event.data.event;
 
     if (!clientId) {
       // A window message was received that is not related to CLSP
@@ -86,7 +88,12 @@ export default class IovCollection {
       // in the console, because it is not an error.
       // @todo - the fail event no longer exists - what is the name of the new
       // corresponding event?
-      if (event.data.event === 'fail') {
+      if (eventType === 'fail') {
+        return;
+      }
+
+      // Do not throw an error on disconnection
+      if (eventType === 'disconnect_success') {
         return;
       }
 
@@ -96,7 +103,7 @@ export default class IovCollection {
         return;
       }
 
-      throw new Error(`Unable to route message for IOV with clientId "${clientId}".  An IOV for that clientId does not exist.`);
+      throw new Error(`Unable to route message of type ${eventType} for IOV with clientId "${clientId}".  An IOV for that clientId does not exist.`);
     }
 
     // If the document is hidden, don't execute the onMessage handler.  If the

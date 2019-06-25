@@ -16,6 +16,8 @@ const VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MAX = 20;
 
 const logger = Logger().factory('clsp-videojs-plugin');
 
+let totalPluginCount = 0;
+
 export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   static VERSION = utils.version;
 
@@ -60,7 +62,10 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   constructor (player, options) {
     super(player, options);
 
-    logger.debug('creating plugin instance');
+    this.id = ++totalPluginCount;
+    this.logger = Logger().factory(`CLSP Plugin ${this.id}`);
+
+    this.logger.debug('creating plugin instance');
 
     const playerOptions = player.options_;
 
@@ -125,7 +130,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     // @see - https://jsfiddle.net/karstenlh/96hrzp5w/
     // This is currently needed for autoplay.
     player.on('ready', () => {
-      logger.debug('the player is ready');
+      this.logger.debug('the player is ready');
 
       if (this.autoplayEnabled) {
         // Even though the "ready" event has fired, it's not actually ready
@@ -138,10 +143,10 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
     // @todo - this seems like we aren't using videojs properly
     player.on('error', async (event) => {
-      logger.debug('the player encountered an error');
+      this.logger.debug('the player encountered an error');
 
       const retry = async () => {
-        logger.debug('retrying due to error');
+        this.logger.debug('retrying due to error');
 
         if (this.options.maxRetriesOnError === 0) {
           return;
@@ -185,7 +190,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     });
 
     player.on('play', async () => {
-      logger.debug('on player play event');
+      this.logger.debug('on player play event');
 
       // @todo - it is probably unnecessary to have to completely tear down the
       // existing iov and create a new one.  But for now, this works
@@ -201,20 +206,16 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     // not expect it to be triggered.  Therefore, we will create our own "stop"
     // event to be able to better control the player to stop.
     player.on('stop', () => {
+      this.logger.debug('on player stop event');
+
       this.player.pause();
       this.getIov().stop();
     });
 
     player.on('dispose', () => {
-      // @todo - destroy the tech, since it is a player-specific instance
-      try {
-        this.getMqttHandler(player).destroy();
-      }
-      catch (error) {
-        // @todo - need to improve iov destroy logic...
-        console.error('Error while destroying clsp plugin instance!');
-        console.error(error);
-      }
+      this.logger.debug('on dispose stop event');
+
+      this.destroy(player);
     });
 
     const {
@@ -231,6 +232,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   }
 
   onVisibilityChange = () => {
+    this.logger.debug('tab visibility changed...');
+
     const {
       hiddenStateName,
     } = utils.windowStateNames;
@@ -239,6 +242,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       // Continue to update the time, which will prevent videojs-errors from
       // issuing a timeout error
       this.visibilityChangeInterval = setInterval(async () => {
+        this.logger.debug('updating time...');
+
         this.player.trigger('timeupdate');
       }, 2000);
 
@@ -251,6 +256,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   };
 
   getVideojsErrorsOptions () {
+    this.logger.debug('getting videojs errors options...');
+
     return {
       timeout: 120 * 1000,
       errors: {
@@ -265,6 +272,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   }
 
   resetErrors (player) {
+    this.logger.debug('resetting errors...');
+
     // @see - https://github.com/videojs/video.js/issues/4401
     player.error(null);
     player.errorDisplay.close();
@@ -278,14 +287,20 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   }
 
   getMqttHandler (player = this.player) {
+    this.logger.debug('getting mqtt handler IOV...');
+
     return player.tech(true).mqtt;
   }
 
   getIov () {
+    this.logger.debug('getting IOV...');
+
     return this.getMqttHandler().iov;
   }
 
   onMqttHandlerError = () => {
+    this.logger.debug('handling mqtt error...');
+
     const mqttHandler = this.getMqttHandler();
 
     mqttHandler.destroy();
@@ -300,6 +315,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   };
 
   async initializeIOV (player) {
+    this.logger.debug('initializing IOV...');
+
     const mqttHandler = this.getMqttHandler();
 
     if (!mqttHandler) {
@@ -318,22 +335,50 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     await this.getIov().restart();
   }
 
-  destroy () {
-    logger.debug('destroying...');
+  destroy (player = this.player) {
+    this.logger.debug('destroying...');
 
-    const mqttHandler = this.getMqttHandler();
-
-    mqttHandler.off('error', this.onMqttHandlerError);
-
-    const {
-      visibilityChangeEventName,
-    } = utils.windowStateNames;
-
-    if (visibilityChangeEventName) {
-      document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
+    // Note that when the 'dispose' event is fired, this.player no longer exists
+    if (!player) {
+      this.logger.warn('Unable to destroy CLSP Plugin without the player!');
+      return;
     }
 
-    this._playerOptions = null;
-    this.currentSourceIndex = null;
+    if (this.destroyed) {
+      this.logger.debug('Tried to destroy when already destroyed');
+      return;
+    }
+
+    this.destroyed = true;
+
+    // @todo - destroy the tech, since it is a player-specific instance
+    try {
+      const mqttHandler = this.getMqttHandler(player);
+
+      mqttHandler.destroy();
+      mqttHandler.off('error', this.onMqttHandlerError);
+
+      const {
+        visibilityChangeEventName,
+      } = utils.windowStateNames;
+
+      if (visibilityChangeEventName) {
+        this.logger.debug('removing onVisibilityChange listener...');
+        document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
+      }
+
+      if (this.visibilityChangeInterval) {
+        this.logger.debug('removing visibilityChangeInterval...');
+        clearInterval(this.visibilityChangeInterval);
+      }
+
+      this._playerOptions = null;
+      this.currentSourceIndex = null;
+    }
+    catch (error) {
+      // @todo - need to improve iov destroy logic...
+      this.logger.error('Error while destroying clsp plugin instance!');
+      this.logger.error(error);
+    }
   }
 };
