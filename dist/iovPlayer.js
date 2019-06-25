@@ -5368,7 +5368,7 @@ module.exports = function(module) {
 /*! exports provided: name, title, version, description, main, keywords, license, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.1-1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"license":"MIT","scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.1-2","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"license":"MIT","scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -8578,7 +8578,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 window.Paho = {
   MQTT: paho_mqtt__WEBPACK_IMPORTED_MODULE_0___default.a
-};
+}; // @todo - this could cause an overflow!
+
 var totalIovCount = 0;
 var collection;
 /**
@@ -8625,6 +8626,7 @@ function () {
 
     _defineProperty(this, "_onWindowMessage", function (event) {
       var clientId = event.data.clientId;
+      var eventType = event.data.event;
 
       if (!clientId) {
         // A window message was received that is not related to CLSP
@@ -8639,7 +8641,12 @@ function () {
         // in the console, because it is not an error.
         // @todo - the fail event no longer exists - what is the name of the new
         // corresponding event?
-        if (event.data.event === 'fail') {
+        if (eventType === 'fail') {
+          return;
+        } // Do not throw an error on disconnection
+
+
+        if (eventType === 'disconnect_success') {
           return;
         } // Don't show an error for iovs that have been deleted
 
@@ -8650,7 +8657,7 @@ function () {
           return;
         }
 
-        throw new Error("Unable to route message for IOV with clientId \"".concat(clientId, "\".  An IOV for that clientId does not exist."));
+        throw new Error("Unable to route message of type ".concat(eventType, " for IOV with clientId \"").concat(clientId, "\".  An IOV for that clientId does not exist."));
       } // If the document is hidden, don't execute the onMessage handler.  If the
       // handler is executed, for some reason, the conduit will continue to
       // request/receive data from the server, which will eventually result in
@@ -8904,12 +8911,12 @@ window.IovCollection = _collection__WEBPACK_IMPORTED_MODULE_1__["default"];
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return IOVPlayer; });
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MSEWrapper */ "./src/js/iov/MSEWrapper.js");
-/* harmony import */ var _utils_logger__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/logger */ "./src/js/utils/logger.js");
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _MSEWrapper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MSEWrapper */ "./src/js/iov/MSEWrapper.js");
+/* harmony import */ var _utils_logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/logger */ "./src/js/utils/logger.js");
+
+
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -8921,7 +8928,6 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 
 
 
@@ -9011,7 +9017,7 @@ function () {
       _this.mseWrapper.append(mqttMessage.payloadBytes);
     });
 
-    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().factory("IOV Player ".concat(iov.id));
+    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_2__["default"])().factory("IOV Player ".concat(iov.id));
     this.logger.debug('constructor');
     this.metrics = {}; // @todo - there must be a more proper way to do events than this...
 
@@ -9023,7 +9029,7 @@ function () {
 
     this.iov = iov;
     this.videoElement = videoElement;
-    this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
+    this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default()({}, options, {
       segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
       driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
       enableMetrics: false
@@ -9160,7 +9166,7 @@ function () {
                 return this.mseWrapper.destroy();
 
               case 3:
-                this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory(this.videoElement);
+                this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_1__["default"].factory(this.videoElement);
                 this.mseWrapper.on('metric', function (_ref2) {
                   var type = _ref2.type,
                       value = _ref2.value;

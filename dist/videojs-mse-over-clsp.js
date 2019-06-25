@@ -5368,7 +5368,7 @@ module.exports = function(module) {
 /*! exports provided: name, title, version, description, main, keywords, license, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.1-1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"license":"MIT","scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.1-2","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"license":"MIT","scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -8578,7 +8578,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 window.Paho = {
   MQTT: paho_mqtt__WEBPACK_IMPORTED_MODULE_0___default.a
-};
+}; // @todo - this could cause an overflow!
+
 var totalIovCount = 0;
 var collection;
 /**
@@ -8625,6 +8626,7 @@ function () {
 
     _defineProperty(this, "_onWindowMessage", function (event) {
       var clientId = event.data.clientId;
+      var eventType = event.data.event;
 
       if (!clientId) {
         // A window message was received that is not related to CLSP
@@ -8639,7 +8641,12 @@ function () {
         // in the console, because it is not an error.
         // @todo - the fail event no longer exists - what is the name of the new
         // corresponding event?
-        if (event.data.event === 'fail') {
+        if (eventType === 'fail') {
+          return;
+        } // Do not throw an error on disconnection
+
+
+        if (eventType === 'disconnect_success') {
           return;
         } // Don't show an error for iovs that have been deleted
 
@@ -8650,7 +8657,7 @@ function () {
           return;
         }
 
-        throw new Error("Unable to route message for IOV with clientId \"".concat(clientId, "\".  An IOV for that clientId does not exist."));
+        throw new Error("Unable to route message of type ".concat(eventType, " for IOV with clientId \"").concat(clientId, "\".  An IOV for that clientId does not exist."));
       } // If the document is hidden, don't execute the onMessage handler.  If the
       // handler is executed, for some reason, the conduit will continue to
       // request/receive data from the server, which will eventually result in
@@ -8883,12 +8890,12 @@ function () {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return IOVPlayer; });
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! uuid/v4 */ "./node_modules/uuid/v4.js");
-/* harmony import */ var uuid_v4__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(uuid_v4__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
-/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MSEWrapper */ "./src/js/iov/MSEWrapper.js");
-/* harmony import */ var _utils_logger__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/logger */ "./src/js/utils/logger.js");
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash/defaults */ "./node_modules/lodash/defaults.js");
+/* harmony import */ var lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_defaults__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _MSEWrapper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MSEWrapper */ "./src/js/iov/MSEWrapper.js");
+/* harmony import */ var _utils_logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/logger */ "./src/js/utils/logger.js");
+
+
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -8900,7 +8907,6 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 
 
 
@@ -8990,7 +8996,7 @@ function () {
       _this.mseWrapper.append(mqttMessage.payloadBytes);
     });
 
-    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().factory("IOV Player ".concat(iov.id));
+    this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_2__["default"])().factory("IOV Player ".concat(iov.id));
     this.logger.debug('constructor');
     this.metrics = {}; // @todo - there must be a more proper way to do events than this...
 
@@ -9002,7 +9008,7 @@ function () {
 
     this.iov = iov;
     this.videoElement = videoElement;
-    this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_1___default()({}, options, {
+    this.options = lodash_defaults__WEBPACK_IMPORTED_MODULE_0___default()({}, options, {
       segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
       driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
       enableMetrics: false
@@ -9139,7 +9145,7 @@ function () {
                 return this.mseWrapper.destroy();
 
               case 3:
-                this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_2__["default"].factory(this.videoElement);
+                this.mseWrapper = _MSEWrapper__WEBPACK_IMPORTED_MODULE_1__["default"].factory(this.videoElement);
                 this.mseWrapper.on('metric', function (_ref2) {
                   var type = _ref2.type,
                       value = _ref2.value;
@@ -10224,6 +10230,7 @@ var Plugin = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.getPlugin('plugin')
 var VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MIN = 1;
 var VIDEOJS_ERRORS_PLAYER_CURRENT_TIME_MAX = 20;
 var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().factory('clsp-videojs-plugin');
+var totalPluginCount = 0;
 /* harmony default export */ __webpack_exports__["default"] = (function () {
   var _class, _temp;
 
@@ -10274,6 +10281,8 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
       _this = _possibleConstructorReturn(this, _getPrototypeOf(ClspPlugin).call(this, player, options));
 
       _defineProperty(_assertThisInitialized(_this), "onVisibilityChange", function () {
+        _this.logger.debug('tab visibility changed...');
+
         var hiddenStateName = _utils__WEBPACK_IMPORTED_MODULE_2__["default"].windowStateNames.hiddenStateName;
 
         if (document[hiddenStateName]) {
@@ -10288,9 +10297,11 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
               while (1) {
                 switch (_context.prev = _context.next) {
                   case 0:
+                    _this.logger.debug('updating time...');
+
                     _this.player.trigger('timeupdate');
 
-                  case 1:
+                  case 2:
                   case "end":
                     return _context.stop();
                 }
@@ -10306,6 +10317,8 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
       });
 
       _defineProperty(_assertThisInitialized(_this), "onMqttHandlerError", function () {
+        _this.logger.debug('handling mqtt error...');
+
         var mqttHandler = _this.getMqttHandler();
 
         mqttHandler.destroy();
@@ -10319,7 +10332,11 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
         });
       });
 
-      logger.debug('creating plugin instance');
+      _this.id = ++totalPluginCount;
+      _this.logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().factory("CLSP Plugin ".concat(_this.id));
+
+      _this.logger.debug('creating plugin instance');
+
       var playerOptions = player.options_;
       _this.options = video_js__WEBPACK_IMPORTED_MODULE_0___default.a.mergeOptions(_objectSpread({}, _this.constructor.getDefaultOptions(), defaultOptions, playerOptions.clsp || {}), options);
       _this._playerOptions = playerOptions;
@@ -10372,7 +10389,7 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
 
 
       player.on('ready', function () {
-        logger.debug('the player is ready');
+        _this.logger.debug('the player is ready');
 
         if (_this.autoplayEnabled) {
           // Even though the "ready" event has fired, it's not actually ready
@@ -10394,7 +10411,7 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
             while (1) {
               switch (_context3.prev = _context3.next) {
                 case 0:
-                  logger.debug('the player encountered an error');
+                  _this.logger.debug('the player encountered an error');
 
                   retry =
                   /*#__PURE__*/
@@ -10407,7 +10424,7 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
                         while (1) {
                           switch (_context2.prev = _context2.next) {
                             case 0:
-                              logger.debug('retrying due to error');
+                              _this.logger.debug('retrying due to error');
 
                               if (!(_this.options.maxRetriesOnError === 0)) {
                                 _context2.next = 3;
@@ -10493,8 +10510,9 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                logger.debug('on player play event'); // @todo - it is probably unnecessary to have to completely tear down the
+                _this.logger.debug('on player play event'); // @todo - it is probably unnecessary to have to completely tear down the
                 // existing iov and create a new one.  But for now, this works
+
 
                 _context4.next = 3;
                 return _this.initializeIOV(player);
@@ -10516,19 +10534,16 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
       // event to be able to better control the player to stop.
 
       player.on('stop', function () {
+        _this.logger.debug('on player stop event');
+
         _this.player.pause();
 
         _this.getIov().stop();
       });
       player.on('dispose', function () {
-        // @todo - destroy the tech, since it is a player-specific instance
-        try {
-          _this.getMqttHandler(player).destroy();
-        } catch (error) {
-          // @todo - need to improve iov destroy logic...
-          console.error('Error while destroying clsp plugin instance!');
-          console.error(error);
-        }
+        _this.logger.debug('on dispose stop event');
+
+        _this.destroy(player);
       });
       var visibilityChangeEventName = _utils__WEBPACK_IMPORTED_MODULE_2__["default"].windowStateNames.visibilityChangeEventName;
 
@@ -10542,6 +10557,7 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
     _createClass(ClspPlugin, [{
       key: "getVideojsErrorsOptions",
       value: function getVideojsErrorsOptions() {
+        this.logger.debug('getting videojs errors options...');
         return _objectSpread({
           timeout: 120 * 1000,
           errors: {
@@ -10556,7 +10572,8 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
     }, {
       key: "resetErrors",
       value: function resetErrors(player) {
-        // @see - https://github.com/videojs/video.js/issues/4401
+        this.logger.debug('resetting errors...'); // @see - https://github.com/videojs/video.js/issues/4401
+
         player.error(null);
         player.errorDisplay.close(); // Support for the videojs-errors library
         // After an error occurs, and then we clear the error and its message
@@ -10570,11 +10587,13 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
       key: "getMqttHandler",
       value: function getMqttHandler() {
         var player = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.player;
+        this.logger.debug('getting mqtt handler IOV...');
         return player.tech(true).mqtt;
       }
     }, {
       key: "getIov",
       value: function getIov() {
+        this.logger.debug('getting IOV...');
         return this.getMqttHandler().iov;
       }
     }, {
@@ -10588,30 +10607,31 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
             while (1) {
               switch (_context5.prev = _context5.next) {
                 case 0:
+                  this.logger.debug('initializing IOV...');
                   mqttHandler = this.getMqttHandler();
 
                   if (mqttHandler) {
-                    _context5.next = 3;
+                    _context5.next = 4;
                     break;
                   }
 
                   throw new Error("VideoJS Player ".concat(player.id(), " does not have mqtt tech!"));
 
-                case 3:
+                case 4:
                   mqttHandler.off('error', this.onMqttHandlerError);
                   mqttHandler.on('error', this.onMqttHandlerError);
-                  _context5.next = 7;
+                  _context5.next = 8;
                   return mqttHandler.createIOV(player, {
                     enableMetrics: this.options.enableMetrics,
                     defaultNonSslPort: this.options.defaultNonSslPort,
                     defaultSslPort: this.options.defaultSslPort
                   });
 
-                case 7:
-                  _context5.next = 9;
+                case 8:
+                  _context5.next = 10;
                   return this.getIov().restart();
 
-                case 9:
+                case 10:
                 case "end":
                   return _context5.stop();
               }
@@ -10628,17 +10648,44 @@ var logger = Object(_utils_logger__WEBPACK_IMPORTED_MODULE_3__["default"])().fac
     }, {
       key: "destroy",
       value: function destroy() {
-        logger.debug('destroying...');
-        var mqttHandler = this.getMqttHandler();
-        mqttHandler.off('error', this.onMqttHandlerError);
-        var visibilityChangeEventName = _utils__WEBPACK_IMPORTED_MODULE_2__["default"].windowStateNames.visibilityChangeEventName;
+        var player = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.player;
+        this.logger.debug('destroying...'); // Note that when the 'dispose' event is fired, this.player no longer exists
 
-        if (visibilityChangeEventName) {
-          document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
+        if (!player) {
+          this.logger.warn('Unable to destroy CLSP Plugin without the player!');
+          return;
         }
 
-        this._playerOptions = null;
-        this.currentSourceIndex = null;
+        if (this.destroyed) {
+          this.logger.debug('Tried to destroy when already destroyed');
+          return;
+        }
+
+        this.destroyed = true; // @todo - destroy the tech, since it is a player-specific instance
+
+        try {
+          var mqttHandler = this.getMqttHandler(player);
+          mqttHandler.destroy();
+          mqttHandler.off('error', this.onMqttHandlerError);
+          var visibilityChangeEventName = _utils__WEBPACK_IMPORTED_MODULE_2__["default"].windowStateNames.visibilityChangeEventName;
+
+          if (visibilityChangeEventName) {
+            this.logger.debug('removing onVisibilityChange listener...');
+            document.removeEventListener(visibilityChangeEventName, this.onVisibilityChange);
+          }
+
+          if (this.visibilityChangeInterval) {
+            this.logger.debug('removing visibilityChangeInterval...');
+            clearInterval(this.visibilityChangeInterval);
+          }
+
+          this._playerOptions = null;
+          this.currentSourceIndex = null;
+        } catch (error) {
+          // @todo - need to improve iov destroy logic...
+          this.logger.error('Error while destroying clsp plugin instance!');
+          this.logger.error(error);
+        }
       }
     }]);
 
