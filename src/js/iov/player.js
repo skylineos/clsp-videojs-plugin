@@ -1,4 +1,5 @@
-import uuidv4 from 'uuid/v4';
+'use strict';
+
 import defaults from 'lodash/defaults';
 
 import MSEWrapper from './MSEWrapper';
