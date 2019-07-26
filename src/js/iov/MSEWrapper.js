@@ -81,6 +81,7 @@ export default class MSEWrapper {
       driftThreshold: 2000,
       duration: 10,
       enableMetrics: false,
+      appendsWithSameTimeEndThreshold: 1,
     });
 
     this.segmentQueue = [];
@@ -90,6 +91,7 @@ export default class MSEWrapper {
     this.sourceBuffer = null;
     this.objectURL = null;
     this.timeBuffered = null;
+    this.appendsSinceTimeEndUpdated = 0;
 
     if (!this.options.bufferTruncateValue) {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
@@ -558,13 +560,23 @@ export default class MSEWrapper {
     this.metric('sourceBuffer.updateEnd.appendEvent', 1);
 
     // The current buffer size should always be bigger.If it isn't, there is a problem,
-    // and we need to reinitialize or something.
+    // and we need to reinitialize or something.  Sometimes the buffer is the same.  This is
+    // allowed for consecutive appends, but only a configurable number of times.  The default
+    // is 1
+    debug('Appends with same time end: ' + this.appendsSinceTimeEndUpdated);
     if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
+      this.appendsSinceTimeEndUpdated += 1;
       this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
-      this.eventListeners.sourceBuffer.onStreamFrozen();
-      return;
+
+      //append threshold with same time end has been crossed.  Reinitialize frozen stream.
+      if (this.appendsSinceTimeEndUpdated > this.options.appendsWithSameTimeEndThreshold) {
+        debug('stream frozen!');
+        this.eventListeners.sourceBuffer.onStreamFrozen();
+        return;
+      }
     }
 
+    this.appendsSinceTimeEndUpdated = 0;
     this.previousTimeEnd = info.bufferTimeEnd;
 
     this.eventListeners.sourceBuffer.onAppendFinish(info);
