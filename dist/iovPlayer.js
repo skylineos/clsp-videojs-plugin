@@ -5368,7 +5368,7 @@ module.exports = function(module) {
 /*! exports provided: name, title, version, description, main, keywords, license, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"license":"MIT","scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.2-1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"license":"MIT","scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -7879,7 +7879,8 @@ function () {
       bufferTruncateValue: null,
       driftThreshold: 2000,
       duration: 10,
-      enableMetrics: false
+      enableMetrics: false,
+      appendsWithSameTimeEndThreshold: 1
     });
     this.segmentQueue = [];
     this.sequenceNumber = 0;
@@ -7887,6 +7888,7 @@ function () {
     this.sourceBuffer = null;
     this.objectURL = null;
     this.timeBuffered = null;
+    this.appendsSinceTimeEndUpdated = 0;
 
     if (!this.options.bufferTruncateValue) {
       this.options.bufferTruncateValue = parseInt(this.options.bufferSizeLimit / this.options.bufferTruncateFactor);
@@ -8369,14 +8371,24 @@ function () {
       var info = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getBufferTimes();
       silly('On append finish...');
       this.metric('sourceBuffer.updateEnd.appendEvent', 1); // The current buffer size should always be bigger.If it isn't, there is a problem,
-      // and we need to reinitialize or something.
+      // and we need to reinitialize or something.  Sometimes the buffer is the same.  This is
+      // allowed for consecutive appends, but only a configurable number of times.  The default
+      // is 1
+
+      debug('Appends with same time end: ' + this.appendsSinceTimeEndUpdated);
 
       if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
-        this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
-        this.eventListeners.sourceBuffer.onStreamFrozen();
-        return;
+        this.appendsSinceTimeEndUpdated += 1;
+        this.metric('sourceBuffer.updateEnd.bufferFrozen', 1); //append threshold with same time end has been crossed.  Reinitialize frozen stream.
+
+        if (this.appendsSinceTimeEndUpdated > this.options.appendsWithSameTimeEndThreshold) {
+          debug('stream frozen!');
+          this.eventListeners.sourceBuffer.onStreamFrozen();
+          return;
+        }
       }
 
+      this.appendsSinceTimeEndUpdated = 0;
       this.previousTimeEnd = info.bufferTimeEnd;
       this.eventListeners.sourceBuffer.onAppendFinish(info);
       this.trimBuffer(info);
