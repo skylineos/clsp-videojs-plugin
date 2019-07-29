@@ -3,7 +3,7 @@
 import Debug from 'debug';
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
-// import { mp4toJSON } from './mp4-inspect';
+import { mp4toJSON } from './mp4-inspect';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 
@@ -325,7 +325,7 @@ export default class MSEWrapper {
     this.metric('queue.added', 1);
 
     this.segmentQueue.push({
-      timestamp: Date.now(),
+      timeSegmentWasAddedToQueue: Date.now(),
       byteArray: segment,
     });
   }
@@ -351,11 +351,11 @@ export default class MSEWrapper {
     }
   }
 
-  _append ({ timestamp, byteArray }) {
+  _append ({ timeSegmentWasAddedToQueue, byteArray }) {
     silly('Appending to the sourceBuffer...');
 
     try {
-      const estimatedDrift = Date.now() - timestamp;
+      const estimatedDrift = Date.now() - timeSegmentWasAddedToQueue;
 
       if (estimatedDrift > this.options.driftThreshold) {
         debug(`Estimated drift of ${estimatedDrift} is above the ${this.options.driftThreshold} threshold.  Flushing queue...`);
@@ -471,7 +471,15 @@ export default class MSEWrapper {
 
     this.metric('sourceBuffer.lastMoofSize', byteArray.length);
 
-    // console.log(mp4toJSON(byteArray));
+    const segmentJson = mp4toJSON(byteArray);
+    const moofDuration = segmentJson[0].boxes[1].boxes[2].samples[0].duration;
+
+    if (!moofDuration) {
+      console.log(segmentJson);
+      console.log(moofDuration);
+      console.log('bytearray length: ', byteArray.length)
+    }
+
 
     // Sometimes this can get hit after destroy is called
     if (!this.eventListeners.sourceBuffer.onAppendStart) {
@@ -565,13 +573,15 @@ export default class MSEWrapper {
     // is 1
     debug('Appends with same time end: ' + this.appendsSinceTimeEndUpdated);
     if (this.previousTimeEnd && info.bufferTimeEnd <= this.previousTimeEnd) {
+      console.log('-------------- NO TIME CHANGE', info.bufferTimeEnd, this.previousTimeEnd);
       this.appendsSinceTimeEndUpdated += 1;
       this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
 
       //append threshold with same time end has been crossed.  Reinitialize frozen stream.
       if (this.appendsSinceTimeEndUpdated > this.options.appendsWithSameTimeEndThreshold) {
+        console.log('stream frozen ----------------------------------------------------------')
         debug('stream frozen!');
-        this.eventListeners.sourceBuffer.onStreamFrozen();
+        // this.eventListeners.sourceBuffer.onStreamFrozen();
         return;
       }
     }

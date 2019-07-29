@@ -370,6 +370,7 @@ export default class IOVPlayer {
 
     this.trigger('videoReceived');
     this.getSegmentIntervalMetrics();
+
     this.mseWrapper.append(mqttMessage.payloadBytes);
   };
 
