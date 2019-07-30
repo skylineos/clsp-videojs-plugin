@@ -106,6 +106,18 @@ export default function () {
       this.Reconnect = null;
       this.connectionTimeout = 120;
 
+      // @todo - there is a "private" method named "_doConnect" in the paho mqtt
+      // library that is responsible for instantiating the WebSocket.  We have
+      // seen at least 1 instance where the instantiation of the WebSocket fails
+      // which was due to the error "ERR_NAME_NOT_RESOLVED", but it does not
+      // seem like this error is "passed" up to the caller (e.g. Router.connect)
+      // and therefore we cannot respond to it.  If we could, perhaps we could
+      // attempt to reconnect, or at least send a message to Router's parent.
+      // Given this, should we override Paho.MQTT.Client._doConnect and wrap
+      // the original prototype method call in a try/catch that we can control
+      // and respond to?  I'm not even sure that that would solve the problem.
+      // Presumably, the instantiation of the WebSocket would throw, which would
+      // be caught by our Router.connect try/catch block...
       this.mqttClient = new Paho.MQTT.Client(
         this.host,
         this.port,
@@ -582,6 +594,7 @@ export default function () {
       onSuccess: this._connect_onSuccess.bind(this),
       onFailure: this._connect_onFailure.bind(this),
       willMessage: willMessage,
+      // @todo - should `reconnect` be set here?
     };
 
     if (this.useSSL === true) {
