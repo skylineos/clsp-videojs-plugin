@@ -5368,7 +5368,7 @@ module.exports = function(module) {
 /*! exports provided: name, title, version, description, main, keywords, license, scripts, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.2-1","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"license":"MIT","scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
+module.exports = {"name":"videojs-mse-over-clsp","title":"CLSP Plugin","version":"0.16.2","description":"Uses clsp (iot) as a video distribution system, video is is received via the clsp client then rendered using the media source extensions. ","main":"dist/videojs-mse-over-clsp.js","keywords":["videojs","videojs-plugin"],"license":"MIT","scripts":{"build":"./scripts/build.sh","serve":"./scripts/serve.sh","serve:vagrant":"WATCH_WITH_POLLING=true yarn run serve","lint":"./scripts/lint.sh","lint-fix":"./scripts/lint.sh --fix","preversion":"./scripts/version.sh --pre","version":"./scripts/version.sh","postversion":"./scripts/version.sh --post"},"dependencies":{"debug":"4.1.1","lodash":"4.17.11","paho-mqtt":"1.1.0"},"devDependencies":{"@babel/core":"7.4.4","@babel/plugin-proposal-class-properties":"7.4.4","@babel/plugin-proposal-object-rest-spread":"7.4.4","@babel/plugin-syntax-dynamic-import":"7.2.0","@babel/polyfill":"7.4.4","@babel/preset-env":"7.4.4","babel-eslint":"10.0.1","babel-loader":"8.0.5","chalk":"2.4.2","css-loader":"2.1.1","eslint":"5.16.0","eslint-config-standard":"12.0.0","eslint-plugin-import":"2.17.2","eslint-plugin-node":"9.0.1","eslint-plugin-promise":"4.1.1","eslint-plugin-standard":"4.0.0","extract-text-webpack-plugin":"4.0.0-beta.0","humanize":"0.0.9","jquery":"3.4.1","moment":"2.24.0","node-sass":"4.12.0","pre-commit":"1.2.2","progress-bar-webpack-plugin":"1.12.1","sass-loader":"7.1.0","srcdoc-polyfill":"1.0.0","standard":"12.0.1","style-loader":"0.23.1","terser-webpack-plugin":"1.2.3","url-loader":"1.1.2","video.js":"7.5.4","videojs-errors":"4.2.0","webpack":"4.31.0","webpack-bundle-analyzer":"3.3.2","webpack-dev-server":"3.3.1","write-file-webpack-plugin":"4.5.0"}};
 
 /***/ }),
 
@@ -6450,7 +6450,19 @@ __webpack_require__.r(__webpack_exports__);
       this.logger.debug('Constructing...');
       this.retryInterval = 2000;
       this.Reconnect = null;
-      this.connectionTimeout = 120;
+      this.connectionTimeout = 120; // @todo - there is a "private" method named "_doConnect" in the paho mqtt
+      // library that is responsible for instantiating the WebSocket.  We have
+      // seen at least 1 instance where the instantiation of the WebSocket fails
+      // which was due to the error "ERR_NAME_NOT_RESOLVED", but it does not
+      // seem like this error is "passed" up to the caller (e.g. Router.connect)
+      // and therefore we cannot respond to it.  If we could, perhaps we could
+      // attempt to reconnect, or at least send a message to Router's parent.
+      // Given this, should we override Paho.MQTT.Client._doConnect and wrap
+      // the original prototype method call in a try/catch that we can control
+      // and respond to?  I'm not even sure that that would solve the problem.
+      // Presumably, the instantiation of the WebSocket would throw, which would
+      // be caught by our Router.connect try/catch block...
+
       this.mqttClient = new Paho.MQTT.Client(this.host, this.port, '/mqtt', this.clientId);
       this.mqttClient.onConnectionLost = this._onConnectionLost.bind(this);
       this.mqttClient.onMessageArrived = this._onMessageArrived.bind(this);
@@ -6939,7 +6951,8 @@ __webpack_require__.r(__webpack_exports__);
       timeout: this.connectionTimeout,
       onSuccess: this._connect_onSuccess.bind(this),
       onFailure: this._connect_onFailure.bind(this),
-      willMessage: willMessage
+      willMessage: willMessage // @todo - should `reconnect` be set here?
+
     };
 
     if (this.useSSL === true) {
