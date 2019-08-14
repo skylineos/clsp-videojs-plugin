@@ -332,7 +332,13 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       defaultSslPort: this.options.defaultSslPort,
     });
 
-    await this.getIov().restart();
+    const iovPlayer = this.getIov();
+
+    iovPlayer.on('firstFrameShown', () => {
+      player.trigger('firstFrameShown');
+    });
+
+    await iovPlayer.restart();
   }
 
   destroy (player = this.player) {
