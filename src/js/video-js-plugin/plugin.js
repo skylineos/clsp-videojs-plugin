@@ -334,7 +334,9 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
     const iovPlayer = this.getIov();
 
+    this.logger.debug('resgistering "firstFrameShown" event');
     iovPlayer.on('firstFrameShown', () => {
+      this.logger.debug('about to trigger "firstFrameShown" event on videojs player');
       player.trigger('firstFrameShown');
     });
 
