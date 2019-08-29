@@ -105,61 +105,82 @@
     <script src="../dist/iovPlayer.min.js"></script>
 
     <script>
-      document.getElementById('version').innerHTML += window.clspUtils.version;
+      (async function main () {
+        const TOUR_DURATION = 5000;
 
-      var iovCollection = window.IovCollection.asSingleton();
+        document.getElementById('version').innerHTML += window.clspUtils.version;
 
-      var element = document.getElementById('my-video');
-      var playlist = [
-        'clsp://172.28.12.57/FairfaxVideo0420',
-        'clsp://172.28.12.57/FairfaxVideo0520',
-      ];
+        const iovCollection = window.IovCollection.asSingleton();
 
-      var iov = null;
+        const element = document.getElementById('my-video');
+        const playlist = [
+          'clsp://172.28.12.57/FairfaxVideo0420',
+          'clsp://172.28.12.57/FairfaxVideo0520',
+        ];
 
-      iovCollection.create(playlist, element)
-        .then(function (_iov) {
-          iov = _iov;
-          iov.play();
-        })
-        .catch(function (error) {
+        let iovId = null;
+        let tourCounter = 0;
+
+        try {
+          const iov = await iovCollection.create(playlist[tourCounter], element);
+
+          iovId = iov.id;
+
+          await iov.play();
+
+          setInterval(async function () {
+            tourCounter++;
+
+            if (tourCounter === playlist.length) {
+              tourCounter = 0;
+            }
+
+            const url = playlist[tourCounter];
+
+            const cloneId = await iovCollection.changeSource(iovId, url)
+
+            iovId = cloneId;
+          }, TOUR_DURATION);
+
+          // function onPlay () {
+          //   if (!iov) {
+          //     return;
+          //   }
+
+          //   iov.play();
+          // }
+
+          // function onStop () {
+          //   if (!iov) {
+          //     return;
+          //   }
+
+          //   iov.stop();
+          // }
+
+          // function onFullscreen () {
+          //   if (!iov) {
+          //     return;
+          //   }
+
+          //   iov.toggleFullscreen();
+          // }
+
+          // function onDestroy() {
+          //   if (!iov) {
+          //     return;
+          //   }
+
+          //   iovCollection.remove(iov.id);
+          //   iov = null;
+          // }
+        }
+        catch (error) {
           document.getElementById('browser-not-supported').style.display = 'block';
           document.getElementById('my-video').style.display = 'none';
           console.error(error);
-        });
-
-      // function onPlay () {
-      //   if (!iov) {
-      //     return;
-      //   }
-
-      //   iov.play();
-      // }
-
-      // function onStop () {
-      //   if (!iov) {
-      //     return;
-      //   }
-
-      //   iov.stop();
-      // }
-
-      // function onFullscreen () {
-      //   if (!iov) {
-      //     return;
-      //   }
-
-      //   iov.toggleFullscreen();
-      // }
-
-      // function onDestroy() {
-      //   if (!iov) {
-      //     return;
-      //   }
-
-      //   iovCollection.remove(iov.id);
-      //   iov = null;
-      // }
+        }
+      })()
     </script>
   </body>
 </html>

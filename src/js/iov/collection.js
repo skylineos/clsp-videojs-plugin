@@ -68,6 +68,10 @@ export default class IovCollection {
     window.addEventListener('message', this._onWindowMessage);
   }
 
+  _getNextId () {
+    return (++totalIovCount).toString();
+  }
+
   /**
    * @private
    *
@@ -114,7 +118,12 @@ export default class IovCollection {
         return;
       }
 
-      throw new Error(`Unable to route message of type ${eventType} for IOV with clientId "${clientId}".  An IOV for that clientId does not exist.`);
+      const iovClientIdMismatchMessage = `Unable to route message of type ${eventType} for IOV with clientId "${clientId}".  An IOV for that clientId does not exist.`;
+
+      this.logger.warn(iovClientIdMismatchMessage);
+      // throw new Error(iovClientIdMismatchMessage);
+
+      return;
     }
 
     // If the document is hidden, don't execute the onMessage handler.  If the
@@ -143,7 +152,7 @@ export default class IovCollection {
       url,
       videoElement,
       {
-        id: (++totalIovCount).toString(),
+        id: this._getNextId(),
         clientId: uuidv4(),
       }
     );
@@ -174,7 +183,7 @@ export default class IovCollection {
     return this;
   }
 
-  changeSource (id, url) {
+  async changeSource (id, url) {
     if (!this.has(id)) {
       throw new Error(`IOV with id ${id} does not exist!`);
     }
@@ -184,34 +193,47 @@ export default class IovCollection {
     }
 
     const iov = this.get(id);
+    const cloneId = this._getNextId();
+    const clone = iov.cloneFromUrl(url, { id: cloneId });
 
-    const clone = iov.cloneFromUrl(url);
+    await clone.initialize();
 
-    clone.initialize();
+    clone.play();
 
-    // When the tab is not in focus, chrome doesn't handle things the same
-    // way as when the tab is in focus, and it seems that the result of that
-    // is that the "firstFrameShown" event never fires.  Having the IOV be
-    // updated on a delay in case the "firstFrameShown" takes too long will
-    // ensure that the old IOVs are destroyed, ensuring that unnecessary
-    // socket connections, etc. are not being used, as this can cause the
-    // browser to crash.
-    // Note that if there is a better way to do this, it would likely reduce
-    // the number of try/catch blocks and null checks in the IOVPlayer and
-    // MSEWrapper, but I don't think that is likely to happen until the MSE
-    // is standardized, and even then, we may be subject to non-intuitive
-    // behavior based on tab switching, etc.
-    setTimeout(() => {
-      this.remove(id);
-      this.add(clone);
-    }, this.changeSourceMaxWait);
+    let isDone = false;
 
-    // Under normal circumstances, meaning when the tab is in focus, we want
-    // to respond by switching the IOV when the new IOV Player has something
-    // to display
-    clone.player.on('firstFrameShown', () => {
-      this.remove(id);
-      this.add(clone);
+    return new Promise((resolve, reject) => {
+      const onDone = () => {
+        if (isDone) {
+          return;
+        }
+
+        isDone = true;
+
+        this.remove(id);
+        this.add(clone);
+
+        resolve(cloneId);
+      };
+
+      // When the tab is not in focus, chrome doesn't handle things the same
+      // way as when the tab is in focus, and it seems that the result of that
+      // is that the "firstFrameShown" event never fires.  Having the IOV be
+      // updated on a delay in case the "firstFrameShown" takes too long will
+      // ensure that the old IOVs are destroyed, ensuring that unnecessary
+      // socket connections, etc. are not being used, as this can cause the
+      // browser to crash.
+      // Note that if there is a better way to do this, it would likely reduce
+      // the number of try/catch blocks and null checks in the IOVPlayer and
+      // MSEWrapper, but I don't think that is likely to happen until the MSE
+      // is standardized, and even then, we may be subject to non-intuitive
+      // behavior based on tab switching, etc.
+      setTimeout(onDone, this.changeSourceMaxWait);
+
+      // Under normal circumstances, meaning when the tab is in focus, we want
+      // to respond by switching the IOV when the new IOV Player has something
+      // to display
+      clone.player.on('firstFrameShown', onDone);
     });
   }
 
