@@ -2,6 +2,7 @@
 
 import Paho from 'paho-mqtt';
 import uuidv4 from 'uuid/v4';
+import defaults from 'lodash/defaults';
 
 import IOV from './IOV';
 import Logger from '../utils/logger';
@@ -12,6 +13,8 @@ import Logger from '../utils/logger';
 window.Paho = {
   MQTT: Paho,
 };
+
+const DEFAULT_CHANGE_SOURCE_MAX_WAIT = 5000;
 
 // @todo - this could cause an overflow!
 let totalIovCount = 0;
@@ -46,9 +49,17 @@ export default class IovCollection {
    * use more than one, you run the risk of having more than one IOV listening
    * for segments using the same clientId.
    */
-  constructor () {
+  constructor (options = {}) {
     this.logger = Logger().factory('IovCollection');
     this.logger.debug('Constructing...');
+
+    defaults(
+      {},
+      options,
+      {
+        changeSourceMaxWait: DEFAULT_CHANGE_SOURCE_MAX_WAIT,
+      }
+    );
 
     this.iovs = {};
     this.iovsByClientId = {};
@@ -161,6 +172,47 @@ export default class IovCollection {
     this.iovsByClientId[clientId] = iov;
 
     return this;
+  }
+
+  changeSource (id, url) {
+    if (!this.has(id)) {
+      throw new Error(`IOV with id ${id} does not exist!`);
+    }
+
+    if (!url || !url.startsWith('clsp')) {
+      throw new Error(`Cannot change source on IOV ${id} with invalid url "${url}"`);
+    }
+
+    const iov = this.get(id);
+
+    const clone = iov.cloneFromUrl(url);
+
+    clone.initialize();
+
+    // When the tab is not in focus, chrome doesn't handle things the same
+    // way as when the tab is in focus, and it seems that the result of that
+    // is that the "firstFrameShown" event never fires.  Having the IOV be
+    // updated on a delay in case the "firstFrameShown" takes too long will
+    // ensure that the old IOVs are destroyed, ensuring that unnecessary
+    // socket connections, etc. are not being used, as this can cause the
+    // browser to crash.
+    // Note that if there is a better way to do this, it would likely reduce
+    // the number of try/catch blocks and null checks in the IOVPlayer and
+    // MSEWrapper, but I don't think that is likely to happen until the MSE
+    // is standardized, and even then, we may be subject to non-intuitive
+    // behavior based on tab switching, etc.
+    setTimeout(() => {
+      this.remove(id);
+      this.add(clone);
+    }, this.changeSourceMaxWait);
+
+    // Under normal circumstances, meaning when the tab is in focus, we want
+    // to respond by switching the IOV when the new IOV Player has something
+    // to display
+    clone.player.on('firstFrameShown', () => {
+      this.remove(id);
+      this.add(clone);
+    });
   }
 
   /**

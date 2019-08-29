@@ -295,7 +295,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   getIov () {
     this.logger.debug('getting IOV...');
 
-    return this.getMqttHandler().iov;
+    return this.getMqttHandler().getIov();
   }
 
   onMqttHandlerError = () => {

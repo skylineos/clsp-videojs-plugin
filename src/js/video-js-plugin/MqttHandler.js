@@ -10,13 +10,11 @@ import Logger from '../utils/logger';
 
 const Component = videojs.getComponent('Component');
 
-const DEFAULT_CHANGE_SOURCE_MAX_WAIT = 5000;
-
 export default class MqttHandler extends Component {
   constructor (
     source,
     tech,
-    options
+    options = {}
   ) {
     super(tech, options.mqtt);
 
@@ -27,11 +25,12 @@ export default class MqttHandler extends Component {
     this.tech_ = tech;
     this.source_ = source;
 
-    // @todo - is there a better way to do this where we don't pollute the
-    // top level namespace?
-    this.changeSourceMaxWait = options.changeSourceMaxWait || DEFAULT_CHANGE_SOURCE_MAX_WAIT;
-    this.iov = null;
+    this.iovId = null;
     this.player = null;
+  }
+
+  getIov () {
+    return IovCollection.asSingleton().get(this.iovId);
   }
 
   onChangeSource = (event, { url }) => {
@@ -41,35 +40,10 @@ export default class MqttHandler extends Component {
       throw new Error('Unable to change source because there is no url!');
     }
 
-    const clone = this.iov.cloneFromUrl(url);
-
-    clone.initialize();
-
-    // When the tab is not in focus, chrome doesn't handle things the same
-    // way as when the tab is in focus, and it seems that the result of that
-    // is that the "firstFrameShown" event never fires.  Having the IOV be
-    // updated on a delay in case the "firstFrameShown" takes too long will
-    // ensure that the old IOVs are destroyed, ensuring that unnecessary
-    // socket connections, etc. are not being used, as this can cause the
-    // browser to crash.
-    // Note that if there is a better way to do this, it would likely reduce
-    // the number of try/catch blocks and null checks in the IOVPlayer and
-    // MSEWrapper, but I don't think that is likely to happen until the MSE
-    // is standardized, and even then, we may be subject to non-intuitive
-    // behavior based on tab switching, etc.
-    setTimeout(() => {
-      this.updateIOV(clone);
-    }, this.changeSourceMaxWait);
-
-    // Under normal circumstances, meaning when the tab is in focus, we want
-    // to respond by switching the IOV when the new IOV Player has something
-    // to display
-    clone.player.on('firstFrameShown', () => {
-      this.updateIOV(clone);
-    });
+    IovCollection.asSingleton().changeSource(this.iovId, url);
   };
 
-  async createIOV (player) {
+  async createIOV (player, options = {}) {
     this.logger.debug('createIOV');
 
     this.player = player;
@@ -125,9 +99,9 @@ export default class MqttHandler extends Component {
       this.player.on('changesrc', this.onChangeSource);
     });
 
-    this.updateIOV(iov);
+    this.iovId = iov.id;
 
-    // this.iov.on('unsupportedMimeCodec', (error) => {
+    // iov.on('unsupportedMimeCodec', (error) => {
     //   this.videoPlayer.errors.extend({
     //     PLAYER_ERR_IOV: {
     //       headline: 'Error Playing Stream',
@@ -139,23 +113,6 @@ export default class MqttHandler extends Component {
     //     code: 'PLAYER_ERR_IOV',
     //   });
     // });
-  }
-
-  updateIOV (iov) {
-    this.logger.debug('updateIOV');
-
-    if (this.iov) {
-      // If the IOV is the same, do nothing
-      if (this.iov.id === iov.id) {
-        return;
-      }
-
-      IovCollection.asSingleton()
-        .remove(this.iov.id)
-        .add(iov.id, iov);
-    }
-
-    this.iov = iov;
   }
 
   destroy () {
@@ -171,9 +128,9 @@ export default class MqttHandler extends Component {
       this.player.off('changesrc', this.onChangeSource);
     }
 
-    IovCollection.asSingleton().remove(this.iov.id);
+    IovCollection.asSingleton().remove(this.iovId);
 
-    this.iov = null;
+    this.iovId = null;
     this.player = null;
   }
 }
