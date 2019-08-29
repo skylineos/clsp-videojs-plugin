@@ -4,6 +4,12 @@
     <meta charset="utf-8">
     <title>CLSP Demo</title>
     <link rel="shortcut icon" href="./favicon.ico">
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+      integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay"
+      crossorigin="anonymous"
+    >
     <style type="text/css">
       html,
       body {
@@ -12,13 +18,13 @@
         height: 100%;
         padding: 0;
         margin: 0;
+        box-sizing: border-box;
+        display: flex;
       }
 
       body {
-        display: flex;
         flex-direction: column;
         align-content: center;
-        justify-content: center;
       }
 
       .header {
@@ -38,15 +44,26 @@
         flex-grow: 1;
         padding: 2rem;
         margin: auto;
-        width: 50%;
       }
 
       .buttons > button {
+        display: flex;
+        align-items: center;
         font-size: 2rem;
         padding: 2rem;
         margin: 2rem;
         border-radius: 2rem;
         cursor: pointer;
+      }
+
+      button > .icons {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+      }
+
+      .icons > i {
+        padding: 0.25rem;
       }
     </style>
   </head>
@@ -56,10 +73,37 @@
       <h1>CLSP Demos</h1>
     </div>
     <div class="buttons">
-      <button onclick="location.href = 'advancedWithVideoJs/';">Advanced CLSP with VideoJs Plugin Demo</button>
-      <button onclick="location.href = 'advancedStandalone/';">Advanced CLSP Standalone Demo</button>
-      <button onclick="location.href = 'simpleWithVideoJs.html';">Simple CLSP with VideoJs Plugin Demo</button>
-      <button onclick="location.href = 'simpleStandalone.html';">Simple CLSP Standalone Demo</button>
+      <button onclick="location.href = 'advancedWithVideoJs/';">
+        <div class="icons">
+          <i class="fas fa-dice-six"></i>
+        </div>
+        <span>Advanced CLSP with VideoJs Plugin Demo</span>
+      </button>
+      <button onclick="location.href = 'advancedStandalone/';">
+        <div class="icons">
+          <i class="fas fa-dice-six"></i>
+        </div>
+        <span>Advanced CLSP Standalone Demo</span>
+      </button>
+      <button onclick="location.href = 'simpleWithVideoJs.html';">
+        <div class="icons">
+          <i class="fas fa-dice-one"></i>
+        </div>
+        <span>Simple CLSP with VideoJs Plugin Demo</span>
+      </button>
+      <button onclick="location.href = 'simpleStandalone.html';">
+        <div class="icons">
+          <i class="fas fa-dice-one"></i>
+        </div>
+        <span>Simple CLSP Standalone Demo</span>
+      </button>
+      <button onclick="location.href = 'simpleStandalonePlaylist.html';">
+        <div class="icons">
+          <i class="fas fa-dice-one"></i>
+          <i class="fas fa-list"></i>
+        </div>
+        <span>Simple CLSP Standalone Playlist Demo</span>
+      </button>
     </div>
 
   </body>

@@ -594,8 +594,11 @@ export default class Conduit {
         this.disconnect();
         break;
       }
+      case 'connect_success': {
+        // @todo - Do some changeSrc stuff here...
+        break;
+      }
       case 'router_created':
-      case 'connect_success':
       case 'disconnect_success': {
         break;
       }
