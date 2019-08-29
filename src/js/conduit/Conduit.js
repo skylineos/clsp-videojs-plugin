@@ -15,26 +15,16 @@ import Logger from '../utils/logger';
 const MAX_RECONNECTION_ATTEMPTS = 200;
 
 export default class Conduit {
-  static factory (clientId, {
+  static factory (
+    clientId,
     iovId,
-    wsbroker,
-    wsport,
-    useSSL,
-    b64_jwt_access_url,
-    jwt,
-    b64_hash_access_url,
-    hash,
-  }) {
-    return new Conduit(clientId, {
+    source,
+  ) {
+    return new Conduit(
+      clientId,
       iovId,
-      wsbroker,
-      wsport,
-      useSSL,
-      b64_jwt_access_url,
-      jwt,
-      b64_hash_access_url,
-      hash,
-    });
+      source,
+    );
   }
 
   /**
@@ -42,35 +32,19 @@ export default class Conduit {
    *
    * clientId - the guid to be used to construct the topic
    * iovId - the ID of the parent iov, used for logging purposes
-   * wsbroker - the host (url or ip) of the SFS that is providing the stream
-   * wsport - the port the stream is served over
-   * useSSL - true to request the stream over clsps, false to request the stream over clsp
-   * [b64_jwt_access_url] - the "tokenized" url
-   * [jwt] - the access token
    */
-  constructor (clientId, {
+  constructor (
+    clientId,
     iovId,
-    wsbroker,
-    wsport,
-    useSSL,
-    b64_jwt_access_url,
-    jwt,
-    b64_hash_access_url,
-    hash,
-  }) {
-    this.iovId = iovId;
+    source,
+  ) {
     this.clientId = clientId;
+    this.iovId = iovId;
 
     this.logger = Logger().factory(`Conduit ${this.iovId}`);
     this.logger.debug('Constructing...');
 
-    this.wsbroker = wsbroker;
-    this.wsport = wsport;
-    this.useSSL = useSSL;
-    this.b64_jwt_access_url = b64_jwt_access_url;
-    this.jwt = jwt;
-    this.b64_hash_access_url = b64_hash_access_url;
-    this.hash = hash;
+    this.source = source;
 
     this.statsMsg = {
       byteCount: 0,
@@ -231,9 +205,10 @@ export default class Conduit {
     // @todo - should connect be called here?
     await this.connect();
 
-    if (this.jwt.length > 0) {
+    if (this.source.jwt.length > 0) {
       streamName = await this.validateJwt();
-    } else if (this.hash.length > 0) {
+    }
+    else if (this.source.hash.length > 0) {
       streamName = await this.validateHash();
     }
 
@@ -275,7 +250,7 @@ export default class Conduit {
           this.publish(`iov/video/${this.guid}/play`, {
             initSegmentTopic,
             clientId: this.clientId,
-            jwt: this.jwt,
+            jwt: this.source.jwt,
           });
         });
       }
@@ -347,8 +322,8 @@ export default class Conduit {
         this.transaction(
           'iov/jwtValidate',
           {
-            b64_access_url: this.b64_jwt_access_url,
-            token: this.jwt,
+            b64_access_url: this.source.b64_jwt_access_url,
+            token: this.source.jwt,
           },
           (response) => {
             // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
@@ -406,8 +381,8 @@ export default class Conduit {
         this.transaction(
           'iov/hashValidate',
           {
-            b64HashURL: this.b64_hash_access_url,
-            token: this.hash,
+            b64HashURL: this.source.b64_hash_access_url,
+            token: this.source.hash,
           },
           (response) => {
             // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
@@ -420,7 +395,7 @@ export default class Conduit {
               return reject(new Error('HashInvalid'));
             }
 
-            //TODO, figure out how to handle a change in the sfs url from the
+            // TODO, figure out how to handle a change in the sfs url from the
             // clsp-hash from the target url returned from decrypting the hash
             // token.
             // Example:
@@ -549,11 +524,7 @@ export default class Conduit {
     this.disconnect();
 
     this.clientId = null;
-    this.wsbroker = null;
-    this.wsport = null;
-    this.useSSL = null;
-    this.b64_jwt_access_url = null;
-    this.jwt = null;
+    this.source = null;
 
     // Destroy iframe
     this.iframe.parentNode.removeChild(this.iframe);
@@ -795,9 +766,9 @@ export default class Conduit {
             window.mqttRouterConfig = {
               iovId: '${this.iovId}',
               clientId: '${this.clientId}',
-              host: '${this.wsbroker}',
-              port: ${this.wsport},
-              useSSL: ${this.useSSL},
+              host: '${this.source.wsbroker}',
+              port: ${this.source.wsport},
+              useSSL: ${this.source.useSSL},
             };
 
             window.iframeEventHandlers = ${Router.toString()}();
