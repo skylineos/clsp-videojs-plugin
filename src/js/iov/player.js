@@ -21,6 +21,7 @@ import Logger from '../utils/logger';
 export default class IOVPlayer {
   static EVENT_NAMES = [
     'metric',
+    'unsupportedMimeCodec',
     'firstFrameShown',
     'videoReceived',
     'videoInfoReceived',
@@ -308,7 +309,6 @@ export default class IOVPlayer {
 
         this.trigger('videoInfoReceived');
 
-        // @todo - the moovBox is currently set in the IOV - do something else
         this.mseWrapper.appendMoov(this.moovBox);
       },
       onSourceEnded: async () => {
@@ -344,25 +344,31 @@ export default class IOVPlayer {
     await this.iov.play();
   }
 
-  onMoov = async (mimeCodec, moov) => {
+  onMoov = async (activeStream) => {
     // @todo - this seems like a hack...
     if (this.stopped) {
       return;
     }
 
-    this.moovBox = moov;
+    if (!MSEWrapper.isMimeCodecSupported(activeStream.mimeCodec)) {
+      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${activeStream.mimeCodec}`);
+      this.stop();
+      return;
+    }
+
+    this.moovBox = activeStream.moov;
 
     // this.trigger('firstChunk');
 
-    await this.reinitializeMseWrapper(mimeCodec);
+    await this.reinitializeMseWrapper(activeStream.mimeCodec);
 
-    this.iov.resyncStream(() => {
+    this.iov.resyncStream(activeStream.guid, () => {
       // console.log('sync received re-initialize media source buffer');
-      this.reinitializeMseWrapper(mimeCodec);
+      this.reinitializeMseWrapper(activeStream.mimeCodec);
     });
   };
 
-  onMoof = (mqttMessage) => {
+  onMoof = (activeStream, mqttMessage) => {
     // @todo - this seems like a hack...
     if (this.stopped) {
       return;
@@ -373,12 +379,16 @@ export default class IOVPlayer {
     this.mseWrapper.append(mqttMessage.payloadBytes);
   };
 
-  async play () {
+  onChange = (previousStream, activeStream) => {
+    this.reinitializeMseWrapper(activeStream.mimeCodec);
+  };
+
+  async play (source) {
     this.logger.debug('play');
 
     this.stopped = false;
 
-    await this.iov._play(this.onMoov, this.onMoof);
+    await this.iov._play(source, this.onMoov, this.onMoof, this.onChange);
   }
 
   stop () {

@@ -74,7 +74,7 @@ export default function () {
    * @param {String} iovId
    *   the ID of the parent iov, used for logging purposes
    * @param {String} clientId
-   *   the guid to be used to construct the topic
+   *   the uuid to be used to construct the topic
    * @param {String} host
    *   the host (url or ip) of the SFS that is providing the stream
    * @param {Number} port

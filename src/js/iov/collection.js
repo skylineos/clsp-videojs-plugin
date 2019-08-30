@@ -5,6 +5,7 @@ import uuidv4 from 'uuid/v4';
 import defaults from 'lodash/defaults';
 
 import IOV from './IOV';
+import Source from './Source';
 import Logger from '../utils/logger';
 
 // Even though the export of paho-mqtt is { Client, Message }, there is an
@@ -23,7 +24,7 @@ let collection;
 /**
  * The IOV Collection is meant ot be a singleton, and is meant to manage all
  * IOVs in a given browser window/document.  There are certain centralized
- * functions it is meant to perform, such as generating the guids that are
+ * functions it is meant to perform, such as generating the uuids that are
  * needed to establish a connection to a unique topic on the SFS, and to listen
  * to window messages and route the relevant messages to the appropriate IOV
  * instance.
@@ -147,13 +148,28 @@ export default class IovCollection {
    *
    * @returns {IOV}
    */
-  async create (url, videoElement) {
+  async createFromUrl (url, videoElement) {
     const iov = IOV.fromUrl(
       url,
       videoElement,
       {
         id: this._getNextId(),
-        clientId: uuidv4(),
+      }
+    );
+
+    this.add(iov);
+
+    await iov.initialize();
+
+    return iov;
+  }
+
+  async createFromSource (source, videoElement) {
+    const iov = IOV.fromSource(
+      source,
+      videoElement,
+      {
+        id: this._getNextId(),
       }
     );
 
@@ -183,7 +199,7 @@ export default class IovCollection {
     return this;
   }
 
-  async changeSource (id, url) {
+  async changeSourceUrl (id, url) {
     if (!this.has(id)) {
       throw new Error(`IOV with id ${id} does not exist!`);
     }
@@ -192,9 +208,34 @@ export default class IovCollection {
       throw new Error(`Cannot change source on IOV ${id} with invalid url "${url}"`);
     }
 
+    const source = Source.fromUrl(url);
+
+    return this.changeSource(id, source);
+  }
+
+  async changeSource (id, source) {
+    if (!this.has(id)) {
+      throw new Error(`IOV with id ${id} does not exist!`);
+    }
+
+    if (!source) {
+      throw new Error(`Cannot change source on IOV ${id} without a source`);
+    }
+
     const iov = this.get(id);
+
+    if (source.host === iov.source.host) {
+      console.log(`found same host "${source.host}"`)
+      await iov.play(source);
+    }
+    else {
+      // @todo
+    }
+
+    return iov.id;
+
     const cloneId = this._getNextId();
-    const clone = iov.cloneFromUrl(url, { id: cloneId });
+    const clone = iov.clone(source, { id: cloneId });
 
     await clone.initialize();
 

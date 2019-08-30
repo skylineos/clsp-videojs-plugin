@@ -116,7 +116,7 @@
       var url = element.children[0].getAttribute('src');
       var iovCollection = window.IovCollection.asSingleton();
 
-      iovCollection.create(url, element)
+      iovCollection.createFromUrl(url, element)
         .then(function (iov) {
           window.iov = iov;
           iov.play();

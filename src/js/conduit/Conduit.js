@@ -9,10 +9,16 @@
  * controller of the iframe that contains the router.
  */
 
+// @todo - why doesn't this work?
+// import noop from 'lodash/noop';
+
+import ActiveStreams from './ActiveStreams';
 import Router from './Router';
 import Logger from '../utils/logger';
 
 const MAX_RECONNECTION_ATTEMPTS = 200;
+
+const noop = () => {};
 
 export default class Conduit {
   static factory (
@@ -30,7 +36,7 @@ export default class Conduit {
   /**
    * @private
    *
-   * clientId - the guid to be used to construct the topic
+   * clientId - the uuid to be used to construct the topic
    * iovId - the ID of the parent iov, used for logging purposes
    */
   constructor (
@@ -58,6 +64,11 @@ export default class Conduit {
     this.reconnectionAttempts = 0;
 
     this.connected = false;
+
+    // When connected to an mqtt host, the Router can request more than one
+    // stream.  This object will track of the currently active streams.
+    this.activeStreams = ActiveStreams.factory();
+    this.currentStream = null;
   }
 
   /**
@@ -111,6 +122,7 @@ export default class Conduit {
 
       this.iframe = this._generateIframe();
 
+      console.log(`About to append iframe for iov ${this.iovId}`);
       videoElementParent.appendChild(this.iframe);
     });
   }
@@ -129,6 +141,10 @@ export default class Conduit {
     this.logger.debug('Connecting to MQTT server...');
 
     return new Promise((resolve, reject) => {
+      if (this.connected) {
+        return resolve();
+      }
+
       this._onConnect = (event) => {
         const clientId = event.data.clientId;
 
@@ -200,7 +216,14 @@ export default class Conduit {
    * @param {string} streamName - the name of the stream to get segments for
    * @param {Conduit-onMoof} onMoof - the function that will handle the moof
    */
-  async play (streamName, onMoof) {
+  async play (streamName, onMoov = noop, onMoof = noop, onChange = noop) {
+    // This particular stream is already active
+    if (this.activeStreams.hasByStreamName(streamName)) {
+      console.log(`"${streamName} is already an active stream`)
+      // @todo - should this throw?
+      return;
+    }
+
     // @todo - should we have a check to confirm that the conduit has been initialized?
     // @todo - should connect be called here?
     await this.connect();
@@ -212,46 +235,70 @@ export default class Conduit {
       streamName = await this.validateHash();
     }
 
+    const {
+      error,
+      guid,
+      mimeCodec,
+    } = await this.requestStream(streamName);
+
+    if (error) {
+      throw new Error(error);
+    }
+
+    const initSegmentTopic = `${this.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
+
     return new Promise((resolve, reject) => {
       try {
-        this.requestStream(streamName, ({
-          mimeCodec,
-          guid,
+        // Set up the listener for the stream init
+        this.subscribe(initSegmentTopic, async ({
+          payloadBytes,
         }) => {
-          this.guid = guid;
+          const moov = payloadBytes;
+          const activeStream = this.activeStreams.add(
+            streamName,
+            guid,
+            mimeCodec,
+            moov
+          );
 
-          const initSegmentTopic = `${this.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
+          let previousStream = this.currentStream;
+          this.currentStream = activeStream;
 
-          // Set up the listener for the stream init
-          this.subscribe(initSegmentTopic, async ({
-            payloadBytes,
-          }) => {
-            const moov = payloadBytes;
+          this.unsubscribe(initSegmentTopic);
 
-            this.unsubscribe(initSegmentTopic);
+          // Set up the listener for the stream itself
+          this.subscribe(`iov/video/${activeStream.guid}/live`, (mqttMessage) => {
+            onMoof(activeStream, mqttMessage);
 
-            const newTopic = `iov/video/${guid}/live`;
+            if (previousStream) {
+              let _previousStream = previousStream;
+              previousStream = null;
 
-            // Set up the listener for the stream itself
-            this.subscribe(newTopic, (mqttMessage) => {
-              if (onMoof) {
-                onMoof(mqttMessage);
-              }
-            });
+              setTimeout(() => {
 
-            resolve({
-              guid,
-              mimeCodec,
-              moov,
-            });
+                // self.reinitializeMse();
+                onChange(_previousStream, activeStream);
+                this.unsubscribe(`iov/video/${_previousStream.guid}/live`);
+
+                // destroy the _previousStream's iframe (only when there is a different host!)
+
+                this.activeStreams.remove(_previousStream);
+              }, 500);
+            }
           });
 
-          // Ask the server for the stream
-          this.publish(`iov/video/${this.guid}/play`, {
-            initSegmentTopic,
-            clientId: this.clientId,
-            jwt: this.source.jwt,
-          });
+          if (!previousStream) {
+            onMoov(activeStream);
+          }
+
+          resolve(activeStream);
+        });
+
+        // Ask the server for the stream
+        this.publish(`iov/video/${guid}/play`, {
+          initSegmentTopic,
+          clientId: this.clientId,
+          jwt: this.source.jwt,
         });
       }
       catch (error) {
@@ -285,26 +332,47 @@ export default class Conduit {
    * @todo - make this async and await the disconnection, and maybe even the
    * unsubscribes
    */
-  stop () {
-    this.logger.debug('Stopping stream...');
+  stop (streamName) {
+    console.log(`stopping ${streamName}...`)
+    let activeStream;
 
-    if (!this.guid) {
-      this.logger.warn('No guid, so not stopping stream...');
-      return;
+    if (streamName) {
+      activeStream = this.activeStreams.getByStreamName(streamName);
+
+      if (!activeStream) {
+        this.logger.warn('No active stream with name "${streamName}", so not stopping');
+        return;
+      }
     }
 
+    if (!activeStream) {
+      activeStream = this.activeStreams.first();
+
+      if (!activeStream) {
+        this.logger.warn('No active streams exist, so not stopping');
+        return;
+      }
+    }
+    console.log('stopping', activeStream)
+    this.logger.debug(`Stopping stream for ${activeStream.guid}...`);
+
     // Stop listening for moofs
-    this.unsubscribe(`iov/video/${this.guid}/live`);
+    this.unsubscribe(`iov/video/${activeStream.guid}/live`);
 
     // Stop listening for resync events
-    this.unsubscribe(`iov/video/${this.guid}/resync`);
+    this.unsubscribe(`iov/video/${activeStream.guid}/resync`);
 
     // Tell the server we've stopped
-    this.publish(`iov/video/${this.guid}/stop`, {
+    this.publish(`iov/video/${activeStream.guid}/stop`, {
       clientId: this.clientId,
     });
 
-    this.disconnect();
+    this.activeStreams.remove(activeStream);
+
+    if (this.activeStreams.isEmpty()) {
+      console.log('no active streams!')
+      this.disconnect();
+    }
   }
 
   /**
@@ -432,20 +500,31 @@ export default class Conduit {
    * @todo - return a Promise
    *
    * @param {string} streamName - the name of the stream
-   * @param {Conduit-requestStreamCallback} cb
    *
-   * @returns {void}
+   * @returns {Promise}
    */
-  requestStream (streamName, cb) {
+  requestStream (streamName) {
     this.logger.debug('Requesting Stream...');
 
-    this.transaction(
-      `iov/video/${window.btoa(streamName)}/request`,
-      {
-        clientId: this.clientId,
-      },
-      cb
-    );
+    return new Promise((resolve, reject) => {
+      this.transaction(
+        `iov/video/${window.btoa(streamName)}/request`,
+        {
+          clientId: this.clientId,
+        },
+        ({
+          error,
+          guid,
+          mimeCodec,
+        }) => {
+          resolve({
+            error,
+            guid,
+            mimeCodec,
+          });
+        }
+      );
+    });
   }
 
   /**
@@ -461,10 +540,30 @@ export default class Conduit {
    * @param {Conduit-resyncStreamCb} cb
    *   The callback for the resync operation
    */
-  resyncStream (cb) {
+  resyncStream (guid, cb) {
+    let activeStream;
+
+    if (guid) {
+      activeStream = this.activeStreams.getByGuid(guid);
+
+      if (!activeStream) {
+        this.logger.warn('No active stream with guid "${guid}", so not resyncing');
+        return;
+      }
+    }
+
+    if (!activeStream) {
+      activeStream = this.activeStreams.first();
+
+      if (!activeStream) {
+        this.logger.warn('No active streams exist, so not resyncing');
+        return;
+      }
+    }
+
     // subscribe to a sync topic that will be called if the stream that is feeding
     // the mse service dies and has to be restarted that this player should restart the stream
-    this.subscribe(`iov/video/${this.guid}/resync`, cb);
+    this.subscribe(`iov/video/${activeStream.guid}/resync`, cb);
   }
 
   /**
@@ -534,6 +633,10 @@ export default class Conduit {
 
     this.handlers = null;
     this.reconnectionAttempts = null;
+
+    this.activeStreams.destroy();
+    this.activeStreams = null;
+    this.currentStream = null;
   }
 
   /**
@@ -766,9 +869,9 @@ export default class Conduit {
             window.mqttRouterConfig = {
               iovId: '${this.iovId}',
               clientId: '${this.clientId}',
-              host: '${this.source.wsbroker}',
-              port: ${this.source.wsport},
               useSSL: ${this.source.useSSL},
+              host: '${this.source.host}',
+              port: ${this.source.port},
             };
 
             window.iframeEventHandlers = ${Router.toString()}();

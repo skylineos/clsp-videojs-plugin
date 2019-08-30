@@ -22,6 +22,7 @@
       html,
       body {
         background-color: black;
+        color: white;
         width: 100%;
         height: 100%;
         padding: 0;
@@ -36,13 +37,18 @@
       }
 
       h1 {
-        color: white;
         margin: 0 auto;
       }
 
       h3 {
-        color: white;
         margin: 0 auto;
+      }
+
+      #video-title {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0;
       }
 
       .video-container {
@@ -95,6 +101,8 @@
         muted
       ></video>
     </div>
+    <p id="video-title"></p>
+    <p id="video-countdown"></p>
     <div class="controls">
       <button onclick="onPlay()" title="play"><i class="fas fa-play"></i></button>
       <button onclick="onStop()" title="stop"><i class="fas fa-stop"></i></button>
@@ -114,15 +122,31 @@
 
         const element = document.getElementById('my-video');
         const playlist = [
-          'clsp://172.28.12.57/FairfaxVideo0420',
-          'clsp://172.28.12.57/FairfaxVideo0520',
+          'clsps://172.28.12.57/FairfaxVideo0520',
+          'clsps://172.28.12.57/FairfaxVideo0420',
+          'clsps://172.28.12.57/FairfaxVideo0350',
+          'clsps://172.28.12.57/FairfaxVideo0760',
+          'clsps://172.28.12.57/FairfaxVideo0430',
+          'clsps://172.28.12.57/FairfaxVideo0440',
+          'clsps://172.28.12.57/FairfaxVideo0450',
+          'clsps://172.28.12.57/FairfaxVideo0470',
+          'clsps://172.28.12.57/FairfaxVideo0780',
+          'clsps://172.28.12.57/FairfaxVideo0790',
         ];
+
+        const sources = playlist.map((url) => window.skylineIov.Source.fromUrl(url));
 
         let iovId = null;
         let tourCounter = 0;
 
+        function getIov () {
+          return iovCollection.get(iovId);
+        }
+
         try {
-          const iov = await iovCollection.create(playlist[tourCounter], element);
+          const source = sources[tourCounter];
+          document.getElementById('video-title').textContent = source.url;
+          const iov = await iovCollection.createFromSource(source, element);
 
           iovId = iov.id;
 
@@ -135,11 +159,11 @@
               tourCounter = 0;
             }
 
-            const url = playlist[tourCounter];
+            const source = sources[tourCounter];
 
-            const cloneId = await iovCollection.changeSource(iovId, url)
-
-            iovId = cloneId;
+            console.log(`About to switch IOV ${iovId} to ${source.url}`);
+            document.getElementById('video-title').textContent = source.url;
+            iovId = await iovCollection.changeSource(iovId, source);
           }, TOUR_DURATION);
 
           // function onPlay () {

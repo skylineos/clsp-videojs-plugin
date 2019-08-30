@@ -62,7 +62,7 @@ export default class MqttHandler extends Component {
 
     videoElementParent.insertBefore(videoElement, videoJsVideoElement);
 
-    const iov = await IovCollection.asSingleton().create(this.source_.src, videoElement);
+    const iov = await IovCollection.asSingleton().createFromUrl(this.source_.src, videoElement);
 
     this.player.on('ready', () => {
       if (this.onReadyAlreadyCalled) {
@@ -101,7 +101,7 @@ export default class MqttHandler extends Component {
 
     this.iovId = iov.id;
 
-    // iov.on('unsupportedMimeCodec', (error) => {
+    // iov.player.on('unsupportedMimeCodec', (error) => {
     //   this.videoPlayer.errors.extend({
     //     PLAYER_ERR_IOV: {
     //       headline: 'Error Playing Stream',

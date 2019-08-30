@@ -5,7 +5,6 @@ import uuidv4 from 'uuid/v4';
 import Source from './Source';
 import Conduit from '../conduit/Conduit';
 import IOVPlayer from './player';
-import MSEWrapper from './MSEWrapper';
 import utils from '../utils';
 import Logger from '../utils/logger';
 
@@ -17,7 +16,6 @@ import Logger from '../utils/logger';
 export default class IOV {
   static EVENT_NAMES = [
     'metric',
-    'unsupportedMimeCodec',
     'firstFrameShown',
     'videoReceived',
     'videoInfoReceived',
@@ -49,6 +47,18 @@ export default class IOV {
     );
   }
 
+  static fromSource (
+    source,
+    videoElement,
+    config = {}
+  ) {
+    return IOV.factory(
+      videoElement,
+      source,
+      config
+    );
+  }
+
   constructor (
     videoElement,
     source,
@@ -63,7 +73,7 @@ export default class IOV {
     // This MUST be globally unique!  The MQTT server will broadcast the stream
     // to a topic that contains this id, so if there is ANY other client
     // connected that has the same id anywhere in the world, the stream to all
-    // clients that use that topic will fail.  This is why we use guids rather
+    // clients that use that topic will fail.  This is why we use uuids rather
     // than an incrementing integer.
     this.clientId = config.clientId || uuidv4();
 
@@ -297,16 +307,16 @@ export default class IOV {
     );
   }
 
-  cloneFromUrl (url, config = {}) {
-    this.logger.debug('cloneFromUrl');
+  cloneWithUrl (url, config = {}) {
+    this.logger.debug('cloneWithUrl');
 
     return this.clone(Source.fromUrl(url), {
       ...config,
     });
   }
 
-  async play () {
-    await this.player.play();
+  async play (source = this.source) {
+    await this.player.play(source);
   }
 
   async stop () {
@@ -318,33 +328,22 @@ export default class IOV {
     await this.play();
   }
 
-  async _play (onMoov, onMoof) {
+  async _play (source = this.source, onMoov, onMoof, onChange) {
     if (this.player.stopped) {
       return;
     }
 
-    const {
-      // guid,
-      mimeCodec,
-      moov,
-    } = await this.conduit.play(this.source.streamName, onMoof);
+    const activeStream = await this.conduit.play(source.streamName, onMoov, onMoof, onChange);
 
-    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
-      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
-      this.stop();
-    }
-
-    if (onMoov) {
-      onMoov(mimeCodec, moov);
-    }
+    return activeStream;
   }
 
   _stop () {
     this.conduit.stop();
   }
 
-  resyncStream (cb) {
-    this.conduit.resyncStream(cb);
+  resyncStream (activeStreamGuid, cb) {
+    this.conduit.resyncStream(activeStreamGuid, cb);
   }
 
   onAppendStart (byteArray) {

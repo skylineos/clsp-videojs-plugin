@@ -437,7 +437,8 @@ export default class MSEWrapper {
     moof[22] = (this.sequenceNumber & 0x0000FF00) >> 8;
     moof[23] = this.sequenceNumber & 0xFF;
 
-    return moof;
+    // return moof;
+    return moof.slice(0);
   }
 
   appendMoov (moov) {
