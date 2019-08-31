@@ -71,10 +71,10 @@ export default function () {
    * message that is passed from this iframe window to the parent window, so
    * that the conduit can identify what client the message is for.
    *
-   * @param {String} iovId
-   *   the ID of the parent iov, used for logging purposes
    * @param {String} clientId
    *   the uuid to be used to construct the topic
+   * @param {String} willMessageRoute
+   *   the route that paho mqtt needs to send its last will message
    * @param {String} host
    *   the host (url or ip) of the SFS that is providing the stream
    * @param {Number} port
@@ -83,19 +83,17 @@ export default function () {
    *   true to request the stream over clsps, false to request the stream over clsp
    */
   function Router (
-    iovId,
     clientId,
+    willMessageRoute,
     host,
     port,
     useSSL
   ) {
     try {
-      this.iovId = iovId;
-
-      this.logger = window.Logger().factory(`Router ${this.iovId}`);
+      this.logger = window.Logger().factory(`Router ${this.clientId}`);
 
       this.clientId = clientId;
-
+      this.willMessageRoute = willMessageRoute;
       this.host = host;
       this.port = port;
       this.useSSL = useSSL;
@@ -587,7 +585,7 @@ export default function () {
       clientId: this.clientId,
     }));
 
-    willMessage.destinationName = 'iov/clientDisconnect';
+    willMessage.destinationName = this.willMessageRoute;
 
     var connectionOptions = {
       timeout: this.connectionTimeout,
@@ -653,8 +651,8 @@ export default function () {
     onload: function () {
       try {
         window.router = new Router(
-          window.mqttRouterConfig.iovId,
           window.mqttRouterConfig.clientId,
+          window.mqttRouterConfig.willMessageRoute,
           window.mqttRouterConfig.host,
           window.mqttRouterConfig.port,
           window.mqttRouterConfig.useSSL,

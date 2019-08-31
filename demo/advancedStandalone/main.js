@@ -81,11 +81,13 @@ function initializeWall () {
       }
     }
 
-    var iovCollection = window.IovCollection.asSingleton();
+    const iovCollection = window.skylineIov.Collection.asSingleton();
+    const Source = window.skylineIov.Source;
 
-    const iov = await iovCollection.createFromUrl(url, $video[0]);
+    const source = Source.fromUrl(url);
+    const iov = await iovCollection.create($video[0]);
 
-    iov.play();
+    iov.addSource(source);
 
     wallPlayers.push(iov);
 

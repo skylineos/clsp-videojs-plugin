@@ -3,7 +3,7 @@
 import uuidv4 from 'uuid/v4';
 
 import Source from './Source';
-import Conduit from '../conduit/Conduit';
+import Conduit from './conduit/Conduit';
 import IOVPlayer from './player';
 import utils from '../utils';
 import Logger from '../utils/logger';
@@ -23,66 +23,34 @@ export default class IOV {
 
   static METRIC_TYPES = [];
 
-  static factory (
-    videoElement,
-    source,
-    config = {}
-  ) {
-    return new IOV(
-      videoElement,
-      source,
-      config
-    );
+  static factory (videoElement, config = {}) {
+    return new IOV(videoElement, config);
   }
 
-  static fromUrl (
-    url,
-    videoElement,
-    config = {}
-  ) {
-    return IOV.factory(
-      videoElement,
-      Source.fromUrl(url),
-      config
-    );
+  static fromSource (source, videoElement, config = {}) {
+    const iov = IOV.factory(videoElement, config);
+
+    iov.addSource(source);
+
+    return iov;
   }
 
-  static fromSource (
-    source,
-    videoElement,
-    config = {}
-  ) {
-    return IOV.factory(
-      videoElement,
-      source,
-      config
-    );
-  }
-
-  constructor (
-    videoElement,
-    source,
-    config
-  ) {
+  constructor (videoElement, config) {
     if (!utils.supported()) {
       throw new Error('You are using an unsupported browser - Unable to play CLSP video');
     }
 
+    // The ID of the IOV can be controlled by the called (for now) because there
+    // are use cases when clone where the ID needs to be the same.  Also, the
+    // IOV Collection instance that controls this IOV creates the IDs
+    // sequentially, and therefore can and should control them.
     this.id = config.id || uuidv4();
-
-    // This MUST be globally unique!  The MQTT server will broadcast the stream
-    // to a topic that contains this id, so if there is ANY other client
-    // connected that has the same id anywhere in the world, the stream to all
-    // clients that use that topic will fail.  This is why we use uuids rather
-    // than an incrementing integer.
-    this.clientId = config.clientId || uuidv4();
-
-    this.source = source;
-
     this.logger = Logger().factory(`IOV ${this.id}`);
 
     this.logger.debug('Constructing...');
 
+    this.conduit = Conduit.factory();
+    this.sources = [];
     this.metrics = {};
 
     // @todo - there must be a more proper way to do events than this...
@@ -97,29 +65,14 @@ export default class IOV {
     this.videoElement = videoElement;
     this.eid = this.videoElement.id;
 
-    const {
-      visibilityChangeEventName,
-    } = utils.windowStateNames;
+    const { visibilityChangeEventName } = utils.windowStateNames;
 
     if (visibilityChangeEventName) {
-      document.addEventListener(
-        visibilityChangeEventName,
-        this.onVisibilityChange,
-        false
-      );
+      document.addEventListener( visibilityChangeEventName, this.onVisibilityChange, false);
     }
 
-    window.addEventListener(
-      'online',
-      this.onConnectionChange,
-      false
-    );
-
-    window.addEventListener(
-      'offline',
-      this.onConnectionChange,
-      false
-    );
+    window.addEventListener('online', this.onConnectionChange, false);
+    window.addEventListener('offline', this.onConnectionChange, false);
   }
 
   on (name, action) {
@@ -175,6 +128,28 @@ export default class IOV {
       type,
       value: this.metrics[type],
     });
+  }
+
+  addSource (source, play = true) {
+    this.sources.push(source);
+
+    if (play) {
+      return this.play(source);
+    }
+
+    return this;
+  }
+
+  addSources (sources) {
+    if (!Array.isArray(sources)) {
+      throw new Error('Sources must be an array');
+    }
+
+    sources.forEach((source) => {
+      this.addSource(source, false);
+    })
+
+    return this;
   }
 
   onConnectionChange = () => {
@@ -281,41 +256,46 @@ export default class IOV {
       this.trigger('videoInfoReceived');
     });
 
-    this.conduit = Conduit.factory(
-      this.clientId,
-      this.id,
-      this.source
-    );
-
     await this.conduit.initialize(videoElementParent);
+
+    return this;
   }
 
-  clone (source = null, config = {}) {
+  clone (config = {}) {
     this.logger.debug('clone');
 
-    if (!source) {
-      source = this.source.clone();
-    }
-
     // @todo - is it possible to reuse the iov player?
-    return IOV.factory(
+    const iov = IOV.factory(
       this.videoElement,
-      source,
       {
         ...config,
       }
     );
+
+    // @todo - do we need to worry about the fact that we are reusing these
+    // source objects and not cloning them?
+    iov.addSources(this.sources);
+
+    return iov;
   }
 
-  cloneWithUrl (url, config = {}) {
-    this.logger.debug('cloneWithUrl');
+  async play (source) {
+    // If a source was not passed, but a stream has been played, use the most
+    // recently played stream source.
+    if (!source && this.activeStream) {
+      source = this.activeStream.source;
+    }
 
-    return this.clone(Source.fromUrl(url), {
-      ...config,
-    });
-  }
+    // If the source was not passed and there is not a recently played stream
+    // source, try the first one that was added, if it exists.
+    if (!source) {
+      source = this.sources[0];
+    }
 
-  async play (source = this.source) {
+    if (!Source.isSource(source)) {
+      throw new Error('A valid source is required to play');
+    }
+
     await this.player.play(source);
   }
 
@@ -328,12 +308,18 @@ export default class IOV {
     await this.play();
   }
 
-  async _play (source = this.source, onMoov, onMoof, onChange) {
+  async _play (source, onMoov, onMoof, onChange) {
+    if (!Source.isSource(source)) {
+      throw new Error('A valid source is required to _play');
+    }
+
     if (this.player.stopped) {
       return;
     }
 
-    const activeStream = await this.conduit.play(source.streamName, onMoov, onMoof, onChange);
+    const activeStream = await this.conduit.play(source, onMoov, onMoof, onChange);
+
+    this.activeStream = activeStream;
 
     return activeStream;
   }

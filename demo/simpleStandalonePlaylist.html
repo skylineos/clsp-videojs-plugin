@@ -118,7 +118,8 @@
 
         document.getElementById('version').innerHTML += window.clspUtils.version;
 
-        const iovCollection = window.IovCollection.asSingleton();
+        const iovCollection = window.skylineIov.Collection.asSingleton();
+        const Source = window.skylineIov.Source;
 
         const element = document.getElementById('my-video');
         const playlist = [
@@ -134,7 +135,7 @@
           'clsps://172.28.12.57/FairfaxVideo0790',
         ];
 
-        const sources = playlist.map((url) => window.skylineIov.Source.fromUrl(url));
+        const sources = playlist.map((url) => Source.fromUrl(url));
 
         let iovId = null;
         let tourCounter = 0;
@@ -146,11 +147,11 @@
         try {
           const source = sources[tourCounter];
           document.getElementById('video-title').textContent = source.url;
-          const iov = await iovCollection.createFromSource(source, element);
+          const iov = await iovCollection.create(element);
 
           iovId = iov.id;
 
-          await iov.play();
+          await iov.addSource(source);
 
           setInterval(async function () {
             tourCounter++;

@@ -6,6 +6,7 @@ import videojs from 'video.js';
 import uuidv4 from 'uuid/v4';
 
 import IovCollection from '../iov/collection';
+import Source from '../iov/Source';
 import Logger from '../utils/logger';
 
 const Component = videojs.getComponent('Component');
@@ -62,7 +63,8 @@ export default class MqttHandler extends Component {
 
     videoElementParent.insertBefore(videoElement, videoJsVideoElement);
 
-    const iov = await IovCollection.asSingleton().createFromUrl(this.source_.src, videoElement);
+    const source = Source.fromUrl(this.source_.src);
+    const iov = await IovCollection.asSingleton().create(source, videoElement);
 
     this.player.on('ready', () => {
       if (this.onReadyAlreadyCalled) {

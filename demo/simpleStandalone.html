@@ -114,12 +114,16 @@
 
       var element = document.getElementById('my-video');
       var url = element.children[0].getAttribute('src');
-      var iovCollection = window.IovCollection.asSingleton();
 
-      iovCollection.createFromUrl(url, element)
+      var iovCollection = window.skylineIov.Collection.asSingleton();
+      var Source = window.skylineIov.Source;
+
+      var source = Source.fromUrl(url);
+
+      iovCollection.create(element)
         .then(function (iov) {
           window.iov = iov;
-          iov.play();
+          iov.addSource(source);
         })
         .catch(function (error) {
           document.getElementById('browser-not-supported').style.display = 'block';

@@ -11,13 +11,15 @@ export default class ActiveStreams {
     this.activeStreams = [];
     this.activeStreamsByStreamName = {};
     this.activeStreamsByGuid = {};
+
+    this.destroyed = false;
   }
 
-  add (name, guid, mimeCodec, moov) {
-    const activeStream = ActiveStream.factory(name, guid, mimeCodec, moov);
+  add (source, guid, mimeCodec, moov) {
+    const activeStream = ActiveStream.factory(source, guid, mimeCodec, moov);
 
     this.activeStreams.push(activeStream);
-    this.activeStreamsByStreamName[name] = activeStream;
+    this.activeStreamsByStreamName[source.streamName] = activeStream;
     this.activeStreamsByGuid[guid] = activeStream;
 
     return activeStream;
@@ -70,12 +72,20 @@ export default class ActiveStreams {
     this.activeStreams.splice(index, 1);
 
     delete this.activeStreamsByGuid[activeStream.guid];
-    delete this.activeStreamsByStreamName[activeStream.name];
+    delete this.activeStreamsByStreamName[activeStream.source.name];
 
     return activeStream;
   }
 
   destroy () {
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    this.activeStreams.forEach((activeStream) => activeStream.destroy());
+
     this.activeStreams = null;
     this.activeStreamsByStreamName = null;
     this.activeStreamsByGuid = null;

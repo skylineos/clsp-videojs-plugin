@@ -2,8 +2,25 @@
 
 export default class Source {
   static DEFAULT_PORT = 9001;
-
   static SSL_PORT = 443;
+
+  static PROPERTIES = [
+    'useSSL',
+    'host',
+    'port',
+    'streamName',
+    'url',
+    'usingJwt',
+    'b64_jwt_access_url',
+    'jwt',
+    'usingHash',
+    'b64_hash_access_url',
+    'hash',
+  ];
+
+  static factory (config = {}) {
+    return new Source(config);
+  }
 
   static getProtocolFromUrl (url) {
     // Chrome is the only browser that allows non-http protocols in the anchor
@@ -199,8 +216,96 @@ export default class Source {
     return Source.factory(Source.generateSourcePropsFromUrl(url));
   }
 
-  static factory (config = {}) {
-    return new Source(config);
+  static isSource (source) {
+    if (typeof source !== 'object') {
+      return false;
+    }
+
+    const propertiesCount = Source.PROPERTIES.length;
+
+    for (let i = 0; i < propertiesCount; i++) {
+      if (!source.hasOwnProperty(Source.PROPERTIES[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  static getStreamNameFromJWTValidate ({ error, status, target_url }) {
+    if (error) {
+      throw new Error(error);
+    }
+
+    if (status !== 200) {
+      if (status === 403) {
+        throw new Error('JwtUnAuthorized');
+      }
+
+      throw new Error('JwtInvalid');
+    }
+
+    // TODO, figure out how to handle a change in the sfs url from the
+    // clsp-jwt from the target url returned from decrypting the jwt
+    // token.
+    // Example:
+    //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
+    //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+    // --- due to the videojs architecture i don't see a clean way of doing this.
+    // ==============================================================================
+    //    The only way I can see doing this cleanly is to change videojs itself to
+    //    allow the 'canHandleSource' function in MqttSourceHandler to return a
+    //    promise not a value, then ascychronously find out if it can play this
+    //    source after making the call to decrypt the jwt token.22
+    // =============================================================================
+    // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+    // case what is now the sfs ip address in clsp url will always be the same it will
+    // be the public ip of cluster gateway.
+    const targetUrlParts = target_url.split('/');
+
+    // get the actual stream name
+    const streamName = targetUrlParts[targetUrlParts.length - 1];
+
+    // @todo - could we do target_url.split('/').pop()?
+    return streamName;
+  }
+
+  static getStreamNameFromHashValidate ({ error, status, target_url }) {
+    if (error) {
+      throw new Error(error);
+    }
+
+    if (status !== 200) {
+      if (status === 403) {
+        return reject(new Error('HashUnAuthorized'));
+      }
+
+      return reject(new Error('HashInvalid'));
+    }
+
+    // TODO, figure out how to handle a change in the sfs url from the
+    // clsp-hash from the target url returned from decrypting the hash
+    // token.
+    // Example:
+    //    user enters 'clsp-hash://sfs1/hash?start=0&end=...&token=...' for source
+    //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+    // --- due to the videojs architecture i don't see a clean way of doing this.
+    // ==============================================================================
+    //    The only way I can see doing this cleanly is to change videojs itself to
+    //    allow the 'canHandleSource' function in MqttSourceHandler to return a
+    //    promise not a value, then ascychronously find out if it can play this
+    //    source after making the call to decrypt the hash token.22
+    // =============================================================================
+    // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+    // case what is now the sfs ip address in clsp url will always be the same it will
+    // be the public ip of cluster gateway.
+    const targetUrlParts = response.target_url.split('/');
+
+    // get the actual stream name
+    const streamName = targetUrlParts[targetUrlParts.length - 1];
+
+    // @todo - could we do target_url.split('/').pop()?
+    return streamName;
   }
 
   constructor (config = {}) {
@@ -254,5 +359,24 @@ export default class Source {
       b64_hash_access_url: this.b64_hash_access_url,
       hash: this.hash,
     });
+  }
+
+  /**
+   * This indicates whether or not a source is capable of reusing the same
+   * conduit.
+   *
+   * @param {Source} source
+   *   The source to check for the same host
+   */
+  hostsMatch (source) {
+    if (!Source.isSource(source)) {
+      throw new Error('Cannot compare a source against something that is not a source');
+    }
+
+    if (this.protocol === source.protocol && this.host === source.host && this.port === source.port) {
+      return true;
+    }
+
+    return false;
   }
 }
