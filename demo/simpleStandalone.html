@@ -123,7 +123,7 @@
       iovCollection.create(element)
         .then(function (iov) {
           window.iov = iov;
-          iov.addSource(source);
+          iov.play(source);
         })
         .catch(function (error) {
           document.getElementById('browser-not-supported').style.display = 'block';

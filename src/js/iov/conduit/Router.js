@@ -73,7 +73,7 @@ export default function () {
    *
    * @param {String} clientId
    *   the uuid to be used to construct the topic
-   * @param {String} willMessageRoute
+   * @param {String} willMessageTopic
    *   the route that paho mqtt needs to send its last will message
    * @param {String} host
    *   the host (url or ip) of the SFS that is providing the stream
@@ -84,7 +84,7 @@ export default function () {
    */
   function Router (
     clientId,
-    willMessageRoute,
+    willMessageTopic,
     host,
     port,
     useSSL
@@ -93,7 +93,7 @@ export default function () {
       this.logger = window.Logger().factory(`Router ${this.clientId}`);
 
       this.clientId = clientId;
-      this.willMessageRoute = willMessageRoute;
+      this.willMessageTopic = willMessageTopic;
       this.host = host;
       this.port = port;
       this.useSSL = useSSL;
@@ -167,9 +167,14 @@ export default function () {
         break;
       }
       case 'mqtt_data': {
-        if (!message.hasOwnProperty('destinationName') || !message.hasOwnProperty('payloadString') || !message.hasOwnProperty('payloadBytes')) {
+        const hasDestinationName = Object.prototype.hasOwnProperty.call(message, 'destinationName');
+        const hasPayloadString = Object.prototype.hasOwnProperty.call(message, 'payloadString');
+        const hasPayloadBytes = Object.prototype.hasOwnProperty.call(message, 'payloadBytes');
+
+        if (!hasDestinationName || !hasPayloadString || !hasPayloadBytes) {
           throw new Error('improperly formatted "data" message sent to _sendToParent');
         }
+
         break;
       }
       case 'connect_failure':
@@ -177,7 +182,7 @@ export default function () {
       case 'subscribe_failure':
       case 'unsubscribe_failure':
       case 'window_message_fail': {
-        if (!message.hasOwnProperty('reason')) {
+        if (!Object.prototype.hasOwnProperty.call(message, 'reason')) {
           throw new Error('improperly formatted "fail" message sent to _sendToParent');
         }
         break;
@@ -188,6 +193,7 @@ export default function () {
     }
 
     try {
+      // @todo - do not post to '*'!!!
       window.parent.postMessage(message, '*');
     }
     catch (error) {
@@ -585,7 +591,7 @@ export default function () {
       clientId: this.clientId,
     }));
 
-    willMessage.destinationName = this.willMessageRoute;
+    willMessage.destinationName = this.willMessageTopic;
 
     var connectionOptions = {
       timeout: this.connectionTimeout,
@@ -652,7 +658,7 @@ export default function () {
       try {
         window.router = new Router(
           window.mqttRouterConfig.clientId,
-          window.mqttRouterConfig.willMessageRoute,
+          window.mqttRouterConfig.willMessageTopic,
           window.mqttRouterConfig.host,
           window.mqttRouterConfig.port,
           window.mqttRouterConfig.useSSL,

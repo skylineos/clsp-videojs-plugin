@@ -2,6 +2,9 @@
 
 import ActiveStream from './ActiveStream';
 
+/**
+ * A collection of ActiveStream instances.
+ */
 export default class ActiveStreams {
   static factory () {
     return new ActiveStreams();
@@ -25,6 +28,12 @@ export default class ActiveStreams {
     return activeStream;
   }
 
+  /**
+   * Get the most recently added ActiveStream.
+   *
+   * @returns {ActiveStream}
+   *   The most recently added ActiveStream
+   */
   first () {
     return this.activeStreams[0];
   }
@@ -42,11 +51,11 @@ export default class ActiveStreams {
   }
 
   hasByStreamName (name) {
-    return this.activeStreamsByStreamName.hasOwnProperty(name);
+    return Object.prototype.hasOwnProperty.call(this.activeStreamsByStreamName, name);
   }
 
   hasByGuid (guid) {
-    return this.activeStreamsByGuid.hasOwnProperty(guid);
+    return Object.prototype.hasOwnProperty.call(this.activeStreamsByGuid, guid);
   }
 
   removeByName (name) {

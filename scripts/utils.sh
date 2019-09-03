@@ -130,14 +130,14 @@ function getCurrentGitBranch () {
 APPLICATION_DIR="$(pwd)"
 APPLICATION_ROOT_DIR="$(dirname $APPLICATION_DIR)"
 
+  # "src/js/*.js" \
+  # "demo/src/js/*.js" \
+  # "demo/src/js/**/*.js" \
 jsFilesToLint=(\
   ".eslintrc.js" \
-  "src/js/*.js" \
   "src/js/**/*.js" \
   "scripts/*.js" \
   "scripts/**/*.js" \
-  "demo/src/js/*.js" \
-  "demo/src/js/**/*.js" \
 )
 
 scssFilesToLint=(\

@@ -24,12 +24,13 @@ const rules = {
     'always',
   ],
   'no-trailing-spaces': 'error',
-  'object-curly-newline': [
-    'error',
-    {
-      minProperties: 1,
-    },
-  ],
+  // @todo
+  // 'object-curly-newline': [
+  //   'error',
+  //   {
+  //     minProperties: 4,
+  //   },
+  // ],
   'object-property-newline': 'error',
   'object-curly-spacing': [
     'error',

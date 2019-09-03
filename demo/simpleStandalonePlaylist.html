@@ -147,11 +147,11 @@
         try {
           const source = sources[tourCounter];
           document.getElementById('video-title').textContent = source.url;
-          const iov = await iovCollection.create(element);
+          const iov = await iovCollection.create(source, element);
 
           iovId = iov.id;
 
-          await iov.addSource(source);
+          await iov.play();
 
           setInterval(async function () {
             tourCounter++;

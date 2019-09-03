@@ -81,7 +81,7 @@ function initializeWall () {
       // ClspPlugin().METRIC_TYPES,
       // IOV.METRIC_TYPES,
       // Conduit.METRIC_TYPES,
-      // IOVPlayer.METRIC_TYPES,
+      // Player.METRIC_TYPES,
       // MediaSourceWrapper.METRIC_TYPES,
       // SourceBufferWrapper.METRIC_TYPES,
     ];
@@ -274,7 +274,7 @@ function initializeTour () {
       // ClspPlugin().METRIC_TYPES,
       // IOV.METRIC_TYPES,
       // Conduit.METRIC_TYPES,
-      // IOVPlayer.METRIC_TYPES,
+      // Player.METRIC_TYPES,
       // MediaSourceWrapper.METRIC_TYPES,
       // SourceBufferWrapper.METRIC_TYPES,
     ];

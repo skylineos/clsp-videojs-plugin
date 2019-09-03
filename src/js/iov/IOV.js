@@ -3,8 +3,9 @@
 import uuidv4 from 'uuid/v4';
 
 import Source from './Source';
-import Conduit from './conduit/Conduit';
-import IOVPlayer from './player';
+import Sources from './Sources';
+import Streamers from './conduit/Streamers';
+import Player from './Player';
 import utils from '../utils';
 import Logger from '../utils/logger';
 
@@ -27,14 +28,6 @@ export default class IOV {
     return new IOV(videoElement, config);
   }
 
-  static fromSource (source, videoElement, config = {}) {
-    const iov = IOV.factory(videoElement, config);
-
-    iov.addSource(source);
-
-    return iov;
-  }
-
   constructor (videoElement, config) {
     if (!utils.supported()) {
       throw new Error('You are using an unsupported browser - Unable to play CLSP video');
@@ -49,8 +42,6 @@ export default class IOV {
 
     this.logger.debug('Constructing...');
 
-    this.conduit = Conduit.factory();
-    this.sources = [];
     this.metrics = {};
 
     // @todo - there must be a more proper way to do events than this...
@@ -61,18 +52,25 @@ export default class IOV {
     }
 
     this.destroyed = false;
-    this.onReadyAlreadyCalled = false;
+    this.stopped = true;
+    this.player = null;
+    this.currentSource = null;
     this.videoElement = videoElement;
+    // Cache this in the event that the video element is destroyed or detached
     this.eid = this.videoElement.id;
 
     const { visibilityChangeEventName } = utils.windowStateNames;
 
     if (visibilityChangeEventName) {
-      document.addEventListener( visibilityChangeEventName, this.onVisibilityChange, false);
+      document.addEventListener(visibilityChangeEventName, this.onVisibilityChange, false);
     }
 
     window.addEventListener('online', this.onConnectionChange, false);
     window.addEventListener('offline', this.onConnectionChange, false);
+
+    this.sources = Sources.factory();
+    this.streamers = Streamers.factory({ strict: true });
+    this.player = Player.factory(this.videoElement, { id: this.id });
   }
 
   on (name, action) {
@@ -130,32 +128,10 @@ export default class IOV {
     });
   }
 
-  addSource (source, play = true) {
-    this.sources.push(source);
-
-    if (play) {
-      return this.play(source);
-    }
-
-    return this;
-  }
-
-  addSources (sources) {
-    if (!Array.isArray(sources)) {
-      throw new Error('Sources must be an array');
-    }
-
-    sources.forEach((source) => {
-      this.addSource(source, false);
-    })
-
-    return this;
-  }
-
   onConnectionChange = () => {
     if (window.navigator.onLine) {
       this.logger.debug('Back online...');
-      if (this.player.stopped) {
+      if (this.stopped) {
         // Without this timeout, the video appears blank.  Not sure if there is
         // some race condition...
         setTimeout(() => {
@@ -188,11 +164,28 @@ export default class IOV {
       clearTimeout(this.visibilityChangeTimeout);
     }
 
-    if (this.player.stopped) {
+    if (this.stopped) {
       this.logger.debug('Playing because tab became visible...');
       this.play();
     }
   };
+
+  addSource (source) {
+    if (!Source.isSource(source)) {
+      throw new Error('Cannot add an invalid Source to this IOV');
+    }
+
+    // If this is the first time we're getting a source for a particular host,
+    // we must add a streamer for that host.
+    if (!this.streamers.hasByHost(source)) {
+      this.streamers.add(source.host, source.port, source.useSSL);
+    }
+
+    // Add the source to the streamers first so that if it fails, we do not have
+    // an orphaned source in our internal sources collection
+    this.streamers.addSource(source);
+    this.sources.add(source);
+  }
 
   async initialize () {
     this.logger.debug('Initializing...');
@@ -201,15 +194,18 @@ export default class IOV {
       throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
     }
 
+    if (this.sources.count() === 0) {
+      throw new Error('Unable to initialize IOV without a source.  Have you called addSource yet?');
+    }
+
     this.videoElement.classList.add('clsp-video');
 
+    // @todo - do we need to track this DOM element on this instance?
     const videoElementParent = this.videoElement.parentNode;
 
     if (!videoElementParent) {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
-
-    this.player = IOVPlayer.factory(this, this.videoElement);
 
     // @todo - this seems to be videojs specific, and should be removed or moved
     // somewhere else
@@ -256,30 +252,46 @@ export default class IOV {
       this.trigger('videoInfoReceived');
     });
 
-    await this.conduit.initialize(videoElementParent);
+    this.player.on('segmentUsed', ({ activeStream, byteArray }) => {
+      this.streamers.getByHost(activeStream.source).segmentUsed(byteArray);
+    });
+
+    this.player.on('stop', () => {
+      // There may be times when the player encounters an error and needs to
+      // stop itself.  In these instances, also call .stop on this IOV, if it
+      // has not already been stopped.
+      if (!this.stopped) {
+        this.stop();
+      }
+    });
+
+    // Initialize the streamers
+    await this.streamers.forEach(async (streamer) => {
+      await streamer.initialize(videoElementParent);
+    });
 
     return this;
   }
 
-  clone (config = {}) {
-    this.logger.debug('clone');
+  async stop () {
+    this.streamer.stop();
 
-    // @todo - is it possible to reuse the iov player?
-    const iov = IOV.factory(
-      this.videoElement,
-      {
-        ...config,
-      }
-    );
+    this.stopped = true;
 
-    // @todo - do we need to worry about the fact that we are reusing these
-    // source objects and not cloning them?
-    iov.addSources(this.sources);
-
-    return iov;
+    await this.player.stop();
   }
 
-  async play (source) {
+  async restart () {
+    await this.stop();
+    await this.play();
+  }
+
+  async play (
+    source,
+    onMoov = this.player.onMoov,
+    onMoof = this.player.onMoof,
+    onChange = this.player.onChange
+  ) {
     // If a source was not passed, but a stream has been played, use the most
     // recently played stream source.
     if (!source && this.activeStream) {
@@ -289,51 +301,55 @@ export default class IOV {
     // If the source was not passed and there is not a recently played stream
     // source, try the first one that was added, if it exists.
     if (!source) {
-      source = this.sources[0];
+      source = this.sources.first();
     }
 
     if (!Source.isSource(source)) {
       throw new Error('A valid source is required to play');
     }
 
-    await this.player.play(source);
-  }
-
-  async stop () {
-    await this.player.stop();
-  }
-
-  async restart () {
-    await this.stop();
-    await this.play();
-  }
-
-  async _play (source, onMoov, onMoof, onChange) {
-    if (!Source.isSource(source)) {
-      throw new Error('A valid source is required to _play');
+    if (!this.sources.has(source)) {
+      throw new Error('You must add this source to this IOV before this IOV can play it');
     }
 
-    if (this.player.stopped) {
-      return;
-    }
+    this.currentSource = source;
 
-    const activeStream = await this.conduit.play(source, onMoov, onMoof, onChange);
+    // @todo - should this go after streamer.play?
+    this.stopped = false;
+
+    const streamer = await this.streamers.getByHost(this.currentSource);
+
+    const activeStream = streamer.play(
+      this.currentSource,
+      async (activeStream) => {
+        // @todo - this seems like a hack...
+        if (this.stopped) {
+          return;
+        }
+
+        await onMoov(activeStream);
+
+        // @todo - this seems too tightly coupled, maybe it's not though, since
+        // it is a resync event listener...
+        streamer.resync(activeStream.guid, () => {
+          // console.log('sync received re-initialize media source buffer');
+          this.player.reinitializeMseWrapper(activeStream);
+        });
+      },
+      (activeStream, mqttMessage) => {
+        // @todo - this seems like a hack...
+        if (this.stopped) {
+          return;
+        }
+
+        onMoof(activeStream, mqttMessage);
+      },
+      onChange
+    );
 
     this.activeStream = activeStream;
 
     return activeStream;
-  }
-
-  _stop () {
-    this.conduit.stop();
-  }
-
-  resyncStream (activeStreamGuid, cb) {
-    this.conduit.resyncStream(activeStreamGuid, cb);
-  }
-
-  onAppendStart (byteArray) {
-    this.conduit.segmentUsed(byteArray);
   }
 
   enterFullscreen () {
@@ -386,10 +402,16 @@ export default class IOV {
     this.player.destroy();
     this.player = null;
 
-    this.conduit.destroy();
-    this.conduit = null;
+    this.streamers.destroy();
+    this.streamers = null;
+
+    this.sources.destroy();
+    this.sources = null;
 
     this.events = null;
     this.metrics = null;
+
+    this.currentSource = null;
+    this.stopped = null;
   }
 }

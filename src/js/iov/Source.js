@@ -1,14 +1,21 @@
 'use strict';
 
+/**
+ * A Source instance represents the url (and some other properties) of a stream
+ * that exists on an SFS.
+ */
 export default class Source {
+  // This is the default port over which CLSP streams are served
   static DEFAULT_PORT = 9001;
+  // This is the default secure port over which CLSP streams are served
   static SSL_PORT = 443;
-
+  // This is every property that can exist on a Source instance
   static PROPERTIES = [
     'useSSL',
     'host',
     'port',
     'streamName',
+    'baseUrl',
     'url',
     'usingJwt',
     'b64_jwt_access_url',
@@ -17,10 +24,6 @@ export default class Source {
     'b64_hash_access_url',
     'hash',
   ];
-
-  static factory (config = {}) {
-    return new Source(config);
-  }
 
   static getProtocolFromUrl (url) {
     // Chrome is the only browser that allows non-http protocols in the anchor
@@ -53,6 +56,16 @@ export default class Source {
     throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
   }
 
+  /**
+   * Determine whether a given CLSP protocol is secure.
+   *
+   * @param {String} protocol
+   *   The protocol to make a determination about whether or not it is secure
+   *
+   * @returns {Boolean}
+   *   true - if the protocol is secure
+   *   false - if the protocol is not secure
+   */
   static isSecureProtocol (protocol) {
     switch (protocol) {
       case 'clsps-jwt':
@@ -82,6 +95,7 @@ export default class Source {
     let host = '';
     let port = '';
     let streamName = '';
+    let baseUrl = '';
     let url = '';
     // jwt
     const usingJwt = protocol.endsWith('jwt');
@@ -101,9 +115,11 @@ export default class Source {
     // tag's href, so change them all to http here so we get the benefits of the
     // anchor tag's parsing.  Also, if the protocol is not http, the hostname
     // will not be properly parsed.
-    parser.href = rawUrl.replace(protocol, useSSL ? 'https' : 'http');
+    const hrefProtocol = useSSL
+      ? 'https'
+      : 'http';
+    parser.href = rawUrl.replace(protocol, hrefProtocol);
 
-    // --- host
     host = parser.hostname;
 
     // @ is a special address meaning the server that loaded the web page.
@@ -111,7 +127,6 @@ export default class Source {
       host = window.location.hostname;
     }
 
-    // --- port
     port = parser.port;
 
     if (!port) {
@@ -122,12 +137,12 @@ export default class Source {
 
     port = parseInt(port);
 
-    // --- streamName
     const paths = parser.pathname.split('/');
 
     streamName = paths[paths.length - 1];
 
-    // --- jwt
+    baseUrl = `${protocol}://${host}:${port}`;
+
     if (usingJwt === true) {
       // Url: clsp[s]-jwt://<sfs addr>[:9001]/<jwt>?Start=...&End=...
       const qp_offset = rawUrl.indexOf(parser.pathname) + parser.pathname.length;
@@ -153,12 +168,11 @@ export default class Source {
         throw new Error("Required 'token' query parameter not defined for a clsp[s]-jwt");
       }
 
-      url = `${protocol}://${host}:${port}/jwt?Start=${query.Start}&End=${query.End}`;
+      url = `${baseUrl}/jwt?Start=${query.Start}&End=${query.End}`;
       b64_jwt_access_url = window.btoa(url);
       jwt = query.token;
     }
 
-    // --- hash
     else if (usingHash === true) {
       // URL: clsp[s]-hash://<sfs-addr>[:9001]/<stream>?start=...&end=...&token=...
       const qp_offset = rawUrl.indexOf(parser.pathname) + parser.pathname.length;
@@ -184,14 +198,13 @@ export default class Source {
         throw new Error("Required 'token' query parameter not defined for a clsp[s]-hash");
       }
 
-      url = `${protocol}://${host}:${port}/${streamName}?start=${query.start}&end=${query.end}&token=${query.token}`
+      url = `${baseUrl}/${streamName}?start=${query.start}&end=${query.end}&token=${query.token}`;
       b64_hash_access_url = window.btoa(url);
       hash = query.token;
     }
 
-    // --- URL
     else {
-      url = `${protocol}://${host}${port ? `:${port}` : ''}/${streamName}`;
+      url = `${baseUrl}/${streamName}`;
     }
 
     return {
@@ -200,6 +213,7 @@ export default class Source {
       host,
       port,
       streamName,
+      baseUrl,
       url,
       // jwt
       usingJwt,
@@ -212,10 +226,6 @@ export default class Source {
     };
   }
 
-  static fromUrl (url) {
-    return Source.factory(Source.generateSourcePropsFromUrl(url));
-  }
-
   static isSource (source) {
     if (typeof source !== 'object') {
       return false;
@@ -224,7 +234,7 @@ export default class Source {
     const propertiesCount = Source.PROPERTIES.length;
 
     for (let i = 0; i < propertiesCount; i++) {
-      if (!source.hasOwnProperty(Source.PROPERTIES[i])) {
+      if (!Object.prototype.hasOwnProperty.call(source, Source.PROPERTIES[i])) {
         return false;
       }
     }
@@ -232,80 +242,12 @@ export default class Source {
     return true;
   }
 
-  static getStreamNameFromJWTValidate ({ error, status, target_url }) {
-    if (error) {
-      throw new Error(error);
-    }
-
-    if (status !== 200) {
-      if (status === 403) {
-        throw new Error('JwtUnAuthorized');
-      }
-
-      throw new Error('JwtInvalid');
-    }
-
-    // TODO, figure out how to handle a change in the sfs url from the
-    // clsp-jwt from the target url returned from decrypting the jwt
-    // token.
-    // Example:
-    //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
-    //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-    // --- due to the videojs architecture i don't see a clean way of doing this.
-    // ==============================================================================
-    //    The only way I can see doing this cleanly is to change videojs itself to
-    //    allow the 'canHandleSource' function in MqttSourceHandler to return a
-    //    promise not a value, then ascychronously find out if it can play this
-    //    source after making the call to decrypt the jwt token.22
-    // =============================================================================
-    // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
-    // case what is now the sfs ip address in clsp url will always be the same it will
-    // be the public ip of cluster gateway.
-    const targetUrlParts = target_url.split('/');
-
-    // get the actual stream name
-    const streamName = targetUrlParts[targetUrlParts.length - 1];
-
-    // @todo - could we do target_url.split('/').pop()?
-    return streamName;
+  static factory (config = {}) {
+    return new Source(config);
   }
 
-  static getStreamNameFromHashValidate ({ error, status, target_url }) {
-    if (error) {
-      throw new Error(error);
-    }
-
-    if (status !== 200) {
-      if (status === 403) {
-        return reject(new Error('HashUnAuthorized'));
-      }
-
-      return reject(new Error('HashInvalid'));
-    }
-
-    // TODO, figure out how to handle a change in the sfs url from the
-    // clsp-hash from the target url returned from decrypting the hash
-    // token.
-    // Example:
-    //    user enters 'clsp-hash://sfs1/hash?start=0&end=...&token=...' for source
-    //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-    // --- due to the videojs architecture i don't see a clean way of doing this.
-    // ==============================================================================
-    //    The only way I can see doing this cleanly is to change videojs itself to
-    //    allow the 'canHandleSource' function in MqttSourceHandler to return a
-    //    promise not a value, then ascychronously find out if it can play this
-    //    source after making the call to decrypt the hash token.22
-    // =============================================================================
-    // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
-    // case what is now the sfs ip address in clsp url will always be the same it will
-    // be the public ip of cluster gateway.
-    const targetUrlParts = response.target_url.split('/');
-
-    // get the actual stream name
-    const streamName = targetUrlParts[targetUrlParts.length - 1];
-
-    // @todo - could we do target_url.split('/').pop()?
-    return streamName;
+  static fromUrl (url) {
+    return Source.factory(Source.generateSourcePropsFromUrl(url));
   }
 
   constructor (config = {}) {
@@ -315,6 +257,7 @@ export default class Source {
       host,
       port,
       streamName,
+      baseUrl,
       url,
       // jwt
       usingJwt,
@@ -331,6 +274,7 @@ export default class Source {
     this.host = host;
     this.port = port;
     this.streamName = streamName;
+    this.baseUrl = baseUrl;
     this.url = url;
     // jwt
     this.usingJwt = usingJwt;
@@ -349,6 +293,7 @@ export default class Source {
       host: this.host,
       port: this.port,
       streamName: this.streamName,
+      baseUrl: this.baseUrl,
       url: this.url,
       // jwt
       usingJwt: this.usingJwt,
@@ -367,16 +312,24 @@ export default class Source {
    *
    * @param {Source} source
    *   The source to check for the same host
+   *
+   * @returns {Boolean}
+   *   true - if all host properties match
+   *   false - if any host property does not match
    */
   hostsMatch (source) {
     if (!Source.isSource(source)) {
       throw new Error('Cannot compare a source against something that is not a source');
     }
 
-    if (this.protocol === source.protocol && this.host === source.host && this.port === source.port) {
-      return true;
+    if (this.host !== source.host) {
+      return false;
     }
 
-    return false;
+    if (this.port !== source.port) {
+      return false;
+    }
+
+    return true;
   }
 }

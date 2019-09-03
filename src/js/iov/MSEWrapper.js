@@ -3,7 +3,7 @@
 import Debug from 'debug';
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
-// import { mp4toJSON } from './mp4-inspect';
+// import { mp4toJSON } from '../utils/mp4-inspect';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
 
@@ -13,6 +13,8 @@ const silly = Debug(`silly:${DEBUG_PREFIX}:MSEWrapper`);
 // This is the original error text, but it is subject to change by chrome,
 // and we are only checking the part of the error text that contains no
 // punctuation (and is all lower case).
+//
+// eslint-disable-next-line max-len
 // "Failed to execute 'appendBuffer' on 'SourceBuffer': The SourceBuffer is full, and cannot free space to append additional buffers.";
 const FULL_BUFFER_ERROR = 'and cannot free space to append additional buffers';
 
@@ -156,7 +158,7 @@ export default class MSEWrapper {
         break;
       }
       default: {
-        if (!this.metrics.hasOwnProperty(type)) {
+        if (!Object.prototype.hasOwnProperty.call(this.metrics, type)) {
           this.metrics[type] = 0;
         }
 
@@ -319,7 +321,7 @@ export default class MSEWrapper {
       debug(`Queueing segment.  The queue currently has ${this.segmentQueue.length} segments.`);
     }
     else {
-      silly(`Queueing segment.  The queue is currently empty.`);
+      silly('Queueing segment.  The queue is currently empty.');
     }
 
     this.metric('queue.added', 1);
@@ -569,7 +571,7 @@ export default class MSEWrapper {
       this.appendsSinceTimeEndUpdated += 1;
       this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
 
-      //append threshold with same time end has been crossed.  Reinitialize frozen stream.
+      // append threshold with same time end has been crossed.  Reinitialize frozen stream.
       if (this.appendsSinceTimeEndUpdated > this.options.appendsWithSameTimeEndThreshold) {
         debug('stream frozen!');
         this.eventListeners.sourceBuffer.onStreamFrozen();

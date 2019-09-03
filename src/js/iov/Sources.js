@@ -1,5 +1,10 @@
 'use strict';
 
+import Source from './Source';
+
+/**
+ * A collection of Source instances.
+ */
 export default class Sources {
   static factory (sources = [], config = {}) {
     return new Sources(sources, config);
@@ -18,7 +23,9 @@ export default class Sources {
 
     this.sources = [];
 
-    this.firstSource = null;
+    // @private
+    // Used internally to track the original host information
+    this._firstSource = null;
 
     this.add(sources);
 
@@ -27,7 +34,7 @@ export default class Sources {
 
   add (source) {
     if (Array.isArray(source)) {
-      source.forEach((source) => this.addSource(source));
+      source.forEach((source) => this.add(source));
 
       return this;
     }
@@ -38,8 +45,8 @@ export default class Sources {
 
     // If this is the first source added, then this source's host information
     // will be set on this colleciton, regardless of strict mode.
-    if (!this.firstSource) {
-      this.firstSource = source.clone();
+    if (!this._firstSource) {
+      this._firstSource = source.clone();
 
       this.sources.push(source);
 
@@ -55,13 +62,17 @@ export default class Sources {
 
     // With strict mode enabled, the source must have the same host information
     // as the first source
-    if (this.firstSource.hostsMatch(source)) {
+    if (this._firstSource.hostsMatch(source)) {
       this.sources.push(source);
 
       return this;
     }
 
     throw new Error('Strict mode is enabled for this sources collection, and the source does not use the same mqtt host');
+  }
+
+  count () {
+    return this.sources.length;
   }
 
   has (source) {
@@ -73,7 +84,7 @@ export default class Sources {
   }
 
   first () {
-    return this.firstSource;
+    return this.sources[0];
   }
 
   destroy () {
@@ -88,7 +99,7 @@ export default class Sources {
     this.sources = [];
 
     this.strict = null;
-    this.firstSource.destroy();
-    this.firstSource = null;
+    this._firstSource.destroy();
+    this._firstSource = null;
   }
 }

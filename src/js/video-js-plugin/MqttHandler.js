@@ -26,6 +26,7 @@ export default class MqttHandler extends Component {
     this.tech_ = tech;
     this.source_ = source;
 
+    this.onReadyAlreadyCalled = false;
     this.iovId = null;
     this.player = null;
   }

@@ -332,15 +332,16 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       defaultSslPort: this.options.defaultSslPort,
     });
 
-    const iovPlayer = this.getIov();
+    const iov = this.getIov();
 
     this.logger.debug('resgistering "firstFrameShown" event');
-    iovPlayer.on('firstFrameShown', () => {
+
+    iov.on('firstFrameShown', () => {
       this.logger.debug('about to trigger "firstFrameShown" event on videojs player');
       player.trigger('firstFrameShown');
     });
 
-    await iovPlayer.restart();
+    await iov.restart();
   }
 
   destroy (player = this.player) {

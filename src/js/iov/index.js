@@ -2,19 +2,19 @@
 
 import 'srcdoc-polyfill';
 
-import IovCollection from './collection';
+import Collection from './Collection';
 import Source from './Source';
 import IOV from './IOV';
-import Player from './player';
+import Player from './Player';
 
 // @todo - this is deprecated and should be removed
-window.IovCollection = IovCollection;
+window.IovCollection = Collection;
 
 window.skylineIov = {
   Source,
   IOV,
   Player,
-  Collection: IovCollection,
-}
+  Collection,
+};
 
-export default IovCollection;
+export default Collection;

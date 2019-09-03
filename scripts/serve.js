@@ -18,10 +18,10 @@ const prodConfigs = require('../webpack.prod');
 // @todo - the devServer.sh can make this path an environment variable from utils.sh
 const APPLICATION_DIR = path.join(__dirname, '..');
 
-const DEV_SERVER_HOST = process.env.hasOwnProperty('DEV_SERVER_HOST')
+const DEV_SERVER_HOST = Object.prototype.hasOwnProperty.call(process.env, 'DEV_SERVER_HOST')
   ? process.env.DEV_SERVER_HOST
   : '0.0.0.0';
-const DEV_SERVER_PORT = process.env.hasOwnProperty('DEV_SERVER_PORT')
+const DEV_SERVER_PORT = Object.prototype.hasOwnProperty.call(process.env, 'DEV_SERVER_PORT')
   ? parseInt(process.env.DEV_SERVER_PORT, 10)
   : 8080;
 

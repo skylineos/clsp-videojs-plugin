@@ -57,7 +57,7 @@ function initializeWall () {
       // ClspPlugin().METRIC_TYPES,
       // IOV.METRIC_TYPES,
       // Conduit.METRIC_TYPES,
-      // IOVPlayer.METRIC_TYPES,
+      // Player.METRIC_TYPES,
       // MediaSourceWrapper.METRIC_TYPES,
       // SourceBufferWrapper.METRIC_TYPES,
     ];
@@ -87,7 +87,7 @@ function initializeWall () {
     const source = Source.fromUrl(url);
     const iov = await iovCollection.create($video[0]);
 
-    iov.addSource(source);
+    iov.play(source);
 
     wallPlayers.push(iov);
 
