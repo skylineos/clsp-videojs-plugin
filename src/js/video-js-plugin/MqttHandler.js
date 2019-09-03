@@ -5,7 +5,7 @@
 import videojs from 'video.js';
 import uuidv4 from 'uuid/v4';
 
-import IovCollection from '../iov/collection';
+import IovCollection from '../iov/Collection';
 import Source from '../iov/Source';
 import Logger from '../utils/logger';
 
