@@ -75,7 +75,7 @@ Add the following entry to your `package.json` `dependencies` object:
 ```javascript
 "dependencies": {
   // ...
-  "videojs-mse-over-clsp": "git+https://github.com/skylineos/clsp-videojs-plugin.git#v0.15.0",
+  "videojs-mse-over-clsp": "git+https://github.com/skylineos/clsp-videojs-plugin.git#v0.16.3",
 }
 ```
 

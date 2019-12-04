@@ -15,6 +15,10 @@ const silly = Debug(`silly:${DEBUG_PREFIX}:MSEWrapper`);
 // punctuation (and is all lower case).
 // "Failed to execute 'appendBuffer' on 'SourceBuffer': The SourceBuffer is full, and cannot free space to append additional buffers.";
 const FULL_BUFFER_ERROR = 'and cannot free space to append additional buffers';
+// This is the original error text, but it is subject to change by chrome,
+// and we are only checking part of the error text
+// "Failed to execute 'appendBuffer' on 'SourceBuffer': The HTMLMediaElement.error attribute is not null.";
+const VIDEO_ELEMENT_ATTRIBUTE_ERROR = ('The HTMLMediaElement.error attribute is not null.').toLowerCase();
 
 export default class MSEWrapper {
   static EVENT_NAMES = [
@@ -109,6 +113,7 @@ export default class MSEWrapper {
     this.eventListeners = {
       mediaSource: {},
       sourceBuffer: {},
+      videoElement: {},
     };
   }
 
@@ -198,6 +203,14 @@ export default class MSEWrapper {
     this.eventListeners.mediaSource.sourceended = options.onSourceEnded;
     this.eventListeners.mediaSource.error = options.onError;
 
+    // @todo - this is only for debugging, but is referenced below
+    this.eventListeners.videoElement.error = (event) => {
+      console.error('videoElement error:')
+      console.log(event)
+      console.error(event.target.error)
+      console.error(event.target.error.message)
+    };
+
     this.mediaSource.addEventListener('sourceopen', this.eventListeners.mediaSource.sourceopen);
     this.mediaSource.addEventListener('sourceended', this.eventListeners.mediaSource.sourceended);
     this.mediaSource.addEventListener('error', this.eventListeners.mediaSource.error);
@@ -226,6 +239,8 @@ export default class MSEWrapper {
     }
 
     this.videoElement.src = this.objectURL;
+
+    this.videoElement.addEventListener('error', this.eventListeners.videoElement.error);
   }
 
   destroyVideoElementSrc () {
@@ -247,6 +262,10 @@ export default class MSEWrapper {
 
     if (this.sourceBuffer) {
       this.shouldAbort = true;
+    }
+
+    if (this.videoElement) {
+      this.videoElement.removeEventListener('error', this.eventListeners.videoElement.error);
     }
 
     // free the resource
@@ -381,6 +400,15 @@ export default class MSEWrapper {
         // If the buffer is full, we will flush it
         console.warn('source buffer is full, about to flush it...');
         this.trimBuffer(undefined, true);
+      }
+      else if (error.message && error.message.toLowerCase().includes(VIDEO_ELEMENT_ATTRIBUTE_ERROR)) {
+        console.warn('video element error attribute is not null');
+        // @todo - what do we do here?
+        // this.videoElement.error = null;
+        // this.videoElement.setAttribute('error', null);
+        // this.trimBuffer(undefined, true);
+        // this.videoElement.pause = () => {};
+        // this.videoElement.play();
       }
       else {
         this.metric('error.sourceBuffer.append', 1);
@@ -568,7 +596,8 @@ export default class MSEWrapper {
       this.appendsSinceTimeEndUpdated += 1;
       this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
 
-      //append threshold with same time end has been crossed.  Reinitialize frozen stream.
+
+      // append threshold with same time end has been crossed.  Reinitialize frozen stream.
       if (this.appendsSinceTimeEndUpdated > this.options.appendsWithSameTimeEndThreshold) {
         debug('stream frozen!');
         this.eventListeners.sourceBuffer.onStreamFrozen();
