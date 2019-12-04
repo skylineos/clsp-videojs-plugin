@@ -1,6 +1,15 @@
 
 # CLSP Changelog
 
+## v0.16.3 - 2019-08-15 - Recommended
+
+* Add debug logs
+* emit "firstFrameShown" event
+* fix streams flickering in certain situations
+* remove jupyter notebook, which makes this project show as primarily javascript in github
+* update destroy logic
+
+
 ## v0.16.0 - 2019-05-15 - Recommended
 
 * Remove debug statements appearing as console errors
