@@ -1,0 +1,11 @@
+.clsp-video-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  .clsp-video {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+}

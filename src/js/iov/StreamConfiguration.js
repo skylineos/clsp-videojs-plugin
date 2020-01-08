@@ -189,8 +189,6 @@ export default class StreamConfiguration {
   static fromUrl (url) {
     const config = StreamConfiguration.generateConfigFromUrl(url);
 
-    console.log(config)
-
     return StreamConfiguration.fromObject(config);
   }
 

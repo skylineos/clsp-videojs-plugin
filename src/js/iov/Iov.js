@@ -201,6 +201,8 @@ export default class Iov {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
 
+    this.videoElementParent.classList.add('clsp-video-container');
+
     const clspVideoElement = window.document.createElement('video');
     clspVideoElement.classList.add('clsp-video');
     clspVideoElement.muted = true;
@@ -241,7 +243,7 @@ export default class Iov {
     this.iovPlayer = iovPlayer;
   }
 
-  async changeSrc (url) {
+  async changeSrc (url, onPlayerVisible = () => {}) {
     this.logger.debug('Changing Stream...');
 
     const clspVideoElement = this._prepareVideoElement();
@@ -260,6 +262,8 @@ export default class Iov {
 
         this.streamConfiguration = streamConfiguration;
         this.iovPlayer = iovPlayer;
+
+        onPlayerVisible();
       }, 0.5 * 1000);
     });
 

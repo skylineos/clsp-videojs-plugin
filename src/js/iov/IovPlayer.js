@@ -478,7 +478,10 @@ export default class IovPlayer {
 
   enterFullscreen() {
     if (!window.document.fullscreenElement) {
-      this.videoElement.requestFullscreen();
+      // Since the iov and player take control of the video element and its
+      // parent, ask the parent for fullscreen since the video elements will be
+      // destroyed and recreated when changing sources
+      this.videoElement.parentNode.requestFullscreen();
     }
   }
 
