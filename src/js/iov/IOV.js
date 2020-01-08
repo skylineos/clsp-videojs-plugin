@@ -143,7 +143,8 @@ export default class IOV {
 
       b64_jwt_access_url = window.btoa(jwtUrl);
       jwt = query.token;
-    } else if (hashUrl === true) {
+    }
+    else if (hashUrl === true) {
         // URL: clsp[s]-hash://<sfs-addr>[:9001]/<stream>?start=...&end=...&token=...
         const qp_offset = url.indexOf(parser.pathname)+parser.pathname.length;
 
@@ -387,7 +388,20 @@ export default class IOV {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
 
-    this.player = IOVPlayer.factory(this, this.videoElement);
+    this.conduit = Conduit.factory(this.clientId, {
+      iovId: this.id,
+      wsbroker: this.config.wsbroker,
+      wsport: this.config.wsport,
+      useSSL: this.config.useSSL,
+      b64_jwt_access_url: this.config.b64_jwt_access_url,
+      jwt: this.config.jwt,
+      b64_hash_access_url: this.config.b64_hash_access_url,
+      hash: this.config.hash,
+    });
+
+    this.player = IOVPlayer.factory(this.id, this.conduit, this.videoElement);
+
+    this.player.setStream(this.config.streamName);
 
     // @todo - this seems to be videojs specific, and should be removed or moved
     // somewhere else
@@ -434,17 +448,6 @@ export default class IOV {
       this.trigger('videoInfoReceived');
     });
 
-    this.conduit = Conduit.factory(this.clientId, {
-      iovId: this.id,
-      wsbroker: this.config.wsbroker,
-      wsport: this.config.wsport,
-      useSSL: this.config.useSSL,
-      b64_jwt_access_url: this.config.b64_jwt_access_url,
-      jwt: this.config.jwt,
-      b64_hash_access_url: this.config.b64_hash_access_url,
-      hash: this.config.hash,
-    });
-
     await this.conduit.initialize(videoElementParent);
   }
 
@@ -479,39 +482,6 @@ export default class IOV {
   async restart () {
     await this.stop();
     await this.play();
-  }
-
-  async _play (onMoov, onMoof) {
-    if (this.player.stopped) {
-      return;
-    }
-
-    const {
-      // guid,
-      mimeCodec,
-      moov,
-    } = await this.conduit.play(this.config.streamName, onMoof);
-
-    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
-      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
-      this.stop();
-    }
-
-    if (onMoov) {
-      onMoov(mimeCodec, moov);
-    }
-  }
-
-  _stop () {
-    this.conduit.stop();
-  }
-
-  resyncStream (cb) {
-    this.conduit.resyncStream(cb);
-  }
-
-  onAppendStart (byteArray) {
-    this.conduit.segmentUsed(byteArray);
   }
 
   enterFullscreen () {

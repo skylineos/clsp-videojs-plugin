@@ -14,9 +14,6 @@ import Logger from '../utils/logger';
  * it is supposed to be capable of playing video by itself.  The plugin that
  * uses this player should have all of the videojs logic, and none should
  * exist here.
- *
- * var player = IOVPlayer.factory(iov);
- * player.play( video_element_id, stream_name );
 */
 export default class IOVPlayer {
   static EVENT_NAMES = [
@@ -39,23 +36,26 @@ export default class IOVPlayer {
   static DRIFT_CORRECTION_CONSTANT = 2;
 
   static factory (
-    iov,
+    iovId,
+    conduit,
     videoElement,
     options = {}
   ) {
     return new IOVPlayer(
-      iov,
+      iovId,
+      conduit,
       videoElement,
       options
     );
   }
 
   constructor (
-    iov,
+    iovId,
+    conduit,
     videoElement,
     options
   ) {
-    this.logger = Logger().factory(`IOV Player ${iov.id}`);
+    this.logger = Logger().factory(`IOV Player ${iovId}`);
 
     this.logger.debug('constructor');
 
@@ -68,8 +68,9 @@ export default class IOVPlayer {
       this.events[IOVPlayer.EVENT_NAMES[i]] = [];
     }
 
-    this.iov = iov;
+    this.conduit = conduit;
     this.videoElement = videoElement;
+    this.streamName = null;
 
     this.options = defaults(
       {},
@@ -183,6 +184,10 @@ export default class IOVPlayer {
     this.logger.error(error);
   }
 
+  setStream (streamName) {
+    this.streamName = streamName;
+  }
+
   _html5Play () {
     // @see - https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play
     try {
@@ -232,7 +237,8 @@ export default class IOVPlayer {
           onAppendStart: (byteArray) => {
             this.logger.silly('On Append Start...');
 
-            this.iov.onAppendStart(byteArray);
+            // onAppendStart
+            this.conduit.segmentUsed(byteArray);
           },
           onAppendFinish: (info) => {
             this.logger.silly('On Append Finish...');
@@ -340,8 +346,8 @@ export default class IOVPlayer {
   async restart () {
     this.logger.debug('restart');
 
-    await this.iov.stop();
-    await this.iov.play();
+    await this.stop();
+    await this.play();
   }
 
   onMoov = async (mimeCodec, moov) => {
@@ -356,7 +362,7 @@ export default class IOVPlayer {
 
     await this.reinitializeMseWrapper(mimeCodec);
 
-    this.iov.resyncStream(() => {
+    this.conduit.resyncStream(() => {
       // console.log('sync received re-initialize media source buffer');
       this.reinitializeMseWrapper(mimeCodec);
     });
@@ -378,7 +384,25 @@ export default class IOVPlayer {
 
     this.stopped = false;
 
-    await this.iov._play(this.onMoov, this.onMoof);
+    if (!this.streamName) {
+      this.logger.error('Cannot play a stream without a stream name');
+      return;
+    }
+
+    const {
+      // guid,
+      mimeCodec,
+      moov,
+    } = await this.conduit.play(this.streamName, this.onMoof);
+
+    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
+      this.stop();
+    }
+
+    if (this.onMoov) {
+      this.onMoov(mimeCodec, moov);
+    }
   }
 
   stop () {
@@ -387,7 +411,7 @@ export default class IOVPlayer {
     this.stopped = true;
     this.moovBox = null;
 
-    this.iov._stop();
+    this.conduit.stop();
 
     this.logger.debug('stop about to finish synchronous operations and return promise...');
 
@@ -450,9 +474,10 @@ export default class IOVPlayer {
   _freeAllResources () {
     this.logger.debug('_freeAllResources...');
 
-    // Note you will need to destroy the iov yourself.  The child should
-    // probably not destroy the parent
-    this.iov = null;
+    this.iovId = null;
+    // The IOV will destroy the conduit
+    this.conduit = null;
+    this.streamName = null;
 
     this.firstFrameShown = null;
 

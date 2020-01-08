@@ -72,7 +72,7 @@ export default function () {
    * that the conduit can identify what client the message is for.
    *
    * @param {String} iovId
-   *   the ID of the parent iov, used for logging purposes
+   *   the ID of the parent iov, used ONLY for logging purposes
    * @param {String} clientId
    *   the guid to be used to construct the topic
    * @param {String} host

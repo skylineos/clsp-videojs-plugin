@@ -233,7 +233,8 @@ export default class Conduit {
 
     if (this.jwt.length > 0) {
       streamName = await this.validateJwt();
-    } else if (this.hash.length > 0) {
+    }
+    else if (this.hash.length > 0) {
       streamName = await this.validateHash();
     }
 
