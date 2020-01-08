@@ -1,4 +1,4 @@
-# videojs-mse-over-clsp
+# videojs-mse-over-clsp <!-- omit in toc -->
 
 A videojs plugin that adds support for video served over the `clsp` protocol.
 Currently, this protocol is available only via Skyline's SFS solutions.
@@ -6,16 +6,18 @@ Currently, this protocol is available only via Skyline's SFS solutions.
 Note - this plugin currently only works in Chrome and Firefox.  Chrome is recommended for performance.
 Note - this highest h.264 keyframe/iframe segment frequency this plugin currently supports is 2 per second.  This is different from frames per second.
 
-## Table of Contents
+## Table of Contents <!-- omit in toc -->
 
-- [URL structure](#url-structure)
+- [URL Structure](#url-structure)
+  - [Tokenization](#tokenization)
+    - [Hash](#hash)
 - [Installation](#installation)
   - [Via NPM](#via-npm)
   - [Via Git](#via-git)
 - [Usage](#usage)
-  - [`<head>` Tag](#head-tag)
-  - [`<video>` Tag](#video-tag)
-  - [`<script>` Tag](#script-tag)
+  - [&lt;head&gt; Tag](#ltheadgt-tag)
+  - [&lt;video&gt; tag](#ltvideogt-tag)
+  - [&lt;script&gt; Tag](#ltscriptgt-tag)
 - [Supported Browsers](#supported-browsers)
 - [Dependencies](#dependencies)
 - [License](#license)
@@ -105,7 +107,7 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
   <!-- VideoJS styles -->
   <link
     rel="stylesheet"
-    href="//vjs.zencdn.net/7.5.4/video-js.min.css"
+    href="//vjs.zencdn.net/7.6.6/video-js.min.css"
   >
   <!-- CLSP styles -->
   <link
@@ -115,7 +117,7 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
   <!-- Babel Polyfill -->
   <script
     type="text/javascript"
-    src="//cdn.jsdelivr.net/npm/@babel/polyfill@7.4.4/dist/polyfill.min.js"
+    src="//cdn.jsdelivr.net/npm/@babel/polyfill@7.7.0/dist/polyfill.min.js"
   ></script>
 <head>
 ```
@@ -159,7 +161,7 @@ This is the simplest case. Get the script in whatever way you prefer and include
 
 ```html
 <!-- VideoJS -->
-<script src="//vjs.zencdn.net/7.5.4/video.min.js"></script>
+<script src="//vjs.zencdn.net/7.6.6/video.min.js"></script>
 <!-- CLSP Plugin -->
 <script src="../dist/videojs-mse-over-clsp.min.js"></script>
 
@@ -182,9 +184,9 @@ Chrome 52+ or Firefox are the browsers that this plugin currently supports.  All
 
 ## Dependencies
 
-`@babel/polyfill` `7.4.4` is required.
+`@babel/polyfill` `7.7.0` is required.
 
-`video.js` `7.5.4` is the recommended version.  Version `6.x` is not recommended due to it being less performant over time.
+`video.js` `7.6.6` is the recommended version.  Version `6.x` is not recommended due to it being less performant over time.
 
 If using `videojs-errors`, which is recommended, `4.2.0` is the recommended version, as it allows us to re-register successive errors to respond to successfive failures as necessary to support stream recovery.
 

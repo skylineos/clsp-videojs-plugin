@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Simple CLSP Standalone Demo</title>
+    <link
+      rel="shortcut icon"
+      href="../favicon.ico"
+    >
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+      integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay"
+      crossorigin="anonymous"
+    >
+    <link
+      rel="stylesheet"
+      href="./styles.css"
+    >
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@babel/polyfill@7.7.0/dist/polyfill.min.js"
+    ></script>
+  </head>
+  <body>
+    <h1>Simple CLSP Standalone Demo</h1>
+    <h3 id="version">v</h3>
+    <div class="video-container">
+      <span id="browser-not-supported">This browser is not supported</span>
+      <video
+        id="my-video"
+        muted
+      >
+        <source
+          src="clsp://172.28.12.57/FairfaxVideo0520"
+          type="video/mp4; codecs='avc1.42E01E'"
+        />
+      </video>
+    </div>
+    <div class="controls">
+      <button onclick="onPlay()" title="play"><i class="fas fa-play"></i></button>
+      <button onclick="onStop()" title="stop"><i class="fas fa-stop"></i></button>
+      <button onclick="onFullscreen()" title="fullscreen"><i class="fas fa-expand"></i></button>
+      <button onclick="onDestroy()" title="destroy"><i class="fas fa-bomb"></i></button>
+    </div>
+
+    <script src="../../dist/iovPlayer.min.js"></script>
+    <script src="./index.js"></script>
+
+    <script>
+      main();
+    </script>
+  </body>
+</html>
