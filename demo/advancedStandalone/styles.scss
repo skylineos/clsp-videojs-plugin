@@ -1,7 +1,7 @@
 @import 'src/styles/videojs-mse-over-clsp.scss';
 
 * {
-  box-sizing: border-box;
+  box-sizing: border-box !important;
 }
 
 html, body {
@@ -21,6 +21,11 @@ video {
   height: 100%;
   object-fit: fill;
 }
+
+// .clsp-video {
+//   min-height: 150px;
+//   min-width: 200px;
+// }
 
 .tour,
 .headless {
@@ -54,6 +59,8 @@ video {
 .page-body {
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
+  flex-shrink: 0;
 
   section {
     border: solid 3px black;
@@ -61,7 +68,6 @@ video {
     padding: 0;
     display: flex;
     flex-direction: column;
-    width: 100%;
     overflow: auto;
     flex-grow: 1;
     flex-shrink: 0;
@@ -107,6 +113,7 @@ video {
       grid-template-columns: repeat(4, 1fr);
       flex-grow: 1;
       flex-shrink: 0;
+      height: 100%;
     }
 
     .player-container {
@@ -145,6 +152,8 @@ video {
 
       .video-container {
         display: flex;
+        flex-grow: 1;
+        flex-shrink: 0;
       }
 
       .video-metrics {

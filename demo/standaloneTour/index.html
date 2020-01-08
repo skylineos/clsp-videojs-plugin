@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>CLSP Standalone Tour Demo</title>
+    <link
+      rel="shortcut icon"
+      href="../favicon.ico"
+    >
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+      integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay"
+      crossorigin="anonymous"
+    >
+    <link
+      rel="stylesheet"
+      href="../../dist/videojs-mse-over-clsp.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./styles.css"
+    >
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@babel/polyfill@7.7.0/dist/polyfill.min.js"
+    ></script>
+  </head>
+  <body>
+    <h1>CLSP Standalone Tour Demo</h1>
+    <h3 id="version">v</h3>
+    <div class="container">
+      <div class="tour-container">
+        <div class="stream-container">
+          <textarea
+            id="stream-src"
+            name="stream-src"
+            value="clsp://172.28.12.57/FairfaxVideo0520"
+          >clsps://172.28.12.57/FairfaxVideo0520
+clsps://172.28.12.57/FairfaxVideo0420
+clsps://172.28.12.57/FairfaxVideo0350
+clsps://172.28.12.57/FairfaxVideo0760
+clsps://172.28.12.57/FairfaxVideo0430
+clsps://172.28.12.57/FairfaxVideo0440
+clsps://172.28.12.57/FairfaxVideo0450
+clsps://172.28.12.57/FairfaxVideo0470
+clsps://172.28.12.57/FairfaxVideo0780
+clsps://172.28.12.57/FairfaxVideo0790
+clsp://172.28.12.57/FairfaxVideo0520
+clsp://172.28.12.57/FairfaxVideo0420
+clsp://172.28.12.57/FairfaxVideo0350
+clsp://172.28.12.57/FairfaxVideo0760
+clsp://172.28.12.57/FairfaxVideo0430
+clsp://172.28.12.57/FairfaxVideo0440
+clsp://172.28.12.57/FairfaxVideo0450
+clsp://172.28.12.57/FairfaxVideo0470
+clsp://172.28.12.57/FairfaxVideo0780
+clsp://172.28.12.57/FairfaxVideo0790
+          </textarea>
+          <button
+            onclick="clspControls.resetTour()"
+            title="reset tour"
+          >Reset Tour</button>
+        </div>
+        <div class="video-section">
+          <h2 id="current-stream-url"></h2>
+          <span id="browser-not-supported">This browser is not supported</span>
+          <div class="video-container">
+            <div>
+              <video
+                id="my-video"
+                muted
+              ></video>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button
+          onclick="window.clspControls.resumeTour(true, true)"
+          title="resume tour"
+          >
+          <i class="fas fa-play"></i>
+        </button>
+        <button
+          onclick="window.clspControls.pauseTour()"
+          title="pause tour"
+          >
+          <i class="fas fa-pause"></i>
+        </button>
+        <button
+          onclick="window.clspControls.previous()"
+          title="previous"
+          >
+          <i class="fas fa-step-backward"></i>
+        </button>
+        <button
+          onclick="window.clspControls.next(true)"
+          title="next"
+          >
+          <i class="fas fa-step-forward"></i>
+        </button>
+        <button
+          onclick="window.clspControls.destroy()"
+          title="destroy"
+          >
+          <i class="fas fa-bomb"></i>
+        </button>
+        <button
+          onclick="window.clspControls.fullscreen()"
+          title="fullscreen"
+        >
+          <i class="fas fa-expand"></i>
+        </button>
+      </div>
+    </div>
+
+    <script src="../../dist/iovPlayer.min.js"></script>
+    <script src="./index.js"></script>
+
+    <script>
+      window.clspControls.initialize();
+    </script>
+  </body>
+</html>

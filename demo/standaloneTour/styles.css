@@ -23,6 +23,11 @@ h1 {
   margin: 0 auto;
 }
 
+h2 {
+  color: white;
+  margin: 0 auto;
+}
+
 h3 {
   color: white;
   margin: 0 auto;
@@ -32,7 +37,7 @@ h3 {
   display: flex;
   flex-direction: column;
   height: 100%;
-  width: 50%;
+  width: 100%;
   align-items: center;
   justify-content: space-around;
   margin: 0 auto;
@@ -43,27 +48,45 @@ h3 {
   width: 100%;
 }
 
-.stream-container {
+.tour-container {
   display: flex;
-}
-
-.stream-container input {
   flex-grow: 1;
   flex-shrink: 0;
+}
+
+.tour-container > * {
+  width: 50%;
+}
+
+.stream-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.stream-container textarea {
+  flex-grow: 1;
+  flex-shrink: 0;
+}
+
+.stream-container button {
   padding: 0.5rem;
-  margin-right: 0.5rem;
+}
+
+.video-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .video-container {
   display: flex;
+  flex-grow: 1;
+  flex-shrink: 0;
   border: solid 2px white;
   border-radius: 1rem;
 }
 
-/* sane defaults */
 .clsp-video-container {
-  height: 450px;
-  width: 600px;
 }
 
 .clsp-video {
