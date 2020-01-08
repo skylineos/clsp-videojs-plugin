@@ -1,4 +1,6 @@
-function onPlay () {
+'use strict';
+
+function play () {
   if (!window.iov) {
     return;
   }
@@ -6,7 +8,7 @@ function onPlay () {
   window.iov.play();
 }
 
-function onStop () {
+function stop () {
   if (!window.iov) {
     return;
   }
@@ -14,7 +16,7 @@ function onStop () {
   window.iov.stop();
 }
 
-function onFullscreen () {
+function fullscreen () {
   if (!window.iov) {
     return;
   }
@@ -22,7 +24,7 @@ function onFullscreen () {
   window.iov.toggleFullscreen();
 }
 
-function onDestroy() {
+function destroy () {
   if (!window.iov) {
     return;
   }
@@ -31,11 +33,19 @@ function onDestroy() {
   window.iov = null;
 }
 
-function main () {
+function changeSrc () {
+  var streamUrl = document.getElementById('stream-src').value;
+
+  window.clspControls.stop();
+}
+
+function initialize () {
   document.getElementById('version').innerHTML += window.clspUtils.version;
 
   var element = document.getElementById('my-video');
   var url = element.children[0].getAttribute('src');
+
+  document.getElementById('stream-src').value = url;
 
   window.iovCollection = window.IovCollection.asSingleton();
 
@@ -50,3 +60,12 @@ function main () {
       console.error(error);
     });
 }
+
+window.clspControls = {
+  play: play,
+  stop: stop,
+  fullscreen: fullscreen,
+  destroy: destroy,
+  changeSrc: changeSrc,
+  initialize: initialize,
+};

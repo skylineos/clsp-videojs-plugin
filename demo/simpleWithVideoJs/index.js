@@ -1,3 +1,5 @@
+'use strict';
+
 function onPlay () {
   if (!window.player) {
     return;

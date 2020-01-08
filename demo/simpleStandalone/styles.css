@@ -28,17 +28,37 @@ h3 {
   margin: 0 auto;
 }
 
-.video-container {
+.container {
   display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 50%;
   align-items: center;
   justify-content: space-around;
   margin: 0 auto;
   margin-top: 2rem;
+}
+
+.container > * {
+  width: 100%;
+}
+
+.stream-container {
+  display: flex;
+}
+
+.stream-container input {
+  flex-grow: 1;
+  flex-shrink: 0;
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+.video-container {
+  display: flex;
   border: solid 2px white;
   padding: 1rem;
   border-radius: 1rem;
-  width: 50%;
-  height: 50%;
 }
 
 video {
@@ -56,7 +76,6 @@ video {
 
 .controls {
   display: flex;
-  width: 50%;
   margin: 1rem auto;
   justify-content: space-around;
 }
