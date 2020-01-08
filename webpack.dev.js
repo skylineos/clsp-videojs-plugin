@@ -10,16 +10,14 @@ function devConfig (webpackConfig) {
   return {
     ...webpackConfig,
     mode: 'development',
-    // cache: true,
-    // watch: true,
-    devtool: 'source-map',
-    // devtool: 'eval-source-map',
-    entry: {
-      ...webpackConfig.entry,
-      // @todo - these need to be documented
-      [`${webpackConfig.name}.0`]: `webpack-dev-server/client?http://${devHost}:${devPort}`,
-      // [`${webpackConfig.name}.1`]: 'webpack/hot/only-dev-server',
-    },
+    devtool: 'eval-source-map',
+    // devtool: 'source-map',
+    // entry: {
+    //   ...webpackConfig.entry,
+    //   // @todo - these need to be documented
+    //   [`${webpackConfig.name}.0`]: `webpack-dev-server/client?http://${devHost}:${devPort}`,
+    //   // [`${webpackConfig.name}.1`]: 'webpack/hot/only-dev-server',
+    // },
     output: {
       ...webpackConfig.output,
       pathinfo: true,

@@ -2,7 +2,7 @@
 
 import 'srcdoc-polyfill';
 
-import IovCollection from './collection';
+import IovCollection from './IovCollection';
 
 window.IovCollection = IovCollection;
 

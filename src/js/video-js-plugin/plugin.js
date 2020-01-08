@@ -162,7 +162,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
           // @todo - investigate how this can be called when the iov has been destroyed
           if (!iov || iov.destroyed) {
-            await this.initializeIOV(player);
+            await this.initializeIov(player);
           }
           else {
             await iov.restart();
@@ -180,7 +180,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
         case 0:
         case 4:
         case 5:
-        case 'PLAYER_ERR_IOV': {
+        case 'PLAYER_ERR_Iov': {
           break;
         }
         default: {
@@ -194,7 +194,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
       // @todo - it is probably unnecessary to have to completely tear down the
       // existing iov and create a new one.  But for now, this works
-      await this.initializeIOV(player);
+      await this.initializeIov(player);
 
       // @todo - this hides it permanently.  it should be re-enabled when the
       // player stops or pauses.  This will likely involve using some videojs
@@ -287,13 +287,13 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   }
 
   getMqttHandler (player = this.player) {
-    this.logger.debug('getting mqtt handler IOV...');
+    this.logger.debug('getting mqtt handler Iov...');
 
     return player.tech(true).mqtt;
   }
 
   getIov () {
-    this.logger.debug('getting IOV...');
+    this.logger.debug('getting Iov...');
 
     return this.getMqttHandler().iov;
   }
@@ -314,8 +314,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     });
   };
 
-  async initializeIOV (player) {
-    this.logger.debug('initializing IOV...');
+  async initializeIov (player) {
+    this.logger.debug('initializing Iov...');
 
     const mqttHandler = this.getMqttHandler();
 
@@ -326,7 +326,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     mqttHandler.off('error', this.onMqttHandlerError);
     mqttHandler.on('error', this.onMqttHandlerError);
 
-    await mqttHandler.createIOV(player, {
+    await mqttHandler.createIov(player, {
       enableMetrics: this.options.enableMetrics,
       defaultNonSslPort: this.options.defaultNonSslPort,
       defaultSslPort: this.options.defaultSslPort,

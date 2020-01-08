@@ -2,9 +2,8 @@
 
 import uuidv4 from 'uuid/v4';
 
-import Conduit from '../conduit/Conduit';
-import IOVPlayer from './player';
-import MSEWrapper from './MSEWrapper';
+import ConduitCollection from '../conduit/ConduitCollection';
+import IovPlayer from './IovPlayer';
 import utils from '../utils';
 import Logger from '../utils/logger';
 
@@ -13,7 +12,7 @@ import Logger from '../utils/logger';
  * deliver video content streamed through MQTT from distributed sources.
  */
 
-export default class IOV {
+export default class Iov {
   static EVENT_NAMES = [
     'metric',
     'unsupportedMimeCodec',
@@ -192,7 +191,7 @@ export default class IOV {
   }
 
   static factory (videoElement, config = {}) {
-    return new IOV(videoElement, config);
+    return new Iov(videoElement, config);
   }
 
   static fromUrl (
@@ -200,9 +199,9 @@ export default class IOV {
     videoElement,
     config = {}
   ) {
-    return IOV.factory(videoElement, {
+    return Iov.factory(videoElement, {
       ...config,
-      ...IOV.generateConfigFromUrl(url),
+      ...Iov.generateConfigFromUrl(url),
     });
   }
 
@@ -220,7 +219,7 @@ export default class IOV {
     // than an incrementing integer.
     this.clientId = config.clientId || uuidv4();
 
-    this.logger = Logger().factory(`IOV ${this.id}`);
+    this.logger = Logger().factory(`Iov ${this.id}`);
 
     this.logger.debug('Constructing...');
 
@@ -229,22 +228,23 @@ export default class IOV {
     // @todo - there must be a more proper way to do events than this...
     this.events = {};
 
-    for (let i = 0; i < IOV.EVENT_NAMES.length; i++) {
-      this.events[IOV.EVENT_NAMES[i]] = [];
+    for (let i = 0; i < Iov.EVENT_NAMES.length; i++) {
+      this.events[Iov.EVENT_NAMES[i]] = [];
     }
 
     this.destroyed = false;
     this.onReadyAlreadyCalled = false;
     this.videoElement = videoElement;
+
+    // Store this value in case the DOM element becomes unavailable
     this.eid = this.videoElement.id;
 
     this.config = {
       clientId: this.clientId,
       wsbroker: config.wsbroker,
       wsport: config.wsport,
-      useSSL: config.useSSL,
       streamName: config.streamName,
-      appStart: config.appStart,
+      useSSL: config.useSSL,
       jwt: config.jwt,
       b64_jwt_access_url: config.b64_jwt_access_url,
       hash: config.hash,
@@ -279,7 +279,7 @@ export default class IOV {
   on (name, action) {
     this.logger.debug(`Registering Listener for ${name} event...`);
 
-    if (!IOV.EVENT_NAMES.includes(name)) {
+    if (!Iov.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -304,7 +304,7 @@ export default class IOV {
       return;
     }
 
-    if (!IOV.EVENT_NAMES.includes(name)) {
+    if (!Iov.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -318,7 +318,7 @@ export default class IOV {
       return;
     }
 
-    if (!IOV.METRIC_TYPES.includes(type)) {
+    if (!Iov.METRIC_TYPES.includes(type)) {
       // @todo - should this throw?
       return;
     }
@@ -388,18 +388,9 @@ export default class IOV {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
 
-    this.conduit = Conduit.factory(this.clientId, {
-      iovId: this.id,
-      wsbroker: this.config.wsbroker,
-      wsport: this.config.wsport,
-      useSSL: this.config.useSSL,
-      b64_jwt_access_url: this.config.b64_jwt_access_url,
-      jwt: this.config.jwt,
-      b64_hash_access_url: this.config.b64_hash_access_url,
-      hash: this.config.hash,
-    });
+    const conduit = await ConduitCollection.asSingleton().create(this.id, this.clientId, this.config);
 
-    this.player = IOVPlayer.factory(this.id, this.conduit, this.videoElement);
+    this.player = IovPlayer.factory(this.id, conduit, this.videoElement);
 
     this.player.setStream(this.config.streamName);
 
@@ -448,7 +439,7 @@ export default class IOV {
       this.trigger('videoInfoReceived');
     });
 
-    await this.conduit.initialize(videoElementParent);
+    await conduit.initialize(videoElementParent);
   }
 
   clone (config) {
@@ -459,14 +450,14 @@ export default class IOV {
     };
 
     // @todo - is it possible to reuse the iov player?
-    return IOV.factory(this.videoElement, clonedConfig);
+    return Iov.factory(this.videoElement, clonedConfig);
   }
 
   cloneFromUrl (url, config = {}) {
     this.logger.debug('cloneFromUrl');
 
     return this.clone({
-      ...IOV.generateConfigFromUrl(url),
+      ...Iov.generateConfigFromUrl(url),
       ...config,
     });
   }
@@ -482,6 +473,90 @@ export default class IOV {
   async restart () {
     await this.stop();
     await this.play();
+  }
+
+  async _changeSrcConfig (config) {
+    const videoElementParent = this.videoElement.parentNode;
+
+    if (!videoElementParent) {
+      throw new Error('There is no iframe container element to attach the iframe to!');
+    }
+
+    const clientId = config.clientId || uuidv4();
+
+    const conduit = await ConduitCollection.asSingleton().create(this.id, clientId, {
+      iovId: this.id,
+      ...config,
+    });
+
+    const player = IovPlayer.factory(this.id, conduit, this.videoElement);
+
+    player.setStream(config.streamName);
+
+    // @todo - this seems to be videojs specific, and should be removed or moved
+    // somewhere else
+    player.on('firstFrameShown', () => {
+      // @todo - this may be overkill given the changeSourceMaxWait...
+      // When the video is ready to be displayed, swap out the video player if
+      // the source has changed.  This is what allows tours to switch to the next
+      try {
+        let videos = videoElementParent.getElementsByTagName('video');
+
+        for (let i = 0; i < videos.length; i++) {
+          let video = videos[i];
+          const id = video.getAttribute('id');
+
+          if (id !== this.eid) {
+            // video.pause();
+            // video.removeAttribute('src');
+            // video.load();
+            // video.style.display = 'none';
+            videoElementParent.removeChild(video);
+            video.remove();
+            video = null;
+            videos = null;
+            break;
+          }
+        }
+
+        // videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
+        // is there still a reference to this element?
+        // this.videoJsVideoElement = null;
+      } catch (error) {
+        this.logger.error(error);
+      }
+
+      this.trigger('firstFrameShown');
+    });
+
+    player.on('videoReceived', () => {
+      this.trigger('videoReceived');
+    });
+
+    player.on('videoInfoReceived', () => {
+      this.trigger('videoInfoReceived');
+    });
+
+    await conduit.initialize(videoElementParent);
+
+    console.log('READY');
+
+    await player.play();
+
+    // if (this.player) {
+    //   this.player.destroy();
+    // }
+
+    ConduitCollection.asSingleton().remove(this.clientId);
+
+    this.player = player;
+    this.clientId = clientId;
+  }
+
+  async changeSrc (url) {
+    const config = Iov.generateConfigFromUrl(url);
+
+    await this._changeSrcConfig(config);
   }
 
   enterFullscreen () {
@@ -534,8 +609,7 @@ export default class IOV {
     this.player.destroy();
     this.player = null;
 
-    this.conduit.destroy();
-    this.conduit = null;
+    ConduitCollection.asSingleton().remove(this.clientId);
 
     this.events = null;
     this.metrics = null;

@@ -15,8 +15,15 @@ import Logger from '../utils/logger';
 const MAX_RECONNECTION_ATTEMPTS = 200;
 
 export default class Conduit {
-  static factory (clientId, {
-    iovId,
+  static fromIov (iov) {
+    if (!iov) {
+      throw new Error('An Iov instance is required to create a new Conduit from an Iov');
+    }
+
+    return Conduit.factory(iov.clientId, iov.id, iov.config);
+  }
+
+  static factory (iovId, clientId, {
     wsbroker,
     wsport,
     useSSL,
@@ -24,9 +31,8 @@ export default class Conduit {
     jwt,
     b64_hash_access_url,
     hash,
-  }) {
-    return new Conduit(clientId, {
-      iovId,
+  } = {}) {
+    return new Conduit(iovId, clientId, {
       wsbroker,
       wsport,
       useSSL,
@@ -40,16 +46,15 @@ export default class Conduit {
   /**
    * @private
    *
-   * clientId - the guid to be used to construct the topic
    * iovId - the ID of the parent iov, used for logging purposes
+   * clientId - the guid to be used to construct the topic
    * wsbroker - the host (url or ip) of the SFS that is providing the stream
    * wsport - the port the stream is served over
    * useSSL - true to request the stream over clsps, false to request the stream over clsp
    * [b64_jwt_access_url] - the "tokenized" url
    * [jwt] - the access token
    */
-  constructor (clientId, {
-    iovId,
+  constructor (iovId, clientId, {
     wsbroker,
     wsport,
     useSSL,
@@ -57,7 +62,27 @@ export default class Conduit {
     jwt,
     b64_hash_access_url,
     hash,
-  }) {
+  } = {}) {
+    if (!clientId) {
+      throw new Error('clientId is required to construct a new Conduit instance.');
+    }
+
+    if (!iovId) {
+      throw new Error('iovId is required to construct a new Conduit instance.');
+    }
+
+    if (!wsbroker) {
+      throw new Error('wsbroker is required to construct a new Conduit instance.');
+    }
+
+    if (!wsport) {
+      throw new Error('wsport is required to construct a new Conduit instance.');
+    }
+
+    if (!useSSL && useSSL !== false) {
+      throw new Error('useSSL is required to construct a new Conduit instance.');
+    }
+
     this.iovId = iovId;
     this.clientId = clientId;
 

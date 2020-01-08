@@ -5,7 +5,7 @@
 import videojs from 'video.js';
 import uuidv4 from 'uuid/v4';
 
-import IovCollection from '../iov/collection';
+import IovCollection from '../iov/IovCollection';
 import Logger from '../utils/logger';
 
 const Component = videojs.getComponent('Component');
@@ -47,30 +47,30 @@ export default class MqttHandler extends Component {
 
     // When the tab is not in focus, chrome doesn't handle things the same
     // way as when the tab is in focus, and it seems that the result of that
-    // is that the "firstFrameShown" event never fires.  Having the IOV be
+    // is that the "firstFrameShown" event never fires.  Having the Iov be
     // updated on a delay in case the "firstFrameShown" takes too long will
-    // ensure that the old IOVs are destroyed, ensuring that unnecessary
+    // ensure that the old Iovs are destroyed, ensuring that unnecessary
     // socket connections, etc. are not being used, as this can cause the
     // browser to crash.
     // Note that if there is a better way to do this, it would likely reduce
-    // the number of try/catch blocks and null checks in the IOVPlayer and
+    // the number of try/catch blocks and null checks in the IovPlayer and
     // MSEWrapper, but I don't think that is likely to happen until the MSE
     // is standardized, and even then, we may be subject to non-intuitive
     // behavior based on tab switching, etc.
     setTimeout(() => {
-      this.updateIOV(clone);
+      this.updateIov(clone);
     }, this.changeSourceMaxWait);
 
     // Under normal circumstances, meaning when the tab is in focus, we want
-    // to respond by switching the IOV when the new IOV Player has something
+    // to respond by switching the Iov when the new Iov Player has something
     // to display
     clone.player.on('firstFrameShown', () => {
-      this.updateIOV(clone);
+      this.updateIov(clone);
     });
   };
 
-  async createIOV (player) {
-    this.logger.debug('createIOV');
+  async createIov (player) {
+    this.logger.debug('createIov');
 
     this.player = player;
 
@@ -125,27 +125,27 @@ export default class MqttHandler extends Component {
       this.player.on('changesrc', this.onChangeSource);
     });
 
-    this.updateIOV(iov);
+    this.updateIov(iov);
 
     // this.iov.on('unsupportedMimeCodec', (error) => {
     //   this.videoPlayer.errors.extend({
-    //     PLAYER_ERR_IOV: {
+    //     PLAYER_ERR_Iov: {
     //       headline: 'Error Playing Stream',
     //       message: error,
     //     },
     //   });
 
     //   this.videoPlayer.error({
-    //     code: 'PLAYER_ERR_IOV',
+    //     code: 'PLAYER_ERR_Iov',
     //   });
     // });
   }
 
-  updateIOV (iov) {
-    this.logger.debug('updateIOV');
+  updateIov (iov) {
+    this.logger.debug('updateIov');
 
     if (this.iov) {
-      // If the IOV is the same, do nothing
+      // If the Iov is the same, do nothing
       if (this.iov.id === iov.id) {
         return;
       }

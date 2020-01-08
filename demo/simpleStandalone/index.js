@@ -36,7 +36,7 @@ function destroy () {
 function changeSrc () {
   var streamUrl = document.getElementById('stream-src').value;
 
-  window.clspControls.stop();
+  window.iov.changeSrc(streamUrl);
 }
 
 function initialize () {

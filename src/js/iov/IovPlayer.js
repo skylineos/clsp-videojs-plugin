@@ -15,7 +15,7 @@ import Logger from '../utils/logger';
  * uses this player should have all of the videojs logic, and none should
  * exist here.
 */
-export default class IOVPlayer {
+export default class IovPlayer {
   static EVENT_NAMES = [
     'metric',
     'firstFrameShown',
@@ -41,7 +41,7 @@ export default class IOVPlayer {
     videoElement,
     options = {}
   ) {
-    return new IOVPlayer(
+    return new IovPlayer(
       iovId,
       conduit,
       videoElement,
@@ -55,7 +55,7 @@ export default class IOVPlayer {
     videoElement,
     options
   ) {
-    this.logger = Logger().factory(`IOV Player ${iovId}`);
+    this.logger = Logger().factory(`Iov Player ${iovId}`);
 
     this.logger.debug('constructor');
 
@@ -64,8 +64,8 @@ export default class IOVPlayer {
     // @todo - there must be a more proper way to do events than this...
     this.events = {};
 
-    for (let i = 0; i < IOVPlayer.EVENT_NAMES.length; i++) {
-      this.events[IOVPlayer.EVENT_NAMES[i]] = [];
+    for (let i = 0; i < IovPlayer.EVENT_NAMES.length; i++) {
+      this.events[IovPlayer.EVENT_NAMES[i]] = [];
     }
 
     this.conduit = conduit;
@@ -76,8 +76,8 @@ export default class IOVPlayer {
       {},
       options,
       {
-        segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
-        driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
+        segmentIntervalSampleSize: IovPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
+        driftCorrectionConstant: IovPlayer.DRIFT_CORRECTION_CONSTANT,
         enableMetrics: false,
       }
     );
@@ -103,7 +103,7 @@ export default class IOVPlayer {
   on (name, action) {
     this.logger.debug(`Registering Listener for ${name} event...`);
 
-    if (!IOVPlayer.EVENT_NAMES.includes(name)) {
+    if (!IovPlayer.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -131,7 +131,7 @@ export default class IOVPlayer {
       return;
     }
 
-    if (!IOVPlayer.EVENT_NAMES.includes(name)) {
+    if (!IovPlayer.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -145,7 +145,7 @@ export default class IOVPlayer {
       return;
     }
 
-    if (!IOVPlayer.METRIC_TYPES.includes(type)) {
+    if (!IovPlayer.METRIC_TYPES.includes(type)) {
       // @todo - should this throw?
       return;
     }
@@ -314,7 +314,7 @@ export default class IOVPlayer {
 
         this.trigger('videoInfoReceived');
 
-        // @todo - the moovBox is currently set in the IOV - do something else
+        // @todo - the moovBox is currently set in the Iov - do something else
         this.mseWrapper.appendMoov(this.moovBox);
       },
       onSourceEnded: async () => {
@@ -475,7 +475,7 @@ export default class IOVPlayer {
     this.logger.debug('_freeAllResources...');
 
     this.iovId = null;
-    // The IOV will destroy the conduit
+    // The Iov will destroy the conduit
     this.conduit = null;
     this.streamName = null;
 
