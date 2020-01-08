@@ -11,6 +11,7 @@
 
 import Router from './Router';
 import Logger from '../utils/logger';
+import StreamConfiguration from '../iov/StreamConfiguration';
 
 const MAX_RECONNECTION_ATTEMPTS = 200;
 
@@ -23,79 +24,36 @@ export default class Conduit {
     return Conduit.factory(iov.clientId, iov.id, iov.config);
   }
 
-  static factory (iovId, clientId, {
-    wsbroker,
-    wsport,
-    useSSL,
-    b64_jwt_access_url,
-    jwt,
-    b64_hash_access_url,
-    hash,
-  } = {}) {
-    return new Conduit(iovId, clientId, {
-      wsbroker,
-      wsport,
-      useSSL,
-      b64_jwt_access_url,
-      jwt,
-      b64_hash_access_url,
-      hash,
-    });
+  static factory (iovId, clientId, streamConfiguration) {
+    return new Conduit(iovId, clientId, streamConfiguration);
   }
 
   /**
    * @private
    *
-   * iovId - the ID of the parent iov, used for logging purposes
+   * iovId - the ID of the parent iov, used ONLY for logging purposes
    * clientId - the guid to be used to construct the topic
-   * wsbroker - the host (url or ip) of the SFS that is providing the stream
-   * wsport - the port the stream is served over
-   * useSSL - true to request the stream over clsps, false to request the stream over clsp
-   * [b64_jwt_access_url] - the "tokenized" url
-   * [jwt] - the access token
+   * streamConfiguration - @todo
    */
-  constructor (iovId, clientId, {
-    wsbroker,
-    wsport,
-    useSSL,
-    b64_jwt_access_url,
-    jwt,
-    b64_hash_access_url,
-    hash,
-  } = {}) {
-    if (!clientId) {
-      throw new Error('clientId is required to construct a new Conduit instance.');
-    }
-
+  constructor (iovId, clientId, streamConfiguration) {
     if (!iovId) {
       throw new Error('iovId is required to construct a new Conduit instance.');
     }
 
-    if (!wsbroker) {
-      throw new Error('wsbroker is required to construct a new Conduit instance.');
+    if (!clientId) {
+      throw new Error('clientId is required to construct a new Conduit instance.');
     }
 
-    if (!wsport) {
-      throw new Error('wsport is required to construct a new Conduit instance.');
-    }
-
-    if (!useSSL && useSSL !== false) {
-      throw new Error('useSSL is required to construct a new Conduit instance.');
+    if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
+      throw new Error('invalid streamConfiguration passed to Conduit constructor');
     }
 
     this.iovId = iovId;
     this.clientId = clientId;
+    this.streamConfiguration = streamConfiguration;
 
     this.logger = Logger().factory(`Conduit ${this.iovId}`);
     this.logger.debug('Constructing...');
-
-    this.wsbroker = wsbroker;
-    this.wsport = wsport;
-    this.useSSL = useSSL;
-    this.b64_jwt_access_url = b64_jwt_access_url;
-    this.jwt = jwt;
-    this.b64_hash_access_url = b64_hash_access_url;
-    this.hash = hash;
 
     this.statsMsg = {
       byteCount: 0,
@@ -256,10 +214,10 @@ export default class Conduit {
     // @todo - should connect be called here?
     await this.connect();
 
-    if (this.jwt.length > 0) {
+    if (this.streamConfiguration.jwt && this.streamConfiguration.jwt.length > 0) {
       streamName = await this.validateJwt();
     }
-    else if (this.hash.length > 0) {
+    else if (this.streamConfiguration.hash && this.streamConfiguration.hash.length > 0) {
       streamName = await this.validateHash();
     }
 
@@ -301,7 +259,7 @@ export default class Conduit {
           this.publish(`iov/video/${this.guid}/play`, {
             initSegmentTopic,
             clientId: this.clientId,
-            jwt: this.jwt,
+            jwt: this.streamConfiguration.jwt,
           });
         });
       }
@@ -373,8 +331,8 @@ export default class Conduit {
         this.transaction(
           'iov/jwtValidate',
           {
-            b64_access_url: this.b64_jwt_access_url,
-            token: this.jwt,
+            b64_access_url: this.streamConfiguration.b64_jwt_access_url,
+            token: this.streamConfiguration.jwt,
           },
           (response) => {
             // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
@@ -432,8 +390,8 @@ export default class Conduit {
         this.transaction(
           'iov/hashValidate',
           {
-            b64HashURL: this.b64_hash_access_url,
-            token: this.hash,
+            b64HashURL: this.streamConfiguration.b64_hash_access_url,
+            token: this.streamConfiguration.hash,
           },
           (response) => {
             // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
@@ -574,12 +532,10 @@ export default class Conduit {
 
     this.disconnect();
 
+    this.iovId = null;
     this.clientId = null;
-    this.wsbroker = null;
-    this.wsport = null;
-    this.useSSL = null;
-    this.b64_jwt_access_url = null;
-    this.jwt = null;
+    // The caller must destroy the streamConfiguration
+    this.streamConfiguration = null;
 
     // Destroy iframe
     this.iframe.parentNode.removeChild(this.iframe);
@@ -818,9 +774,9 @@ export default class Conduit {
             window.mqttRouterConfig = {
               iovId: '${this.iovId}',
               clientId: '${this.clientId}',
-              host: '${this.wsbroker}',
-              port: ${this.wsport},
-              useSSL: ${this.useSSL},
+              host: '${this.streamConfiguration.host}',
+              port: ${this.streamConfiguration.port},
+              useSSL: ${this.streamConfiguration.useSSL},
             };
 
             window.iframeEventHandlers = ${Router.toString()}();

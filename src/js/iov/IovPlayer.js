@@ -1,7 +1,9 @@
 'use strict';
 
 import defaults from 'lodash/defaults';
+import uuidv4 from 'uuid/v4';
 
+import ConduitCollection from '../conduit/ConduitCollection';
 import MSEWrapper from './MSEWrapper';
 import Logger from '../utils/logger';
 
@@ -35,27 +37,13 @@ export default class IovPlayer {
   static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
   static DRIFT_CORRECTION_CONSTANT = 2;
 
-  static factory (
-    iovId,
-    conduit,
-    videoElement,
-    options = {}
-  ) {
-    return new IovPlayer(
-      iovId,
-      conduit,
-      videoElement,
-      options
-    );
+  static factory (iovId, videoElement, options) {
+    return new IovPlayer(iovId, videoElement, options);
   }
 
-  constructor (
-    iovId,
-    conduit,
-    videoElement,
-    options
-  ) {
-    this.logger = Logger().factory(`Iov Player ${iovId}`);
+  constructor (iovId, videoElement, options) {
+    this.iovId = iovId;
+    this.logger = Logger().factory(`Iov Player ${this.iovId}`);
 
     this.logger.debug('constructor');
 
@@ -68,9 +56,9 @@ export default class IovPlayer {
       this.events[IovPlayer.EVENT_NAMES[i]] = [];
     }
 
-    this.conduit = conduit;
     this.videoElement = videoElement;
-    this.streamName = null;
+    this.conduit = null;
+    this.streamConfiguration = null;
 
     this.options = defaults(
       {},
@@ -184,8 +172,21 @@ export default class IovPlayer {
     this.logger.error(error);
   }
 
-  setStream (streamName) {
-    this.streamName = streamName;
+  async initialize (streamConfiguration) {
+    this.streamConfiguration = streamConfiguration;
+
+    // This MUST be globally unique!  The MQTT server will broadcast the stream
+    // to a topic that contains this id, so if there is ANY other client
+    // connected that has the same id anywhere in the world, the stream to all
+    // clients that use that topic will fail.  This is why we use guids rather
+    // than an incrementing integer.
+    this.clientId = uuidv4();
+
+    this.conduit = await ConduitCollection.asSingleton().create(this.iovId, this.clientId, this.streamConfiguration);
+
+    const videoElementParent = this.videoElement.parentNode;
+
+    await this.conduit.initialize(videoElementParent);
   }
 
   _html5Play () {
@@ -384,8 +385,8 @@ export default class IovPlayer {
 
     this.stopped = false;
 
-    if (!this.streamName) {
-      this.logger.error('Cannot play a stream without a stream name');
+    if (!this.streamConfiguration) {
+      this.logger.error('Cannot play a stream without a stream configuration');
       return;
     }
 
@@ -393,7 +394,7 @@ export default class IovPlayer {
       // guid,
       mimeCodec,
       moov,
-    } = await this.conduit.play(this.streamName, this.onMoof);
+    } = await this.conduit.play(this.streamConfiguration.streamName, this.onMoof);
 
     if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
       this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
@@ -476,8 +477,10 @@ export default class IovPlayer {
 
     this.iovId = null;
     // The Iov will destroy the conduit
+    ConduitCollection.asSingleton().remove(this.clientId);
     this.conduit = null;
-    this.streamName = null;
+    // The caller must destroy the streamConfiguration
+    this.streamConfiguration = null;
 
     this.firstFrameShown = null;
 
