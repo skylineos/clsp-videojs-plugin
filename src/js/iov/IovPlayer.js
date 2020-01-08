@@ -6,6 +6,7 @@ import uuidv4 from 'uuid/v4';
 import ConduitCollection from '../conduit/ConduitCollection';
 import MSEWrapper from './MSEWrapper';
 import Logger from '../utils/logger';
+import StreamConfiguration from './StreamConfiguration';
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -57,6 +58,7 @@ export default class IovPlayer {
     }
 
     this.videoElement = videoElement;
+
     this.conduit = null;
     this.streamConfiguration = null;
 
@@ -181,6 +183,8 @@ export default class IovPlayer {
     // clients that use that topic will fail.  This is why we use guids rather
     // than an incrementing integer.
     this.clientId = uuidv4();
+
+    this.videoElement.id = this.clientId;
 
     this.conduit = await ConduitCollection.asSingleton().create(this.iovId, this.clientId, this.streamConfiguration);
 
@@ -472,6 +476,27 @@ export default class IovPlayer {
     }
   }
 
+  enterFullscreen() {
+    if (!window.document.fullscreenElement) {
+      this.videoElement.requestFullscreen();
+    }
+  }
+
+  exitFullscreen() {
+    if (window.document.exitFullscreen) {
+      window.document.exitFullscreen();
+    }
+  }
+
+  toggleFullscreen() {
+    if (!window.document.fullscreenElement) {
+      this.enterFullscreen();
+    }
+    else {
+      this.exitFullscreen();
+    }
+  }
+
   _freeAllResources () {
     this.logger.debug('_freeAllResources...');
 
@@ -535,6 +560,8 @@ export default class IovPlayer {
     // SourceBuffer, and various Video elements are properly dereferenced
     // to avoid memory leaks
     this.videoElement.src = '';
+    this.videoElement.parentNode.removeChild(this.videoElement);
+    this.videoElement.remove();
     this.videoElement = null;
 
     this.logger.debug('exiting destroy, asynchronous destroy logic in progress...');

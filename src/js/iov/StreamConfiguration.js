@@ -220,6 +220,8 @@ export default class StreamConfiguration {
     this.port = port;
     this.useSSL = useSSL;
     this.tokenConfig = tokenConfig;
+
+    this.destroyed = false;
   }
 
   clone (streamConfiguration) {
@@ -242,5 +244,19 @@ export default class StreamConfiguration {
         ...streamConfiguration.tokenConfig,
       },
     };
+  }
+
+  destroy () {
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    this.streamName = null;
+    this.host = null;
+    this.port = null;
+    this.useSSL = null;
+    this.tokenConfig = null;
   }
 }

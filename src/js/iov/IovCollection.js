@@ -44,14 +44,15 @@ export default class IovCollection {
    *
    * @param {String} url
    *   The url to the clsp stream
-   * @param {DOMNode} videoElement
-   *   The video element that will serve as the video player in the DOM
+   * @param {DOMNode} videoElementId
+   *   The id of the video element that will serve as the video player in the
+   *   DOM
    *
    * @returns {Iov}
    */
-  async create (url, videoElement) {
+  async create (videoElementId, url) {
     const iov = Iov.factory(
-      videoElement,
+      videoElementId,
       StreamConfiguration.fromUrl(url),
       {
         id: (++totalIovCount).toString(),

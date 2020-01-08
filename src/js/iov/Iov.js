@@ -23,17 +23,17 @@ export default class Iov {
 
   static METRIC_TYPES = [];
 
-  static factory (videoElement, streamConfiguration, options) {
-    return new Iov(videoElement, streamConfiguration, options);
+  static factory (videoElementId, streamConfiguration, options) {
+    return new Iov(videoElementId, streamConfiguration, options);
   }
 
-  constructor (videoElement, streamConfiguration, options = {}) {
+  constructor (videoElementId, streamConfiguration, options = {}) {
     if (!utils.supported()) {
       throw new Error('You are using an unsupported browser - Unable to play CLSP video');
     }
 
-    if (!videoElement) {
-      throw new Error('videoElement is required to construct an Iov');
+    if (!videoElementId) {
+      throw new Error('videoElementId is required to construct an Iov');
     }
 
     if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
@@ -59,10 +59,8 @@ export default class Iov {
 
     this.destroyed = false;
     this.onReadyAlreadyCalled = false;
-    this.videoElement = videoElement;
-
-    // Store this value in case the DOM element becomes unavailable
-    this.eid = this.videoElement.id;
+    this.videoElementId = videoElementId;
+    this.videoElementParent = null;
 
     const {
       visibilityChangeEventName,
@@ -147,7 +145,7 @@ export default class Iov {
   onConnectionChange = () => {
     if (window.navigator.onLine) {
       this.logger.debug('Back online...');
-      if (this.player.stopped) {
+      if (this.iovPlayer.stopped) {
         // Without this timeout, the video appears blank.  Not sure if there is
         // some race condition...
         setTimeout(() => {
@@ -180,75 +178,92 @@ export default class Iov {
       clearTimeout(this.visibilityChangeTimeout);
     }
 
-    if (this.player.stopped) {
+    if (this.iovPlayer.stopped) {
       this.logger.debug('Playing because tab became visible...');
       this.play();
     }
   };
 
-  async initialize () {
-    this.logger.debug('Initializing...');
+  _prepareVideoElement () {
+    const videoElement = window.document.getElementById(this.videoElementId);
 
-    if (!this.videoElement) {
-      throw new Error(`Unable to find an element in the DOM with id "${this.eid}".`);
+    // If we have no elements to work with, throw an error
+    if (!videoElement) {
+      throw new Error(`Unable to find an element in the DOM with id "${this.videoElementId}".`);
     }
 
-    this.videoElement.classList.add('clsp-video');
+    if (!this.videoElementParent) {
+      videoElement.style.display = 'none';
+      this.videoElementParent = videoElement.parentNode;
+    }
 
-    const videoElementParent = this.videoElement.parentNode;
-
-    if (!videoElementParent) {
+    if (!this.videoElementParent) {
       throw new Error('There is no iframe container element to attach the iframe to!');
     }
 
-    this.player = IovPlayer.factory(this.id, this.videoElement);
+    const clspVideoElement = window.document.createElement('video');
+    clspVideoElement.classList.add('clsp-video');
+    clspVideoElement.muted = true;
 
+    // @todo - is it ok that the most recent video is always first?  what about
+    // the spinner or the not-supported text
+    this.videoElementParent.insertBefore(clspVideoElement, this.videoElementParent.childNodes[0]);
+
+    return clspVideoElement;
+  }
+
+  _registerPlayerListeners (iovPlayer) {
     // @todo - this seems to be videojs specific, and should be removed or moved
     // somewhere else
-    this.player.on('firstFrameShown', () => {
-      // @todo - this may be overkill given the changeSourceMaxWait...
-      // When the video is ready to be displayed, swap out the video player if
-      // the source has changed.  This is what allows tours to switch to the next
-      try {
-        let videos = videoElementParent.getElementsByTagName('video');
-
-        for (let i = 0; i < videos.length; i++) {
-          let video = videos[i];
-          const id = video.getAttribute('id');
-
-          if (id !== this.eid) {
-            // video.pause();
-            // video.removeAttribute('src');
-            // video.load();
-            // video.style.display = 'none';
-            videoElementParent.removeChild(video);
-            video.remove();
-            video = null;
-            videos = null;
-            break;
-          }
-        }
-
-        // videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
-        // is there still a reference to this element?
-        // this.videoJsVideoElement = null;
-      }
-      catch (error) {
-        this.logger.error(error);
-      }
-
+    iovPlayer.on('firstFrameShown', () => {
       this.trigger('firstFrameShown');
     });
 
-    this.player.on('videoReceived', () => {
+    iovPlayer.on('videoReceived', () => {
       this.trigger('videoReceived');
     });
 
-    this.player.on('videoInfoReceived', () => {
+    iovPlayer.on('videoInfoReceived', () => {
       this.trigger('videoInfoReceived');
     });
+  }
 
-    await this.player.initialize(this.streamConfiguration);
+  async initialize () {
+    this.logger.debug('Initializing...');
+
+    const clspVideoElement = this._prepareVideoElement();
+    const iovPlayer = IovPlayer.factory(this.id, clspVideoElement);
+
+    this._registerPlayerListeners(iovPlayer);
+
+    await iovPlayer.initialize(this.streamConfiguration);
+
+    this.iovPlayer = iovPlayer;
+  }
+
+  async changeSrc (url) {
+    this.logger.debug('Changing Stream...');
+
+    const clspVideoElement = this._prepareVideoElement();
+    const iovPlayer = IovPlayer.factory(this.id, clspVideoElement);
+    const streamConfiguration = StreamConfiguration.fromUrl(url);
+
+    this._registerPlayerListeners(iovPlayer);
+
+    await iovPlayer.initialize(streamConfiguration);
+
+    iovPlayer.on('firstFrameShown', () => {
+      setTimeout(() => {
+        this.iovPlayer.stop();
+        this.iovPlayer.destroy();
+        this.streamConfiguration.destroy();
+
+        this.streamConfiguration = streamConfiguration;
+        this.iovPlayer = iovPlayer;
+      }, 0.5 * 1000);
+    });
+
+    await iovPlayer.play();
   }
 
   clone (streamConfiguration) {
@@ -269,112 +284,27 @@ export default class Iov {
   }
 
   async play () {
-    await this.player.play();
+    await this.iovPlayer.play();
   }
 
   async stop () {
-    await this.player.stop();
+    await this.iovPlayer.stop();
   }
 
   async restart () {
-    await this.stop();
-    await this.play();
-  }
-
-  async _changeSrcConfig (streamConfiguration) {
-    const videoElementParent = this.videoElement.parentNode;
-
-    if (!videoElementParent) {
-      throw new Error('There is no iframe container element to attach the iframe to!');
-    }
-
-    // const clientId = uuidv4();
-
-    // this.player.initialize(streamConfiguration);
-
-    // // @todo - this seems to be videojs specific, and should be removed or moved
-    // // somewhere else
-    // player.on('firstFrameShown', () => {
-    //   // @todo - this may be overkill given the changeSourceMaxWait...
-    //   // When the video is ready to be displayed, swap out the video player if
-    //   // the source has changed.  This is what allows tours to switch to the next
-    //   try {
-    //     let videos = videoElementParent.getElementsByTagName('video');
-
-    //     for (let i = 0; i < videos.length; i++) {
-    //       let video = videos[i];
-    //       const id = video.getAttribute('id');
-
-    //       if (id !== this.eid) {
-    //         // video.pause();
-    //         // video.removeAttribute('src');
-    //         // video.load();
-    //         // video.style.display = 'none';
-    //         videoElementParent.removeChild(video);
-    //         video.remove();
-    //         video = null;
-    //         videos = null;
-    //         break;
-    //       }
-    //     }
-
-    //     // videoElementParent.replaceChild(this.videoElement, this.videoJsVideoElement);
-    //     // is there still a reference to this element?
-    //     // this.videoJsVideoElement = null;
-    //   } catch (error) {
-    //     this.logger.error(error);
-    //   }
-
-    //   this.trigger('firstFrameShown');
-    // });
-
-    // player.on('videoReceived', () => {
-    //   this.trigger('videoReceived');
-    // });
-
-    // player.on('videoInfoReceived', () => {
-    //   this.trigger('videoInfoReceived');
-    // });
-
-    // console.log('READY');
-
-    // if (this.player) {
-    //   this.player.stop();
-    // }
-
-    // await this.player.play();
-
-    // ConduitCollection.asSingleton().remove(this.clientId);
-
-    // this.player = player;
-    // this.clientId = clientId;
-  }
-
-  async changeSrc (url) {
-    const streamConfiguration = StreamConfiguration.generateConfigFromUrl(url);
-
-    await this._changeSrcConfig(streamConfiguration);
+    await this.iovPlayer.restart();
   }
 
   enterFullscreen () {
-    if (!document.fullscreenElement) {
-      this.videoElement.requestFullscreen();
-    }
+    this.iovPlayer.enterFullscreen();
   }
 
   exitFullscreen () {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    }
+    this.iovPlayer.exitFullscreen();
   }
 
   toggleFullscreen () {
-    if (!document.fullscreenElement) {
-      this.enterFullscreen();
-    }
-    else {
-      this.exitFullscreen();
-    }
+    this.iovPlayer.toggleFullscreen();
   }
 
   /**
@@ -403,8 +333,11 @@ export default class Iov {
     window.removeEventListener('online', this.onConnectionChange);
     window.removeEventListener('offline', this.onConnectionChange);
 
-    this.player.destroy();
-    this.player = null;
+    this.iovPlayer.destroy();
+    this.iovPlayer = null;
+
+    this.videoElement = null;
+    this.videoElementParent = null;
 
     this.events = null;
     this.metrics = null;

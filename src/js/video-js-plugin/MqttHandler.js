@@ -88,7 +88,7 @@ export default class MqttHandler extends Component {
 
     videoElementParent.insertBefore(videoElement, videoJsVideoElement);
 
-    const iov = await IovCollection.asSingleton().create(this.source_.src, videoElement);
+    const iov = await IovCollection.asSingleton().create(videoId, this.source_.src);
 
     this.player.on('ready', () => {
       if (this.onReadyAlreadyCalled) {

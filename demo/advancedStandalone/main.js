@@ -83,7 +83,7 @@ function initializeWall () {
 
     var iovCollection = window.IovCollection.asSingleton();
 
-    const iov = await iovCollection.create(url, $video[0]);
+    const iov = await iovCollection.create($video[0].id, url);
 
     iov.play();
 
