@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * This is the lowest level controller of the actual mqtt connection.
+ * The Router is the lowest level controller of the actual MQTT connection.
  *
  * Note that this is the code that gets duplicated in each iframe.
  * Keep the contents of the exported function light and ES5 only.
@@ -14,62 +14,27 @@
  */
 
 /**
- * This router will manage an MQTT connection for a given clientId, and pass
- * the relevant data and messages back up to the conduit.
+ * This Router will manage an MQTT connection for a given clientId, and pass
+ * the relevant data and messages back up to the Conduit.
  *
  * @see - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe
  * @see - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body
  * @see - https://www.eclipse.org/paho/files/jsdoc/index.html
  *
- * The following events are sent to the parent window:
- *
- * router_created
- *   when the router creation is finished.
- *   can only happen at time of router instantiation.
- * router_create_failure
- *   when the router creation fails.
- *   can only happen at time of router instantiation.
- * mqtt_data
- *   when a segment / moof is transmitted.
- *   can happen for as long as the connection is open.
- * connect_success
- *   when the connection to the mqtt server is established.can only happen at time of connection.
- * connect_failure
- *   when trying to connect to the mqtt server fails.
- *   can only happen at time of connection.
- * connection_lost
- *   when the connection to the mqtt server has been established, but is later lost.
- *   can happen for as long as the connection is open.
- * disconnect_success
- *   when the connection to the mqtt server is terminated normally.
- *   can only happen at time of disconnection.
- * subscribe_failure
- *   when trying to subscribe to a topic fails.
- *   can only happen when a subscribe is attempted.
- * unsubscribe_failure
- *   when trying to unsubscribe from a topic fails.
- *   can only happen when an unsubscribe is attempted.
- * window_message_fail
- *   when an error is encountered while processing window messages.
- *   can happen any time.
- *
  * @export - the function that provides the Router and constants
  */
 export default function () {
-  // The error code from paho mqtt that represents the socket not being
+  // The error code from Paho MQTT that represents the socket not being
   // connected
   var PAHO_MQTT_ERROR_CODE_NOT_CONNECTED = 'AMQJS0011E';
   var PAHO_MQTT_ERROR_CODE_ALREADY_CONNECTED = 'AMQJS0011E';
   var Paho = window.parent.Paho;
 
   /**
-   * @todo - define this as a class, and in a different file.  This will require
-   * a change the way webpack processes the file though...
-   *
    * A Router that can be used to set up an MQTT connection to the specified
-   * host and port, using a conduit-provided clientId that will be a part of every
-   * message that is passed from this iframe window to the parent window, so
-   * that the conduit can identify what client the message is for.
+   * host and port, using a Conduit-provided clientId that will be a part of
+   * every message that is passed from this iframe window to the parent window,
+   * so that the conduit can identify what client the message is for.
    *
    * @param {String} iovId
    *   the ID of the parent iov, used ONLY for logging purposes
@@ -142,6 +107,56 @@ export default function () {
     }
   }
 
+  // All events that are emitted by the Router are prefixed with `clsp_router`
+  Router.events = {
+    // Triggered when the Router is successfully instantiated.
+    // Can only be triggered at time of router instantiation.
+    CREATED: 'clsp_router_created',
+    // Triggered when there is an error during Router instantiation.
+    // Can only be triggered at time of router instantiation.
+    CREATE_FAILURE: 'clsp_router_create_failure',
+    // Triggered when a segment / moof is transmitted.
+    // Can be triggered for as long as the connection is open.
+    DATA_RECEIVED: 'clsp_router_mqtt_data',
+    // Triggered when the connection to the mqtt server is established.
+    // Can only be triggered at time of connection.
+    CONNECT_SUCCESS: 'clsp_router_connect_success',
+    // Triggered when trying to connect to the mqtt server fails.
+    // Can only be triggered at time of connection.
+    CONNECT_FAILURE: 'clsp_router_connect_failure',
+    // Triggered when the connection to the mqtt server has been established, but is later lost.
+    // Can be triggered for as long as the connection is open.
+    CONNECTION_LOST: 'clsp_router_connection_lost',
+    // Triggered when the connection to the mqtt server is terminated normally.
+    // Can only be triggered at time of disconnection.
+    DISCONNECT_SUCCESS: 'clsp_router_disconnect_success',
+    // Triggered when trying to subscribe to a topic fails.
+    // Can only be triggered when a subscribe is attempted.
+    SUBSCRIBE_FAILURE: 'clsp_router_subscribe_failure',
+    // When trying to unsubscribe from a topic fails.
+    // Can only be triggered when an unsubscribe is attempted.
+    UNSUBSCRIBE_FAILURE: 'clsp_router_unsubscribe_failure',
+    // Triggered when an error is encountered while processing window messages.
+    // Can be triggered any time.
+    WINDOW_MESSAGE_FAIL: 'clsp_router_window_message_fail',
+  };
+
+  Router.factory = function (
+    iovId,
+    clientId,
+    host,
+    port,
+    useSSL
+  ) {
+    return new Router(
+      iovId,
+      clientId,
+      host,
+      port,
+      useSSL
+    );
+  };
+
   /**
    * @private
    *
@@ -162,23 +177,23 @@ export default function () {
     message.clientId = this.clientId;
 
     switch (message.event) {
-      case 'router_created':
-      case 'connect_success':
-      case 'disconnect_success': {
+      case Router.events.CREATED:
+      case Router.events.CONNECT_SUCCESS:
+      case Router.events.DISCONNECT_SUCCESS: {
         // no validation needed
         break;
       }
-      case 'mqtt_data': {
+      case Router.events.DATA_RECEIVED: {
         if (!message.hasOwnProperty('destinationName') || !message.hasOwnProperty('payloadString') || !message.hasOwnProperty('payloadBytes')) {
           throw new Error('improperly formatted "data" message sent to _sendToParent');
         }
         break;
       }
-      case 'connect_failure':
-      case 'connection_lost':
-      case 'subscribe_failure':
-      case 'unsubscribe_failure':
-      case 'window_message_fail': {
+      case Router.events.CONNECT_FAILURE:
+      case Router.events.CONNECTION_LOST:
+      case Router.events.SUBSCRIBE_FAILURE:
+      case Router.events.UNSUBSCRIBE_FAILURE:
+      case Router.events.WINDOW_MESSAGE_FAIL: {
         if (!message.hasOwnProperty('reason')) {
           throw new Error('improperly formatted "fail" message sent to _sendToParent');
         }
@@ -211,10 +226,10 @@ export default function () {
    *
    * To be called when a message has arrived in this Paho.MQTT.client
    *
-   * The idea here is that when the server sends an mqtt message, whether a
+   * The idea here is that when the server sends an MQTT message, whether a
    * moof, moov, or something else, that data needs to be sent to the appropriate
    * player (client).  So when this router gets that chunk of data, it sends it
-   * back to the conduit with the clientId, and the conduit is then responsible
+   * back to the Conduit with the clientId, and the Conduit is then responsible
    * for passing it to the appropriate player.
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
@@ -242,7 +257,7 @@ export default function () {
       }
 
       this._sendToParent({
-        event: 'mqtt_data',
+        event: Router.events.DATA_RECEIVED,
         destinationName: mqttMessage.destinationName,
         payloadString: payloadString, // @todo - why is this necessary when it doesn't exist?
         payloadBytes: mqttMessage.payloadBytes || null,
@@ -256,8 +271,7 @@ export default function () {
   /**
    * @private
    *
-   * called when an mqttClient connection has been lost, or after a connect()
-   * method has succeeded.
+   * Called when an mqttClient connection has been lost
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
@@ -274,14 +288,14 @@ export default function () {
     if (errorCode === 0) {
       // The connection was "properly" terminated
       this._sendToParent({
-        event: 'disconnect_success',
+        event: Router.events.DISCONNECT_SUCCESS,
       });
 
       return;
     }
 
     this._sendToParent({
-      event: 'connection_lost',
+      event: Router.events.CONNECTION_LOST,
       reason: 'connection lost error code "' + errorCode + '" with message: ' + response.errorMessage,
     });
   };
@@ -289,8 +303,9 @@ export default function () {
   /**
    * @private
    *
-   * Any time a "message" event occurs on the window respond to it by inspecting
-   * the messages "method" property and taking the appropriate action.
+   * Any time a "message" event occurs on the window, respond to it by
+   * inspecting the message's "method" property and taking the appropriate
+   * action.
    *
    * @param {Object} event
    *   The window message event
@@ -305,15 +320,15 @@ export default function () {
 
     try {
       switch (method) {
-        case 'subscribe': {
+        case window.conduitCommands.SUBSCRIBE: {
           this._subscribe(message.topic);
           break;
         }
-        case 'unsubscribe': {
+        case window.conduitCommands.UNSUBSCRIBE: {
           this._unsubscribe(message.topic);
           break;
         }
-        case 'publish': {
+        case window.conduitCommands.PUBLISH: {
           var payload = null;
 
           try {
@@ -331,15 +346,15 @@ export default function () {
           this._publish(payload, message.topic);
           break;
         }
-        case 'connect': {
+        case window.conduitCommands.CONNECT: {
           this.connect();
           break;
         }
-        case 'disconnect': {
+        case window.conduitCommands.DISCONNECT: {
           this.disconnect();
           break;
         }
-        case 'send': {
+        case window.conduitCommands.SEND: {
           this._publish(message.byteArray, message.topic);
           break;
         }
@@ -352,7 +367,7 @@ export default function () {
       this.logger.error(error);
 
       this._sendToParent({
-        event: 'window_message_fail',
+        event: Router.events.WINDOW_MESSAGE_FAIL,
         reason: 'window message event failure',
       });
     }
@@ -378,7 +393,7 @@ export default function () {
     this.logger.info('Successfully established MQTT connection');
 
     this._sendToParent({
-      event: 'connect_success',
+      event: Router.events.CONNECT_SUCCESS,
     });
   };
 
@@ -398,7 +413,7 @@ export default function () {
   Router.prototype._connect_onFailure = function (response) {
     this.logger.info('MQTT Connection Failure!');
     this._sendToParent({
-      event: 'connect_failure',
+      event: Router.events.CONNECT_FAILURE,
       reason: 'Connection Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
     });
   };
@@ -441,7 +456,7 @@ export default function () {
     this.logger.error('Failed to subscribe to topic "' + topic + '"');
 
     this._sendToParent({
-      event: 'subscribe_failure',
+      event: Router.events.SUBSCRIBE_FAILURE,
       reason: 'Subscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
     });
   };
@@ -509,7 +524,7 @@ export default function () {
     this.logger.debug('Failed to unsubscribe from topic "' + topic + '"');
 
     this._sendToParent({
-      event: 'unsubscribe_failure',
+      event: Router.events.UNSUBSCRIBE_FAILURE,
       reason: 'Unsubscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
     });
   };
@@ -614,7 +629,7 @@ export default function () {
       this.logger.error('Failed to connect', error);
 
       this._sendToParent({
-        event: 'connect_failure',
+        event: Router.events.CONNECT_FAILURE,
         reason: 'General error when trying to connect.',
       });
     }
@@ -646,13 +661,32 @@ export default function () {
     }
   };
 
+  /**
+   * Destroy the Router and free all resources
+   *
+   * @returns {void}
+   */
+  Router.prototype.destroy = function () {
+    this.logger.info('Destroying...');
+
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    this.disconnect();
+
+    window.removeEventListener('message', this.boundWindowMessageEventHandler);
+  };
+
   // This is a series of "controllers" to keep the conduit's iframe as dumb as
   // possible.  Call each of these in the corresponding attribute on the
   // "body" tag.
   return {
     onload: function () {
       try {
-        window.router = new Router(
+        window.router = Router.factory(
           window.mqttRouterConfig.iovId,
           window.mqttRouterConfig.clientId,
           window.mqttRouterConfig.host,
@@ -661,7 +695,7 @@ export default function () {
         );
 
         window.router._sendToParent({
-          event: 'router_created',
+          event: Router.events.CREATED,
         });
 
         window.router.logger.info('onload - Router created');
@@ -671,7 +705,7 @@ export default function () {
         console.error(error);
 
         window.parent.postMessage({
-          event: 'router_create_failure',
+          event: Router.events.CREATE_FAILURE,
           reason: error,
         }, '*');
       }
@@ -681,12 +715,10 @@ export default function () {
         return;
       }
 
-      // @todo - do we need destroy logic?  or does the destruction of the
-      // iframe handle all dereferences for us?
       try {
-        window.router.logger.info('onunload - Router disconnecting in onunload...');
-        window.router.disconnect();
-        window.router.logger.info('onunload - Router disconnected in onunload');
+        window.router.logger.info('onunload - Router being destroyed in onunload...');
+        window.router.destroy();
+        window.router.logger.info('onunload - Router destroyed in onunload');
       }
       catch (error) {
         if (error.message.startsWith(PAHO_MQTT_ERROR_CODE_NOT_CONNECTED)) {
@@ -697,5 +729,6 @@ export default function () {
         window.router.logger.error(error);
       }
     },
+    Router: Router,
   };
 }

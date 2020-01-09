@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * Creates a hidden iframe that is used to establish a dedicated mqtt websocket
- * for a single video. This is basically an in-browser micro service which
- * uses cross-document communication to route data to and from the iframe.
+ * The Conduit a hidden iframe that is used to establish a dedicated mqtt
+ * websocket for a single video. This is basically an in-browser micro service
+ * which uses cross-document communication to route data to and from the iframe.
  *
  * This code is a layer of abstraction on top of the mqtt router, and the
  * controller of the iframe that contains the router.
@@ -16,13 +16,16 @@ import StreamConfiguration from '../iov/StreamConfiguration';
 const MAX_RECONNECTION_ATTEMPTS = 200;
 
 export default class Conduit {
-  static fromIov (iov) {
-    if (!iov) {
-      throw new Error('An Iov instance is required to create a new Conduit from an Iov');
-    }
+  static iframeCommands = {
+    SUBSCRIBE: 'subscribe',
+    UNSUBSCRIBE: 'unsubscribe',
+    PUBLISH: 'publish',
+    CONNECT: 'connect',
+    DISCONNECT: 'disconnect',
+    SEND: 'send',
+  };
 
-    return Conduit.factory(iov.clientId, iov.id, iov.config);
-  }
+  static routerEvents = Router().Router.events;
 
   static factory (iovId, clientId, streamConfiguration) {
     return new Conduit(iovId, clientId, streamConfiguration);
@@ -31,9 +34,12 @@ export default class Conduit {
   /**
    * @private
    *
-   * iovId - the ID of the parent iov, used ONLY for logging purposes
-   * clientId - the guid to be used to construct the topic
-   * streamConfiguration - @todo
+   * @param {String} iovId
+   *   the ID of the parent iov, used ONLY for logging purposes
+   * @param {String} clientId
+   *   the guid to be used to construct the topic
+   * @param {StreamConfiguration} streamConfiguration
+   *   The stream configuration to pull from the CLSP server / SFS
    */
   constructor (iovId, clientId, streamConfiguration) {
     if (!iovId) {
@@ -73,6 +79,8 @@ export default class Conduit {
    * After constructing, call this to initialize the conduit, which will create
    * the iframe and the Router needed to get the stream from the server.
    *
+   * @async
+   *
    * @returns Promise
    *   Resolves when the Router has been successfully created.
    *   Rejects upon failure to create the Router.
@@ -89,15 +97,15 @@ export default class Conduit {
           return;
         }
 
-        // This message was intended for another conduit
+        // This message was intended for another Conduit instance
         if (this.clientId !== clientId) {
           return;
         }
 
         const eventType = event.data.event;
 
-        // Filter out all other window messages
-        if (eventType !== 'router_created' && eventType !== 'router_create_failure') {
+        // Filter out all other window messages from the Router
+        if (eventType !== Conduit.routerEvents.CREATED && eventType !== Conduit.routerEvents.CREATE_FAILURE) {
           return;
         }
 
@@ -105,9 +113,13 @@ export default class Conduit {
 
         // Whether success or failure, remove the event listener
         window.removeEventListener('message', this._onRouterCreate);
+
+        // Once the event listener is removed, remove the listener handler,
+        // since it will not be used again and to prevent the `destroy` method
+        // from trying to unregister it.
         this._onRouterCreate = null;
 
-        if (eventType === 'router_create_failure') {
+        if (eventType === Conduit.routerEvents.CREATE_FAILURE) {
           return reject(event.data.reason);
         }
 
@@ -120,6 +132,11 @@ export default class Conduit {
 
       this.iframe = this._generateIframe();
 
+      // @todo - if the Iov were to create a wrapper around the video element
+      // that it manages (rather than expecting one to already be there), each
+      // video element and iframe could be contained in a single container,
+      // rather than potentially having multiple video elements and multiple
+      // iframes contained in a single parent.
       videoElementParent.appendChild(this.iframe);
     });
   }
@@ -129,6 +146,8 @@ export default class Conduit {
    *
    * Note that this is called within the play method, so you shouldn't ever need
    * to manually call `connect`.
+   *
+   * @async
    *
    * @returns Promise
    *   Resolves when the connection is successfully established.
@@ -154,7 +173,7 @@ export default class Conduit {
         const eventType = event.data.event;
 
         // Filter out all other window messages
-        if (eventType !== 'connect_success' && eventType !== 'connect_failure') {
+        if (eventType !== Conduit.routerEvents.CONNECT_SUCCESS && eventType !== Conduit.routerEvents.CONNECT_FAILURE) {
           return;
         }
 
@@ -164,7 +183,7 @@ export default class Conduit {
         window.removeEventListener('message', this._onConnect);
         this._onConnect = null;
 
-        if (eventType === 'connect_failure') {
+        if (eventType === Conduit.routerEvents.CONNECT_FAILURE) {
           this.logger.error(new Error(event.data.reason));
 
           this._reconnect()
@@ -188,7 +207,7 @@ export default class Conduit {
       window.addEventListener('message', this._onConnect);
 
       this._command({
-        method: 'connect',
+        method: Conduit.iframeCommands.CONNECT,
       });
     });
   }
@@ -205,6 +224,8 @@ export default class Conduit {
    * conduit operations to retrieve stream segments (moofs).  The actual
    * "playing" occurs in the player, since it involves taking those received
    * stream segments and using MSE to display them.
+   *
+   * @async
    *
    * @param {string} streamName - the name of the stream to get segments for
    * @param {Conduit-onMoof} onMoof - the function that will handle the moof
@@ -284,7 +305,7 @@ export default class Conduit {
     clearInterval(this._statsTimer);
 
     this._command({
-      method: 'disconnect',
+      method: Conduit.iframeCommands.DISCONNECT,
     });
   }
 
@@ -318,6 +339,8 @@ export default class Conduit {
 
   /**
    * Validate the jwt that this conduit was constructed with.
+   *
+   * @async
    *
    * @returns Promise
    *   Resolves the streamName when the response is received AND is successful.
@@ -375,8 +398,11 @@ export default class Conduit {
       }
     });
   }
+
   /**
    * Validate the hash that this conduit was constructed with.
+   *
+   * @async
    *
    * @returns Promise
    *   Resolves the streamName when the response is received AND is successful.
@@ -562,23 +588,23 @@ export default class Conduit {
     this.logger.debug(`Message received for "${eventType}" event`);
 
     switch (eventType) {
-      case 'mqtt_data': {
+      case Conduit.routerEvents.DATA_RECEIVED: {
         this._onMqttData(event.data);
         break;
       }
-      case 'connection_lost': {
+      case Conduit.routerEvents.CONNECTION_LOST: {
         this.disconnect();
         this._reconnect();
         break;
       }
-      case 'window_message_fail': {
+      case Conduit.routerEvents.WINDOW_MESSAGE_FAIL: {
         // @todo - do we really need to disconnect?
         this.disconnect();
         break;
       }
-      case 'router_created':
-      case 'connect_success':
-      case 'disconnect_success': {
+      case Conduit.routerEvents.CREATED:
+      case Conduit.routerEvents.CONNECT_SUCCESS:
+      case Conduit.routerEvents.DISCONNECT_SUCCESS: {
         break;
       }
       default: {
@@ -599,7 +625,7 @@ export default class Conduit {
     // @todo - it appears that this is never used!
     if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
       this.directSend({
-        method: 'send',
+        method: Conduit.iframeCommands.SEND,
         topic: this.LogSourceBufferTopic,
         byteArray,
       });
@@ -648,7 +674,7 @@ export default class Conduit {
     this.handlers[topic] = handler;
 
     this._command({
-      method: 'subscribe',
+      method: Conduit.iframeCommands.SUBSCRIBE,
       topic,
     });
   }
@@ -667,7 +693,7 @@ export default class Conduit {
     delete this.handlers[topic];
 
     this._command({
-      method: 'unsubscribe',
+      method: Conduit.iframeCommands.UNSUBSCRIBE,
       topic,
     });
   }
@@ -686,7 +712,7 @@ export default class Conduit {
     this.logger.debug(`Publishing to topic "${topic}"`);
 
     this._command({
-      method: 'publish',
+      method: Conduit.iframeCommands.PUBLISH,
       topic,
       data,
     });
@@ -706,7 +732,7 @@ export default class Conduit {
     this.logger.debug('directSend...');
 
     this._command({
-      method: 'send',
+      method: Conduit.iframeCommands.SEND,
       topic,
       byteArray,
     });
@@ -779,6 +805,8 @@ export default class Conduit {
               useSSL: ${this.streamConfiguration.useSSL},
             };
 
+            window.conduitCommands = ${JSON.stringify(Conduit.iframeCommands)};
+
             window.iframeEventHandlers = ${Router.toString()}();
           </script>
         </head>
@@ -796,6 +824,8 @@ export default class Conduit {
 
   /**
    * Attempt to reconnect a certain number of times
+   *
+   * @async
    *
    * @returns Promise
    *   Resolves when the connection is successfully established

@@ -76,7 +76,7 @@ export default class ConduitCollection {
       }
 
       // Do not throw an error on disconnection
-      if (eventType === 'disconnect_success') {
+      if (eventType === Conduit.routerEvents.DISCONNECT_SUCCESS) {
         return;
       }
 
