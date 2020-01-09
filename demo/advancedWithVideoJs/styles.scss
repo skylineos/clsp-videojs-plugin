@@ -60,6 +60,8 @@ html, body {
 .page-body {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow: auto;
 
   section {
     border: solid 3px black;
@@ -68,7 +70,6 @@ html, body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    overflow: auto;
     flex-grow: 1;
     flex-shrink: 0;
 
@@ -113,6 +114,7 @@ html, body {
       grid-template-columns: repeat(4, 1fr);
       flex-grow: 1;
       flex-shrink: 0;
+      height: 100%;
     }
 
     .player-container {
@@ -151,6 +153,8 @@ html, body {
 
       .video-container {
         display: flex;
+        flex-grow: 1;
+        flex-shrink: 0;
       }
 
       .video-metrics {

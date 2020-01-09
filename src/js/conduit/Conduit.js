@@ -326,6 +326,10 @@ export default class Conduit {
                 this._moofTimeout = null;
               }
 
+              // @todo - should we have a timeout that checks time between moofs?
+              // e.g. if we are getting moofs, then after 30 seconds we haven't
+              // received another moof, should that throw an error?
+
               if (onMoof) {
                 onMoof(mqttMessage);
               }

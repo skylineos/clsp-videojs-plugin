@@ -1,6 +1,23 @@
 
 # CLSP Changelog
 
+## v0.17.0 - 2020-01-09 Recommended
+
+* update vulnerable dependencies
+* update all outdated dependencies
+* add functionality to switch stream source on internal player
+* add demo for tours
+* add stream play timeout handling in Conduit
+* rename IOV classes
+* implement ConduitCollection
+* implement StreamConfiguration
+* IovPlayer no longer calls methods on its parent Iov
+* IovPlayer now instantiates and controls its own Conduit
+* each demo now has its own folder
+* split styles into multiple files
+* create constants for Conduit and Router events
+* document Conduit and Router classes and files
+
 ## v0.16.3 - 2019-08-15 - Recommended
 
 * Add debug logs
