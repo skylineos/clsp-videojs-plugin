@@ -50,6 +50,7 @@ function initializeWall () {
     $container.attr('id', `wall-container-${index}`);
     $container.find('.video-stream .index').text(index);
     $container.find('.video-stream .url').text(url);
+    $container.find('.video-stream .url').attr('title', url);
 
     const $videoMetrics = $container.find('.wall-video-metrics');
 
@@ -171,7 +172,7 @@ function initializeWall () {
     $('#wallStartTime').text(moment(now).format('MMMM Do YYYY, h:mm:ss a'));
 
     if (wallInterval) {
-      window.clearInterval(wallInterval);
+      clearInterval(wallInterval);
     }
 
     $('#wallDuration').text('0 hours 0 minutes 0 seconds');

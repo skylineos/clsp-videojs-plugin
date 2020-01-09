@@ -58,12 +58,10 @@ h3 {
   display: flex;
   border: solid 2px white;
   border-radius: 1rem;
-}
-
-/* sane defaults */
-.clsp-video-container {
-  height: 450px;
-  width: 600px;
+  padding: 1rem;
+  margin: 1rem;
+  flex-grow: 1;
+  flex-shrink: 0;
 }
 
 .clsp-video {

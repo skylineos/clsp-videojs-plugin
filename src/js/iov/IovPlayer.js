@@ -394,24 +394,36 @@ export default class IovPlayer {
       return;
     }
 
-    const {
-      // guid,
-      mimeCodec,
-      moov,
-    } = await this.conduit.play(this.streamConfiguration.streamName, this.onMoof);
+    try {
+      const {
+        // guid,
+        mimeCodec,
+        moov,
+      } = await this.conduit.play(this.streamConfiguration.streamName, this.onMoof);
 
-    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
-      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
-      this.stop();
+      if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+        this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
+        this.stop();
+      }
+
+      if (this.onMoov) {
+        this.onMoov(mimeCodec, moov);
+      }
     }
-
-    if (this.onMoov) {
-      this.onMoov(mimeCodec, moov);
+    catch (error) {
+      console.error(error);
     }
   }
 
+  /**
+   * @returns {Promise}
+   */
   stop () {
     this.logger.debug('stop...');
+
+    if (this.stopped) {
+      return Promise.resolve();
+    }
 
     this.stopped = true;
     this.moovBox = null;
@@ -528,6 +540,9 @@ export default class IovPlayer {
     this.logger.debug('_freeAllResources finished...');
   }
 
+  /**
+   * @returns {Promise}
+   */
   destroy () {
     this.logger.debug('destroy...');
 
@@ -544,7 +559,21 @@ export default class IovPlayer {
     // do not support asynchronous destruction.  See the comments in the destroy
     // method on the MSEWrapper for a more detailed explanation.
     this.logger.debug('about to stop...');
-    this.stop()
+
+    const stopPromise = this.stop();
+
+    // Setting the src of the video element to an empty string is
+    // the only reliable way we have found to ensure that MediaSource,
+    // SourceBuffer, and various Video elements are properly dereferenced
+    // to avoid memory leaks
+    this.videoElement.src = '';
+    this.videoElement.parentNode.removeChild(this.videoElement);
+    this.videoElement.remove();
+    this.videoElement = null;
+
+    this.logger.debug('exiting destroy, asynchronous destroy logic in progress...');
+
+    return stopPromise
       .then(() => {
         this.logger.debug('stopped successfully...');
         this._freeAllResources();
@@ -557,16 +586,5 @@ export default class IovPlayer {
         this._freeAllResources();
         this.logger.debug('destroy unsuccessfully finished...');
       });
-
-    // Setting the src of the video element to an empty string is
-    // the only reliable way we have found to ensure that MediaSource,
-    // SourceBuffer, and various Video elements are properly dereferenced
-    // to avoid memory leaks
-    this.videoElement.src = '';
-    this.videoElement.parentNode.removeChild(this.videoElement);
-    this.videoElement.remove();
-    this.videoElement = null;
-
-    this.logger.debug('exiting destroy, asynchronous destroy logic in progress...');
   }
 }

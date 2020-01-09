@@ -16,6 +16,13 @@ import StreamConfiguration from '../iov/StreamConfiguration';
 const MAX_RECONNECTION_ATTEMPTS = 200;
 
 export default class Conduit {
+  /**
+   * The number of seconds before considering the play operation timed out.
+   */
+  // static MOOV_TIMEOUT_DURATION = 5;
+  static MOOV_TIMEOUT_DURATION = 30;
+  static FIRST_MOOF_TIMEOUT_DURATION = 45;
+
   static iframeCommands = {
     SUBSCRIBE: 'subscribe',
     UNSUBSCRIBE: 'unsubscribe',
@@ -73,13 +80,13 @@ export default class Conduit {
     this.reconnectionAttempts = 0;
 
     this.connected = false;
+    this._moovTimeout = null;
+    this._moofTimeout = null;
   }
 
   /**
    * After constructing, call this to initialize the conduit, which will create
    * the iframe and the Router needed to get the stream from the server.
-   *
-   * @async
    *
    * @returns Promise
    *   Resolves when the Router has been successfully created.
@@ -109,7 +116,7 @@ export default class Conduit {
           return;
         }
 
-        this.logger.debug(`Message received for "${eventType}" event`);
+        this.logger.debug(`initialize "${eventType}" event`);
 
         // Whether success or failure, remove the event listener
         window.removeEventListener('message', this._onRouterCreate);
@@ -147,8 +154,6 @@ export default class Conduit {
    * Note that this is called within the play method, so you shouldn't ever need
    * to manually call `connect`.
    *
-   * @async
-   *
    * @returns Promise
    *   Resolves when the connection is successfully established.
    *   Rejects upon failure to connect after a number of retries.
@@ -177,7 +182,7 @@ export default class Conduit {
           return;
         }
 
-        this.logger.debug(`Message received for "${eventType}" event`);
+        this.logger.debug(`connect "${eventType}" event`);
 
         // Whether success or failure, remove the event listener
         window.removeEventListener('message', this._onConnect);
@@ -201,6 +206,7 @@ export default class Conduit {
 
         this.connected = true;
 
+        this.logger.info('Connected');
         resolve();
       };
 
@@ -231,6 +237,8 @@ export default class Conduit {
    * @param {Conduit-onMoof} onMoof - the function that will handle the moof
    */
   async play (streamName, onMoof) {
+    this.logger.info('Playing...');
+
     // @todo - should we have a check to confirm that the conduit has been initialized?
     // @todo - should connect be called here?
     await this.connect();
@@ -243,7 +251,46 @@ export default class Conduit {
     }
 
     return new Promise((resolve, reject) => {
+      let hasMoovTimedOut = false;
+      let hasMoofTimedOut = false;
+
+      this.logger.info('Play is registering the moov timeout...');
+      this._moovTimeout = setTimeout(() => {
+        hasMoovTimedOut = true;
+
+        // @todo - we could retry
+        this.stop();
+
+        if (this._moovTimeout) {
+          clearTimeout(this._moovTimeout);
+          this._moovTimeout = null;
+        }
+
+        reject(new Error(`Stream ${streamName} timed out (moov) after ${Conduit.MOOV_TIMEOUT_DURATION} seconds`));
+      }, Conduit.MOOV_TIMEOUT_DURATION * 1000);
+
+      this.logger.info('Play is registering the moof timeout...');
+      this._moofTimeout = setTimeout(() => {
+        hasMoofTimedOut = true;
+
+        // If the moov already timed out, then we already rejected
+        if (hasMoovTimedOut) {
+          return;
+        }
+
+        // @todo - we could retry
+        this.stop();
+
+        if (this._moofTimeout) {
+          clearTimeout(this._moofTimeout);
+          this._moofTimeout = null;
+        }
+
+        reject(new Error(`Stream ${streamName} timed out (moof) after ${Conduit.MOOV_TIMEOUT_DURATION} seconds`));
+      }, Conduit.FIRST_MOOF_TIMEOUT_DURATION * 1000);
+
       try {
+        this.logger.info('Play is requesting stream...');
         this.requestStream(streamName, ({
           mimeCodec,
           guid,
@@ -253,21 +300,47 @@ export default class Conduit {
           const initSegmentTopic = `${this.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
 
           // Set up the listener for the stream init
+          this.logger.info('Play is requesting the moov...');
           this.subscribe(initSegmentTopic, async ({
             payloadBytes,
           }) => {
             const moov = payloadBytes;
 
+            // @todo - in our error handling, we do not unsubscribe from this
+            // topic - does that have a negative effect on the SFS?
+            this.logger.info('Play is unsubscribing from the moov topic...');
             this.unsubscribe(initSegmentTopic);
 
             const newTopic = `iov/video/${guid}/live`;
 
             // Set up the listener for the stream itself
+            this.logger.info('Play is requesting the moofs...');
             this.subscribe(newTopic, (mqttMessage) => {
+              if (hasMoofTimedOut) {
+                this.logger.info('Recevied a moof, but moofTimeout has already occurred...');
+                return;
+              }
+
+              if (this._moofTimeout) {
+                clearTimeout(this._moofTimeout);
+                this._moofTimeout = null;
+              }
+
               if (onMoof) {
                 onMoof(mqttMessage);
               }
             });
+
+            // If the play failed, the error has already been rejected
+            if (hasMoovTimedOut || hasMoofTimedOut) {
+              this.logger.info('Recevied a moov, but moovTimeout or moofTimeout has already occurred...');
+              return;
+            }
+
+            if (this._moovTimeout) {
+              clearTimeout(this._moovTimeout);
+              this._moovTimeout = null;
+            }
 
             resolve({
               guid,
@@ -277,6 +350,7 @@ export default class Conduit {
           });
 
           // Ask the server for the stream
+          this.logger.info('Play is requesting to play...');
           this.publish(`iov/video/${this.guid}/play`, {
             initSegmentTopic,
             clientId: this.clientId,
@@ -340,8 +414,6 @@ export default class Conduit {
   /**
    * Validate the jwt that this conduit was constructed with.
    *
-   * @async
-   *
    * @returns Promise
    *   Resolves the streamName when the response is received AND is successful.
    *   Rejects if the transaction fails or if the response code is not 200.
@@ -401,8 +473,6 @@ export default class Conduit {
 
   /**
    * Validate the hash that this conduit was constructed with.
-   *
-   * @async
    *
    * @returns Promise
    *   Resolves the streamName when the response is received AND is successful.
@@ -544,7 +614,20 @@ export default class Conduit {
 
     this.destroyed = true;
 
-    clearInterval(this._statsTimer);
+    if (this._moovTimeout) {
+      clearTimeout(this._moovTimeout);
+      this._moovTimeout = null;
+    }
+
+    if (this._moofTimeout) {
+      clearTimeout(this._moofTimeout);
+      this._moofTimeout = null;
+    }
+
+    if (this._statsTimer) {
+      clearInterval(this._statsTimer);
+      this._statsTimer = null;
+    }
 
     if (this._onConnect) {
       window.removeEventListener('message', this._onConnect);
@@ -754,7 +837,7 @@ export default class Conduit {
     messageData = {},
     cb
   ) {
-    this.logger.debug('transaction...');
+    this.logger.debug(`transaction for ${topic}...`);
 
     messageData.resp_topic = `${this.clientId}/response/${parseInt(Math.random() * 1000000)}`;
 
@@ -826,12 +909,10 @@ export default class Conduit {
    * Attempt to reconnect a certain number of times
    *
    * @async
-   *
-   * @returns Promise
-   *   Resolves when the connection is successfully established
-   *   Rejects when the connection fails
    */
   async _reconnect () {
+    this.logger.info('Reconnecting...');
+
     this.reconnectionAttempts++;
 
     if (this.reconnectionAttempts > MAX_RECONNECTION_ATTEMPTS) {

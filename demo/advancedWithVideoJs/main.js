@@ -196,7 +196,7 @@ function initializeWall () {
     $('#wallStartTime').text(moment(now).format('MMMM Do YYYY, h:mm:ss a'));
 
     if (wallInterval) {
-      window.clearInterval(wallInterval);
+      clearInterval(wallInterval);
     }
 
     $('#wallDuration').text('0 hours 0 minutes 0 seconds');
@@ -402,7 +402,7 @@ function initializeTour () {
     $('#tourStartTime').text(moment(now).format('MMMM Do YYYY, h:mm:ss a'));
 
     if (tourInterval) {
-      window.clearInterval(tourInterval);
+      clearInterval(tourInterval);
     }
 
     $('#tourDuration').text('0 hours 0 minutes 0 seconds');

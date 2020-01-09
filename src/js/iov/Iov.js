@@ -13,6 +13,10 @@ import StreamConfiguration from './StreamConfiguration';
  */
 
 export default class Iov {
+  static CONNECTION_CHANGE_PLAY_DELAY = 2;
+  static VISIBILITY_CHANGE_STOP_DELAY = 1;
+  static SHOW_NEXT_VIDEO_DELAY = 0.5;
+
   static EVENT_NAMES = [
     'metric',
     'unsupportedMimeCodec',
@@ -150,7 +154,7 @@ export default class Iov {
         // some race condition...
         setTimeout(() => {
           this.play();
-        }, 2000);
+        }, Iov.CONNECTION_CHANGE_PLAY_DELAY * 1000);
       }
     }
     else {
@@ -169,7 +173,7 @@ export default class Iov {
       this.visibilityChangeTimeout = setTimeout(async () => {
         this.logger.debug('Stopping because tab is not visible...');
         await this.stop();
-      }, 1000);
+      }, Iov.VISIBILITY_CHANGE_STOP_DELAY * 1000);
 
       return;
     }
@@ -255,19 +259,18 @@ export default class Iov {
     await iovPlayer.initialize(streamConfiguration);
 
     iovPlayer.on('firstFrameShown', () => {
-      setTimeout(() => {
-        this.iovPlayer.stop();
-        this.iovPlayer.destroy();
+      setTimeout(async () => {
+        await this.iovPlayer.destroy();
         this.streamConfiguration.destroy();
 
         this.streamConfiguration = streamConfiguration;
         this.iovPlayer = iovPlayer;
 
         onPlayerVisible();
-      }, 0.5 * 1000);
+      }, Iov.SHOW_NEXT_VIDEO_DELAY * 1000);
     });
 
-    await iovPlayer.play();
+    await this.play(iovPlayer);
   }
 
   clone (streamConfiguration) {
@@ -287,35 +290,42 @@ export default class Iov {
     return clone;
   }
 
-  async play () {
-    await this.iovPlayer.play();
+  async play (iovPlayer = this.iovPlayer) {
+    try {
+      await iovPlayer.play();
+    }
+    catch (error) {
+      // @todo - display a message in the page saying that the stream couldn't
+      // be played
+      console.error(error);
+    }
   }
 
-  async stop () {
-    await this.iovPlayer.stop();
+  async stop (iovPlayer = this.iovPlayer) {
+    await iovPlayer.stop();
   }
 
-  async restart () {
-    await this.iovPlayer.restart();
+  async restart (iovPlayer = this.iovPlayer) {
+    await iovPlayer.restart();
   }
 
-  enterFullscreen () {
-    this.iovPlayer.enterFullscreen();
+  enterFullscreen (iovPlayer = this.iovPlayer) {
+    iovPlayer.enterFullscreen();
   }
 
-  exitFullscreen () {
-    this.iovPlayer.exitFullscreen();
+  exitFullscreen (iovPlayer = this.iovPlayer) {
+    iovPlayer.exitFullscreen();
   }
 
-  toggleFullscreen () {
-    this.iovPlayer.toggleFullscreen();
+  toggleFullscreen (iovPlayer = this.iovPlayer) {
+    iovPlayer.toggleFullscreen();
   }
 
   /**
    * Dereference the necessary properties, clear any intervals and timeouts, and
    * remove any listeners.  Will also destroy the player.
    *
-   * @returns {void}
+   * @returns {Promise}
    */
   destroy () {
     this.logger.debug('destroy');
@@ -337,7 +347,8 @@ export default class Iov {
     window.removeEventListener('online', this.onConnectionChange);
     window.removeEventListener('offline', this.onConnectionChange);
 
-    this.iovPlayer.destroy();
+    const iovPlayerDestroyPromise = this.iovPlayer.destroy();
+
     this.iovPlayer = null;
 
     this.videoElement = null;
@@ -345,5 +356,7 @@ export default class Iov {
 
     this.events = null;
     this.metrics = null;
+
+    return iovPlayerDestroyPromise;
   }
 }
