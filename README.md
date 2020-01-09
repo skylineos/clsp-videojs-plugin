@@ -125,6 +125,9 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
 
 ### `<video>` tag
 
+We recommend wrapping the `video` tag in a `div`, as the CLSP plugin needs to
+perform some actions on the `video` element as well as its container.
+
 On the HTML `video` tag, the `type` attribute must be the following:
 
 `video/mp4; codecs='avc1.42E01E'`
@@ -136,22 +139,24 @@ H.264 baseline 3.0 is a least common denominator codec supported on all browsers
 Here is a sample video element that defines a CLSP and an HLS stream
 
 ```html
-<video
-  id="my-video"
-  class="video-js vjs-default-skin"
-  controls
->
-  <!-- CLSP Stream -->
-  <source
-    src="clsp://8.15.251.53/FairfaxVideo0510"
-    type="video/mp4; codecs='avc1.42E01E'"
-  />
-  <!-- HLS Stream -->
-  <source
-    src="http://8.15.251.53:1935/rtplive/FairfaxVideo0510/playlist.m3u8"
-    type="application/x-mpegURL"
-  />
-</video>
+<div>
+  <video
+    id="my-video"
+    class="video-js vjs-default-skin"
+    controls
+  >
+    <!-- CLSP Stream -->
+    <source
+      src="clsp://8.15.251.53/FairfaxVideo0510"
+      type="video/mp4; codecs='avc1.42E01E'"
+    />
+    <!-- HLS Stream -->
+    <source
+      src="http://8.15.251.53:1935/rtplive/FairfaxVideo0510/playlist.m3u8"
+      type="application/x-mpegURL"
+    />
+  </video>
+</div>
 ```
 
 

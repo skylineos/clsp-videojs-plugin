@@ -5,6 +5,7 @@
 
 * update vulnerable dependencies
 * update all outdated dependencies
+* the video tags should now have a dedicated container for use by the CLSP plugin
 * add functionality to switch stream source on internal player
 * add demo for tours
 * add stream play timeout handling in Conduit
