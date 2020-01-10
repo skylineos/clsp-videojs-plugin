@@ -25,11 +25,27 @@
       type="text/javascript"
       src="https://cdn.jsdelivr.net/npm/@babel/polyfill@7.7.0/dist/polyfill.min.js"
     ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/humanize@0.0.9/humanize.js"
+    ></script>
   </head>
   <body>
     <h1>CLSP Standalone Tour Demo</h1>
     <h3 id="version">v</h3>
     <div class="container">
+      <div id="tourSummary" class="summary">
+        <span>Time Elapsed:</span>
+        <h2 id="tourDuration">0 hours 0 minutes 0 seconds</h2>
+        <span>Time Started:</span>
+        <span id="tourStartTime">N/A</span>
+        <span>Heap Size Limit:</span>
+        <span id="tourHeapSizeLimit">N/A</span>
+        <span>Total Heap Size:</span>
+        <span id="tourTotalHeapSize">N/A</span>
+        <span>Used Heap Size:</span>
+        <h2 id="tourUsedHeapSize">N/A</h2>
+      </div>
       <div class="tour-container">
         <div class="stream-container">
           <textarea
