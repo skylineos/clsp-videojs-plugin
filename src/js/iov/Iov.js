@@ -16,7 +16,7 @@ import StreamConfiguration from './StreamConfiguration';
 export default class Iov {
   static CONNECTION_CHANGE_PLAY_DELAY = 2;
   static VISIBILITY_CHANGE_STOP_DELAY = 1;
-  static SHOW_NEXT_VIDEO_DELAY = 0.5;
+  static SHOW_NEXT_VIDEO_DELAY = 0.25;
 
   static EVENT_NAMES = [
     'metric',
@@ -249,34 +249,56 @@ export default class Iov {
     this.iovPlayer = iovPlayer;
   }
 
-  async changeSrc (url, onPlayerVisible = () => {}) {
+  async changeSrc (url) {
     this.logger.debug('Changing Stream...');
+
+    // Handle the case of multiple changeSrc requests.  Only change to the last
+    // stream that was requested
+    if (this.pendingChangeSrcIovPlayer) {
+      clearTimeout(this.changeSrcTimeout);
+      this.changeSrcTimeout = null;
+
+      // @todo - should we await this?
+      this.pendingChangeSrcIovPlayer.destroy();
+      this.pendingChangeSrcIovPlayer = null;
+    }
 
     const clspVideoElement = this._prepareVideoElement();
     const iovPlayer = IovPlayer.factory(`${this.id}.${++this.iovPlayerCount}`, clspVideoElement);
+
+    this.pendingChangeSrcIovPlayer = iovPlayer;
 
     this._registerPlayerListeners(iovPlayer);
 
     const streamConfiguration = StreamConfiguration.fromUrl(url);
     await iovPlayer.initialize(streamConfiguration);
 
-    iovPlayer.on('firstFrameShown', () => {
-      this.logger.debug('Got first frame of new stream...');
+    const firstFramePromise = new Promise((resolve, reject) => {
+      iovPlayer.on('firstFrameShown', () => {
+        this.changeSrcTimeout = setTimeout(() => {
+          this.logger.debug('Destroying old player...');
 
-      setTimeout(() => {
-        this.logger.debug('Destroying old player...');
-        if (this.iovPlayer) {
-          this.iovPlayer.destroy();
-        }
+          if (this.iovPlayer) {
+            // async, but we don't need to wait for it
+            this.iovPlayer.destroy();
+          }
 
-        this.iovPlayer = iovPlayer;
-        this.streamConfiguration = streamConfiguration;
+          this.iovPlayer = iovPlayer;
+          this.streamConfiguration = streamConfiguration;
 
-        onPlayerVisible();
-      }, Iov.SHOW_NEXT_VIDEO_DELAY * 1000);
+          this.changeSrcTimeout = null;
+          this.pendingChangeSrcIovPlayer = false;
+
+          resolve();
+        }, Iov.SHOW_NEXT_VIDEO_DELAY * 1000);
+      });
     });
 
+    // @todo - should the play method only resolve once the first frame has
+    // been shown?  right now it resolves on first moof recevied
     await this.play(iovPlayer);
+
+    return firstFramePromise;
   }
 
   clone (streamConfiguration = this.streamConfiguration) {
@@ -306,8 +328,9 @@ export default class Iov {
       this.logger.debug('Play error - destroying');
       // @todo - display a message in the page saying that the stream couldn't
       // be played
-      this.logger.error(error);
       await iovPlayer.destroy();
+
+      throw error;
     }
   }
 

@@ -87,7 +87,7 @@ export default class IovPlayer {
     this.segmentIntervals = [];
 
     this.mseWrapper = null;
-    this.moovBox = null;
+    this.moov = null;
   }
 
   on (name, action) {
@@ -328,8 +328,7 @@ export default class IovPlayer {
 
         this.trigger('videoInfoReceived');
 
-        // @todo - the moovBox is currently set in the Iov - do something else
-        this.mseWrapper.appendMoov(this.moovBox);
+        this.mseWrapper.appendMoov(this.moov);
       },
       onSourceEnded: async () => {
         this.logger.debug('on mediaSource sourceended');
@@ -364,24 +363,6 @@ export default class IovPlayer {
     await this.play();
   }
 
-  onMoov = async (mimeCodec, moov) => {
-    // @todo - this seems like a hack...
-    if (this.stopped) {
-      return;
-    }
-
-    this.moovBox = moov;
-
-    // this.trigger('firstChunk');
-
-    await this.reinitializeMseWrapper(mimeCodec);
-
-    this.conduit.resyncStream(() => {
-      // console.log('sync received re-initialize media source buffer');
-      this.reinitializeMseWrapper(mimeCodec);
-    });
-  };
-
   onMoof = (mqttMessage) => {
     // @todo - this seems like a hack...
     if (this.stopped) {
@@ -391,8 +372,8 @@ export default class IovPlayer {
     this.trigger('videoReceived');
     this.getSegmentIntervalMetrics();
 
-    // Sometimes, the first moof arrives before the onMoov logic (which includes
-    // the initialization of the mseWrapper) has finished.
+    // Sometimes, the first moof arrives before the mseWrapper has finished
+    // being initialized, so we will need to drop those frames
     if (!this.mseWrapper) {
       return;
     }
@@ -426,9 +407,14 @@ export default class IovPlayer {
       throw new Error(`Unsupported mime codec: ${mimeCodec}`);
     }
 
-    if (this.onMoov) {
-      this.onMoov(mimeCodec, moov);
-    }
+    this.moov = moov;
+
+    await this.reinitializeMseWrapper(mimeCodec);
+
+    this.conduit.resyncStream(() => {
+      // console.log('sync received re-initialize media source buffer');
+      this.reinitializeMseWrapper(mimeCodec);
+    });
   }
 
   /**
@@ -442,7 +428,7 @@ export default class IovPlayer {
     }
 
     this.stopped = true;
-    this.moovBox = null;
+    this.moov = null;
 
     this.logger.debug('stop about to finish synchronous operations and return promise...');
 
@@ -555,7 +541,7 @@ export default class IovPlayer {
     this.segmentInterval = null;
     this.segmentIntervals = null;
 
-    this.moovBox = null;
+    this.moov = null;
 
     this.logger.debug('_freeAllResources finished...');
   }

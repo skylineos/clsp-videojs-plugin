@@ -33,9 +33,14 @@ function next (resetTimer) {
 
   currentTourIndex++;
 
-  iov.changeSrc(url, function () {
-    window.document.getElementById('current-stream-url').innerHTML = url + ' (' + currentTourIndex + '/' + window.urls.length + ')';
-  });
+  iov.changeSrc(url)
+    .then(function () {
+      window.document.getElementById('current-stream-url').innerHTML = url + ' (' + currentTourIndex + '/' + window.urls.length + ')';
+    })
+    .catch(function (error) {
+      console.error(error);
+      console.error('Failed to play ' + url);
+    });
 
   if (resetTimer) {
     clearInterval(tourInterval);
@@ -99,6 +104,35 @@ function destroy () {
 }
 
 function _getTourList () {
+  var initialStreams = [
+    'clsps://172.28.12.57/FairfaxVideo0520',
+    'clsps://172.28.12.57/FairfaxVideo0420',
+    'clsps://172.28.12.57/FairfaxVideo0440',
+    'clsps://172.28.12.57/FairfaxVideo0350',
+    'clsps://172.28.12.57/FairfaxVideo0440_FakeStreamUrl',
+    'clsps://172.28.12.57/FairfaxVideo0760',
+    'clsps://172.28.12.57/FairfaxVideo0430',
+    'clsps://172.28.12.57/FairfaxVideo0450',
+    'clsps://172.28.12.57/FairfaxVideo0470',
+    'clsps://172.28.12.57/FairfaxVideo0780',
+    'clsps://172.28.12.57/FairfaxVideo0790',
+    'clsp://172.28.12.57/FairfaxVideo0520',
+    'clsp://172.28.12.57/FairfaxVideo0420',
+    'clsp://172.28.12.57/FairfaxVideo0440',
+    'clsp://172.28.12.57/FairfaxVideo0350',
+    'clsp://172.28.12.57/FairfaxVideo0440_FakeStreamUrl',
+    'clsp://172.28.12.57/FairfaxVideo0760',
+    'clsp://172.28.12.57/FairfaxVideo0430',
+    'clsp://172.28.12.57/FairfaxVideo0450',
+    'clsp://172.28.12.57/FairfaxVideo0470',
+    'clsp://172.28.12.57/FairfaxVideo0780',
+    'clsp://172.28.12.57/FairfaxVideo0790',
+  ];
+
+  if (!document.getElementById(textAreaId).value) {
+    document.getElementById(textAreaId).value = initialStreams.join('\n');
+  }
+
   window.urls = document.getElementById(textAreaId).value
     .split('\n')
     .map((url) => url.trim())

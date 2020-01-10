@@ -16,6 +16,7 @@ import StreamConfiguration from '../iov/StreamConfiguration';
 const MAX_RECONNECTION_ATTEMPTS = 200;
 
 export default class Conduit {
+  static STREAM_DATA_TIMEOUT_DURATION = 30; // seconds
   static MOOV_TIMEOUT_DURATION = 30; // seconds
   static FIRST_MOOF_TIMEOUT_DURATION = 45; // seconds
   static PUBLISH_STATS_INTERVAL = 5; // seconds
@@ -90,6 +91,7 @@ export default class Conduit {
     this.connected = false;
 
     this.statsInterval = null;
+    this.requestStreamDataTimeout = null;
     this.moovTimeout = null;
     this.firstMoofTimeout = null;
 
@@ -269,24 +271,34 @@ export default class Conduit {
 
     this.logger.info('Play is requesting stream...');
 
-    const {
-      guid,
-      mimeCodec,
-    } = await this.requestStreamData();
+    try {
+      const {
+        guid,
+        mimeCodec,
+      } = await this.requestStreamData();
 
-    this.guid = guid;
+      this.guid = guid;
 
-    // Get the moov first
-    const { moov } = await this.requestMoov();
+      // Get the moov first
+      const { moov } = await this.requestMoov();
 
-    // Set up the listener for the moofs
-    await this.requestMoofs(onMoof);
+      // Set up the listener for the moofs
+      await this.requestMoofs(onMoof);
 
-    return {
-      guid,
-      mimeCodec,
-      moov,
-    };
+      return {
+        guid,
+        mimeCodec,
+        moov,
+      };
+    }
+    catch (error) {
+      this.logger.error(`Error trying to play stream ${this.streamName}`);
+
+      // @todo - we could retry
+      this.stop();
+
+      throw error;
+    }
   }
 
   /**
@@ -317,32 +329,31 @@ export default class Conduit {
   stop () {
     this.logger.debug('Stopping stream...');
 
-    if (!this.guid) {
-      this.logger.warn('No guid, so not stopping stream...');
-      return Promise.resolve();
-    }
-
     // Clear all timeouts
+    this.clearRequestStreamDataTimeout();
     this.clearMoovTimeout();
     this.clearFirstMoofTimeout();
 
-    // Stop listening for the moov
-    this.unsubscribe(this.moovRequestTopic);
+    if (this.guid) {
+      // Stop listening for the moov
+      this.unsubscribe(this.moovRequestTopic);
 
-    // Stop listening for moofs
-    this.unsubscribe(`iov/video/${this.guid}/live`);
+      // Stop listening for moofs
+      this.unsubscribe(`iov/video/${this.guid}/live`);
 
-    // Stop listening for resync events
-    this.unsubscribe(`iov/video/${this.guid}/resync`);
+      // Stop listening for resync events
+      this.unsubscribe(`iov/video/${this.guid}/resync`);
 
-    // Tell the server we've stopped
-    this.publish(`iov/video/${this.guid}/stop`, {
-      clientId: this.clientId,
-    });
+      // Tell the server we've stopped
+      this.publish(`iov/video/${this.guid}/stop`, {
+        clientId: this.clientId,
+      });
+    }
+    else {
+      this.logger.warn(`Trying to stop stream ${this.streamName} with no guid!`);
+    }
 
     this.disconnect();
-
-    return Promise.resolve();
   }
 
   /**
@@ -476,6 +487,14 @@ export default class Conduit {
     this.logger.debug('Requesting Stream...');
 
     return new Promise((resolve, reject) => {
+      let hasRequestTimedout = false;
+
+      this.requestStreamDataTimeout = setTimeout(() => {
+        hasRequestTimedout = true;
+
+        reject(new Error(`Stream data for stream ${this.streamName} timed out after ${Conduit.STREAM_DATA_TIMEOUT_DURATION} seconds`));
+      }, Conduit.STREAM_DATA_TIMEOUT_DURATION * 1000);
+
       this.transaction(
         `iov/video/${window.btoa(this.streamName)}/request`,
         {
@@ -485,13 +504,21 @@ export default class Conduit {
           mimeCodec,
           guid,
         }) => {
+          // If we received the moov after the timeout, do nothing
+          if (hasRequestTimedout) {
+            this.logger.warn('Received stream data, but requestStreamDataTimeout has already occurred...');
+            return;
+          }
+
+          this.clearRequestStreamDataTimeout();
+
           // @todo - is it possible to do better error handling here?
           if (!mimeCodec) {
-            return reject('Error while requesting stream: mimeCodec was not recevied!');
+            return reject('Error while requesting stream: mimeCodec was not received!');
           }
 
           if (!guid) {
-            return reject('Error while requesting stream: guid was not recevied!');
+            return reject('Error while requesting stream: guid was not received!');
           }
 
           resolve({
@@ -507,6 +534,13 @@ export default class Conduit {
     if (this.statsInterval) {
       clearTimeout(this.statsInterval);
       this.statsInterval = null;
+    }
+  }
+
+  clearRequestStreamDataTimeout () {
+    if (this.requestStreamDataTimeout) {
+      clearTimeout(this.requestStreamDataTimeout);
+      this.requestStreamDataTimeout = null;
     }
   }
 
@@ -531,7 +565,7 @@ export default class Conduit {
    *
    * @returns {Promise}
    *   * Resolves when the moov is received
-   *   * Rejects if the moov is not recevied within the time defined by
+   *   * Rejects if the moov is not received within the time defined by
    *     MOOV_TIMEOUT_DURATION
    */
   async requestMoov () {
@@ -547,16 +581,13 @@ export default class Conduit {
       this.moovTimeout = setTimeout(() => {
         hasMoovTimedOut = true;
 
-        // @todo - we could retry
-        this.stop();
-
         reject(new Error(`Moov for stream ${this.streamName} timed out after ${Conduit.MOOV_TIMEOUT_DURATION} seconds`));
       }, Conduit.MOOV_TIMEOUT_DURATION * 1000);
 
       this.subscribe(this.moovRequestTopic, ({ payloadBytes }) => {
         // If we received the moov after the timeout, do nothing
         if (hasMoovTimedOut) {
-          this.logger.info('Recevied moov, but moofTimeout has already occurred...');
+          this.logger.warn('Received moov, but moofTimeout has already occurred...');
           return;
         }
 
@@ -592,11 +623,11 @@ export default class Conduit {
    * Request moofs from the SFS.  Should only be called after getting the moov.
    *
    * @param {Function} onMoof
-   *   The function to call when a moof is recevied
+   *   The function to call when a moof is received
    *
    * @returns {Promise}
    *   * Resolves when the first moof is received
-   *   * Rejects if the first moof is not recevied within the time defined by
+   *   * Rejects if the first moof is not received within the time defined by
    *     FIRST_MOOF_TIMEOUT_DURATION
    */
   async requestMoofs (onMoof = () => {}) {
@@ -608,13 +639,10 @@ export default class Conduit {
 
     return new Promise((resolve, reject) => {
       let hasFirstMoofTimedOut = false;
-      let hasReceviedFirstMoof = false;
+      let hasReceivedFirstMoof = false;
 
       this.firstMoofTimeout = setTimeout(() => {
         hasFirstMoofTimedOut = true;
-
-        // @todo - we could retry
-        this.stop();
 
         reject(new Error(`First moof for stream ${this.streamName} timed out after ${Conduit.FIRST_MOOF_TIMEOUT_DURATION} seconds`));
       }, Conduit.FIRST_MOOF_TIMEOUT_DURATION * 1000);
@@ -623,10 +651,10 @@ export default class Conduit {
 
       // Set up the listener for the stream itself (the moof video segments)
       this.subscribe(moofReceivedTopic, (mqttMessage) => {
-        if (!hasReceviedFirstMoof) {
+        if (!hasReceivedFirstMoof) {
           // If we received the first moof after the timeout, do nothing
           if (hasFirstMoofTimedOut) {
-            this.logger.info('Recevied first moof, but moofTimeout has already occurred...');
+            this.logger.warn('Received first moof, but moofTimeout has already occurred...');
             return;
           }
 
@@ -635,10 +663,9 @@ export default class Conduit {
           this.clearFirstMoofTimeout();
 
           // Since this is the first moof, resolve
-          hasReceviedFirstMoof = true;
-          resolve({
-            moofReceivedTopic,
-          });
+          hasReceivedFirstMoof = true;
+
+          resolve({ moofReceivedTopic });
         }
 
         // @todo - should we have a timeout that checks time between moofs?
@@ -660,13 +687,14 @@ export default class Conduit {
    *
    * @todo - return a Promise
    *
-   * @param {Conduit-resyncStreamCb} cb
+   * @param {Conduit-resyncStreamCb} onResync
    *   The callback for the resync operation
    */
-  resyncStream (cb) {
-    // subscribe to a sync topic that will be called if the stream that is feeding
-    // the mse service dies and has to be restarted that this player should restart the stream
-    this.subscribe(`iov/video/${this.guid}/resync`, cb);
+  resyncStream (onResync) {
+    // subscribe to a sync topic that will be called if the stream that is
+    // feeding the mse service dies and has to be restarted that this player
+    // should restart the stream
+    this.subscribe(`iov/video/${this.guid}/resync`, onResync);
   }
 
   /**
@@ -676,6 +704,8 @@ export default class Conduit {
 
   /**
    * Get the list of available CLSP streams from the SFS
+   *
+   * Note - this isn't currently used anywhere
    *
    * @todo - return a Promise
    *
@@ -690,32 +720,6 @@ export default class Conduit {
       'iov/video/list', {},
       cb
     );
-  }
-
-  _freeAllResources() {
-    this.iovId = null;
-    this.clientId = null;
-    this.guid = null;
-    // The caller must destroy the streamConfiguration
-    this.streamConfiguration = null;
-    this.containerElement = null;
-
-    // The Router will be destroyed along with the iframe
-    this.iframe.parentNode.removeChild(this.iframe);
-    // this.iframe.remove();
-    this.iframe.srcdoc = '';
-    this.iframe = null;
-
-    this.handlers = null;
-    this.reconnectionAttempts = null;
-
-    this.connected = null;
-    this.moovTimeout = null;
-    this.firstMoofTimeout = null;
-
-    this.moovRequestTopic = null;
-
-    this.statsMsg = null;
   }
 
   /**
@@ -747,21 +751,31 @@ export default class Conduit {
       this._onRouterCreate = null;
     }
 
-    const stopPromise = this.stop();
+    this.stop();
 
-    return stopPromise
-      .then(() => {
-        this.logger.debug('stopped successfully...');
-        this._freeAllResources();
-        this.logger.debug('destroy successfully finished...');
-      })
-      .catch((error) => {
-        this.logger.debug('stopped unsuccessfully...');
-        this.logger.error('Error while destroying the Conduit!');
-        this.logger.error(error);
-        this._freeAllResources();
-        this.logger.debug('destroy unsuccessfully finished...');
-      });
+    this.iovId = null;
+    this.clientId = null;
+    this.guid = null;
+    // The caller must destroy the streamConfiguration
+    this.streamConfiguration = null;
+    this.containerElement = null;
+
+    // The Router will be destroyed along with the iframe
+    this.iframe.parentNode.removeChild(this.iframe);
+    // this.iframe.remove();
+    this.iframe.srcdoc = '';
+    this.iframe = null;
+
+    this.handlers = null;
+    this.reconnectionAttempts = null;
+
+    this.connected = null;
+    this.moovTimeout = null;
+    this.firstMoofTimeout = null;
+
+    this.moovRequestTopic = null;
+
+    this.statsMsg = null;
   }
 
   /**
