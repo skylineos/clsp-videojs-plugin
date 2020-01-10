@@ -260,11 +260,13 @@ export default class Iov {
 
     iovPlayer.on('firstFrameShown', () => {
       setTimeout(async () => {
-        await this.iovPlayer.destroy();
-        this.streamConfiguration.destroy();
+        if (this.iovPlayer) {
+          await this.iovPlayer.destroy();
+          this.streamConfiguration.destroy();
+        }
 
-        this.streamConfiguration = streamConfiguration;
         this.iovPlayer = iovPlayer;
+        this.streamConfiguration = streamConfiguration;
 
         onPlayerVisible();
       }, Iov.SHOW_NEXT_VIDEO_DELAY * 1000);
@@ -298,6 +300,7 @@ export default class Iov {
       // @todo - display a message in the page saying that the stream couldn't
       // be played
       console.error(error);
+      await iovPlayer.destroy();
     }
   }
 
