@@ -16,12 +16,9 @@ import StreamConfiguration from '../iov/StreamConfiguration';
 const MAX_RECONNECTION_ATTEMPTS = 200;
 
 export default class Conduit {
-  /**
-   * The number of seconds before considering the play operation timed out.
-   */
-  // static MOOV_TIMEOUT_DURATION = 5;
-  static MOOV_TIMEOUT_DURATION = 30;
-  static FIRST_MOOF_TIMEOUT_DURATION = 45;
+  static MOOV_TIMEOUT_DURATION = 30; // seconds
+  static FIRST_MOOF_TIMEOUT_DURATION = 45; // seconds
+  static PUBLISH_STATS_INTERVAL = 5; // seconds
 
   static iframeCommands = {
     SUBSCRIBE: 'subscribe',
@@ -34,8 +31,8 @@ export default class Conduit {
 
   static routerEvents = Router().Router.events;
 
-  static factory (iovId, clientId, streamConfiguration) {
-    return new Conduit(iovId, clientId, streamConfiguration);
+  static factory (iovId, clientId, streamConfiguration, containerElement) {
+    return new Conduit(iovId, clientId, streamConfiguration, containerElement);
   }
 
   /**
@@ -47,8 +44,11 @@ export default class Conduit {
    *   the guid to be used to construct the topic
    * @param {StreamConfiguration} streamConfiguration
    *   The stream configuration to pull from the CLSP server / SFS
+   * @param {Element} containerElement
+   *   The container of the video element and where the Conduit's iframe will be
+   *   inserted
    */
-  constructor (iovId, clientId, streamConfiguration) {
+  constructor (iovId, clientId, streamConfiguration, containerElement) {
     if (!iovId) {
       throw new Error('iovId is required to construct a new Conduit instance.');
     }
@@ -61,9 +61,17 @@ export default class Conduit {
       throw new Error('invalid streamConfiguration passed to Conduit constructor');
     }
 
+    if (!containerElement) {
+      throw new Error('containerElement is required to construct a new Conduit instance');
+    }
+
     this.iovId = iovId;
     this.clientId = clientId;
     this.streamConfiguration = streamConfiguration;
+    this.containerElement = containerElement;
+
+    this.streamName = this.streamConfiguration.streamName;
+    this.guid = null;
 
     this.logger = Logger().factory(`Conduit ${this.iovId}`);
     this.logger.debug('Constructing...');
@@ -80,8 +88,12 @@ export default class Conduit {
     this.reconnectionAttempts = 0;
 
     this.connected = false;
-    this._moovTimeout = null;
-    this._moofTimeout = null;
+
+    this.statsInterval = null;
+    this.moovTimeout = null;
+    this.firstMoofTimeout = null;
+
+    this.moovRequestTopic = `${this.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
   }
 
   /**
@@ -92,7 +104,7 @@ export default class Conduit {
    *   Resolves when the Router has been successfully created.
    *   Rejects upon failure to create the Router.
    */
-  initialize (videoElementParent) {
+  initialize () {
     this.logger.debug('Initializing...');
 
     return new Promise((resolve, reject) => {
@@ -144,7 +156,7 @@ export default class Conduit {
       // video element and iframe could be contained in a single container,
       // rather than potentially having multiple video elements and multiple
       // iframes contained in a single parent.
-      videoElementParent.appendChild(this.iframe);
+      this.containerElement.appendChild(this.iframe);
     });
   }
 
@@ -200,9 +212,9 @@ export default class Conduit {
 
         // the mse service will stop streaming to us if we don't send
         // a message to iov/stats within 1 minute.
-        this._statsTimer = setInterval(() => {
-          this._publishStats();
-        }, 5000);
+        this.statsInterval = setInterval(() => {
+          this.publishStats();
+        }, Conduit.PUBLISH_STATS_INTERVAL * 1000);
 
         this.connected = true;
 
@@ -233,10 +245,14 @@ export default class Conduit {
    *
    * @async
    *
-   * @param {string} streamName - the name of the stream to get segments for
-   * @param {Conduit-onMoof} onMoof - the function that will handle the moof
+   * @param {Conduit-onMoof} onMoof
+   *   the function that will handle the moof
+   *
+   * @returns {Promise}
+   *   * Resolves once the first moof has been received
+   *   * Rejects if the moov or first moof time out
    */
-  async play (streamName, onMoof) {
+  async play (onMoof) {
     this.logger.info('Playing...');
 
     // @todo - should we have a check to confirm that the conduit has been initialized?
@@ -244,134 +260,39 @@ export default class Conduit {
     await this.connect();
 
     if (this.streamConfiguration.jwt && this.streamConfiguration.jwt.length > 0) {
-      streamName = await this.validateJwt();
-    }
-    else if (this.streamConfiguration.hash && this.streamConfiguration.hash.length > 0) {
-      streamName = await this.validateHash();
+      this.streamName = await this.validateJwt();
     }
 
-    return new Promise((resolve, reject) => {
-      let hasMoovTimedOut = false;
-      let hasMoofTimedOut = false;
+    if (this.streamConfiguration.hash && this.streamConfiguration.hash.length > 0) {
+      this.streamName = await this.validateHash();
+    }
 
-      this.logger.info('Play is registering the moov timeout...');
-      this._moovTimeout = setTimeout(() => {
-        hasMoovTimedOut = true;
+    this.logger.info('Play is requesting stream...');
 
-        // @todo - we could retry
-        this.stop();
+    const {
+      guid,
+      mimeCodec,
+    } = await this.requestStreamData();
 
-        if (this._moovTimeout) {
-          clearTimeout(this._moovTimeout);
-          this._moovTimeout = null;
-        }
+    this.guid = guid;
 
-        reject(new Error(`Stream ${streamName} timed out (moov) after ${Conduit.MOOV_TIMEOUT_DURATION} seconds`));
-      }, Conduit.MOOV_TIMEOUT_DURATION * 1000);
+    // Get the moov first
+    const { moov } = await this.requestMoov();
 
-      this.logger.info('Play is registering the moof timeout...');
-      this._moofTimeout = setTimeout(() => {
-        hasMoofTimedOut = true;
+    // Set up the listener for the moofs
+    await this.requestMoofs(onMoof);
 
-        // If the moov already timed out, then we already rejected
-        if (hasMoovTimedOut) {
-          return;
-        }
-
-        // @todo - we could retry
-        this.stop();
-
-        if (this._moofTimeout) {
-          clearTimeout(this._moofTimeout);
-          this._moofTimeout = null;
-        }
-
-        reject(new Error(`Stream ${streamName} timed out (moof) after ${Conduit.MOOV_TIMEOUT_DURATION} seconds`));
-      }, Conduit.FIRST_MOOF_TIMEOUT_DURATION * 1000);
-
-      try {
-        this.logger.info('Play is requesting stream...');
-        this.requestStream(streamName, ({
-          mimeCodec,
-          guid,
-        }) => {
-          this.guid = guid;
-
-          const initSegmentTopic = `${this.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
-
-          // Set up the listener for the stream init
-          this.logger.info('Play is requesting the moov...');
-          this.subscribe(initSegmentTopic, async ({
-            payloadBytes,
-          }) => {
-            const moov = payloadBytes;
-
-            // @todo - in our error handling, we do not unsubscribe from this
-            // topic - does that have a negative effect on the SFS?
-            this.logger.info('Play is unsubscribing from the moov topic...');
-            this.unsubscribe(initSegmentTopic);
-
-            const newTopic = `iov/video/${guid}/live`;
-
-            // Set up the listener for the stream itself
-            this.logger.info('Play is requesting the moofs...');
-            this.subscribe(newTopic, (mqttMessage) => {
-              if (hasMoofTimedOut) {
-                this.logger.info('Recevied a moof, but moofTimeout has already occurred...');
-                return;
-              }
-
-              if (this._moofTimeout) {
-                clearTimeout(this._moofTimeout);
-                this._moofTimeout = null;
-              }
-
-              // @todo - should we have a timeout that checks time between moofs?
-              // e.g. if we are getting moofs, then after 30 seconds we haven't
-              // received another moof, should that throw an error?
-
-              if (onMoof) {
-                onMoof(mqttMessage);
-              }
-            });
-
-            // If the play failed, the error has already been rejected
-            if (hasMoovTimedOut || hasMoofTimedOut) {
-              this.logger.info('Recevied a moov, but moovTimeout or moofTimeout has already occurred...');
-              return;
-            }
-
-            if (this._moovTimeout) {
-              clearTimeout(this._moovTimeout);
-              this._moovTimeout = null;
-            }
-
-            resolve({
-              guid,
-              mimeCodec,
-              moov,
-            });
-          });
-
-          // Ask the server for the stream
-          this.logger.info('Play is requesting to play...');
-          this.publish(`iov/video/${this.guid}/play`, {
-            initSegmentTopic,
-            clientId: this.clientId,
-            jwt: this.streamConfiguration.jwt,
-          });
-        });
-      }
-      catch (error) {
-        reject(error);
-      }
-    });
+    return {
+      guid,
+      mimeCodec,
+      moov,
+    };
   }
 
   /**
    * Disconnect from the mqtt server
    *
-   * @todo - return a promise that resolves when the disconnection is complete
+   * @todo - return a promise that resolves when the disconnection is complete!
    */
   disconnect () {
     this.logger.debug('Disconnecting...');
@@ -380,7 +301,7 @@ export default class Conduit {
 
     // when a stream fails, it no longer needs to send stats to the
     // server, and it may not even be connected to the server
-    clearInterval(this._statsTimer);
+    this.clearStatsInterval();
 
     this._command({
       method: Conduit.iframeCommands.DISCONNECT,
@@ -398,8 +319,15 @@ export default class Conduit {
 
     if (!this.guid) {
       this.logger.warn('No guid, so not stopping stream...');
-      return;
+      return Promise.resolve();
     }
+
+    // Clear all timeouts
+    this.clearMoovTimeout();
+    this.clearFirstMoofTimeout();
+
+    // Stop listening for the moov
+    this.unsubscribe(this.moovRequestTopic);
 
     // Stop listening for moofs
     this.unsubscribe(`iov/video/${this.guid}/live`);
@@ -413,6 +341,8 @@ export default class Conduit {
     });
 
     this.disconnect();
+
+    return Promise.resolve();
   }
 
   /**
@@ -536,25 +466,188 @@ export default class Conduit {
   }
 
   /**
-   * Get the `guid` and `mimeCodec` for the stream
+   * Get the `guid` and `mimeCodec` for the stream.  The guid serves as a stream
+   * instance for a given camera or video feed, and is needed to make requests
+   * for the stream instance.
    *
-   * @todo - return a Promise
-   *
-   * @param {string} streamName - the name of the stream
-   * @param {Conduit-requestStreamCallback} cb
-   *
-   * @returns {void}
+   * @returns {Promise}
    */
-  requestStream (streamName, cb) {
+  requestStreamData () {
     this.logger.debug('Requesting Stream...');
 
-    this.transaction(
-      `iov/video/${window.btoa(streamName)}/request`,
-      {
+    return new Promise((resolve, reject) => {
+      this.transaction(
+        `iov/video/${window.btoa(this.streamName)}/request`,
+        {
+          clientId: this.clientId,
+        },
+        ({
+          mimeCodec,
+          guid,
+        }) => {
+          // @todo - is it possible to do better error handling here?
+          if (!mimeCodec) {
+            return reject('Error while requesting stream: mimeCodec was not recevied!');
+          }
+
+          if (!guid) {
+            return reject('Error while requesting stream: guid was not recevied!');
+          }
+
+          resolve({
+            mimeCodec,
+            guid,
+          });
+        }
+      );
+    });
+  }
+
+  clearStatsInterval () {
+    if (this.statsInterval) {
+      clearTimeout(this.statsInterval);
+      this.statsInterval = null;
+    }
+  }
+
+  clearMoovTimeout () {
+    if (this.moovTimeout) {
+      clearTimeout(this.moovTimeout);
+      this.moovTimeout = null;
+    }
+  }
+
+  clearFirstMoofTimeout () {
+    if (this.firstMoofTimeout) {
+      clearTimeout(this.firstMoofTimeout);
+      this.firstMoofTimeout = null;
+    }
+  }
+
+  /**
+   * Request the moov from the SFS
+   *
+   * @todo - why is the clientId used here rather than the stream guid?
+   *
+   * @returns {Promise}
+   *   * Resolves when the moov is received
+   *   * Rejects if the moov is not recevied within the time defined by
+   *     MOOV_TIMEOUT_DURATION
+   */
+  async requestMoov () {
+    this.logger.info('Requesting the moov...');
+
+    if (!this.guid) {
+      throw new Error('The guid must be set before requesting moofs');
+    }
+
+    return new Promise((resolve, reject) => {
+      let hasMoovTimedOut = false;
+
+      this.moovTimeout = setTimeout(() => {
+        hasMoovTimedOut = true;
+
+        // @todo - we could retry
+        this.stop();
+
+        reject(new Error(`Moov for stream ${this.streamName} timed out after ${Conduit.MOOV_TIMEOUT_DURATION} seconds`));
+      }, Conduit.MOOV_TIMEOUT_DURATION * 1000);
+
+      this.subscribe(this.moovRequestTopic, ({ payloadBytes }) => {
+        // If we received the moov after the timeout, do nothing
+        if (hasMoovTimedOut) {
+          this.logger.info('Recevied moov, but moofTimeout has already occurred...');
+          return;
+        }
+
+        this.clearMoovTimeout();
+
+        const moov = payloadBytes;
+
+        // @todo - in our error handling, we do not unsubscribe from this
+        // topic - does that have a negative effect on the SFS?
+
+        // @todo - what if the unsubscribe fails?
+
+        // Once we have the moov, we don't need to listen for it anymore
+        this.logger.info('Play is unsubscribing from the moov topic...');
+        this.unsubscribe(this.moovRequestTopic);
+
+        resolve({ moov });
+      });
+
+      const readyToRecevieMoofsTopic = `iov/video/${this.guid}/play`;
+
+      // Once we are listening for the moov, tell the server (by publishing to
+      // it) to start sending the CLSP stream.
+      this.publish(readyToRecevieMoofsTopic, {
+        initSegmentTopic: this.moovRequestTopic,
         clientId: this.clientId,
-      },
-      cb
-    );
+        jwt: this.streamConfiguration.jwt,
+      });
+    });
+  }
+
+  /**
+   * Request moofs from the SFS.  Should only be called after getting the moov.
+   *
+   * @param {Function} onMoof
+   *   The function to call when a moof is recevied
+   *
+   * @returns {Promise}
+   *   * Resolves when the first moof is received
+   *   * Rejects if the first moof is not recevied within the time defined by
+   *     FIRST_MOOF_TIMEOUT_DURATION
+   */
+  async requestMoofs (onMoof = () => {}) {
+    this.logger.info('Setting up moof listener...');
+
+    if (!this.guid) {
+      throw new Error('The guid must be set before requesting moofs');
+    }
+
+    return new Promise((resolve, reject) => {
+      let hasFirstMoofTimedOut = false;
+      let hasReceviedFirstMoof = false;
+
+      this.firstMoofTimeout = setTimeout(() => {
+        hasFirstMoofTimedOut = true;
+
+        // @todo - we could retry
+        this.stop();
+
+        reject(new Error(`First moof for stream ${this.streamName} timed out after ${Conduit.FIRST_MOOF_TIMEOUT_DURATION} seconds`));
+      }, Conduit.FIRST_MOOF_TIMEOUT_DURATION * 1000);
+
+      const moofReceivedTopic = `iov/video/${this.guid}/live`;
+
+      // Set up the listener for the stream itself (the moof video segments)
+      this.subscribe(moofReceivedTopic, (mqttMessage) => {
+        if (!hasReceviedFirstMoof) {
+          // If we received the first moof after the timeout, do nothing
+          if (hasFirstMoofTimedOut) {
+            this.logger.info('Recevied first moof, but moofTimeout has already occurred...');
+            return;
+          }
+
+          // If the firstMoofTimeout still exists, cancel it, since the request
+          // did not timeout
+          this.clearFirstMoofTimeout();
+
+          // Since this is the first moof, resolve
+          hasReceviedFirstMoof = true;
+          resolve({
+            moofReceivedTopic,
+          });
+        }
+
+        // @todo - should we have a timeout that checks time between moofs?
+        // e.g. if we are getting moofs, then after 30 seconds we haven't
+        // received another moof, should that throw an error?
+
+        onMoof(mqttMessage);
+      });
+    });
   }
 
   /**
@@ -599,6 +692,32 @@ export default class Conduit {
     );
   }
 
+  _freeAllResources() {
+    this.iovId = null;
+    this.clientId = null;
+    this.guid = null;
+    // The caller must destroy the streamConfiguration
+    this.streamConfiguration = null;
+    this.containerElement = null;
+
+    // The Router will be destroyed along with the iframe
+    this.iframe.parentNode.removeChild(this.iframe);
+    // this.iframe.remove();
+    this.iframe.srcdoc = '';
+    this.iframe = null;
+
+    this.handlers = null;
+    this.reconnectionAttempts = null;
+
+    this.connected = null;
+    this.moovTimeout = null;
+    this.firstMoofTimeout = null;
+
+    this.moovRequestTopic = null;
+
+    this.statsMsg = null;
+  }
+
   /**
    * Clean up and dereference the necessary properties.  Will also disconnect
    * and destroy the iframe.
@@ -618,21 +737,6 @@ export default class Conduit {
 
     this.destroyed = true;
 
-    if (this._moovTimeout) {
-      clearTimeout(this._moovTimeout);
-      this._moovTimeout = null;
-    }
-
-    if (this._moofTimeout) {
-      clearTimeout(this._moofTimeout);
-      this._moofTimeout = null;
-    }
-
-    if (this._statsTimer) {
-      clearInterval(this._statsTimer);
-      this._statsTimer = null;
-    }
-
     if (this._onConnect) {
       window.removeEventListener('message', this._onConnect);
       this._onConnect = null;
@@ -643,21 +747,21 @@ export default class Conduit {
       this._onRouterCreate = null;
     }
 
-    this.disconnect();
+    const stopPromise = this.stop();
 
-    this.iovId = null;
-    this.clientId = null;
-    // The caller must destroy the streamConfiguration
-    this.streamConfiguration = null;
-
-    // Destroy iframe
-    this.iframe.parentNode.removeChild(this.iframe);
-    // this.iframe.remove();
-    this.iframe.srcdoc = '';
-    this.iframe = null;
-
-    this.handlers = null;
-    this.reconnectionAttempts = null;
+    return stopPromise
+      .then(() => {
+        this.logger.debug('stopped successfully...');
+        this._freeAllResources();
+        this.logger.debug('destroy successfully finished...');
+      })
+      .catch((error) => {
+        this.logger.debug('stopped unsuccessfully...');
+        this.logger.error('Error while destroying the Conduit!');
+        this.logger.error(error);
+        this._freeAllResources();
+        this.logger.debug('destroy unsuccessfully finished...');
+      });
   }
 
   /**
@@ -962,7 +1066,7 @@ export default class Conduit {
    *
    * Send stats to the server
    */
-  _publishStats () {
+  publishStats () {
     this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / 30000.0;
     this.statsMsg.byteCount = 0;
 

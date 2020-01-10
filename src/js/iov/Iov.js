@@ -2,9 +2,10 @@
 
 import uuidv4 from 'uuid/v4';
 
-import IovPlayer from './IovPlayer';
-import utils from '../utils';
 import Logger from '../utils/logger';
+import utils from '../utils';
+
+import IovPlayer from './IovPlayer';
 import StreamConfiguration from './StreamConfiguration';
 
 /**
@@ -65,6 +66,7 @@ export default class Iov {
     this.onReadyAlreadyCalled = false;
     this.videoElementId = videoElementId;
     this.videoElementParent = null;
+    this.iovPlayerCount = 0;
 
     const {
       visibilityChangeEventName,
@@ -238,7 +240,7 @@ export default class Iov {
     this.logger.debug('Initializing...');
 
     const clspVideoElement = this._prepareVideoElement();
-    const iovPlayer = IovPlayer.factory(this.id, clspVideoElement);
+    const iovPlayer = IovPlayer.factory(`${this.id}.${++this.iovPlayerCount}`, clspVideoElement);
 
     this._registerPlayerListeners(iovPlayer);
 
@@ -251,18 +253,20 @@ export default class Iov {
     this.logger.debug('Changing Stream...');
 
     const clspVideoElement = this._prepareVideoElement();
-    const iovPlayer = IovPlayer.factory(this.id, clspVideoElement);
-    const streamConfiguration = StreamConfiguration.fromUrl(url);
+    const iovPlayer = IovPlayer.factory(`${this.id}.${++this.iovPlayerCount}`, clspVideoElement);
 
     this._registerPlayerListeners(iovPlayer);
 
+    const streamConfiguration = StreamConfiguration.fromUrl(url);
     await iovPlayer.initialize(streamConfiguration);
 
     iovPlayer.on('firstFrameShown', () => {
-      setTimeout(async () => {
+      this.logger.debug('Got first frame of new stream...');
+
+      setTimeout(() => {
+        this.logger.debug('Destroying old player...');
         if (this.iovPlayer) {
-          await this.iovPlayer.destroy();
-          this.streamConfiguration.destroy();
+          this.iovPlayer.destroy();
         }
 
         this.iovPlayer = iovPlayer;
@@ -275,7 +279,7 @@ export default class Iov {
     await this.play(iovPlayer);
   }
 
-  clone (streamConfiguration) {
+  clone (streamConfiguration = this.streamConfiguration) {
     this.logger.debug('clone');
 
     const newStreamConfiguration = streamConfiguration.clone();
@@ -293,34 +297,42 @@ export default class Iov {
   }
 
   async play (iovPlayer = this.iovPlayer) {
+    this.logger.debug('Play');
+
     try {
       await iovPlayer.play();
     }
     catch (error) {
+      this.logger.debug('Play error - destroying');
       // @todo - display a message in the page saying that the stream couldn't
       // be played
-      console.error(error);
+      this.logger.error(error);
       await iovPlayer.destroy();
     }
   }
 
   async stop (iovPlayer = this.iovPlayer) {
+    this.logger.debug('Stop');
     await iovPlayer.stop();
   }
 
   async restart (iovPlayer = this.iovPlayer) {
+    this.logger.debug('Restart');
     await iovPlayer.restart();
   }
 
   enterFullscreen (iovPlayer = this.iovPlayer) {
+    this.logger.debug('Enter fullscreen');
     iovPlayer.enterFullscreen();
   }
 
   exitFullscreen (iovPlayer = this.iovPlayer) {
+    this.logger.debug('Exit fullscreen');
     iovPlayer.exitFullscreen();
   }
 
   toggleFullscreen (iovPlayer = this.iovPlayer) {
+    this.logger.debug('Toggle fullscreen');
     iovPlayer.toggleFullscreen();
   }
 
@@ -350,9 +362,12 @@ export default class Iov {
     window.removeEventListener('online', this.onConnectionChange);
     window.removeEventListener('offline', this.onConnectionChange);
 
-    const iovPlayerDestroyPromise = this.iovPlayer.destroy();
+    const iovPlayerDestroyPromise = this.iovPlayer
+      ? this.iovPlayer.destroy()
+      : Promise.resolve();
 
     this.iovPlayer = null;
+    this.streamConfiguration = null;
 
     this.videoElement = null;
     this.videoElementParent = null;

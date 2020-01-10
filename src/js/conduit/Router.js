@@ -281,7 +281,7 @@ export default function () {
    * @returns {void}
    */
   Router.prototype._onConnectionLost = function (response) {
-    this.logger.warn('MQTT connection lost!');
+    this.logger.debug('MQTT connection lost');
 
     var errorCode = parseInt(response.errorCode);
 
@@ -293,6 +293,8 @@ export default function () {
 
       return;
     }
+
+    this.logger.warn('MQTT connection lost improperly!');
 
     this._sendToParent({
       event: Router.events.CONNECTION_LOST,

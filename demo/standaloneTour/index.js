@@ -156,7 +156,7 @@ function initialize () {
   window.iovCollection.create(videoElementId, window.urls[0])
     .then(function (iov) {
       window.iov = iov;
-      window.clspControls.resumeTour();
+      window.clspControls.resumeTour(true);
     })
     .catch(function (error) {
       document.getElementById('browser-not-supported').style.display = 'block';

@@ -105,15 +105,17 @@ export default class ConduitCollection {
   /**
    * Create a Conduit for a specific stream, and add it to this collection.
    *
-   * @param {String} clientId
-   * @param {DOMNode} config
-   *
    * @returns {Conduit}
    */
-  async create (iovId, clientId, config) {
+  async create (iovId, clientId, streamConfiguration, containerElement) {
     this.logger.debug(`creating a conduit with iovId ${iovId} and clientId ${clientId}`);
 
-    const conduit = Conduit.factory(iovId, clientId, config);
+    const conduit = Conduit.factory(
+      iovId,
+      clientId,
+      streamConfiguration,
+      containerElement
+    );
 
     this.add(conduit);
 

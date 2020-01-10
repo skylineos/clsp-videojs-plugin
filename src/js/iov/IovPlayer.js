@@ -175,6 +175,12 @@ export default class IovPlayer {
   }
 
   async initialize (streamConfiguration) {
+    if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
+      throw new Error('streamConfiguration is not valid');
+    }
+
+    this.logger.debug(`Initializing with ${streamConfiguration.streamName}`);
+
     this.streamConfiguration = streamConfiguration;
 
     // This MUST be globally unique!  The MQTT server will broadcast the stream
@@ -186,11 +192,14 @@ export default class IovPlayer {
 
     this.videoElement.id = this.clientId;
 
-    this.conduit = await ConduitCollection.asSingleton().create(this.iovId, this.clientId, this.streamConfiguration);
+    this.conduit = await ConduitCollection.asSingleton().create(
+      this.iovId,
+      this.clientId,
+      this.streamConfiguration,
+      this.videoElement.parentNode
+    );
 
-    const videoElementParent = this.videoElement.parentNode;
-
-    await this.conduit.initialize(videoElementParent);
+    await this.conduit.initialize();
   }
 
   _html5Play () {
@@ -381,9 +390,20 @@ export default class IovPlayer {
 
     this.trigger('videoReceived');
     this.getSegmentIntervalMetrics();
+
+    // Sometimes, the first moof arrives before the onMoov logic (which includes
+    // the initialization of the mseWrapper) has finished.
+    if (!this.mseWrapper) {
+      return;
+    }
+
     this.mseWrapper.append(mqttMessage.payloadBytes);
   };
 
+  /**
+   * Note that if an error is thrown during play, the IovPlayer instance should
+   * be destroyed to free resources.
+   */
   async play () {
     this.logger.debug('play');
 
@@ -394,24 +414,20 @@ export default class IovPlayer {
       return;
     }
 
-    try {
-      const {
-        // guid,
-        mimeCodec,
-        moov,
-      } = await this.conduit.play(this.streamConfiguration.streamName, this.onMoof);
+    const {
+      // guid,
+      mimeCodec,
+      moov,
+    } = await this.conduit.play(this.onMoof);
 
-      if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
-        this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
-        this.stop();
-      }
+    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
 
-      if (this.onMoov) {
-        this.onMoov(mimeCodec, moov);
-      }
+      throw new Error(`Unsupported mime codec: ${mimeCodec}`);
     }
-    catch (error) {
-      console.error(error);
+
+    if (this.onMoov) {
+      this.onMoov(mimeCodec, moov);
     }
   }
 
@@ -428,8 +444,6 @@ export default class IovPlayer {
     this.stopped = true;
     this.moovBox = null;
 
-    this.conduit.stop();
-
     this.logger.debug('stop about to finish synchronous operations and return promise...');
 
     // The logic above MUST be run synchronously when called, therefore,
@@ -437,26 +451,33 @@ export default class IovPlayer {
     // promise here rather than using await.  We return this promise so
     // that the caller has the option of waiting, but is not forced to
     // wait.
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        await this.conduit.stop();
+      }
+      catch (error) {
+        this.logger.error('failed to stop the conduit');
+        this.logger.error(error);
+      }
+
+      if (!this.mseWrapper) {
+        this.logger.debug('stop succeeded asynchronously...');
+        return resolve();
+      }
+
       // Don't wait until the next play event or the destruction of this player
       // to clear the MSE
-      if (this.mseWrapper) {
-        this.mseWrapper.destroy()
-          .then(() => {
-            this.mseWrapper = null;
-            this.logger.debug('stop succeeded asynchronously...');
-            resolve();
-          })
-          .catch((error) => {
-            this.mseWrapper = null;
-            this.logger.error('stop failed asynchronously...');
-            reject(error);
-          });
-      }
-      else {
+      try {
+        await this.mseWrapper.destroy();
         this.logger.debug('stop succeeded asynchronously...');
         resolve();
       }
+      catch (error) {
+        this.logger.error('stop failed asynchronously...');
+        reject(error);
+      }
+
+      this.mseWrapper = null;
     });
   }
 
@@ -516,7 +537,6 @@ export default class IovPlayer {
     this.logger.debug('_freeAllResources...');
 
     this.iovId = null;
-    // The Iov will destroy the conduit
     ConduitCollection.asSingleton().remove(this.clientId);
     this.conduit = null;
     // The caller must destroy the streamConfiguration
@@ -566,6 +586,8 @@ export default class IovPlayer {
     // the only reliable way we have found to ensure that MediaSource,
     // SourceBuffer, and various Video elements are properly dereferenced
     // to avoid memory leaks
+    // @todo - should these occur after stop? is there a reason they're done
+    // in this order?
     this.videoElement.src = '';
     this.videoElement.parentNode.removeChild(this.videoElement);
     this.videoElement.remove();
