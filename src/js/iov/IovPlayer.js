@@ -38,13 +38,28 @@ export default class IovPlayer {
   static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
   static DRIFT_CORRECTION_CONSTANT = 2;
 
-  static factory (iovId, videoElement, options) {
-    return new IovPlayer(iovId, videoElement, options);
+  static factory (
+    logId,
+    videoElement,
+    onConduitMessageError,
+    options
+  ) {
+    return new IovPlayer(
+      logId,
+      videoElement,
+      onConduitMessageError,
+      options
+    );
   }
 
-  constructor (iovId, videoElement, options) {
-    this.iovId = iovId;
-    this.logger = Logger().factory(`Iov Player ${this.iovId}`);
+  constructor (
+    logId,
+    videoElement,
+    onConduitMessageError = this.onConduitMessageError,
+    options
+  ) {
+    this.logId = logId;
+    this.logger = Logger().factory(`Iov Player ${this.logId}`);
 
     this.logger.debug('constructor');
 
@@ -59,6 +74,7 @@ export default class IovPlayer {
 
     this.videoElement = videoElement;
 
+    this.conduitCount = 0;
     this.conduit = null;
     this.streamConfiguration = null;
 
@@ -72,6 +88,7 @@ export default class IovPlayer {
       }
     );
 
+    this.onConduitMessageError = onConduitMessageError;
     this.firstFrameShown = false;
     this.stopped = false;
 
@@ -174,7 +191,16 @@ export default class IovPlayer {
     this.logger.error(error);
   }
 
-  async initialize (streamConfiguration) {
+  generateConduitLogId() {
+    return `${this.logId}.conduit:${++this.conduitCount}`;
+  }
+
+  onConduitMessageError = (error) => {
+    this.logger.error('Conduit Message Error!');
+    this.logger.error(error);
+  };
+
+  async initialize (streamConfiguration = this.streamConfiguration) {
     if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
       throw new Error('streamConfiguration is not valid');
     }
@@ -193,10 +219,11 @@ export default class IovPlayer {
     this.videoElement.id = this.clientId;
 
     this.conduit = await ConduitCollection.asSingleton().create(
-      this.iovId,
+      this.generateConduitLogId(),
       this.clientId,
       this.streamConfiguration,
-      this.videoElement.parentNode
+      this.videoElement.parentNode,
+      this.onConduitMessageError
     );
 
     await this.conduit.initialize();
@@ -522,7 +549,6 @@ export default class IovPlayer {
   _freeAllResources () {
     this.logger.debug('_freeAllResources...');
 
-    this.iovId = null;
     ConduitCollection.asSingleton().remove(this.clientId);
     this.conduit = null;
     // The caller must destroy the streamConfiguration

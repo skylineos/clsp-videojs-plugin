@@ -34,6 +34,8 @@ export default class ConduitCollection {
     this.logger = Logger().factory('ConduitCollection');
     this.logger.debug('Constructing...');
 
+    this.totalConduitCount = 0;
+
     this.conduits = {};
     this.deletedConduitClientIds = [];
 
@@ -107,17 +109,26 @@ export default class ConduitCollection {
    *
    * @returns {Conduit}
    */
-  async create (iovId, clientId, streamConfiguration, containerElement) {
-    this.logger.debug(`creating a conduit with iovId ${iovId} and clientId ${clientId}`);
+  async create (
+    logId,
+    clientId,
+    streamConfiguration,
+    containerElement,
+    onMessageError
+  ) {
+    this.logger.debug(`creating a conduit with logId ${logId} and clientId ${clientId}`);
 
     const conduit = Conduit.factory(
-      iovId,
+      logId,
       clientId,
       streamConfiguration,
-      containerElement
+      containerElement,
+      onMessageError
     );
 
-    this.add(conduit);
+    this._add(conduit);
+
+    this.totalConduitCount++;
 
     return conduit;
   }
@@ -125,12 +136,14 @@ export default class ConduitCollection {
   /**
    * Add a Conduit instance to this collection.
    *
+   * @private
+   *
    * @param {Conduit} conduit
    *   The conduit instance to add
    *
    * @returns {this}
    */
-  add (conduit) {
+  _add (conduit) {
     const clientId = conduit.clientId;
 
     this.conduits[clientId] = conduit;

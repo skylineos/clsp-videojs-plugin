@@ -32,6 +32,12 @@ export default class Iov {
     return new Iov(videoElementId, streamConfiguration, options);
   }
 
+  /**
+   * @param {String} videoElementId
+   * @param {StreamConfiguration|String} streamConfiguration
+   *   The stream configuration or url of the stream
+   * @param {Object} [options]
+   */
   constructor (videoElementId, streamConfiguration, options = {}) {
     if (!utils.supported()) {
       throw new Error('You are using an unsupported browser - Unable to play CLSP video');
@@ -39,6 +45,10 @@ export default class Iov {
 
     if (!videoElementId) {
       throw new Error('videoElementId is required to construct an Iov');
+    }
+
+    if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
+      streamConfiguration = StreamConfiguration.fromUrl(streamConfiguration);
     }
 
     if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
@@ -236,11 +246,19 @@ export default class Iov {
     });
   }
 
+  generatePlayerLogId () {
+    return `iov:${this.id}.player:${++this.iovPlayerCount}`;
+  }
+
   async initialize () {
     this.logger.debug('Initializing...');
 
     const clspVideoElement = this._prepareVideoElement();
-    const iovPlayer = IovPlayer.factory(`${this.id}.${++this.iovPlayerCount}`, clspVideoElement);
+    const iovPlayer = IovPlayer.factory(
+      this.generatePlayerLogId(),
+      clspVideoElement,
+      () => this.changeSrc(this.streamConfiguration)
+    );
 
     this._registerPlayerListeners(iovPlayer);
 
@@ -249,8 +267,20 @@ export default class Iov {
     this.iovPlayer = iovPlayer;
   }
 
+  /**
+   * @param {StreamConfiguration|String} url
+   *   The StreamConfiguration or url of the new stream
+   */
   async changeSrc (url) {
     this.logger.debug('Changing Stream...');
+
+    if (!url) {
+      throw new Error('url is required to changeSrc');
+    }
+
+    if (!this.iovPlayer) {
+      throw new Error('IovPlayer must be initialized before calling changeSrc');
+    }
 
     // Handle the case of multiple changeSrc requests.  Only change to the last
     // stream that was requested
@@ -264,13 +294,20 @@ export default class Iov {
     }
 
     const clspVideoElement = this._prepareVideoElement();
-    const iovPlayer = IovPlayer.factory(`${this.id}.${++this.iovPlayerCount}`, clspVideoElement);
+    const iovPlayer = IovPlayer.factory(
+      this.generatePlayerLogId(),
+      clspVideoElement,
+      () => this.changeSrc(this.streamConfiguration)
+    );
 
     this.pendingChangeSrcIovPlayer = iovPlayer;
 
     this._registerPlayerListeners(iovPlayer);
 
-    const streamConfiguration = StreamConfiguration.fromUrl(url);
+    const streamConfiguration = StreamConfiguration.isStreamConfiguration(url)
+      ? url
+      : StreamConfiguration.fromUrl(url);
+
     await iovPlayer.initialize(streamConfiguration);
 
     const firstFramePromise = new Promise((resolve, reject) => {
@@ -301,21 +338,20 @@ export default class Iov {
     return firstFramePromise;
   }
 
+  /**
+   * @param {StreamConfiguration|url} streamConfiguration
+   *   The StreamConfiguration or url of the stream to use with the cloned
+   *   player
+   */
   clone (streamConfiguration = this.streamConfiguration) {
     this.logger.debug('clone');
 
-    const newStreamConfiguration = streamConfiguration.clone();
+    const newStreamConfiguration = StreamConfiguration.isStreamConfiguration(streamConfiguration)
+      ? streamConfiguration.clone()
+      : StreamConfiguration.fromUrl(streamConfiguration);
 
     // @todo - is it possible to reuse the iov player?
     return Iov.factory(this.videoElement, newStreamConfiguration);
-  }
-
-  cloneFromUrl (url) {
-    this.logger.debug('cloneFromUrl');
-
-    const clone = this.clone(StreamConfiguration.generateConfigFromUrl(url));
-
-    return clone;
   }
 
   async play (iovPlayer = this.iovPlayer) {

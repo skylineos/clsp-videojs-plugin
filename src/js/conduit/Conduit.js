@@ -32,15 +32,27 @@ export default class Conduit {
 
   static routerEvents = Router().Router.events;
 
-  static factory (iovId, clientId, streamConfiguration, containerElement) {
-    return new Conduit(iovId, clientId, streamConfiguration, containerElement);
+  static factory (
+    logId,
+    clientId,
+    streamConfiguration,
+    containerElement,
+    onMessageError
+  ) {
+    return new Conduit(
+      logId,
+      clientId,
+      streamConfiguration,
+      containerElement,
+      onMessageError
+    );
   }
 
   /**
    * @private
    *
-   * @param {String} iovId
-   *   the ID of the parent iov, used ONLY for logging purposes
+   * @param {String} logId
+   *   a string that identifies this router in log messages
    * @param {String} clientId
    *   the guid to be used to construct the topic
    * @param {StreamConfiguration} streamConfiguration
@@ -48,10 +60,19 @@ export default class Conduit {
    * @param {Element} containerElement
    *   The container of the video element and where the Conduit's iframe will be
    *   inserted
+   * @param {Function} onMessageError
+   *   The action to perform when an error is encountered between the Router
+   *   and Conduit instances
    */
-  constructor (iovId, clientId, streamConfiguration, containerElement) {
-    if (!iovId) {
-      throw new Error('iovId is required to construct a new Conduit instance.');
+  constructor (
+    logId,
+    clientId,
+    streamConfiguration,
+    containerElement,
+    onMessageError = () => {}
+  ) {
+    if (!logId) {
+      throw new Error('logId is required to construct a new Conduit instance.');
     }
 
     if (!clientId) {
@@ -66,7 +87,7 @@ export default class Conduit {
       throw new Error('containerElement is required to construct a new Conduit instance');
     }
 
-    this.iovId = iovId;
+    this.logId = logId;
     this.clientId = clientId;
     this.streamConfiguration = streamConfiguration;
     this.containerElement = containerElement;
@@ -74,7 +95,7 @@ export default class Conduit {
     this.streamName = this.streamConfiguration.streamName;
     this.guid = null;
 
-    this.logger = Logger().factory(`Conduit ${this.iovId}`);
+    this.logger = Logger().factory(`Conduit ${this.logId}`);
     this.logger.debug('Constructing...');
 
     this.statsMsg = {
@@ -89,6 +110,7 @@ export default class Conduit {
     this.reconnectionAttempts = 0;
 
     this.connected = false;
+    this._onMessageError = onMessageError;
 
     this.statsInterval = null;
     this.requestStreamDataTimeout = null;
@@ -354,6 +376,64 @@ export default class Conduit {
     }
 
     this.disconnect();
+  }
+
+  /**
+   * Clean up and dereference the necessary properties.  Will also disconnect
+   * and destroy the iframe.
+   *
+   * @todo - return a Promise, but do not wait for the promise to resolve to
+   * continue the destroy logic.  the promise should resolve/reject based on
+   * the disconnect method call
+   *
+   * @returns {void}
+   */
+  destroy () {
+    this.logger.debug('Destroying...');
+
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    if (this._onConnect) {
+      window.removeEventListener('message', this._onConnect);
+      this._onConnect = null;
+    }
+
+    if (this._onRouterCreate) {
+      window.removeEventListener('message', this._onRouterCreate);
+      this._onRouterCreate = null;
+    }
+
+    this.stop();
+
+    this.clientId = null;
+    this.guid = null;
+    // The caller must destroy the streamConfiguration
+    this.streamConfiguration = null;
+    this.containerElement = null;
+
+    // The Router will be destroyed along with the iframe
+    this.iframe.parentNode.removeChild(this.iframe);
+    // this.iframe.remove();
+    this.iframe.srcdoc = '';
+    this.iframe = null;
+
+    this.handlers = null;
+    this.reconnectionAttempts = null;
+
+    this.connected = null;
+    this.moovTimeout = null;
+    this.firstMoofTimeout = null;
+
+    this.moovRequestTopic = null;
+
+    this.statsMsg = null;
+
+    // @todo - can this be safely dereferenced?
+    // this._onMessageError = null;
   }
 
   /**
@@ -723,62 +803,6 @@ export default class Conduit {
   }
 
   /**
-   * Clean up and dereference the necessary properties.  Will also disconnect
-   * and destroy the iframe.
-   *
-   * @todo - return a Promise, but do not wait for the promise to resolve to
-   * continue the destroy logic.  the promise should resolve/reject based on
-   * the disconnect method call
-   *
-   * @returns {void}
-   */
-  destroy () {
-    this.logger.debug('Destroying...');
-
-    if (this.destroyed) {
-      return;
-    }
-
-    this.destroyed = true;
-
-    if (this._onConnect) {
-      window.removeEventListener('message', this._onConnect);
-      this._onConnect = null;
-    }
-
-    if (this._onRouterCreate) {
-      window.removeEventListener('message', this._onRouterCreate);
-      this._onRouterCreate = null;
-    }
-
-    this.stop();
-
-    this.iovId = null;
-    this.clientId = null;
-    this.guid = null;
-    // The caller must destroy the streamConfiguration
-    this.streamConfiguration = null;
-    this.containerElement = null;
-
-    // The Router will be destroyed along with the iframe
-    this.iframe.parentNode.removeChild(this.iframe);
-    // this.iframe.remove();
-    this.iframe.srcdoc = '';
-    this.iframe = null;
-
-    this.handlers = null;
-    this.reconnectionAttempts = null;
-
-    this.connected = null;
-    this.moovTimeout = null;
-    this.firstMoofTimeout = null;
-
-    this.moovRequestTopic = null;
-
-    this.statsMsg = null;
-  }
-
-  /**
    * Handler for an iframe window message.
    *
    * @param {Object} event
@@ -792,29 +816,36 @@ export default class Conduit {
 
     this.logger.debug(`Message received for "${eventType}" event`);
 
-    switch (eventType) {
-      case Conduit.routerEvents.DATA_RECEIVED: {
-        this._onMqttData(event.data);
-        break;
+    try {
+      switch (eventType) {
+        case Conduit.routerEvents.DATA_RECEIVED: {
+          this._onMqttData(event.data);
+          break;
+        }
+        case Conduit.routerEvents.CONNECTION_LOST: {
+          this.disconnect();
+          this._reconnect();
+          break;
+        }
+        case Conduit.routerEvents.WINDOW_MESSAGE_FAIL: {
+          // @todo - do we really need to disconnect?
+          this.disconnect();
+          break;
+        }
+        case Conduit.routerEvents.CREATED:
+        case Conduit.routerEvents.CONNECT_SUCCESS:
+        case Conduit.routerEvents.DISCONNECT_SUCCESS: {
+          break;
+        }
+        default: {
+          this.logger.error(`No match for event: ${eventType}`);
+        }
       }
-      case Conduit.routerEvents.CONNECTION_LOST: {
-        this.disconnect();
-        this._reconnect();
-        break;
-      }
-      case Conduit.routerEvents.WINDOW_MESSAGE_FAIL: {
-        // @todo - do we really need to disconnect?
-        this.disconnect();
-        break;
-      }
-      case Conduit.routerEvents.CREATED:
-      case Conduit.routerEvents.CONNECT_SUCCESS:
-      case Conduit.routerEvents.DISCONNECT_SUCCESS: {
-        break;
-      }
-      default: {
-        this.logger.error(`No match for event: ${eventType}`);
-      }
+    }
+    catch (error) {
+      this.logger.debug('onMessageError');
+
+      this._onMessageError(error);
     }
   }
 
@@ -1003,7 +1034,7 @@ export default class Conduit {
 
             // Configure the CLSP properties
             window.mqttRouterConfig = {
-              iovId: '${this.iovId}',
+              logId: '${this.logId}',
               clientId: '${this.clientId}',
               host: '${this.streamConfiguration.host}',
               port: ${this.streamConfiguration.port},

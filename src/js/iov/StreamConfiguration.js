@@ -244,6 +244,10 @@ export default class StreamConfiguration {
     };
   }
 
+  get url () {
+    // @todo
+  }
+
   destroy () {
     if (this.destroyed) {
       return;

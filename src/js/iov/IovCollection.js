@@ -2,7 +2,6 @@
 
 import Iov from './Iov';
 import Logger from '../utils/logger';
-import StreamConfiguration from './StreamConfiguration';
 
 // @todo - this could cause an overflow!
 let totalIovCount = 0;
@@ -53,7 +52,7 @@ export default class IovCollection {
   async create (videoElementId, url) {
     const iov = Iov.factory(
       videoElementId,
-      StreamConfiguration.fromUrl(url),
+      url,
       {
         id: (++totalIovCount).toString(),
       }

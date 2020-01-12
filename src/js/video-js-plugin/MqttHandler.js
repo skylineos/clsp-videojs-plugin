@@ -41,7 +41,7 @@ export default class MqttHandler extends Component {
       throw new Error('Unable to change source because there is no url!');
     }
 
-    const clone = this.iov.cloneFromUrl(url);
+    const clone = this.iov.clone(url);
 
     clone.initialize();
 

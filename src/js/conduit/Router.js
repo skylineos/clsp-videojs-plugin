@@ -36,8 +36,8 @@ export default function () {
    * every message that is passed from this iframe window to the parent window,
    * so that the conduit can identify what client the message is for.
    *
-   * @param {String} iovId
-   *   the ID of the parent iov, used ONLY for logging purposes
+   * @param {String} logId
+   *   a string that identifies this router in log messages
    * @param {String} clientId
    *   the guid to be used to construct the topic
    * @param {String} host
@@ -48,16 +48,16 @@ export default function () {
    *   true to request the stream over clsps, false to request the stream over clsp
    */
   function Router (
-    iovId,
+    logId,
     clientId,
     host,
     port,
     useSSL
   ) {
     try {
-      this.iovId = iovId;
+      this.logId = logId;
 
-      this.logger = window.Logger().factory(`Router ${this.iovId}`);
+      this.logger = window.Logger().factory(`Router ${this.logId}`);
 
       this.clientId = clientId;
 
@@ -142,14 +142,14 @@ export default function () {
   };
 
   Router.factory = function (
-    iovId,
+    logId,
     clientId,
     host,
     port,
     useSSL
   ) {
     return new Router(
-      iovId,
+      logId,
       clientId,
       host,
       port,
@@ -169,6 +169,10 @@ export default function () {
    */
   Router.prototype._sendToParent = function (message) {
     this.logger.debug('Sending message to parent window...');
+
+    if (this.destroyed) {
+      return;
+    }
 
     if (typeof message !== 'object') {
       throw new Error('_sendToParent must be passed an object');
@@ -414,6 +418,7 @@ export default function () {
    */
   Router.prototype._connect_onFailure = function (response) {
     this.logger.info('MQTT Connection Failure!');
+
     this._sendToParent({
       event: Router.events.CONNECT_FAILURE,
       reason: 'Connection Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
@@ -638,7 +643,9 @@ export default function () {
   };
 
   /**
-   * Disconnect the messaging client from the server
+   * Disconnect the messaging client from the server.  To get confirmation of
+   * the disconnection, the caller must listen for the following event:
+   * `Router.events.CONNECTION_LOST`
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
@@ -646,6 +653,7 @@ export default function () {
    */
   Router.prototype.disconnect = function () {
     this.logger.info('Disconnecting');
+
     try {
       this.mqttClient.disconnect();
     }
@@ -677,9 +685,15 @@ export default function () {
 
     this.destroyed = true;
 
+    window.removeEventListener('message', this.boundWindowMessageEventHandler);
+
+    this.boundWindowMessageEventHandler = null;
+
     this.disconnect();
 
-    window.removeEventListener('message', this.boundWindowMessageEventHandler);
+    // @todo - is there a way to "destroy" the client?  I didn't see anything
+    // in the documentation
+    this.mqttClient = null;
   };
 
   // This is a series of "controllers" to keep the conduit's iframe as dumb as
@@ -689,7 +703,7 @@ export default function () {
     onload: function () {
       try {
         window.router = Router.factory(
-          window.mqttRouterConfig.iovId,
+          window.mqttRouterConfig.logId,
           window.mqttRouterConfig.clientId,
           window.mqttRouterConfig.host,
           window.mqttRouterConfig.port,
