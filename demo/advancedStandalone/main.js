@@ -49,7 +49,21 @@ function initLocalStorage (elementId, type, defaultValue) {
   const localStorageKey = `skyline.clspPlugin.${elementId}`;
 
   switch (type) {
-    case 'input':
+    case 'input': {
+      const currentValue = window.localStorage.getItem(localStorageKey);
+
+      if (!currentValue) {
+        window.localStorage.setItem(localStorageKey, defaultValue.toString());
+      }
+
+      $element.val(window.localStorage.getItem(localStorageKey));
+
+      $element.on('change', () => {
+        window.localStorage.setItem(localStorageKey, $element.val().trim());
+      });
+
+      break;
+    }
     case 'textarea': {
       const currentValue = window.localStorage.getItem(localStorageKey);
 
