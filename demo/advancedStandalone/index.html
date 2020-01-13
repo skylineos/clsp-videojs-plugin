@@ -35,25 +35,67 @@
           </div>
         </div>
         <div class="controls">
-          <div class="urls-container">
-            <span>Urls:</span>
-            <br />
-            <textarea
-              id="wallUrls"
-              rows="25"
-              cols="80"
-            ></textarea>
+          <div class="url-containers">
+            <div class="urls-container">
+              <div class="urls-title">
+                <span>Urls:</span>
+              </div>
+              <textarea
+                id="wallUrls"
+                rows="25"
+              ></textarea>
+              <div class="urls-options">
+                <div>
+                  <label for="wallEnabled">
+                    <input id="wallEnabled" type="checkbox" />
+                    <span>Enable</span>
+                  </label>
+                </div>
+                <div>
+                  <span>Times to Replicate</span>
+                  <input
+                    id="wallReplicate"
+                    value="1"
+                    type="number"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="tour-urls-container">
+              <div class="urls-title">
+                <span>Tour Urls:</span>
+              </div>
+              <textarea
+                id="wallTourUrls"
+                rows="25"
+              ></textarea>
+              <div class="urls-options">
+                <div>
+                  <label for="wallToursEnabled">
+                    <input id="wallToursEnabled" type="checkbox" />
+                    <span>Enable</span>
+                  </label>
+                </div>
+                <div>
+                  <span>Times to Replicate</span>
+                  <input
+                    id="wallTourReplicate"
+                    value="1"
+                    type="number"
+                  />
+                </div>
+                <div>
+                  <span>Tour Interval (seconds):</span>
+                  <input
+                    id="wallTourInterval"
+                    value="10"
+                    type="number"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           <div class="controls-container">
-            <div>
-              <span>Times to Replicate</span>
-              <br />
-              <input
-                id="wallReplicate"
-                value="1"
-                type="number"
-              />
-            </div>
             <label for="wallEnableMetrics">
               <input id="wallEnableMetrics" type="checkbox" />
               <span>Enable Metrics</span>
@@ -69,58 +111,6 @@
         </div>
 
         <div id="videowall"></div>
-      </section>
-
-      <section class="tour">
-        <div class="monitor">
-          <button id="tour-controls-toggle" data-state="shown">Hide Controls</button>
-          <div id="tourSummary" class="summary">
-            <span>Total videos playing:</span>
-            <h2 id="tourTotalVideos">N/A</h2>
-            <span>Time Elapsed:</span>
-            <h2 id="tourDuration">N/A</h2>
-            <span>Time Started:</span>
-            <span id="tourStartTime">N/A</span>
-            <span>Heap Size Limit:</span>
-            <span id="tourHeapSizeLimit">N/A</span>
-            <span>Total Heap Size:</span>
-            <span id="tourTotalHeapSize">N/A</span>
-            <span>Used Heap Size:</span>
-            <h2 id="tourUsedHeapSize">N/A</h2>
-          </div>
-        </div>
-        <div class="controls">
-          <div class="urls-container">
-            <span>Urls:</span>
-            <br />
-            <textarea id="tourUrls" rows="25" cols="80"></textarea>
-          </div>
-          <div class="controls-container">
-            <div>
-              <span>Times to Replicate</span>
-              <br />
-              <input id="tourReplicate" value="1" type="number" />
-            </div>
-            <div>
-              <span>Tour Duration</span>
-              <br />
-              <input id="tourDurationValue" value="10" type="number" />
-            </div>
-            <label for="tourEnableMetrics">
-              <input id="tourEnableMetrics" type="checkbox" />
-              <span>Enable Metrics</span>
-            </label>
-            <label for="tourShowMetrics">
-              <input id="tourShowMetrics" type="checkbox" />
-              <span>Show Metrics</span>
-            </label>
-            <div>
-              <button id="tourCreate">Create Video Tour Wall</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="tourwall"></div>
       </section>
     </div>
 
@@ -140,22 +130,6 @@
           </div>
         </div>
         <div class="wall-video-metrics video-metrics"></div>
-      </div>
-    </template>
-
-    <template id="tour-video-template">
-      <div id="tour-container-null" class="player-container">
-        <div class="video-stream">
-          <span class="index"></span>
-          <span class="url"></span>
-          <button class="close">&times;</button>
-        </div>
-        <div class="video-container">
-          <div>
-            <video></video>
-          </div>
-        </div>
-        <div class="tour-video-metrics video-metrics"></div>
       </div>
     </template>
 

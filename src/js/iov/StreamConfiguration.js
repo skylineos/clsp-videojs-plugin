@@ -244,8 +244,14 @@ export default class StreamConfiguration {
     };
   }
 
+  get protocol () {
+    return this.useSSL
+      ? 'clsps'
+      : 'clsp';
+  }
+
   get url () {
-    // @todo
+    return `${this.protocol}://${this.host}:${this.port}/${this.streamName}`;
   }
 
   destroy () {

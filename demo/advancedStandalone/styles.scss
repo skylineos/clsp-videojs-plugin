@@ -97,12 +97,53 @@ video {
 
     .controls {
       display: flex;
-      background-color: lightgray;
+      flex-direction: column;
+      flex-grow: 1;
+      flex-shrink: 0;
       padding: 1rem;
+      background-color: lightgray;
+
+      .url-containers {
+        display: flex;
+        flex-grow: 1;
+        flex-shrink: 0;
+        justify-content: space-between;
+
+        .urls-container {
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          flex-shrink: 0;
+        }
+
+        .tour-urls-container {
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          flex-shrink: 0;
+        }
+
+        .urls-title {
+          display: flex;
+          justify-content: space-between;
+
+          input {
+            width: 25%;
+          }
+        }
+      }
 
       .controls-container {
-        & > div {
-          margin: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+
+        & > * {
+          margin: 1rem;
+        }
+
+        button {
+          padding: 1rem;
         }
       }
     }

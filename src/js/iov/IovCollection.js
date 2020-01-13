@@ -49,18 +49,15 @@ export default class IovCollection {
    *
    * @returns {Iov}
    */
-  async create (videoElementId, url) {
+  async create (videoElementId) {
     const iov = Iov.factory(
       videoElementId,
-      url,
       {
         id: (++totalIovCount).toString(),
       }
     );
 
     this.add(iov);
-
-    await iov.initialize();
 
     return iov;
   }

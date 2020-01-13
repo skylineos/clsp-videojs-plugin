@@ -28,17 +28,15 @@ export default class Iov {
 
   static METRIC_TYPES = [];
 
-  static factory (videoElementId, streamConfiguration, options) {
-    return new Iov(videoElementId, streamConfiguration, options);
+  static factory (videoElementId, options) {
+    return new Iov(videoElementId, options);
   }
 
   /**
    * @param {String} videoElementId
-   * @param {StreamConfiguration|String} streamConfiguration
-   *   The stream configuration or url of the stream
    * @param {Object} [options]
    */
-  constructor (videoElementId, streamConfiguration, options = {}) {
+  constructor (videoElementId, options = {}) {
     if (!utils.supported()) {
       throw new Error('You are using an unsupported browser - Unable to play CLSP video');
     }
@@ -47,18 +45,8 @@ export default class Iov {
       throw new Error('videoElementId is required to construct an Iov');
     }
 
-    if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
-      streamConfiguration = StreamConfiguration.fromUrl(streamConfiguration);
-    }
-
-    if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
-      throw new Error('invalid streamConfiguration passed to iov constructor');
-    }
-
     // This should be unique - it is only used for logging
     this.id = options.id || uuidv4();
-
-    this.streamConfiguration = streamConfiguration;
 
     this.logger = Logger().factory(`Iov ${this.id}`);
     this.logger.debug('Constructing...');
@@ -250,23 +238,6 @@ export default class Iov {
     return `iov:${this.id}.player:${++this.iovPlayerCount}`;
   }
 
-  async initialize () {
-    this.logger.debug('Initializing...');
-
-    const clspVideoElement = this._prepareVideoElement();
-    const iovPlayer = IovPlayer.factory(
-      this.generatePlayerLogId(),
-      clspVideoElement,
-      () => this.changeSrc(this.streamConfiguration)
-    );
-
-    this._registerPlayerListeners(iovPlayer);
-
-    await iovPlayer.initialize(this.streamConfiguration);
-
-    this.iovPlayer = iovPlayer;
-  }
-
   /**
    * @param {StreamConfiguration|String} url
    *   The StreamConfiguration or url of the new stream
@@ -276,10 +247,6 @@ export default class Iov {
 
     if (!url) {
       throw new Error('url is required to changeSrc');
-    }
-
-    if (!this.iovPlayer) {
-      throw new Error('IovPlayer must be initialized before calling changeSrc');
     }
 
     // Handle the case of multiple changeSrc requests.  Only change to the last
@@ -373,11 +340,6 @@ export default class Iov {
   async stop (iovPlayer = this.iovPlayer) {
     this.logger.debug('Stop');
     await iovPlayer.stop();
-  }
-
-  async restart (iovPlayer = this.iovPlayer) {
-    this.logger.debug('Restart');
-    await iovPlayer.restart();
   }
 
   enterFullscreen (iovPlayer = this.iovPlayer) {

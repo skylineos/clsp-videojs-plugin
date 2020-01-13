@@ -5,7 +5,7 @@ function play () {
     return;
   }
 
-  window.iov.play();
+  window.iov.changeSrc();
 }
 
 function stop () {
@@ -51,10 +51,10 @@ function initialize () {
 
   window.iovCollection = window.IovCollection.asSingleton();
 
-  window.iovCollection.create(videoElementId, url)
+  window.iovCollection.create(videoElementId)
     .then(function (iov) {
       window.iov = iov;
-      iov.play();
+      iov.changeSrc(url);
     })
     .catch(function (error) {
       document.getElementById('browser-not-supported').style.display = 'block';

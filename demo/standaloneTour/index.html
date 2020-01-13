@@ -53,7 +53,7 @@
             name="stream-src"
           ></textarea>
           <button
-            onclick="clspControls.resetTour()"
+            onclick="window.tour.reset()"
             title="reset tour"
           >Reset Tour</button>
         </div>
@@ -72,37 +72,41 @@
       </div>
       <div class="controls">
         <button
-          onclick="window.clspControls.resumeTour(true, true)"
+          onclick="window.tour.resume(true, true)"
           title="resume tour"
-          >
+          disabled
+        >
           <i class="fas fa-play"></i>
         </button>
         <button
-          onclick="window.clspControls.pauseTour()"
+          onclick="window.tour.pause()"
           title="pause tour"
-          >
+          disabled
+        >
           <i class="fas fa-pause"></i>
         </button>
         <button
-          onclick="window.clspControls.previous()"
+          onclick="window.tour.previous()"
           title="previous"
-          >
+          disabled
+        >
           <i class="fas fa-step-backward"></i>
         </button>
         <button
-          onclick="window.clspControls.next(true)"
+          onclick="window.tour.next(true)"
           title="next"
-          >
+          disabled
+        >
           <i class="fas fa-step-forward"></i>
         </button>
         <button
-          onclick="window.clspControls.destroy()"
+          onclick="window.tour.destroy()"
           title="destroy"
-          >
+        >
           <i class="fas fa-bomb"></i>
         </button>
         <button
-          onclick="window.clspControls.fullscreen()"
+          onclick="window.tour.fullscreen()"
           title="fullscreen"
         >
           <i class="fas fa-expand"></i>
