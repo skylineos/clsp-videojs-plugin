@@ -44,7 +44,9 @@ function getLocalStorage (elementId) {
   };
 }
 
-function initLocalStorage (elementId, type, defaultValue) {
+function initLocalStorage (
+  elementId, type, defaultValue,
+) {
   const $element = $(`#${elementId}`);
   const localStorageKey = `skyline.clspPlugin.${elementId}`;
 
@@ -98,7 +100,6 @@ function initLocalStorage (elementId, type, defaultValue) {
       throw new Error(`Unknown element type: ${type}`);
     }
   }
-
 }
 
 function initializeWall () {
@@ -120,17 +121,23 @@ function initializeWall () {
     $container.find('.video-stream .index').text(index);
 
     if (playerOptions.tour && playerOptions.tour.enabled) {
-      const tour = TourController.factory(iovCollection, videoElementId, {
-        intervalDuration: 10,
-        onChange: (index, streamConfiguration) => {
-          $container.find('.video-stream .url').text(`${streamConfiguration.url} (${index}/${tour.streamConfigurations.length})`);
-          $container.find('.video-stream .url').attr('title', streamConfiguration.url);
+      const tour = TourController.factory(
+        iovCollection, videoElementId, {
+          intervalDuration: 10,
+          onShown: (
+            error, index, streamConfiguration,
+          ) => {
+            if (error) {
+              console.error(`Failed to play stream ${streamConfiguration.url}`);
+              console.error(error);
+              return;
+            }
+
+            $container.find('.video-stream .url').text(`${streamConfiguration.url} (${index}/${tour.streamConfigurations.length})`);
+            $container.find('.video-stream .url').attr('title', streamConfiguration.url);
+          },
         },
-        onChangeError: (error, index, streamConfiguration) => {
-          console.error(`Failed to play stream ${streamConfiguration.url}`);
-          console.error(error);
-        },
-      });
+      );
 
       tour.addUrls(playerOptions.sources.map((source) => source.src));
       tour.start(playerOptions.sources, playerOptions.tour.interval);
@@ -163,9 +170,13 @@ function initializeWall () {
         for (let j = 0; j < metricType.length; j++) {
           const text = metricType[j];
           const name = text.replace(new RegExp(/\./, 'g'), '-');
-          const $metric = $('<div/>', { class: `metric ${name}` });
+          const $metric = $('<div/>', {
+            class: `metric ${name}`,
+          });
 
-          $metric.append($('<span/>', { class: 'value' }));
+          $metric.append($('<span/>', {
+            class: 'value',
+          }));
           $metric.append($('<span/>', {
             class: 'type',
             title: text,
@@ -253,7 +264,7 @@ function initializeWall () {
             return {
               src: url,
               type: "video/mp4; codecs='avc1.42E01E'",
-            }
+            };
           }),
           clsp: {
             enableMetrics: $('#wallEnableMetrics').prop('checked'),
@@ -327,14 +338,28 @@ function initializeWall () {
   $('#wall-controls-toggle').click(toggleControls);
   $('#wallShowMetrics').on('change', setMetricsVisibility);
 
-  initLocalStorage('wallEnabled', 'checkbox', true);
-  initLocalStorage('wallUrls', 'textarea', defaultWallUrls);
-  initLocalStorage('wallReplicate', 'input', 1);
+  initLocalStorage(
+    'wallEnabled', 'checkbox', true,
+  );
+  initLocalStorage(
+    'wallUrls', 'textarea', defaultWallUrls,
+  );
+  initLocalStorage(
+    'wallReplicate', 'input', 1,
+  );
 
-  initLocalStorage('wallToursEnabled', 'checkbox', true);
-  initLocalStorage('wallTourUrls', 'textarea', defaultWallUrls);
-  initLocalStorage('wallTourReplicate', 'input', 1);
-  initLocalStorage('wallTourInterval', 'input', 10);
+  initLocalStorage(
+    'wallToursEnabled', 'checkbox', true,
+  );
+  initLocalStorage(
+    'wallTourUrls', 'textarea', defaultWallUrls,
+  );
+  initLocalStorage(
+    'wallTourReplicate', 'input', 1,
+  );
+  initLocalStorage(
+    'wallTourInterval', 'input', 10,
+  );
 }
 
 $(() => {

@@ -9,7 +9,9 @@ import moment from 'moment';
 import humanize from 'humanize';
 import videojs from 'video.js';
 import 'videojs-errors';
-import { version as videojsErrorsVersion } from 'videojs-errors/package.json';
+import {
+  version as videojsErrorsVersion,
+} from 'videojs-errors/package.json';
 
 import packageJson from '~root/package.json';
 
@@ -92,9 +94,13 @@ function initializeWall () {
       for (let j = 0; j < metricType.length; j++) {
         const text = metricType[j];
         const name = text.replace(new RegExp(/\./, 'g'), '-');
-        const $metric = $('<div/>', { class: `metric ${name}` });
+        const $metric = $('<div/>', {
+          class: `metric ${name}`,
+        });
 
-        $metric.append($('<span/>', { class: 'value' }));
+        $metric.append($('<span/>', {
+          class: 'value',
+        }));
         $metric.append($('<span/>', {
           class: 'type',
           title: text,
@@ -119,7 +125,9 @@ function initializeWall () {
 
     const tech = player.clsp();
 
-    tech.on('metric', (event, { metric }) => {
+    tech.on('metric', (event, {
+      metric,
+    }) => {
       $videoMetrics.find(`.${metric.type.replace(new RegExp(/\./, 'g'), '-')} .value`)
         .attr('title', metric.value)
         .html(metric.value);
@@ -285,9 +293,13 @@ function initializeTour () {
       for (let j = 0; j < metricType.length; j++) {
         const text = metricType[j];
         const name = text.replace(new RegExp(/\./, 'g'), '-');
-        const $metric = $('<div/>', { class: `metric ${name}` });
+        const $metric = $('<div/>', {
+          class: `metric ${name}`,
+        });
 
-        $metric.append($('<span/>', { class: 'value' }));
+        $metric.append($('<span/>', {
+          class: 'value',
+        }));
         $metric.append($('<span/>', {
           class: 'type',
           title: text,
@@ -316,7 +328,9 @@ function initializeTour () {
 
     const tech = player.clsp();
 
-    tech.on('metric', (event, { metric }) => {
+    tech.on('metric', (event, {
+      metric,
+    }) => {
       $videoMetrics.find(`.${metric.type.replace(new RegExp(/\./, 'g'), '-')} .value`)
         .attr('title', metric.value)
         .html(metric.value);
@@ -365,7 +379,7 @@ function initializeTour () {
     let videoIndex = 0;
 
     for (let i = 0; i < timesToReplicate; i++) {
-      let sources = [];
+      const sources = [];
       const type = "video/mp4; codecs='avc1.42E01E'";
 
       for (let j = 0; j < urlList.length; j++) {

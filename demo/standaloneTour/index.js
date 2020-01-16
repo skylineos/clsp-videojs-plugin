@@ -49,7 +49,7 @@ function initialize () {
 
   var date = new Date();
 
-  document.getElementById('tourStartTime').innerText = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+  document.getElementById('tourStartTime').innerText = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
 
   var pageLoadStartTime = Date.now();
 
@@ -64,28 +64,33 @@ function initialize () {
     var displayMinutes = Math.floor(secondsElapsedSinceStart / 60) - (displayHours * 60);
     var displaySeconds = Math.floor(secondsElapsedSinceStart) - (displayHours * 60 * 60) - (displayMinutes * 60);
 
-
     document.getElementById('tourDuration').innerText = displayHours + ' hours ' + displayMinutes + ' minutes ' + displaySeconds + ' seconds';
 
     if (window.performance && window.performance.memory) {
-      document.getElementById('tourHeapSizeLimit').innerText = humanize.filesize(window.performance.memory.jsHeapSizeLimit);
-      document.getElementById('tourTotalHeapSize').innerText = humanize.filesize(window.performance.memory.totalJSHeapSize);
-      document.getElementById('tourUsedHeapSize').innerText = humanize.filesize(window.performance.memory.usedJSHeapSize);
+      document.getElementById('tourHeapSizeLimit').innerText = window.humanize.filesize(window.performance.memory.jsHeapSizeLimit);
+      document.getElementById('tourTotalHeapSize').innerText = window.humanize.filesize(window.performance.memory.totalJSHeapSize);
+      document.getElementById('tourUsedHeapSize').innerText = window.humanize.filesize(window.performance.memory.usedJSHeapSize);
     }
   }, 1000);
 
   _getTourList();
 
-  window.tour = window.TourController.factory(window.IovCollection.asSingleton(), videoElementId, {
-    intervalDuration: 10,
-    onChange: function (index, streamConfiguration) {
-      window.document.getElementById('current-stream-url').innerHTML = streamConfiguration.url + ' (' + index + '/' + window.tour.streamConfigurations.length + ')';
+  window.tour = window.TourController.factory(
+    window.IovCollection.asSingleton(), videoElementId, {
+      intervalDuration: 10,
+      onShown: function (
+        error, index, streamConfiguration,
+      ) {
+        if (error) {
+          console.error(`Failed to play stream ${streamConfiguration.url}`);
+          console.error(error);
+          return;
+        }
+
+        window.document.getElementById('current-stream-url').innerHTML = streamConfiguration.url + ' (' + index + '/' + window.tour.streamConfigurations.length + ')';
+      },
     },
-    onChangeError: function (error, index, streamConfiguration) {
-      console.error(`Failed to play stream ${streamConfiguration.url}`);
-      console.error(error);
-    },
-  });
+  );
 
   window.tour.addUrls(window.urls);
   window.tour.start();

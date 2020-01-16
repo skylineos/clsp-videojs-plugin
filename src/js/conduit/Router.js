@@ -52,7 +52,7 @@ export default function () {
     clientId,
     host,
     port,
-    useSSL
+    useSSL,
   ) {
     try {
       this.logId = logId;
@@ -87,18 +87,19 @@ export default function () {
         this.host,
         this.port,
         '/mqtt',
-        this.clientId
+        this.clientId,
       );
 
       this.mqttClient.onConnectionLost = this._onConnectionLost.bind(this);
       this.mqttClient.onMessageArrived = this._onMessageArrived.bind(this);
+      this.mqttClient.onMessageDelivered = this._onMessageDelivered.bind(this);
 
       this.boundWindowMessageEventHandler = this._windowMessageEventHandler.bind(this);
 
       window.addEventListener(
         'message',
         this.boundWindowMessageEventHandler,
-        false
+        false,
       );
     }
     catch (error) {
@@ -106,6 +107,9 @@ export default function () {
       this.logger.error(error);
     }
   }
+
+  // The number of seconds to wait for a "publish" message to be delivered
+  Router.PUBLISH_TIMEOUT = 10;
 
   // All events that are emitted by the Router are prefixed with `clsp_router`
   Router.events = {
@@ -118,6 +122,12 @@ export default function () {
     // Triggered when a segment / moof is transmitted.
     // Can be triggered for as long as the connection is open.
     DATA_RECEIVED: 'clsp_router_mqtt_data',
+    // Triggered when a message is successfully published to the server
+    // Can only be triggered on publish
+    PUBLISH_SUCCESS: 'clsp_router_publish_success',
+    // Triggered when a message fails to be published to the server
+    // Can only be triggered on publish
+    PUBLISH_FAIL: 'clsp_router_publish_failure',
     // Triggered when the connection to the mqtt server is established.
     // Can only be triggered at time of connection.
     CONNECT_SUCCESS: 'clsp_router_connect_success',
@@ -146,14 +156,14 @@ export default function () {
     clientId,
     host,
     port,
-    useSSL
+    useSSL,
   ) {
     return new Router(
       logId,
       clientId,
       host,
       port,
-      useSSL
+      useSSL,
     );
   };
 
@@ -167,7 +177,7 @@ export default function () {
    *
    * @returns {void}
    */
-  Router.prototype._sendToParent = function (message) {
+  Router.prototype._sendToParentWindow = function (message) {
     this.logger.debug('Sending message to parent window...');
 
     if (this.destroyed) {
@@ -175,7 +185,7 @@ export default function () {
     }
 
     if (typeof message !== 'object') {
-      throw new Error('_sendToParent must be passed an object');
+      throw new Error('_sendToParentWindow must be passed an object');
     }
 
     message.clientId = this.clientId;
@@ -188,9 +198,13 @@ export default function () {
         break;
       }
       case Router.events.DATA_RECEIVED: {
-        if (!message.hasOwnProperty('destinationName') || !message.hasOwnProperty('payloadString') || !message.hasOwnProperty('payloadBytes')) {
-          throw new Error('improperly formatted "data" message sent to _sendToParent');
+        if (!Object.prototype.hasOwnProperty.call(message, 'destinationName') ||
+          !Object.prototype.hasOwnProperty.call(message, 'payloadString') ||
+          !Object.prototype.hasOwnProperty.call(message, 'payloadBytes')
+        ) {
+          throw new Error('improperly formatted "data" message sent to _sendToParentWindow');
         }
+
         break;
       }
       case Router.events.CONNECT_FAILURE:
@@ -198,13 +212,36 @@ export default function () {
       case Router.events.SUBSCRIBE_FAILURE:
       case Router.events.UNSUBSCRIBE_FAILURE:
       case Router.events.WINDOW_MESSAGE_FAIL: {
-        if (!message.hasOwnProperty('reason')) {
-          throw new Error('improperly formatted "fail" message sent to _sendToParent');
+        if (!Object.prototype.hasOwnProperty.call(message, 'reason')) {
+          throw new Error('improperly formatted "fail" message sent to _sendToParentWindow');
         }
+
+        break;
+      }
+      case Router.events.PUBLISH_SUCCESS: {
+        if (!message.publishId) {
+          throw new Error('publish message must contain a publishId');
+        }
+
+        if (!message.topic) {
+          throw new Error('publish message must contain a topic');
+        }
+
+        break;
+      }
+      case Router.events.PUBLISH_FAIL: {
+        if (!message.publishId) {
+          throw new Error('publish message must contain a publishId');
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(message, 'reason')) {
+          throw new Error('improperly formatted "fail" message sent to _sendToParentWindow');
+        }
+
         break;
       }
       default: {
-        throw new Error('Unknown event ' + message.event + ' sent to _sendToParent');
+        throw new Error('Unknown event ' + message.event + ' sent to _sendToParentWindow');
       }
     }
 
@@ -238,7 +275,7 @@ export default function () {
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
-   * @param {Object} mqttMessage
+   * @param {Paho.MQTT.Message} mqttMessage
    *   The incoming message
    *
    * @returns {void}
@@ -260,7 +297,7 @@ export default function () {
         // There should be some way to only use the payloadBytes here...
       }
 
-      this._sendToParent({
+      this._sendToParentWindow({
         event: Router.events.DATA_RECEIVED,
         destinationName: mqttMessage.destinationName,
         payloadString: payloadString, // @todo - why is this necessary when it doesn't exist?
@@ -269,6 +306,26 @@ export default function () {
     }
     catch (error) {
       this.logger.error(error);
+    }
+  };
+
+  /**
+   * @private
+   *
+   * To be called when a message has been published by this mqtt client.
+   *
+   * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
+   *
+   * @param {Paho.MQTT.Message} mqttMessage
+   *   The message that was delivered
+   *
+   * @returns {void}
+   */
+  Router.prototype._onMessageDelivered = function (mqttMessage) {
+    this.logger.debug('Delivered MQTT message...');
+
+    if (mqttMessage._onDelivered) {
+      mqttMessage._onDelivered();
     }
   };
 
@@ -291,7 +348,7 @@ export default function () {
 
     if (errorCode === 0) {
       // The connection was "properly" terminated
-      this._sendToParent({
+      this._sendToParentWindow({
         event: Router.events.DISCONNECT_SUCCESS,
       });
 
@@ -300,7 +357,7 @@ export default function () {
 
     this.logger.warn('MQTT connection lost improperly!');
 
-    this._sendToParent({
+    this._sendToParentWindow({
       event: Router.events.CONNECTION_LOST,
       reason: 'connection lost error code "' + errorCode + '" with message: ' + response.errorMessage,
     });
@@ -349,7 +406,9 @@ export default function () {
             return;
           }
 
-          this._publish(payload, message.topic);
+          this._publish(
+            message.publishId, message.topic, payload,
+          );
           break;
         }
         case window.conduitCommands.CONNECT: {
@@ -361,7 +420,9 @@ export default function () {
           break;
         }
         case window.conduitCommands.SEND: {
-          this._publish(message.byteArray, message.topic);
+          this._publish(
+            message.publishId, message.topic, message.byteArray,
+          );
           break;
         }
         default: {
@@ -372,7 +433,7 @@ export default function () {
     catch (error) {
       this.logger.error(error);
 
-      this._sendToParent({
+      this._sendToParentWindow({
         event: Router.events.WINDOW_MESSAGE_FAIL,
         reason: 'window message event failure',
       });
@@ -382,8 +443,9 @@ export default function () {
   /**
    * @private
    *
-   * Success handler for "connect".  Registers the window message event handler,
-   * and notifies the parent window that this client is "ready".
+   * Success handler for the mqtt client "connect".  Registers the window
+   * message event handler, and notifies the parent window that this client is
+   * "ready".
    *
    * @todo - track the "connected" status to prevent multiple window message
    * event handlers from being attached
@@ -398,7 +460,7 @@ export default function () {
   Router.prototype._connect_onSuccess = function (response) {
     this.logger.info('Successfully established MQTT connection');
 
-    this._sendToParent({
+    this._sendToParentWindow({
       event: Router.events.CONNECT_SUCCESS,
     });
   };
@@ -406,8 +468,8 @@ export default function () {
   /**
    * @private
    *
-   * Failure handler for "connect".  Sends a "fail" message to the parent
-   * window
+   * Failure handler for mqtt client "connect".  Sends a "fail" message to the
+   * parent window
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
@@ -419,7 +481,7 @@ export default function () {
   Router.prototype._connect_onFailure = function (response) {
     this.logger.info('MQTT Connection Failure!');
 
-    this._sendToParent({
+    this._sendToParentWindow({
       event: Router.events.CONNECT_FAILURE,
       reason: 'Connection Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
     });
@@ -428,7 +490,7 @@ export default function () {
   /**
    * @private
    *
-   * Success handler for "subscribe".
+   * Success handler for mqtt client "subscribe".
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
@@ -447,7 +509,7 @@ export default function () {
   /**
    * @private
    *
-   * Failure handler for "subscribe".  Sends a "fail" message to the parent
+   * Failure handler for mqtt "subscribe".  Sends a "fail" message to the parent
    * window
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
@@ -462,7 +524,7 @@ export default function () {
   Router.prototype._subscribe_onFailure = function (topic, response) {
     this.logger.error('Failed to subscribe to topic "' + topic + '"');
 
-    this._sendToParent({
+    this._sendToParentWindow({
       event: Router.events.SUBSCRIBE_FAILURE,
       reason: 'Subscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
     });
@@ -471,7 +533,7 @@ export default function () {
   /**
    * @private
    *
-   * Start receiving messages for the given topic
+   * Start receiving messages for the given topic.
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
@@ -530,7 +592,7 @@ export default function () {
   Router.prototype._unsubscribe_onFailure = function (topic, response) {
     this.logger.debug('Failed to unsubscribe from topic "' + topic + '"');
 
-    this._sendToParent({
+    this._sendToParentWindow({
       event: Router.events.UNSUBSCRIBE_FAILURE,
       reason: 'Unsubscribe Failed - Error code ' + parseInt(response.errorCode) + ': ' + response.errorMessage,
     });
@@ -575,7 +637,9 @@ export default function () {
    *
    * @returns {void}
    */
-  Router.prototype._publish = function (payload, topic) {
+  Router.prototype._publish = function (
+    publishId, topic, payload,
+  ) {
     this.logger.debug('Publishing to topic "' + topic + '"');
 
     if (!payload) {
@@ -586,11 +650,43 @@ export default function () {
       throw new Error('topic is a required argument when publishing');
     }
 
+    var self = this;
+
     var mqttMessage = new Paho.MQTT.Message(payload);
 
     mqttMessage.destinationName = topic;
+    mqttMessage.qos = 2; // qos: exactly once
 
-    this.mqttClient.send(mqttMessage);
+    var publishTimeout = setTimeout(function () {
+      clearTimeout(publishTimeout);
+      publishTimeout = null;
+
+      self._sendToParentWindow({
+        event: Router.events.PUBLISH_FAIL,
+        publishId: publishId,
+        reason: 'publish operation for "' + topic + '" timed out after ' + Router.PUBLISH_TIMEOUT + ' seconds.',
+      });
+    }, Router.PUBLISH_TIMEOUT * 1000);
+
+    // custom property
+    mqttMessage._onDelivered = function (mqttMessage) {
+      if (!publishTimeout) {
+        // the publish operation timed out and has already been rejected
+        return;
+      }
+
+      clearTimeout(publishTimeout);
+      publishTimeout = null;
+
+      self._sendToParentWindow({
+        event: Router.events.PUBLISH_SUCCESS,
+        publishId: publishId,
+        topic: topic,
+      });
+    };
+
+    // @todo - this can fail if the client is not connected
+    this.mqttClient.publish(mqttMessage);
   };
 
   /**
@@ -635,7 +731,7 @@ export default function () {
 
       this.logger.error('Failed to connect', error);
 
-      this._sendToParent({
+      this._sendToParentWindow({
         event: Router.events.CONNECT_FAILURE,
         reason: 'General error when trying to connect.',
       });
@@ -710,7 +806,7 @@ export default function () {
           window.mqttRouterConfig.useSSL,
         );
 
-        window.router._sendToParent({
+        window.router._sendToParentWindow({
           event: Router.events.CREATED,
         });
 

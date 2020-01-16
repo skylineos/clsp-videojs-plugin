@@ -50,12 +50,10 @@ export default class IovCollection {
    * @returns {Iov}
    */
   async create (videoElementId) {
-    const iov = Iov.factory(
-      videoElementId,
+    const iov = Iov.factory(videoElementId,
       {
         id: (++totalIovCount).toString(),
-      }
-    );
+      });
 
     this.add(iov);
 
@@ -90,7 +88,7 @@ export default class IovCollection {
    *   False if the iov with the given id does not exist
    */
   has (id) {
-    return this.iovs.hasOwnProperty(id);
+    return Object.prototype.hasOwnProperty.call(this.iovs, id);
   }
 
   /**
@@ -142,7 +140,7 @@ export default class IovCollection {
 
     window.removeEventListener('message', this._onWindowMessage);
 
-    for (let id in this.iovs) {
+    for (const id in this.iovs) {
       this.remove(id);
     }
 

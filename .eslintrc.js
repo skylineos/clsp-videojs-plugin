@@ -97,9 +97,10 @@ const rules = {
   'function-paren-newline': [
     'error',
     {
-      'minItems': 3,
+      minItems: 3,
     },
   ],
+  'no-async-promise-executor': 'warn',
 };
 
 module.exports = {

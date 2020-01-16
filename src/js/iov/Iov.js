@@ -8,16 +8,15 @@ import utils from '../utils';
 import IovPlayer from './IovPlayer';
 import StreamConfiguration from './StreamConfiguration';
 
+const DEFAULT_CONNECTION_CHANGE_PLAY_DELAY = 2;
+const DEFAULT_VISIBILITY_CHANGE_STOP_DELAY = 1;
+const DEFAULT_SHOW_NEXT_VIDEO_DELAY = 0.25;
+
 /**
  * Internet of Video client. This module uses the MediaSource API to
  * deliver video content streamed through MQTT from distributed sources.
  */
-
 export default class Iov {
-  static CONNECTION_CHANGE_PLAY_DELAY = 2;
-  static VISIBILITY_CHANGE_STOP_DELAY = 1;
-  static SHOW_NEXT_VIDEO_DELAY = 0.25;
-
   static EVENT_NAMES = [
     'metric',
     'unsupportedMimeCodec',
@@ -74,21 +73,26 @@ export default class Iov {
       document.addEventListener(
         visibilityChangeEventName,
         this.onVisibilityChange,
-        false
+        false,
       );
     }
 
     window.addEventListener(
       'online',
       this.onConnectionChange,
-      false
+      false,
     );
 
     window.addEventListener(
       'offline',
       this.onConnectionChange,
-      false
+      false,
     );
+
+    // These can be configured manually after construction
+    this.CONNECTION_CHANGE_PLAY_DELAY = DEFAULT_CONNECTION_CHANGE_PLAY_DELAY;
+    this.VISIBILITY_CHANGE_STOP_DELAY = DEFAULT_VISIBILITY_CHANGE_STOP_DELAY;
+    this.SHOW_NEXT_VIDEO_DELAY = DEFAULT_SHOW_NEXT_VIDEO_DELAY;
   }
 
   on (name, action) {
@@ -153,8 +157,8 @@ export default class Iov {
         // Without this timeout, the video appears blank.  Not sure if there is
         // some race condition...
         setTimeout(() => {
-          this.play();
-        }, Iov.CONNECTION_CHANGE_PLAY_DELAY * 1000);
+          this.changeSrc(this.streamConfiguration);
+        }, this.CONNECTION_CHANGE_PLAY_DELAY * 1000);
       }
     }
     else {
@@ -170,10 +174,10 @@ export default class Iov {
 
     if (document[hiddenStateName]) {
       // Stop playing when tab is hidden or window is minimized
-      this.visibilityChangeTimeout = setTimeout(async () => {
+      this.visibilityChangeTimeout = setTimeout(() => {
         this.logger.debug('Stopping because tab is not visible...');
-        await this.stop();
-      }, Iov.VISIBILITY_CHANGE_STOP_DELAY * 1000);
+        this.stop();
+      }, this.VISIBILITY_CHANGE_STOP_DELAY * 1000);
 
       return;
     }
@@ -184,7 +188,7 @@ export default class Iov {
 
     if (this.iovPlayer.stopped) {
       this.logger.debug('Playing because tab became visible...');
-      this.play();
+      this.changeSrc(this.streamConfiguration);
     }
   };
 
@@ -211,9 +215,13 @@ export default class Iov {
     clspVideoElement.classList.add('clsp-video');
     clspVideoElement.muted = true;
 
+    const insertBefore = this.iovPlayer && this.iovPlayer.videoElement
+      ? this.iovPlayer.videoElement.nextSibling
+      : this.videoElementParent.childNodes[0];
+
     // @todo - is it ok that the most recent video is always first?  what about
     // the spinner or the not-supported text
-    this.videoElementParent.insertBefore(clspVideoElement, this.videoElementParent.childNodes[0]);
+    this.videoElementParent.insertBefore(clspVideoElement, insertBefore);
 
     return clspVideoElement;
   }
@@ -238,11 +246,60 @@ export default class Iov {
     return `iov:${this.id}.player:${++this.iovPlayerCount}`;
   }
 
+  _clearNextPlayerTimeout () {
+    if (this.nextPlayerTimeout) {
+      clearTimeout(this.nextPlayerTimeout);
+      this.nextPlayerTimeout = null;
+    }
+  }
+
+  /**
+   * Meant to be run as soon as the next player (after awaiting changeSrc) has
+   * recevied its first frame.
+   */
+  showNextStream () {
+    this.logger.debug('About to show next player');
+
+    // The next player is actually playing / displaying video, but it isn't
+    // visible because the old player is still in front of it.  The destruction
+    // of the old player is what actually causes the next player to become
+    // visible.
+    if (this.iovPlayer) {
+      // async, but we don't need to wait for it
+      this.iovPlayer.destroy();
+    }
+
+    this._clearNextPlayerTimeout();
+
+    if (this.pendingChangeSrcIovPlayer) {
+      this.streamConfiguration = this.pendingChangeSrcStreamConfiguration;
+      this.iovPlayer = this.pendingChangeSrcIovPlayer;
+
+      this.pendingChangeSrcStreamConfiguration = null;
+      this.pendingChangeSrcIovPlayer = null;
+    }
+  }
+
+  cancelChangeSrc (id) {
+    if (!this.pendingChangeSrcIovPlayer) {
+      return;
+    }
+
+    // @todo - should we await this?
+    this.pendingChangeSrcIovPlayer.destroy();
+
+    this.pendingChangeSrcId = null;
+    this.pendingChangeSrcStreamConfiguration = null;
+    this.pendingChangeSrcIovPlayer = null;
+  }
+
   /**
    * @param {StreamConfiguration|String} url
    *   The StreamConfiguration or url of the new stream
+   * @param {Boolean} showOnFirstFrame
+   *   if true, when the new stream has received its first frame,
    */
-  async changeSrc (url) {
+  changeSrc (url, showOnFirstFrame = true) {
     this.logger.debug('Changing Stream...');
 
     if (!url) {
@@ -252,57 +309,60 @@ export default class Iov {
     // Handle the case of multiple changeSrc requests.  Only change to the last
     // stream that was requested
     if (this.pendingChangeSrcIovPlayer) {
-      clearTimeout(this.changeSrcTimeout);
-      this.changeSrcTimeout = null;
-
-      // @todo - should we await this?
-      this.pendingChangeSrcIovPlayer.destroy();
-      this.pendingChangeSrcIovPlayer = null;
+      this._clearNextPlayerTimeout();
+      this.cancelChangeSrc();
     }
 
     const clspVideoElement = this._prepareVideoElement();
-    const iovPlayer = IovPlayer.factory(
-      this.generatePlayerLogId(),
-      clspVideoElement,
-      () => this.changeSrc(this.streamConfiguration)
-    );
-
-    this.pendingChangeSrcIovPlayer = iovPlayer;
-
-    this._registerPlayerListeners(iovPlayer);
 
     const streamConfiguration = StreamConfiguration.isStreamConfiguration(url)
       ? url
       : StreamConfiguration.fromUrl(url);
 
-    await iovPlayer.initialize(streamConfiguration);
+    const changeSrcId = uuidv4();
+    const iovPlayer = IovPlayer.factory(
+      this.generatePlayerLogId(),
+      clspVideoElement,
+      () => this.changeSrc(this.streamConfiguration),
+    );
 
-    const firstFramePromise = new Promise((resolve, reject) => {
-      iovPlayer.on('firstFrameShown', () => {
-        this.changeSrcTimeout = setTimeout(() => {
-          this.logger.debug('Destroying old player...');
+    this.pendingChangeSrcId = changeSrcId;
+    this.pendingChangeSrcStreamConfiguration = streamConfiguration;
+    this.pendingChangeSrcIovPlayer = iovPlayer;
 
-          if (this.iovPlayer) {
-            // async, but we don't need to wait for it
-            this.iovPlayer.destroy();
-          }
+    this._registerPlayerListeners(iovPlayer);
 
-          this.iovPlayer = iovPlayer;
-          this.streamConfiguration = streamConfiguration;
+    const firstFrameReceivedPromise = new Promise(async (resolve, reject) => {
+      try {
+        await iovPlayer.initialize(streamConfiguration);
 
-          this.changeSrcTimeout = null;
-          this.pendingChangeSrcIovPlayer = false;
+        // @todo - should the play method only resolve once the first frame has
+        // been shown?  right now it resolves on first moof recevied
+        await this.play(iovPlayer);
 
-          resolve();
-        }, Iov.SHOW_NEXT_VIDEO_DELAY * 1000);
-      });
+        iovPlayer.on('firstFrameShown', () => {
+          this.nextPlayerTimeout = setTimeout(() => {
+            this._clearNextPlayerTimeout();
+
+            this.logger.debug('Next player has received its first frame...');
+
+            if (showOnFirstFrame) {
+              this.showNextStream();
+            }
+
+            resolve();
+          }, this.SHOW_NEXT_VIDEO_DELAY * 1000);
+        });
+      }
+      catch (error) {
+        reject(error);
+      }
     });
 
-    // @todo - should the play method only resolve once the first frame has
-    // been shown?  right now it resolves on first moof recevied
-    await this.play(iovPlayer);
-
-    return firstFramePromise;
+    return {
+      id: changeSrcId,
+      firstFrameReceivedPromise,
+    };
   }
 
   /**
@@ -321,6 +381,11 @@ export default class Iov {
     return Iov.factory(this.videoElement, newStreamConfiguration);
   }
 
+  /**
+   * Whenever possible, use the changeSrc method instead, since it minimizes the
+   * number of black (empty) frames when playing or resuming a stream
+   * @param {IovPlayer} iovPlayer
+   */
   async play (iovPlayer = this.iovPlayer) {
     this.logger.debug('Play');
 

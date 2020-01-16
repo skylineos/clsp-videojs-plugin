@@ -16,7 +16,7 @@ export default class MqttHandler extends Component {
   constructor (
     source,
     tech,
-    options
+    options,
   ) {
     super(tech, options.mqtt);
 
@@ -34,7 +34,9 @@ export default class MqttHandler extends Component {
     this.player = null;
   }
 
-  onChangeSource = (event, { url }) => {
+  onChangeSource = (event, {
+    url,
+  }) => {
     this.logger.debug(`changeSource on player "${this.id}""`);
 
     if (!url) {

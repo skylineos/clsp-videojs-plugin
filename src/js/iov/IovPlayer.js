@@ -1,12 +1,15 @@
 'use strict';
 
-import defaults from 'lodash/defaults';
 import uuidv4 from 'uuid/v4';
 
 import ConduitCollection from '../conduit/ConduitCollection';
 import MSEWrapper from './MSEWrapper';
 import Logger from '../utils/logger';
 import StreamConfiguration from './StreamConfiguration';
+
+const DEFAULT_ENABLE_METRICS = false;
+const DEFAULT_SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
+const DEFAULT_DRIFT_CORRECTION_CONSTANT = 2;
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -35,20 +38,15 @@ export default class IovPlayer {
     'video.segmentIntervalAverage',
   ];
 
-  static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
-  static DRIFT_CORRECTION_CONSTANT = 2;
-
   static factory (
     logId,
     videoElement,
     onConduitMessageError,
-    options
   ) {
     return new IovPlayer(
       logId,
       videoElement,
       onConduitMessageError,
-      options
     );
   }
 
@@ -56,7 +54,6 @@ export default class IovPlayer {
     logId,
     videoElement,
     onConduitMessageError = this.onConduitMessageError,
-    options
   ) {
     this.logId = logId;
     this.logger = Logger().factory(`Iov Player ${this.logId}`);
@@ -78,16 +75,6 @@ export default class IovPlayer {
     this.conduit = null;
     this.streamConfiguration = null;
 
-    this.options = defaults(
-      {},
-      options,
-      {
-        segmentIntervalSampleSize: IovPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
-        driftCorrectionConstant: IovPlayer.DRIFT_CORRECTION_CONSTANT,
-        enableMetrics: false,
-      }
-    );
-
     this.onConduitMessageError = onConduitMessageError;
     this.firstFrameShown = false;
     this.stopped = false;
@@ -105,6 +92,11 @@ export default class IovPlayer {
 
     this.mseWrapper = null;
     this.moov = null;
+
+    // These can be configured manually after construction
+    this.ENABLE_METRICS = DEFAULT_ENABLE_METRICS;
+    this.SEGMENT_INTERVAL_SAMPLE_SIZE = DEFAULT_SEGMENT_INTERVAL_SAMPLE_SIZE;
+    this.DRIFT_CORRECTION_CONSTANT = DEFAULT_DRIFT_CORRECTION_CONSTANT;
   }
 
   on (name, action) {
@@ -148,7 +140,7 @@ export default class IovPlayer {
   }
 
   metric (type, value) {
-    if (!this.options.enableMetrics) {
+    if (!this.ENABLE_METRICS) {
       return;
     }
 
@@ -181,17 +173,17 @@ export default class IovPlayer {
   _onError (
     type,
     message,
-    error
+    error,
   ) {
     this.logger.warn(
       type,
       ':',
-      message
+      message,
     );
     this.logger.error(error);
   }
 
-  generateConduitLogId() {
+  generateConduitLogId () {
     return `${this.logId}.conduit:${++this.conduitCount}`;
   }
 
@@ -223,7 +215,7 @@ export default class IovPlayer {
       this.clientId,
       this.streamConfiguration,
       this.videoElement.parentNode,
-      this.onConduitMessageError
+      this.onConduitMessageError,
     );
 
     await this.conduit.initialize();
@@ -239,7 +231,7 @@ export default class IovPlayer {
           this._onError(
             'play.promise',
             'Error while trying to play clsp video',
-            error
+            error,
           );
         });
       }
@@ -248,7 +240,7 @@ export default class IovPlayer {
       this._onError(
         'play.notPromise',
         'Error while trying to play clsp video - the play operation was NOT a promise!',
-        error
+        error,
       );
     }
   }
@@ -295,7 +287,7 @@ export default class IovPlayer {
             this.metric('video.currentTime', this.videoElement.currentTime);
             this.metric('video.drift', this.drift);
 
-            if (this.drift > ((this.segmentIntervalAverage / 1000) + this.options.driftCorrectionConstant)) {
+            if (this.drift > ((this.segmentIntervalAverage / 1000) + this.DRIFT_CORRECTION_CONSTANT)) {
               this.metric('video.driftCorrection', 1);
               this.videoElement.currentTime = info.bufferTimeEnd;
             }
@@ -317,7 +309,7 @@ export default class IovPlayer {
             this._onError(
               'sourceBuffer.append',
               'Error while appending to sourceBuffer',
-              error
+              error,
             );
 
             await this.reinitializeMseWrapper(mimeCodec);
@@ -334,7 +326,7 @@ export default class IovPlayer {
             this._onError(
               'sourceBuffer.remove',
               'Error while removing segments from sourceBuffer',
-              error
+              error,
             );
           },
           onStreamFrozen: async () => {
@@ -346,7 +338,7 @@ export default class IovPlayer {
             this._onError(
               'mediaSource.sourceBuffer.generic',
               'mediaSource sourceBuffer error',
-              error
+              error,
             );
 
             await this.reinitializeMseWrapper(mimeCodec);
@@ -371,7 +363,7 @@ export default class IovPlayer {
           // needs to be accounted for in the MSEWrapper, and the actual error
           // that was thrown must ALWAYS be the first argument here.  As a
           // shortcut, we can log `...args` here instead.
-          error
+          error,
         );
       },
     });
@@ -466,22 +458,25 @@ export default class IovPlayer {
     // wait.
     return new Promise(async (resolve, reject) => {
       try {
-        await this.conduit.stop();
-      }
-      catch (error) {
-        this.logger.error('failed to stop the conduit');
-        this.logger.error(error);
-      }
+        try {
+          await this.conduit.stop();
+        }
+        catch (error) {
+          this.logger.error('failed to stop the conduit');
+          this.logger.error(error);
+        }
 
-      if (!this.mseWrapper) {
-        this.logger.debug('stop succeeded asynchronously...');
-        return resolve();
-      }
+        if (!this.mseWrapper) {
+          this.logger.debug('stop succeeded asynchronously...');
+          return resolve();
+        }
 
-      // Don't wait until the next play event or the destruction of this player
-      // to clear the MSE
-      try {
+        // Don't wait until the next play event or the destruction of this player
+        // to clear the MSE
         await this.mseWrapper.destroy();
+
+        this.mseWrapper = null;
+
         this.logger.debug('stop succeeded asynchronously...');
         resolve();
       }
@@ -489,8 +484,6 @@ export default class IovPlayer {
         this.logger.error('stop failed asynchronously...');
         reject(error);
       }
-
-      this.mseWrapper = null;
     });
   }
 
@@ -503,7 +496,7 @@ export default class IovPlayer {
     }
 
     if (this.segmentInterval) {
-      if (this.segmentIntervals.length >= this.options.segmentIntervalSampleSize) {
+      if (this.segmentIntervals.length >= this.SEGMENT_INTERVAL_SAMPLE_SIZE) {
         this.segmentIntervals.shift();
       }
 
@@ -522,7 +515,7 @@ export default class IovPlayer {
     }
   }
 
-  enterFullscreen() {
+  enterFullscreen () {
     if (!window.document.fullscreenElement) {
       // Since the iov and player take control of the video element and its
       // parent, ask the parent for fullscreen since the video elements will be
@@ -531,13 +524,13 @@ export default class IovPlayer {
     }
   }
 
-  exitFullscreen() {
+  exitFullscreen () {
     if (window.document.exitFullscreen) {
       window.document.exitFullscreen();
     }
   }
 
-  toggleFullscreen() {
+  toggleFullscreen () {
     if (!window.document.fullscreenElement) {
       this.enterFullscreen();
     }

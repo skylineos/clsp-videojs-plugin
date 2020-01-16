@@ -5,7 +5,7 @@ function play () {
     return;
   }
 
-  window.iov.changeSrc();
+  window.clspControls.changeSrc();
 }
 
 function stop () {

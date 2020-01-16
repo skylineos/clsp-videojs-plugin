@@ -226,7 +226,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       document.addEventListener(
         visibilityChangeEventName,
         this.onVisibilityChange,
-        false
+        false,
       );
     }
   }

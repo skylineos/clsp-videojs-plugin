@@ -40,7 +40,7 @@ export default function () {
       handleSource: function (
         source,
         tech,
-        options = {}
+        options = {},
       ) {
         logger.debug('handleSource');
 
@@ -51,13 +51,13 @@ export default function () {
             mqtt: {
               mode,
             },
-          }
+          },
         );
 
         tech.mqtt = new MqttHandler(
           source,
           tech,
-          localOptions
+          localOptions,
         );
 
         return tech.mqtt;

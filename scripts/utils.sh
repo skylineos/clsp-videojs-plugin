@@ -132,12 +132,10 @@ APPLICATION_ROOT_DIR="$(dirname $APPLICATION_DIR)"
 
 jsFilesToLint=(\
   ".eslintrc.js" \
-  "src/js/*.js" \
   "src/js/**/*.js" \
   "scripts/*.js" \
   "scripts/**/*.js" \
-  "demo/src/js/*.js" \
-  "demo/src/js/**/*.js" \
+  "demo/**/*.js" \
 )
 
 scssFilesToLint=(\

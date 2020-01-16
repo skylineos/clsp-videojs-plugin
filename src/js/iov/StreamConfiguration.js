@@ -1,7 +1,12 @@
+'use strict';
 
 export default class StreamConfiguration {
-  static factory (streamName, host, port, useSSL, tokenConfig) {
-    return new StreamConfiguration(streamName, host, port, useSSL, tokenConfig);
+  static factory (
+    streamName, host, port, useSSL, tokenConfig,
+  ) {
+    return new StreamConfiguration(
+      streamName, host, port, useSSL, tokenConfig,
+    );
   }
 
   static fromObject (config) {
@@ -15,7 +20,7 @@ export default class StreamConfiguration {
       config.port,
       config.useSSL,
       {
-        ...config.tokenConfig
+        ...config.tokenConfig,
       },
     );
   }
@@ -24,7 +29,7 @@ export default class StreamConfiguration {
     return target && target.constructor && target.constructor.name === 'StreamConfiguration';
   }
 
-  static generateConfigFromUrl(url) {
+  static generateConfigFromUrl (url) {
     if (!url) {
       throw new Error('No source was given to be parsed!');
     }
@@ -52,37 +57,43 @@ export default class StreamConfiguration {
       default_port = 443;
       jwtUrl = true;
       hashUrl = false;
-    } else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
+    }
+    else if (url.substring(0, 8).toLowerCase() === 'clsp-jwt') {
       useSSL = false;
       parser.href = url.replace('clsp-jwt', 'http');
       default_port = 9001;
       jwtUrl = true;
       hashUrl = false;
-    } else if (url.substring(0, 10).toLowerCase() === 'clsps-hash') {
+    }
+    else if (url.substring(0, 10).toLowerCase() === 'clsps-hash') {
       useSSL = true;
       parser.href = url.replace('clsps-hash', 'https');
       default_port = 443;
       jwtUrl = false;
       hashUrl = true;
-    } else if (url.substring(0, 9).toLowerCase() === 'clsp-hash') {
+    }
+    else if (url.substring(0, 9).toLowerCase() === 'clsp-hash') {
       useSSL = false;
       parser.href = url.replace('clsp-hash', 'http');
       default_port = 9001;
       jwtUrl = false;
       hashUrl = true;
-    } else if (url.substring(0, 5).toLowerCase() === 'clsps') {
+    }
+    else if (url.substring(0, 5).toLowerCase() === 'clsps') {
       useSSL = true;
       parser.href = url.replace('clsps', 'https');
       default_port = 443;
       jwtUrl = false;
       hashUrl = false;
-    } else if (url.substring(0, 4).toLowerCase() === 'clsp') {
+    }
+    else if (url.substring(0, 4).toLowerCase() === 'clsp') {
       useSSL = false;
       parser.href = url.replace('clsp', 'http');
       default_port = 9001;
       jwtUrl = false;
       hashUrl = false;
-    } else {
+    }
+    else {
       throw new Error('The given source is not a clsp url, and therefore cannot be parsed.');
     }
 
@@ -129,15 +140,16 @@ export default class StreamConfiguration {
         throw new Error("Required 'token' query parameter not defined for a clsp[s]-jwt");
       }
 
-      const protocol = useSSL ?
-        'clsps-jwt' :
-        'clsp-jwt';
+      const protocol = useSSL
+        ? 'clsps-jwt'
+        : 'clsp-jwt';
 
       const jwtUrl = `${protocol}://${host}:${port}/jwt?Start=${query.Start}&End=${query.End}`;
 
       b64_jwt_access_url = window.btoa(jwtUrl);
       jwt = query.token;
-    } else if (hashUrl === true) {
+    }
+    else if (hashUrl === true) {
       // URL: clsp[s]-hash://<sfs-addr>[:9001]/<stream>?start=...&end=...&token=...
       const qp_offset = url.indexOf(parser.pathname) + parser.pathname.length;
 
@@ -162,11 +174,11 @@ export default class StreamConfiguration {
         throw new Error("Required 'token' query parameter not defined for a clsp[s]-hash");
       }
 
-      const protocol = useSSL ?
-        'clsps-hash' :
-        'clsp-hash';
+      const protocol = useSSL
+        ? 'clsps-hash'
+        : 'clsp-hash';
 
-      const hashUrl = `${protocol}://${host}:${port}/${streamName}?start=${query.start}&end=${query.end}&token=${query.token}`
+      const hashUrl = `${protocol}://${host}:${port}/${streamName}?start=${query.start}&end=${query.end}&token=${query.token}`;
 
       b64_hash_access_url = window.btoa(hashUrl);
       hash = query.token;
@@ -192,7 +204,9 @@ export default class StreamConfiguration {
     return StreamConfiguration.fromObject(config);
   }
 
-  constructor (streamName, host, port, useSSL, tokenConfig = {}) {
+  constructor (
+    streamName, host, port, useSSL, tokenConfig = {},
+  ) {
     if (!streamName) {
       throw new Error('streamName is required to create a stream configuration.');
     }
@@ -234,12 +248,12 @@ export default class StreamConfiguration {
 
   toObject () {
     return {
-      streamName: streamConfiguration.streamName,
-      host: streamConfiguration.host,
-      port: streamConfiguration.port,
-      useSSL: streamConfiguration.useSSL,
+      streamName: this.streamName,
+      host: this.host,
+      port: this.port,
+      useSSL: this.useSSL,
       tokenConfig: {
-        ...streamConfiguration.tokenConfig,
+        ...this.tokenConfig,
       },
     };
   }

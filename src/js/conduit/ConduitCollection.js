@@ -114,7 +114,7 @@ export default class ConduitCollection {
     clientId,
     streamConfiguration,
     containerElement,
-    onMessageError
+    onMessageError,
   ) {
     this.logger.debug(`creating a conduit with logId ${logId} and clientId ${clientId}`);
 
@@ -123,7 +123,7 @@ export default class ConduitCollection {
       clientId,
       streamConfiguration,
       containerElement,
-      onMessageError
+      onMessageError,
     );
 
     this._add(conduit);
@@ -163,7 +163,7 @@ export default class ConduitCollection {
    *   False if the conduit with the given clientId does not exist
    */
   has (clientId) {
-    return this.conduits.hasOwnProperty(clientId);
+    return Object.prototype.hasOwnProperty.call(this.conduits, clientId);
   }
 
   /**
@@ -208,7 +208,7 @@ export default class ConduitCollection {
    *
    * @returns {void}
    */
-  destroy() {
+  destroy () {
     if (this.destroyed) {
       return;
     }
@@ -217,7 +217,7 @@ export default class ConduitCollection {
 
     window.removeEventListener('message', this._onWindowMessage);
 
-    for (let clientId in this.conduits) {
+    for (const clientId in this.conduits) {
       this.remove(clientId);
     }
 
