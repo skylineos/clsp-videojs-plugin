@@ -8,6 +8,7 @@ import utils from '../utils';
 import IovPlayer from './IovPlayer';
 import StreamConfiguration from './StreamConfiguration';
 
+const DEFAULT_ENABLE_METRICS = false;
 const DEFAULT_CONNECTION_CHANGE_PLAY_DELAY = 5;
 
 /**
@@ -88,6 +89,7 @@ export default class Iov {
     );
 
     // These can be configured manually after construction
+    this.ENABLE_METRICS = DEFAULT_ENABLE_METRICS;
     this.CONNECTION_CHANGE_PLAY_DELAY = DEFAULT_CONNECTION_CHANGE_PLAY_DELAY;
   }
 
@@ -129,7 +131,7 @@ export default class Iov {
   }
 
   metric (type, value) {
-    if (!this.options.enableMetrics) {
+    if (!this.ENABLE_METRICS) {
       return;
     }
 
@@ -171,14 +173,8 @@ export default class Iov {
     }
 
     // If it went from hidden to not hidden, restart the stream(s)
-
-    if (this.pendingChangeSrcIovPlayer) {
-      this.pendingChangeSrcIovPlayer.restart();
-    }
-
-    if (this.iovPlayer) {
-      this.iovPlayer.restart();
-    }
+    this.restart(this.pendingChangeSrcIovPlayer);
+    this.restart();
   };
 
   _prepareVideoElement () {
@@ -399,6 +395,14 @@ export default class Iov {
 
     this.logger.debug('Stop');
     await iovPlayer.stop();
+  }
+
+  async restart (iovPlayer = this.iovPlayer) {
+    if (!iovPlayer) {
+      return;
+    }
+
+    await iovPlayer.restart();
   }
 
   enterFullscreen (iovPlayer = this.iovPlayer) {

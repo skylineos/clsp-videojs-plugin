@@ -322,16 +322,16 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     mqttHandler.off('error', this.onMqttHandlerError);
     mqttHandler.on('error', this.onMqttHandlerError);
 
-    await mqttHandler.createIov(player, {
-      enableMetrics: this.options.enableMetrics,
-      defaultNonSslPort: this.options.defaultNonSslPort,
-      defaultSslPort: this.options.defaultSslPort,
-    });
+    await mqttHandler.createIov(player);
 
     const iov = this.getIov();
 
+    iov.ENABLE_METRICS = this.options.enableMetrics;
+
     this.logger.debug('resgistering "firstFrameShown" event');
 
+    // @todo - is this still the correct way to track this?  we may want to use
+    // the onShown handler in the iov instead
     iov.on('firstFrameShown', () => {
       this.logger.debug('about to trigger "firstFrameShown" event on videojs player');
       player.trigger('firstFrameShown');
