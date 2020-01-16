@@ -1,26 +1,32 @@
 
 # CLSP Changelog
 
-## v0.16.4+ - 2020-01-09 Recommended
+## v0.16.4+ - 2020-01-09 Critical
 
 * update vulnerable dependencies
 * update all outdated dependencies
-* the video tags should now have a dedicated container for use by the CLSP plugin
+* numerous memory leak fixes
+* the video tags SHOULD now have a dedicated container for use by the CLSP plugin
 * add functionality to switch stream source on internal player
-* add demo for tours
+* add externally available tour controller
 * add stream play timeout handling in Conduit
+* add mqtt publishing events
 * handle streams that don't return data (with timeouts)
 * handle invalid urls (with timeouts)
 * rename IOV classes
 * implement ConduitCollection
 * implement StreamConfiguration
+* implement TourController
+* most constants (like timeout durations) are now configurable on instances
+* improve async logic and error handling
+* add timeouts to catch and respond to errors, which improves memory utilization
 * IovPlayer no longer calls methods on its parent Iov
 * IovPlayer now instantiates and controls its own Conduit
-* each demo now has its own folder
 * split styles into multiple files
+* add demo for tours
+* each demo now has its own folder
 * create constants for Conduit and Router events
 * document Conduit and Router classes and files
-* improve async logic and error handling
 
 ## v0.16.3 - 2019-08-15 - Recommended
 
