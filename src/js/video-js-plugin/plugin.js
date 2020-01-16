@@ -234,11 +234,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   onVisibilityChange = () => {
     this.logger.debug('tab visibility changed...');
 
-    const {
-      hiddenStateName,
-    } = utils.windowStateNames;
-
-    if (document[hiddenStateName]) {
+    if (document[utils.windowStateNames.hiddenStateName]) {
       // Continue to update the time, which will prevent videojs-errors from
       // issuing a timeout error
       this.visibilityChangeInterval = setInterval(async () => {

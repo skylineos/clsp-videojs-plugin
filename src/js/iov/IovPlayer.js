@@ -209,6 +209,7 @@ export default class IovPlayer {
     this.clientId = uuidv4();
 
     this.videoElement.id = this.clientId;
+    this.videoElement.dataset.name = streamConfiguration.streamName;
 
     this.conduit = await ConduitCollection.asSingleton().create(
       this.generateConduitLogId(),
@@ -378,8 +379,29 @@ export default class IovPlayer {
   async restart () {
     this.logger.debug('restart');
 
+    // @todo - this has not yet been tested for memory leaks
+
+    // If the src attribute is missing, it means we must reinitialize.  This can
+    // happen if the video was loaded while the page was not visible, e.g.
+    // document.hidden === true, which can happen when switching tabs.
+    // @todo - is there a more "proper" way to do this?
+    const needToReinitialize = !this.videoElement.src;
+
     await this.stop();
+
+    if (needToReinitialize) {
+      if (this.conduit) {
+        ConduitCollection.asSingleton().remove(this.clientId);
+      }
+
+      await this.initialize();
+    }
+
     await this.play();
+
+    if (needToReinitialize) {
+      this._html5Play();
+    }
   }
 
   onMoof = (mqttMessage) => {

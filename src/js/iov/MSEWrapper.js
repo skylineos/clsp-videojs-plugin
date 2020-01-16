@@ -3,6 +3,7 @@
 import Debug from 'debug';
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
+import utils from '../utils';
 // import { mp4toJSON } from './mp4-inspect';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
@@ -405,7 +406,7 @@ export default class MSEWrapper {
       return;
     }
 
-    if (document.hidden) {
+    if (document[utils.windowStateNames.hiddenStateName]) {
       debug('Tab not in focus - dropping frame...');
       this.metric('frameDrop.hiddenTab', 1);
       this.metric('queue.cannotProcessNext', 1);

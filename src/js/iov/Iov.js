@@ -8,9 +8,7 @@ import utils from '../utils';
 import IovPlayer from './IovPlayer';
 import StreamConfiguration from './StreamConfiguration';
 
-const DEFAULT_CONNECTION_CHANGE_PLAY_DELAY = 2;
-const DEFAULT_VISIBILITY_CHANGE_STOP_DELAY = 1;
-const DEFAULT_SHOW_NEXT_VIDEO_DELAY = 0.25;
+const DEFAULT_CONNECTION_CHANGE_PLAY_DELAY = 5;
 
 /**
  * Internet of Video client. This module uses the MediaSource API to
@@ -91,8 +89,6 @@ export default class Iov {
 
     // These can be configured manually after construction
     this.CONNECTION_CHANGE_PLAY_DELAY = DEFAULT_CONNECTION_CHANGE_PLAY_DELAY;
-    this.VISIBILITY_CHANGE_STOP_DELAY = DEFAULT_VISIBILITY_CHANGE_STOP_DELAY;
-    this.SHOW_NEXT_VIDEO_DELAY = DEFAULT_SHOW_NEXT_VIDEO_DELAY;
   }
 
   on (name, action) {
@@ -151,6 +147,7 @@ export default class Iov {
   }
 
   onConnectionChange = () => {
+    // @todo - does this still work?
     if (window.navigator.onLine) {
       this.logger.debug('Back online...');
       if (this.iovPlayer.stopped) {
@@ -167,28 +164,20 @@ export default class Iov {
     }
   };
 
-  onVisibilityChange = () => {
-    const {
-      hiddenStateName,
-    } = utils.windowStateNames;
-
-    if (document[hiddenStateName]) {
-      // Stop playing when tab is hidden or window is minimized
-      this.visibilityChangeTimeout = setTimeout(() => {
-        this.logger.debug('Stopping because tab is not visible...');
-        this.stop();
-      }, this.VISIBILITY_CHANGE_STOP_DELAY * 1000);
-
+  onVisibilityChange = async () => {
+    // If it is currently hidden, do nothing
+    if (document[utils.windowStateNames.hiddenStateName]) {
       return;
     }
 
-    if (this.visibilityChangeTimeout) {
-      clearTimeout(this.visibilityChangeTimeout);
+    // If it went from hidden to not hidden, restart the stream(s)
+
+    if (this.pendingChangeSrcIovPlayer) {
+      this.pendingChangeSrcIovPlayer.restart();
     }
 
-    if (this.iovPlayer.stopped) {
-      this.logger.debug('Playing because tab became visible...');
-      this.changeSrc(this.streamConfiguration);
+    if (this.iovPlayer) {
+      this.iovPlayer.restart();
     }
   };
 
@@ -403,21 +392,41 @@ export default class Iov {
   }
 
   async stop (iovPlayer = this.iovPlayer) {
+    if (!iovPlayer) {
+      this.logger.warn('Tried to stop non-existent player');
+      return;
+    }
+
     this.logger.debug('Stop');
     await iovPlayer.stop();
   }
 
   enterFullscreen (iovPlayer = this.iovPlayer) {
+    if (!iovPlayer) {
+      this.logger.warn('Tried to fullscreen non-existent player');
+      return;
+    }
+
     this.logger.debug('Enter fullscreen');
     iovPlayer.enterFullscreen();
   }
 
   exitFullscreen (iovPlayer = this.iovPlayer) {
+    if (!iovPlayer) {
+      this.logger.warn('Tried to un-fullscreen non-existent player');
+      return;
+    }
+
     this.logger.debug('Exit fullscreen');
     iovPlayer.exitFullscreen();
   }
 
   toggleFullscreen (iovPlayer = this.iovPlayer) {
+    if (!iovPlayer) {
+      this.logger.warn('Tried to toggle fullscreen on non-existent player');
+      return;
+    }
+
     this.logger.debug('Toggle fullscreen');
     iovPlayer.toggleFullscreen();
   }

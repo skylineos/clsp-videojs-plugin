@@ -3,6 +3,8 @@
 import Paho from 'paho-mqtt';
 
 import Conduit from './Conduit';
+import utils from '../utils';
+
 import Logger from '../utils/logger';
 
 // Even though the export of paho-mqtt is { Client, Message }, there is an
@@ -91,11 +93,11 @@ export default class ConduitCollection {
       throw new Error(`Unable to route message of type ${eventType} for Conduit with clientId "${clientId}".  A Conduit with that clientId does not exist.`);
     }
 
-    // If the document is hidden, don't execute the onMessage handler.  If the
-    // handler is executed, for some reason, the conduit will continue to
-    // request/receive data from the server, which will eventually result in
-    // unconstrained resource utilization, and ultimately a browser crash
-    if (document.hidden) {
+    // If the document is hidden, don't pass on the moofs.  All other forms of
+    // communication are fine, but the moofs occur at a rate that will exhaust
+    // the browser tab resources, ultimately resulting in a crash given enough
+    // time.
+    if (document[utils.windowStateNames.hiddenStateName] && eventType === Conduit.routerEvents.DATA_RECEIVED) {
       return;
     }
 
