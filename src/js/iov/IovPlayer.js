@@ -93,6 +93,8 @@ export default class IovPlayer {
     this.mseWrapper = null;
     this.moov = null;
 
+    this.connectedOnce = false;
+
     // These can be configured manually after construction
     this.ENABLE_METRICS = DEFAULT_ENABLE_METRICS;
     this.SEGMENT_INTERVAL_SAMPLE_SIZE = DEFAULT_SEGMENT_INTERVAL_SAMPLE_SIZE;
@@ -187,6 +189,25 @@ export default class IovPlayer {
     return `${this.logId}.conduit:${++this.conduitCount}`;
   }
 
+  onConduitReconnect = (error) => {
+    // If we haven't connected once yet, it means that the play/connect
+    // operation hasn't completed successfully yet, which means we don't want
+    // to use our reconnection logic yet - because the first connection was
+    // just established, and that has a different workflow (the `play` method)
+    if (!this.connectedOnce) {
+      return;
+    }
+
+    if (error) {
+      this.logger.error(error);
+      // @todo - should we do anything else on error?
+      return;
+    }
+
+    // @todo - is there a more performant way to do this?
+    this.restart();
+  };
+
   onConduitMessageError = (error) => {
     this.logger.error('Conduit Message Error!');
     this.logger.error(error);
@@ -216,7 +237,8 @@ export default class IovPlayer {
       this.clientId,
       this.streamConfiguration,
       this.videoElement.parentNode,
-      this.onConduitMessageError,
+      this.onConduitReconnect,
+      this.onConduitMessageError
     );
 
     await this.conduit.initialize();
@@ -441,6 +463,8 @@ export default class IovPlayer {
       mimeCodec,
       moov,
     } = await this.conduit.play(this.onMoof);
+
+    this.connectedOnce = true;
 
     if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
       this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);

@@ -30,6 +30,10 @@ export default function () {
   var PAHO_MQTT_ERROR_CODE_ALREADY_CONNECTED = 'AMQJS0011E';
   var Paho = window.parent.Paho;
 
+  var DEFAULT_CONNECTION_TIMEOUT = 120;
+  // The number of seconds to wait for a "publish" message to be delivered
+  var DEFAULT_PUBLISH_TIMEOUT = 10;
+
   /**
    * A Router that can be used to set up an MQTT connection to the specified
    * host and port, using a Conduit-provided clientId that will be a part of
@@ -67,9 +71,7 @@ export default function () {
 
       this.logger.debug('Constructing...');
 
-      this.retryInterval = 2000;
       this.Reconnect = null;
-      this.connectionTimeout = 120;
 
       // @todo - there is a "private" method named "_doConnect" in the paho mqtt
       // library that is responsible for instantiating the WebSocket.  We have
@@ -101,15 +103,16 @@ export default function () {
         this.boundWindowMessageEventHandler,
         false,
       );
+
+      // These can be configured manually after construction
+      this.CONNECTION_TIMEOUT = DEFAULT_CONNECTION_TIMEOUT;
+      this.PUBLISH_TIMEOUT = DEFAULT_PUBLISH_TIMEOUT;
     }
     catch (error) {
       this.logger.error('IFRAME error for clientId: ' + clientId);
       this.logger.error(error);
     }
   }
-
-  // The number of seconds to wait for a "publish" message to be delivered
-  Router.PUBLISH_TIMEOUT = 10;
 
   // All events that are emitted by the Router are prefixed with `clsp_router`
   Router.events = {
@@ -664,9 +667,9 @@ export default function () {
       self._sendToParentWindow({
         event: Router.events.PUBLISH_FAIL,
         publishId: publishId,
-        reason: 'publish operation for "' + topic + '" timed out after ' + Router.PUBLISH_TIMEOUT + ' seconds.',
+        reason: 'publish operation for "' + topic + '" timed out after ' + this.PUBLISH_TIMEOUT + ' seconds.',
       });
-    }, Router.PUBLISH_TIMEOUT * 1000);
+    }, this.PUBLISH_TIMEOUT * 1000);
 
     // custom property
     mqttMessage._onDelivered = function (mqttMessage) {
@@ -708,7 +711,7 @@ export default function () {
     willMessage.destinationName = 'iov/clientDisconnect';
 
     var connectionOptions = {
-      timeout: this.connectionTimeout,
+      timeout: this.CONNECTION_TIMEOUT,
       onSuccess: this._connect_onSuccess.bind(this),
       onFailure: this._connect_onFailure.bind(this),
       willMessage: willMessage,

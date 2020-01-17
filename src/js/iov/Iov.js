@@ -172,6 +172,8 @@ export default class Iov {
       return;
     }
 
+    // @todo - try / catch, and on catch, destroy and re-create the player
+
     // If it went from hidden to not hidden, restart the stream(s)
     this.restart(this.pendingChangeSrcIovPlayer);
     this.restart();

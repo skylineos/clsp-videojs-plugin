@@ -15,7 +15,13 @@ import Router from './Router';
 import Logger from '../utils/logger';
 import StreamConfiguration from '../iov/StreamConfiguration';
 
-const DEFAULT_MAX_RECONNECTION_ATTEMPTS = 200;
+const DEFAULT_MAX_RECONNECTION_ATTEMPTS = 0;
+const DEFAULT_MAX_RECONNECTION_TIME = 0;
+// When trying to reconnect, try every 5 seconds for the first 2 minutes, then
+// try every 30 seconds after 2 minutes.
+const DEFAULT_IMMEDIATE_RECONNECTION_DELAY = 5;
+const DEFAULT_IMMEDIATE_RECONNECTION_DURATION = 120;
+const DEFAULT_RECONNECTION_DELAY = 30;
 const DEFAULT_STREAM_DATA_TIMEOUT_DURATION = 30;
 const DEFAULT_MOOV_TIMEOUT_DURATION = 30;
 const DEFAULT_FIRST_MOOF_TIMEOUT_DURATION = 45;
@@ -39,14 +45,16 @@ export default class Conduit {
     clientId,
     streamConfiguration,
     containerElement,
-    onMessageError,
+    onReconnect,
+    onMessageError
   ) {
     return new Conduit(
       logId,
       clientId,
       streamConfiguration,
       containerElement,
-      onMessageError,
+      onReconnect,
+      onMessageError
     );
   }
 
@@ -62,6 +70,8 @@ export default class Conduit {
    * @param {Element} containerElement
    *   The container of the video element and where the Conduit's iframe will be
    *   inserted
+   * @param {Function} onReconnect
+   *   The action to perform when a reconnection attempt is successful
    * @param {Function} onMessageError
    *   The action to perform when an error is encountered between the Router
    *   and Conduit instances
@@ -71,7 +81,8 @@ export default class Conduit {
     clientId,
     streamConfiguration,
     containerElement,
-    onMessageError = () => {},
+    onReconnect = () => {},
+    onMessageError = () => {}
   ) {
     if (!logId) {
       throw new Error('logId is required to construct a new Conduit instance.');
@@ -113,6 +124,7 @@ export default class Conduit {
 
     this.connected = false;
     this._onMessageError = onMessageError;
+    this._onReconnect = onReconnect;
 
     this.statsInterval = null;
     this.firstMoofTimeout = null;
@@ -120,9 +132,14 @@ export default class Conduit {
 
     this.moovRequestTopic = `${this.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
     this.publishHandlers = {};
+    this.reconnectionInProgress = null;
 
     // These can be configured manually after construction
     this.MAX_RECONNECTION_ATTEMPTS = DEFAULT_MAX_RECONNECTION_ATTEMPTS;
+    this.MAX_RECONNECTION_TIME = DEFAULT_MAX_RECONNECTION_TIME;
+    this.IMMEDIATE_RECONNECTION_DELAY = DEFAULT_IMMEDIATE_RECONNECTION_DELAY;
+    this.IMMEDIATE_RECONNECTION_DURATION = DEFAULT_IMMEDIATE_RECONNECTION_DURATION;
+    this.RECONNECTION_DELAY = DEFAULT_RECONNECTION_DELAY;
     this.STREAM_DATA_TIMEOUT_DURATION = DEFAULT_STREAM_DATA_TIMEOUT_DURATION;
     this.MOOV_TIMEOUT_DURATION = DEFAULT_MOOV_TIMEOUT_DURATION;
     this.FIRST_MOOF_TIMEOUT_DURATION = DEFAULT_FIRST_MOOF_TIMEOUT_DURATION;
@@ -204,10 +221,14 @@ export default class Conduit {
    *   Resolves when the connection is successfully established.
    *   Rejects upon failure to connect after a number of retries.
    */
-  connect () {
+  connect (reconnect = true) {
     this.logger.debug('Connecting to MQTT server...');
 
     return new Promise((resolve, reject) => {
+      if (this.connected) {
+        return resolve();
+      }
+
       this._onConnect = (event) => {
         const clientId = event.data.clientId;
 
@@ -237,11 +258,15 @@ export default class Conduit {
         if (eventType === Conduit.routerEvents.CONNECT_FAILURE) {
           this.logger.error(new Error(event.data.reason));
 
-          this._reconnect()
-            .then(resolve)
-            .catch(reject);
+          if (reconnect) {
+            this.reconnect()
+              .then(resolve)
+              .catch(reject);
 
-          return;
+            return;
+          }
+
+          return reject(new Error('Failed to connect'));
         }
 
         // the mse service will stop streaming to us if we don't send
@@ -342,6 +367,12 @@ export default class Conduit {
    */
   disconnect () {
     this.logger.debug('Disconnecting...');
+
+    // If a connection is in progress, cancel it
+    if (this._onConnect) {
+      window.removeEventListener('message', this._onConnect);
+      this._onConnect = null;
+    }
 
     this.connected = false;
 
@@ -457,6 +488,7 @@ export default class Conduit {
     this.statsMsg = null;
 
     this.publishHandlers = null;
+    this.reconnectionInProgress = null;
 
     // @todo - can this be safely dereferenced?
     // this._onMessageError = null;
@@ -777,11 +809,13 @@ export default class Conduit {
         }
         case Conduit.routerEvents.CONNECTION_LOST: {
           this.disconnect();
-          this._reconnect();
+          this.reconnect();
           break;
         }
         case Conduit.routerEvents.WINDOW_MESSAGE_FAIL: {
           // @todo - do we really need to disconnect?
+          // @todo - if yes, should we reconnect and try again, like we do for
+          // CONNECTION_LOST?
           this.disconnect();
           break;
         }
@@ -1116,28 +1150,95 @@ export default class Conduit {
   }
 
   /**
-   * Attempt to reconnect a certain number of times
-   *
+   * @private
    * @async
+   *
+   * Do not call this method directly!  Only use the `reconnect` method.
    */
-  async _reconnect () {
+  async _reconnect (reconnectionStartedAt, stopTryingToReconnectAt, onSuccess, onFailure) {
     this.logger.info('Reconnecting...');
 
     this.reconnectionAttempts++;
 
-    if (this.reconnectionAttempts > this.MAX_RECONNECTION_ATTEMPTS) {
-      throw new Error(`Failed to reconnect after ${this.reconnectionAttempts} attempts.`);
+    if (this.MAX_RECONNECTION_ATTEMPTS && this.reconnectionAttempts > this.MAX_RECONNECTION_ATTEMPTS) {
+      return onFailure(new Error(`Failed to reconnect after ${this.reconnectionAttempts} attempts.`));
+    }
+
+    if (this.MAX_RECONNECTION_TIME && Date.now() > stopTryingToReconnectAt) {
+      return onFailure(new Error(`Failed to reconnect after ${this.MAX_RECONNECTION_TIME} seconds.`));
     }
 
     try {
-      await this.connect();
+      this.disconnect();
+      await this.connect(false);
 
+      // After successfully connecting, reset the reconnection attempts and
       this.reconnectionAttempts = 0;
+      this.reconnectionInProgress = null;
+
+      onSuccess();
     }
     catch (error) {
       this.logger.error(error);
-      this._reconnect();
+
+      const reconnectionDelay = (Date.now() - reconnectionStartedAt > (this.IMMEDIATE_RECONNECTION_DURATION * 1000))
+        ? this.RECONNECTION_DELAY
+        : this.IMMEDIATE_RECONNECTION_DELAY
+
+      setTimeout(() => {
+        // @todo - do we need to worry about recursion overflowing the stack?
+        this._reconnect(
+          reconnectionStartedAt,
+          stopTryingToReconnectAt,
+          onSuccess,
+          onFailure
+        );
+      }, reconnectionDelay * 1000);
     }
+  }
+
+  /**
+   * Attempt to reconnect a certain number of times
+   *
+   * @returns {Promise}
+   */
+  reconnect () {
+    this.logger.info('Reconnecting...');
+
+    // If we're already trying to reconnect, don't try again
+    if (this.reconnectionInProgress) {
+      return this.reconnectionInProgress;
+    }
+
+    const reconnectionStartedAt = Date.now();
+
+    const stopTryingToReconnectAt = this.MAX_RECONNECTION_TIME
+      ? reconnectionStartedAt + (this.MAX_RECONNECTION_TIME * 1000)
+      : 0;
+
+    this.reconnectionInProgress = new Promise((resolve, reject) => {
+      this.logger.info('First reconnection attempt...');
+
+      this._reconnect(
+        reconnectionStartedAt,
+        stopTryingToReconnectAt,
+        () => {
+          this.logger.info('reconnected!')
+
+          // After successfully connecting, clear the reconnectionInProgress
+          this.reconnectionInProgress = null;
+
+          this._onReconnect();
+          resolve();
+        },
+        (error) => {
+          this._onReconnect(error);
+          reject(error);
+        }
+      );
+    });
+
+    return this.reconnectionInProgress;
   }
 
   /**
