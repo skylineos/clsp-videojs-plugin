@@ -22,9 +22,10 @@ const DEFAULT_MAX_RECONNECTION_TIME = 0;
 const DEFAULT_IMMEDIATE_RECONNECTION_DELAY = 5;
 const DEFAULT_IMMEDIATE_RECONNECTION_DURATION = 120;
 const DEFAULT_RECONNECTION_DELAY = 30;
-const DEFAULT_STREAM_DATA_TIMEOUT_DURATION = 30;
-const DEFAULT_MOOV_TIMEOUT_DURATION = 30;
-const DEFAULT_FIRST_MOOF_TIMEOUT_DURATION = 45;
+const DEFAULT_STREAM_DATA_TIMEOUT_DURATION = 10;
+const DEFAULT_MOOV_TIMEOUT_DURATION = 10;
+const DEFAULT_FIRST_MOOF_TIMEOUT_DURATION = 10;
+const DEFAULT_MOOF_TIMEOUT_DURATION = 10;
 const DEFAULT_PUBLISH_STATS_INTERVAL = 5;
 const DEFAULT_TRANSACTION_TIMEOUT = 5;
 
@@ -143,6 +144,7 @@ export default class Conduit {
     this.STREAM_DATA_TIMEOUT_DURATION = DEFAULT_STREAM_DATA_TIMEOUT_DURATION;
     this.MOOV_TIMEOUT_DURATION = DEFAULT_MOOV_TIMEOUT_DURATION;
     this.FIRST_MOOF_TIMEOUT_DURATION = DEFAULT_FIRST_MOOF_TIMEOUT_DURATION;
+    this.MOOF_TIMEOUT_DURATION = DEFAULT_MOOF_TIMEOUT_DURATION;
     this.PUBLISH_STATS_INTERVAL = DEFAULT_PUBLISH_STATS_INTERVAL;
     this.TRANSACTION_TIMEOUT = DEFAULT_TRANSACTION_TIMEOUT;
   }
@@ -408,6 +410,7 @@ export default class Conduit {
     this.pendingTransactions = {};
 
     this.clearFirstMoofTimeout();
+    this.clearMoofTimeout();
 
     if (this.guid) {
       // Stop listening for the moov
@@ -428,7 +431,7 @@ export default class Conduit {
       });
     }
     else {
-      this.logger.warn(`Trying to stop stream ${this.streamName} with no guid!`);
+      this.logger.info(`Trying to stop stream ${this.streamName} with no guid!`);
     }
 
     this.disconnect();
@@ -645,6 +648,13 @@ export default class Conduit {
     }
   }
 
+  clearMoofTimeout () {
+    if (this.moofTimeout) {
+      clearTimeout(this.moofTimeout);
+      this.moofTimeout = null;
+    }
+  }
+
   /**
    * Request the moov from the SFS
    *
@@ -738,9 +748,11 @@ export default class Conduit {
           });
         }
 
-        // @todo - should we have a timeout that checks time between moofs?
-        // e.g. if we are getting moofs, then after 30 seconds we haven't
-        // received another moof, should that throw an error?
+        this.clearMoofTimeout();
+
+        this.moofTimeout = setTimeout(() => {
+          this.reconnect();
+        }, this.MOOF_TIMEOUT_DURATION * 1000);
 
         onMoof(mqttMessage);
       });
@@ -807,15 +819,17 @@ export default class Conduit {
           this._onMqttData(event.data);
           break;
         }
+        case Conduit.routerEvents.CONNECT_FAILURE:
         case Conduit.routerEvents.CONNECTION_LOST: {
-          this.disconnect();
+          if (this.reconnectionInProgress) {
+            return;
+          }
+
           this.reconnect();
           break;
         }
         case Conduit.routerEvents.WINDOW_MESSAGE_FAIL: {
-          // @todo - do we really need to disconnect?
-          // @todo - if yes, should we reconnect and try again, like we do for
-          // CONNECTION_LOST?
+          // @todo - do we really need to disconnect? should we reconnect?
           this.disconnect();
           break;
         }
@@ -1029,7 +1043,7 @@ export default class Conduit {
   transaction (
     topic,
     messageData = {},
-    timeout = this.TRANSACTION_TIMEOUT,
+    timeoutDuration = this.TRANSACTION_TIMEOUT,
     subscribeTopic,
   ) {
     this.logger.debug(`transaction for ${topic}...`);
@@ -1083,8 +1097,8 @@ export default class Conduit {
 
         this.pendingTransactions[transactionId].hasTimedOut = true;
 
-        finished(new Error(`Transaction for ${topic} timed out after ${timeout} seconds`));
-      }, timeout * 1000);
+        finished(new Error(`Transaction for ${topic} timed out after ${timeoutDuration} seconds`));
+      }, timeoutDuration * 1000);
 
       this.subscribe(subscribeTopic, (response) => {
         finished(null, response);
@@ -1283,6 +1297,11 @@ export default class Conduit {
     catch (error) {
       this.logger.error('Error while publishing stats!');
       this.logger.error(error);
+
+      // if the stats cannot be published, treat that as an unexpected
+      // disconnection
+      this.clearStatsInterval();
+      this.reconnect();
     }
   }
 }

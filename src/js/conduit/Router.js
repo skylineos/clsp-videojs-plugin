@@ -667,7 +667,7 @@ export default function () {
       self._sendToParentWindow({
         event: Router.events.PUBLISH_FAIL,
         publishId: publishId,
-        reason: 'publish operation for "' + topic + '" timed out after ' + this.PUBLISH_TIMEOUT + ' seconds.',
+        reason: 'publish operation for "' + topic + '" timed out after ' + self.PUBLISH_TIMEOUT + ' seconds.',
       });
     }, this.PUBLISH_TIMEOUT * 1000);
 
