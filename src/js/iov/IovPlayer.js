@@ -222,7 +222,7 @@ export default class IovPlayer {
     this.videoElement.id = this.clientId;
     this.videoElement.dataset.name = streamConfiguration.streamName;
 
-    this.conduit = await ConduitCollection.asSingleton().create(
+    this.conduit = ConduitCollection.asSingleton().create(
       this.generateConduitLogId(),
       this.clientId,
       this.streamConfiguration,

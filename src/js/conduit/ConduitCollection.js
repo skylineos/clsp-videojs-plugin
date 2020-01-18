@@ -111,7 +111,7 @@ export default class ConduitCollection {
    *
    * @returns {Conduit}
    */
-  async create (
+  create (
     logId,
     clientId,
     streamConfiguration,

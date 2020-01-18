@@ -60,6 +60,7 @@ export default function () {
   ) {
     try {
       this.logId = logId;
+      this.destroyed = false;
 
       this.logger = window.Logger().factory(`Router ${this.logId}`);
 
@@ -109,8 +110,8 @@ export default function () {
       this.PUBLISH_TIMEOUT = DEFAULT_PUBLISH_TIMEOUT;
     }
     catch (error) {
-      this.logger.error('IFRAME error for clientId: ' + clientId);
-      this.logger.error(error);
+      console.error('IFRAME error for clientId: ' + clientId);
+      console.error(error);
     }
   }
 
@@ -181,7 +182,7 @@ export default function () {
    * @returns {void}
    */
   Router.prototype._sendToParentWindow = function (message) {
-    this.logger.debug('Sending message to parent window...');
+    this.logger.debug(`Sending message "${message.event}" to parent window... ${this.destroyed}`);
 
     if (this.destroyed) {
       return;

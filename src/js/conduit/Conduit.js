@@ -228,6 +228,7 @@ export default class Conduit {
 
     return new Promise((resolve, reject) => {
       if (this.connected) {
+        this.logger.warn('already connected')
         return resolve();
       }
 
@@ -261,6 +262,7 @@ export default class Conduit {
           this.logger.error(new Error(event.data.reason));
 
           if (reconnect) {
+            console.log('reconnecting from connect')
             this.reconnect()
               .then(resolve)
               .catch(reject);
@@ -271,15 +273,9 @@ export default class Conduit {
           return reject(new Error('Failed to connect'));
         }
 
-        // the mse service will stop streaming to us if we don't send
-        // a message to iov/stats within 1 minute.
-        this.statsInterval = setInterval(() => {
-          this.publishStats();
-        }, this.PUBLISH_STATS_INTERVAL * 1000);
-
         this.connected = true;
 
-        this.logger.info('Connected');
+        this.logger.info('Connected, resolving');
         resolve();
       };
 
@@ -319,6 +315,7 @@ export default class Conduit {
     // @todo - should we have a check to confirm that the conduit has been initialized?
     // @todo - should connect be called here?
     await this.connect();
+    console.log('successfully connected in play')
 
     if (this.streamConfiguration.jwt && this.streamConfiguration.jwt.length > 0) {
       this.streamName = await this.validateJwt();
@@ -343,6 +340,12 @@ export default class Conduit {
         moov,
       } = await this.requestMoov();
 
+      // Note - this used to be in connect, but it was moved here so that the
+      // client is not constantly hitting the server with 0 byteCount stats
+      // when there is no video playing, and to ensure that the connection is
+      // eventually rejected by the server if the client is not streaming
+      this.resumeStats();
+
       // Set up the listener for the moofs
       await this.requestMoofs(onMoof);
 
@@ -355,10 +358,11 @@ export default class Conduit {
     catch (error) {
       this.logger.error(`Error trying to play stream ${this.streamName}`);
 
-      // @todo - we could retry
-      this.stop();
+      console.log('reconnecting in play error')
+      await this.reconnect();
+      console.log('reconnected in play error')
 
-      throw error;
+      return this.play();
     }
   }
 
@@ -371,19 +375,54 @@ export default class Conduit {
     this.logger.debug('Disconnecting...');
 
     // If a connection is in progress, cancel it
-    if (this._onConnect) {
-      window.removeEventListener('message', this._onConnect);
-      this._onConnect = null;
-    }
-
-    this.connected = false;
+    // if (this._onConnect) {
+    //   window.removeEventListener('message', this._onConnect);
+    //   this._onConnect = null;
+    // }
 
     // when a stream fails, it no longer needs to send stats to the
     // server, and it may not even be connected to the server
     this.clearStatsInterval();
 
-    this._command({
-      method: Conduit.iframeCommands.DISCONNECT,
+    return new Promise((resolve, reject) => {
+      this._onDisconnect = (event) => {
+        const clientId = event.data.clientId;
+
+        // A window message was received that is not related to CLSP
+        if (!clientId) {
+          return;
+        }
+
+        // This message was intended for another conduit
+        if (this.clientId !== clientId) {
+          return;
+        }
+
+        const eventType = event.data.event;
+
+        // Filter out all other window messages
+        // @todo - what about a disconnect failure?
+        if (eventType !== Conduit.routerEvents.DISCONNECT_SUCCESS) {
+          return;
+        }
+
+        this.logger.debug(`disconnect "${eventType}" event`);
+
+        // Whether success or failure, remove the event listener
+        window.removeEventListener('message', this._onDisconnect);
+        this._onDisconnect = null;
+
+        this.connected = false;
+
+        this.logger.info('Disconnected, resolving');
+        resolve();
+      };
+
+      window.addEventListener('message', this._onDisconnect);
+
+      this._command({
+        method: Conduit.iframeCommands.DISCONNECT,
+      });
     });
   }
 
@@ -392,7 +431,8 @@ export default class Conduit {
    *
    * @todo - await the disconnection, and maybe even the
    * unsubscribes
-
+   *
+   * @returns {Promise}
    */
   stop () {
     this.logger.debug('Stopping stream...');
@@ -434,40 +474,10 @@ export default class Conduit {
       this.logger.info(`Trying to stop stream ${this.streamName} with no guid!`);
     }
 
-    this.disconnect();
+    return this.disconnect();
   }
 
-  /**
-   * Clean up and dereference the necessary properties.  Will also disconnect
-   * and destroy the iframe.
-   *
-   * @todo - return a Promise, but do not wait for the promise to resolve to
-   * continue the destroy logic.  the promise should resolve/reject based on
-   * the disconnect method call
-   *
-   * @returns {void}
-   */
-  destroy () {
-    this.logger.debug('Destroying...');
-
-    if (this.destroyed) {
-      return;
-    }
-
-    this.destroyed = true;
-
-    if (this._onConnect) {
-      window.removeEventListener('message', this._onConnect);
-      this._onConnect = null;
-    }
-
-    if (this._onRouterCreate) {
-      window.removeEventListener('message', this._onRouterCreate);
-      this._onRouterCreate = null;
-    }
-
-    this.stop();
-
+  _freeResources () {
     this.clientId = null;
     this.guid = null;
     // The caller must destroy the streamConfiguration
@@ -495,6 +505,43 @@ export default class Conduit {
 
     // @todo - can this be safely dereferenced?
     // this._onMessageError = null;
+  }
+
+  /**
+   * Clean up and dereference the necessary properties.  Will also disconnect
+   * and destroy the iframe.
+   *
+   * @returns {Promise}
+   */
+  destroy () {
+    this.logger.debug('Destroying...');
+
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    if (this._onConnect) {
+      window.removeEventListener('message', this._onConnect);
+      this._onConnect = null;
+    }
+
+    if (this._onRouterCreate) {
+      window.removeEventListener('message', this._onRouterCreate);
+      this._onRouterCreate = null;
+    }
+
+    return this.stop()
+      .then(() => {
+        this._freeResources();
+      })
+      .catch((error) => {
+        this.logger.error('Error while stopping during destroy');
+        this.logger.error(error);
+
+        this._freeResources();
+      });
   }
 
   /**
@@ -634,6 +681,14 @@ export default class Conduit {
     return videoMetaData;
   }
 
+  resumeStats () {
+    this.clearStatsInterval();
+
+    this.statsInterval = setInterval(() => {
+      this.publishStats();
+    }, this.PUBLISH_STATS_INTERVAL * 1000);
+  }
+
   clearStatsInterval () {
     if (this.statsInterval) {
       clearInterval(this.statsInterval);
@@ -750,7 +805,10 @@ export default class Conduit {
 
         this.clearMoofTimeout();
 
+        console.log('setting moof timeout')
         this.moofTimeout = setTimeout(() => {
+          this.logger.warn('Moof timed out!');
+          console.log('reconnnecting from moof timeout')
           this.reconnect();
         }, this.MOOF_TIMEOUT_DURATION * 1000);
 
@@ -819,12 +877,14 @@ export default class Conduit {
           this._onMqttData(event.data);
           break;
         }
-        case Conduit.routerEvents.CONNECT_FAILURE:
+        case Conduit.routerEvents.CONNECT_FAILURE: {
+          console.log('reconnecting from connect_failure')
+          this.reconnect();
+          break;
+        }
         case Conduit.routerEvents.CONNECTION_LOST: {
-          if (this.reconnectionInProgress) {
-            return;
-          }
-
+          console.log('reconnecting from connect_lost')
+          this.reconnectionInProgress = null;
           this.reconnect();
           break;
         }
@@ -1170,9 +1230,10 @@ export default class Conduit {
    * Do not call this method directly!  Only use the `reconnect` method.
    */
   async _reconnect (reconnectionStartedAt, stopTryingToReconnectAt, onSuccess, onFailure) {
-    this.logger.info('Reconnecting...');
+    this.logger.info('_reconnecting...');
 
     this.reconnectionAttempts++;
+    this.logger.warn(`Reconnection attempt ${this.reconnectionAttempts}`);
 
     if (this.MAX_RECONNECTION_ATTEMPTS && this.reconnectionAttempts > this.MAX_RECONNECTION_ATTEMPTS) {
       return onFailure(new Error(`Failed to reconnect after ${this.reconnectionAttempts} attempts.`));
@@ -1183,13 +1244,13 @@ export default class Conduit {
     }
 
     try {
-      this.disconnect();
+      this.logger.info('_reconnect about to disconnect')
+      await this.disconnect();
+      this.logger.info('_reconnect about to connect')
       await this.connect(false);
+      this.logger.info('connected successfully')
 
-      // After successfully connecting, reset the reconnection attempts and
-      this.reconnectionAttempts = 0;
-      this.reconnectionInProgress = null;
-
+      console.log('about to call onSuccess', onSuccess.toString());
       onSuccess();
     }
     catch (error) {
@@ -1200,7 +1261,6 @@ export default class Conduit {
         : this.IMMEDIATE_RECONNECTION_DELAY
 
       setTimeout(() => {
-        // @todo - do we need to worry about recursion overflowing the stack?
         this._reconnect(
           reconnectionStartedAt,
           stopTryingToReconnectAt,
@@ -1221,6 +1281,7 @@ export default class Conduit {
 
     // If we're already trying to reconnect, don't try again
     if (this.reconnectionInProgress) {
+      this.logger.info('reconnection already in progress')
       return this.reconnectionInProgress;
     }
 
@@ -1237,11 +1298,14 @@ export default class Conduit {
         reconnectionStartedAt,
         stopTryingToReconnectAt,
         () => {
-          this.logger.info('reconnected!')
+          this.logger.info('reconnected!');
 
-          // After successfully connecting, clear the reconnectionInProgress
+          // After successfully connecting, clear the reconnectionInProgress and
+          // reset the number of reconnection attempts
+          this.reconnectionAttempts = 0;
           this.reconnectionInProgress = null;
 
+          console.log('about to _onReconnect', this._onReconnect.toString())
           this._onReconnect();
           resolve();
         },
@@ -1263,7 +1327,7 @@ export default class Conduit {
    * @param {Object} message
    */
   _command (message) {
-    this.logger.debug('Sending a message to the iframe...');
+    this.logger.debug(`Sending a message "${message.method}" to the iframe...`);
 
     try {
       // @todo - we should not be dispatching to '*' - we should provide the SFS
@@ -1283,9 +1347,11 @@ export default class Conduit {
    *
    * @async
    *
-   * Send stats to the server
+   * Send stats to the server. The MSE service will stop streaming to us if we
+   * don't send a message to iov/stats within 1 minute.
    */
   async publishStats () {
+    console.log(this.statsMsg, this)
     this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / 30000.0;
     this.statsMsg.byteCount = 0;
 
@@ -1299,9 +1365,11 @@ export default class Conduit {
       this.logger.error(error);
 
       // if the stats cannot be published, treat that as an unexpected
-      // disconnection
+      // disconnection, and stop sending stats.  Some other process needs to
+      // try to reconnect, such as the moofTimeout
       this.clearStatsInterval();
-      this.reconnect();
+      // console.log('reconnecting from publish stats')
+      // this.reconnect();
     }
   }
 }
