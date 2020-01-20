@@ -22,10 +22,10 @@ video {
   object-fit: fill;
 }
 
-// .clsp-video {
-//   min-height: 150px;
-//   min-width: 200px;
-// }
+.clsp-video-container {
+  // min-height: 150px;
+  // min-width: 200px;
+}
 
 .tour,
 .headless {
@@ -154,14 +154,13 @@ video {
       grid-template-columns: repeat(4, 1fr);
       flex-grow: 1;
       flex-shrink: 0;
-      height: 100%;
     }
 
     .player-container {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 0.5rem;
+      padding: 0.25rem;
       border: 2px solid grey;
       overflow: hidden;
 
@@ -170,7 +169,6 @@ video {
         width: 100%;
         align-items: center;
         justify-content: space-between;
-        padding: 10px;
         text-align: center;
         background-color: black;
         color: white;
@@ -179,6 +177,7 @@ video {
           padding: 0 0.5rem;
           text-overflow: ellipsis;
           overflow: hidden;
+          white-space: nowrap;
         }
 
         .close {

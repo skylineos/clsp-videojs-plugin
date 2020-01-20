@@ -658,7 +658,13 @@ export default function () {
     var mqttMessage = new Paho.MQTT.Message(payload);
 
     mqttMessage.destinationName = topic;
-    mqttMessage.qos = 2; // qos: exactly once
+
+    // I tried setting the quality of service to 2, which has the highest level
+    // of reliability, but it seems that Paho MQTT doesn't clean up after itself
+    // or have sane (or any) timeouts or something.  When this is set to 2, over
+    // time, local storage will fill up, and all CLSP will cease to work.  Not
+    // to mention the fact that local storage refuses additional writes.
+    // mqttMessage.qos = 2; // qos: exactly once
 
     var publishTimeout = setTimeout(function () {
       clearTimeout(publishTimeout);
