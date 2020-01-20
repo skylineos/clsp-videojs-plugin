@@ -48,11 +48,11 @@ export default class ConduitController {
 
     // initialization
     this._clearAllTimeouts();
-    this._destroyConduit();
-    this.initialize();
   }
 
   /**
+   * @async
+   *
    * Must be called before performing any other operation.  This method destroys
    * the existing conduit and creates a new one.  By using a new Conduit
    * instance after every failure and disconnection, the risks of race
@@ -61,11 +61,11 @@ export default class ConduitController {
    *
    * @returns {this}
    */
-  initialize () {
+  async initialize () {
     this.logger.debug('Initializing');
 
     // Remove the existing conduit
-    this._destroyConduit();
+    await this._destroyConduit();
 
     // Create the new conduit
     this.conduit = ConduitCollection.asSingleton().create(
@@ -94,7 +94,12 @@ export default class ConduitController {
         return reject(new Error('Cannot connect before initialization'));
       }
 
-      const finish = (error) => {
+      if (this.isConnected) {
+        this.logger.warn('Already connected');
+        return Promise.resolve();
+      }
+
+      const finish = async (error) => {
         this._clearConnectTimeout();
 
         if (!error) {
@@ -107,15 +112,21 @@ export default class ConduitController {
         this.logger.error('Error while connecting');
         this.logger.error(error);
 
-        // Attempt to disconnect, but don't wait for it.  Hopefully this will
-        // gracefully cancel any in-progress connection attempts.
-        // this.disconnect();
+        try {
+          // Attempt to disconnect, but don't wait for it.  Hopefully this will
+          // gracefully cancel any in-progress connection attempts.
+          // this.disconnect();
 
-        // Since the connection failed, don't do anything fancy to try to
-        // recover, since there may be other pending operations that may cause
-        // race conditions.  Instead, terminate the connection as best as we
-        // can by destroying the Conduit and try again.
-        this.initialize();
+          // Since the connection failed, don't do anything fancy to try to
+          // recover, since there may be other pending operations that may cause
+          // race conditions.  Instead, terminate the connection as best as we
+          // can by destroying the Conduit and try again.
+          await this.initialize();
+        }
+        catch (error) {
+          this.logger.error('Error while trying to initialize during connect');
+          return reject(error);
+        }
 
         // Recursively try to connect.  Reject should never be called, because
         // we never stop trying to reconnect.
@@ -158,7 +169,7 @@ export default class ConduitController {
       //   return reject(new Error('Cannot disconnect before connecting'));
       // }
 
-      const finish = (error) => {
+      const finish = async (error) => {
         this._clearDisconnectTimeout();
 
         if (!error) {
@@ -166,25 +177,39 @@ export default class ConduitController {
           this.isConnected = false;
           this.isPlaying = false;
 
-          // After disconnecting, even if there wasn't an error we initialize
-          // here so that the caller has a conduit ready to connect and play.
-          // This may be less efficient than it could be, but it prevents
-          // unintended side-effects and race conditions that occur when reusing
-          // conduits.
-          this.initialize();
+          try {
+            // After disconnecting, even if there wasn't an error we initialize
+            // here so that the caller has a conduit ready to connect and play.
+            // This may be less efficient than it could be, but it prevents
+            // unintended side-effects and race conditions that occur when reusing
+            // conduits.
+            await this.initialize();
 
-          // When we disconnect properly, there is no need to destroy the
-          // existing conduit.
-          return resolve();
+            // When we disconnect properly, there is no need to destroy the
+            // existing conduit.
+            return resolve();
+          }
+          catch (initializeError) {
+            this.logger.error('Error while trying to initialize after successful disconnection')
+            return reject(initializeError);
+          }
         }
 
-        // Since the disconnection failed, don't do anything fancy to try to
-        // recover, since there may be other pending operations that may cause
-        // race conditions.  Since we attempted to disconnect, we have no further
-        // use for this particular conduit.  Destroy it and be done with it.
-        // We will create a new one here so that subsequent operations have a
-        // Conduit instance to work with.
-        this.initialize();
+        try {
+          // Since the disconnection failed, don't do anything fancy to try to
+          // recover, since there may be other pending operations that may cause
+          // race conditions.  Since we attempted to disconnect, we have no further
+          // use for this particular conduit.  Destroy it and be done with it.
+          // We will create a new one here so that subsequent operations have a
+          // Conduit instance to work with.
+          await this.initialize();
+        }
+        catch (initializeError) {
+          this.logger.error('Error while trying to initialize after unsuccessful disconnection');
+          // @todo - both the disconnection and initialization errors should be
+          // "returned"
+          this.logger.error(initializeError);
+        }
 
         this.logger.error('Error while disconnecting');
         reject(error);
@@ -197,6 +222,10 @@ export default class ConduitController {
           this.logger.error(error);
         }
 
+        this._disconnectTimeout = setTimeout(() => {
+          finish(`Disconnection timed out after ${this.DISCONNECT_TIMEOUT} seconds`);
+        }, (this.DISCONNECT_TIMEOUT) * 1000);
+
         try {
           await this.conduit.disconnect();
           finish();
@@ -206,12 +235,9 @@ export default class ConduitController {
         }
       }
 
-      this._disconnectTimeout = setTimeout(() => {
-        finish(`Disconnection timed out after ${this.DISCONNECT_TIMEOUT} seconds`);
-      }, (this.STOP_TIMEOUT + this.DISCONNECT_TIMEOUT) * 1000);
 
       // Try to stop before trying to disconnect
-      this.stop()
+      this._stop()
         .then(onStop)
         .catch(onStop);
     });
@@ -320,11 +346,6 @@ export default class ConduitController {
         return reject(new Error('Cannot stop before connecting'));
       }
 
-      if (!this.isPlaying) {
-        this.logger.warn('Conduit is already stopped');
-        return resolve();
-      }
-
       const finish = (error) => {
         this._clearStopTimeout();
 
@@ -346,40 +367,17 @@ export default class ConduitController {
         finish(`Stop timed out after ${this.STOP_TIMEOUT} seconds`);
       }, this.STOP_TIMEOUT * 1000);
 
-      this.conduit.stop()
-        .then(finish)
-        .catch(finish);
+      if (!this.isPlaying) {
+        this.logger.warn('Conduit is already stopped');
+        finish();
+      }
+      else {
+        this.conduit.stop()
+          .then(finish)
+          .catch(finish);
+      }
+
     });
-  }
-
-  /**
-   * @private
-   *
-   * After failures, timeouts, and disconnects, this method must be called
-   * before instantiating a new conduit.  This method should only be called
-   * by `initialize` and `destroy`.
-   *
-   * @returns {void}
-   */
-  _destroyConduit () {
-    this.logger.debug('Destroying conduit');
-
-    // Attempt a graceful destroy
-    if (this.isPlaying) {
-      this.stop();
-    }
-    else if (this.isConnected) {
-      this.disconnect();
-    }
-
-    if (this.conduit) {
-      ConduitCollection.asSingleton().remove(this.clientId);
-    }
-
-    this.conduit = null;
-    this.isInitialized = false;
-    this.isConnected = false;
-    this.isPlaying = false;
   }
 
   /**
@@ -444,6 +442,42 @@ export default class ConduitController {
     this._clearStopTimeout();
   }
 
+/**
+ * @private
+ *
+ * After failures, timeouts, and disconnects, this method must be called
+ * before instantiating a new conduit.  This method should only be called
+ * by `initialize` and `destroy`.
+ *
+ * @returns {void}
+ */
+  async _destroyConduit() {
+    this.logger.debug('Destroying conduit');
+
+    let error;
+
+    try {
+      await this.stop();
+    }
+    catch (stopError) {
+      error = stopError;
+      this.logger.error('Error while stopping before destroying conduit');
+    }
+
+    if (this.conduit) {
+      ConduitCollection.asSingleton().remove(this.clientId);
+    }
+
+    this.conduit = null;
+    this.isInitialized = false;
+    this.isConnected = false;
+    this.isPlaying = false;
+
+    if (error) {
+      throw error;
+    }
+  }
+
   /**
    * Destroy this Conduit Controller and its associated Conduit instance.
    *
@@ -457,6 +491,21 @@ export default class ConduitController {
     }
 
     this._clearAllTimeouts();
-    this._destroyConduit();
+
+    let error;
+
+    try {
+      await this._destroyConduit();
+    }
+    catch (destroyConduitError) {
+      error = destroyConduitError;
+      this.logger.error('Error while trying to destroy conduit during destroy');
+    }
+
+    this.destroyed = true;
+
+    if (error) {
+      throw error;
+    }
   }
 }
