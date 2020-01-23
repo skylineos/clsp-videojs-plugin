@@ -42,7 +42,6 @@ function createPlayer (index, playerOptions) {
     .find('#wall-container-null');
 
   const $video = $container.find('video');
-  console.log($video)
 
   $video.attr('id', videoId);
 
