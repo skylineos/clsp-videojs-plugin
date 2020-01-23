@@ -16,17 +16,6 @@ html, body {
   background-color: black;
 }
 
-video {
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-}
-
-.clsp-video-container {
-  // min-height: 150px;
-  // min-width: 200px;
-}
-
 .tour,
 .headless {
   display: none !important;
@@ -114,6 +103,7 @@ video {
           flex-direction: column;
           flex-grow: 1;
           flex-shrink: 0;
+          width: 50%;
         }
 
         .tour-urls-container {
@@ -121,6 +111,14 @@ video {
           flex-direction: column;
           flex-grow: 1;
           flex-shrink: 0;
+          width: 50%;
+        }
+
+        .urls-options {
+          justify-content: start;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
         }
 
         .urls-title {
@@ -194,6 +192,19 @@ video {
         display: flex;
         flex-grow: 1;
         flex-shrink: 0;
+
+        .clsp-video-container {
+          height: 100%;
+          width: 100%;
+          // min-height: 150px;
+          // min-width: 200px;
+
+          video {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+          }
+        }
       }
 
       .video-metrics {
