@@ -169,13 +169,10 @@ export default class Iov {
   onVisibilityChange = async () => {
     // If it is currently hidden, do nothing
     if (document[utils.windowStateNames.hiddenStateName]) {
+      this.stop();
       return;
     }
 
-    // @todo - try / catch, and on catch, destroy and re-create the player
-
-    // If it went from hidden to not hidden, restart the stream(s)
-    this.restart(this.pendingChangeSrcIovPlayer);
     this.restart();
   };
 
@@ -311,6 +308,7 @@ export default class Iov {
       this.generatePlayerLogId(),
       clspVideoElement,
       () => this.changeSrc(this.streamConfiguration),
+      this.onPlayerError
     );
 
     this.pendingChangeSrcId = changeSrcId;
@@ -368,6 +366,18 @@ export default class Iov {
     return Iov.factory(this.videoElement, newStreamConfiguration);
   }
 
+  onPlayerError = (error) => {
+    // If it is currently hidden, do nothing
+    if (document[utils.windowStateNames.hiddenStateName]) {
+      this.stop();
+      return;
+    }
+
+    this.logger.error(error);
+
+    this.restart();
+  };
+
   /**
    * Whenever possible, use the changeSrc method instead, since it minimizes the
    * number of black (empty) frames when playing or resuming a stream
@@ -404,7 +414,11 @@ export default class Iov {
       return;
     }
 
-    await iovPlayer.restart();
+    // @todo - this is a blunt instrument - is there a more performant (but
+    // still reliable) way to restart the player as opposed to destroying it and
+    // creating a new one?
+    this.logger.debug('Restart');
+    await this.changeSrc(this.streamConfiguration);
   }
 
   enterFullscreen (iovPlayer = this.iovPlayer) {

@@ -42,11 +42,13 @@ export default class IovPlayer {
     logId,
     videoElement,
     onConduitMessageError,
+    onPlayerError,
   ) {
     return new IovPlayer(
       logId,
       videoElement,
       onConduitMessageError,
+      onPlayerError,
     );
   }
 
@@ -54,6 +56,7 @@ export default class IovPlayer {
     logId,
     videoElement,
     onConduitMessageError = this.onConduitMessageError,
+    onPlayerError = this.onPlayerError,
   ) {
     this.logId = logId;
     this.logger = Logger().factory(`Iov Player ${this.logId}`);
@@ -76,6 +79,7 @@ export default class IovPlayer {
     this.streamConfiguration = null;
 
     this.onConduitMessageError = onConduitMessageError;
+    this.onPlayerError = onPlayerError;
     this.firstFrameShown = false;
     this.stopped = false;
 
@@ -196,6 +200,11 @@ export default class IovPlayer {
 
     // @todo - is there a more performant way to do this?
     this.restart();
+  };
+
+  onPlayerError = (error) => {
+    this.logger.error('Player Error!');
+    this.logger.error(error);
   };
 
   onConduitMessageError = (error) => {
@@ -409,7 +418,11 @@ export default class IovPlayer {
       await this.initialize();
     }
 
-    await this.play();
+    const playError = await this.play();
+
+    if (playError) {
+      return playError;
+    }
 
     if (needToReinitialize) {
       this._html5Play();
@@ -448,11 +461,23 @@ export default class IovPlayer {
       return;
     }
 
-    const {
-      // guid,
-      mimeCodec,
-      moov,
-    } = await this.conduit.play(this.onMoof);
+    let mimeCodec;
+    let moov;
+
+    try {
+      ({
+        // guid,
+        mimeCodec,
+        moov,
+      } = await this.conduit.play(this.onMoof));
+    }
+    catch (error) {
+      this.onPlayerError(error);
+
+      // Don't throw here, since the error was handled.  Return the error to the
+      // caller.
+      return error;
+    }
 
     if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
       this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
