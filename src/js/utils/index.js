@@ -1,6 +1,6 @@
 'use strict';
 
-import utils from './utils/';
+import utils from './utils';
 
 if (!window.clspUtils) {
   window.clspUtils = utils;
