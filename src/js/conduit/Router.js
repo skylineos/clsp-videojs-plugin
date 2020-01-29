@@ -31,6 +31,9 @@ export default function () {
   var Paho = window.parent.Paho;
 
   var DEFAULT_CONNECTION_TIMEOUT = 120;
+  // Setting this to half of the default value to help with SFS memory
+  // management
+  var DEFAULT_KEEP_ALIVE_INTERVAL = 30;
   // The number of seconds to wait for a "publish" message to be delivered
   var DEFAULT_PUBLISH_TIMEOUT = 10;
 
@@ -106,6 +109,7 @@ export default function () {
 
       // These can be configured manually after construction
       this.CONNECTION_TIMEOUT = DEFAULT_CONNECTION_TIMEOUT;
+      this.KEEP_ALIVE_INTERVAL = DEFAULT_KEEP_ALIVE_INTERVAL;
       this.PUBLISH_TIMEOUT = DEFAULT_PUBLISH_TIMEOUT;
     }
     catch (error) {
@@ -718,6 +722,7 @@ export default function () {
 
     var connectionOptions = {
       timeout: this.CONNECTION_TIMEOUT,
+      keepAliveInterval: this.KEEP_ALIVE_INTERVAL,
       onSuccess: this._connect_onSuccess.bind(this),
       onFailure: this._connect_onFailure.bind(this),
       willMessage: willMessage,
