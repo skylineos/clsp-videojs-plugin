@@ -11,6 +11,7 @@
 
 import uuidv4 from 'uuid/v4';
 
+import utils from '../utils/';
 import Router from './Router';
 import Logger from '../utils/logger';
 import StreamConfiguration from '../iov/StreamConfiguration';
@@ -22,12 +23,13 @@ const DEFAULT_MAX_RECONNECTION_TIME = 0;
 const DEFAULT_IMMEDIATE_RECONNECTION_DELAY = 5;
 const DEFAULT_IMMEDIATE_RECONNECTION_DURATION = 120;
 const DEFAULT_RECONNECTION_DELAY = 30;
-const DEFAULT_STREAM_DATA_TIMEOUT_DURATION = 10;
-const DEFAULT_MOOV_TIMEOUT_DURATION = 10;
-const DEFAULT_FIRST_MOOF_TIMEOUT_DURATION = 10;
-const DEFAULT_MOOF_TIMEOUT_DURATION = 10;
+const DEFAULT_STREAM_DATA_TIMEOUT_DURATION = utils.DEFAULT_STREAM_TIMEOUT;
+const DEFAULT_MOOV_TIMEOUT_DURATION = utils.DEFAULT_STREAM_TIMEOUT;
+const DEFAULT_FIRST_MOOF_TIMEOUT_DURATION = utils.DEFAULT_STREAM_TIMEOUT;
+const DEFAULT_MOOF_TIMEOUT_DURATION = utils.DEFAULT_STREAM_TIMEOUT;
 const DEFAULT_PUBLISH_STATS_INTERVAL = 5;
 const DEFAULT_TRANSACTION_TIMEOUT = 5;
+const DEFAULT_ROUTER_PUBLISH_TIMEOUT = utils.DEFAULT_STREAM_TIMEOUT;
 
 export default class Conduit {
   static iframeCommands = {
@@ -147,6 +149,7 @@ export default class Conduit {
     this.MOOF_TIMEOUT_DURATION = DEFAULT_MOOF_TIMEOUT_DURATION;
     this.PUBLISH_STATS_INTERVAL = DEFAULT_PUBLISH_STATS_INTERVAL;
     this.TRANSACTION_TIMEOUT = DEFAULT_TRANSACTION_TIMEOUT;
+    this.ROUTER_PUBLISH_TIMEOUT = DEFAULT_ROUTER_PUBLISH_TIMEOUT;
   }
 
   /**
@@ -1144,6 +1147,7 @@ export default class Conduit {
               host: '${this.streamConfiguration.host}',
               port: ${this.streamConfiguration.port},
               useSSL: ${this.streamConfiguration.useSSL},
+              PUBLISH_TIMEOUT: ${this.ROUTER_PUBLISH_TIMEOUT},
             };
 
             window.conduitCommands = ${JSON.stringify(Conduit.iframeCommands)};

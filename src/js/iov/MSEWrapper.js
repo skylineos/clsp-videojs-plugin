@@ -3,7 +3,7 @@
 import Debug from 'debug';
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
-import utils from '../utils';
+import utils from '../utils/';
 // import { mp4toJSON } from './mp4-inspect';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
@@ -74,9 +74,9 @@ export default class MSEWrapper {
 
     this.options = defaults(
       {}, options, {
-      // These default buffer value provide the best results in my testing.
-      // It keeps the memory usage as low as is practical, and rarely causes
-      // the video to stutter
+        // These default buffer values provide the best results in my testing.
+        // It keeps the memory usage as low as is practical, and rarely causes
+        // the video to stutter
         bufferSizeLimit: 90 + Math.floor(Math.random() * (200)),
         bufferTruncateFactor: 2,
         bufferTruncateValue: null,

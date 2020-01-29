@@ -19,6 +19,10 @@ const MINIMUM_CHROME_VERSION = 52;
 // video/mp4; codecs="avc1.42E00D"
 const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
+// The streams must not timeout earlier than this to be able to support Vero
+// tours and high-quality streams.
+const DEFAULT_STREAM_TIMEOUT = 20;
+
 const logger = Logger().factory();
 
 function browserIsCompatable () {
@@ -136,4 +140,5 @@ export default {
   mediaSourceExtensionsCheck,
   isSupportedMimeType,
   windowStateNames: _getWindowStateNames(),
+  DEFAULT_STREAM_TIMEOUT,
 };
