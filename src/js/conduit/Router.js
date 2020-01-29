@@ -30,13 +30,6 @@ export default function () {
   var PAHO_MQTT_ERROR_CODE_ALREADY_CONNECTED = 'AMQJS0011E';
   var Paho = window.parent.Paho;
 
-  var DEFAULT_CONNECTION_TIMEOUT = 120;
-  // Setting this to half of the default value to help with SFS memory
-  // management
-  var DEFAULT_KEEP_ALIVE_INTERVAL = 30;
-  // The number of seconds to wait for a "publish" message to be delivered
-  var DEFAULT_PUBLISH_TIMEOUT = window.clspRouterConfig.PUBLISH_TIMEOUT;
-
   /**
    * A Router that can be used to set up an MQTT connection to the specified
    * host and port, using a Conduit-provided clientId that will be a part of
@@ -53,6 +46,7 @@ export default function () {
    *   the port the stream is served over
    * @param {Boolean} useSSL
    *   true to request the stream over clsps, false to request the stream over clsp
+   * @param {Object} options
    */
   function Router (
     logId,
@@ -60,6 +54,7 @@ export default function () {
     host,
     port,
     useSSL,
+    options
   ) {
     try {
       this.logId = logId;
@@ -107,10 +102,9 @@ export default function () {
         false,
       );
 
-      // These can be configured manually after construction
-      this.CONNECTION_TIMEOUT = DEFAULT_CONNECTION_TIMEOUT;
-      this.KEEP_ALIVE_INTERVAL = DEFAULT_KEEP_ALIVE_INTERVAL;
-      this.PUBLISH_TIMEOUT = DEFAULT_PUBLISH_TIMEOUT;
+      this.CONNECTION_TIMEOUT = options.CONNECTION_TIMEOUT;
+      this.KEEP_ALIVE_INTERVAL = options.KEEP_ALIVE_INTERVAL;
+      this.PUBLISH_TIMEOUT = options.PUBLISH_TIMEOUT;
     }
     catch (error) {
       this.logger.error('IFRAME error for clientId: ' + clientId);
@@ -164,6 +158,7 @@ export default function () {
     host,
     port,
     useSSL,
+    options
   ) {
     return new Router(
       logId,
@@ -171,6 +166,7 @@ export default function () {
       host,
       port,
       useSSL,
+      options
     );
   };
 
@@ -818,6 +814,11 @@ export default function () {
           window.clspRouterConfig.host,
           window.clspRouterConfig.port,
           window.clspRouterConfig.useSSL,
+          {
+            CONNECTION_TIMEOUT: window.clspRouterConfig.CONNECTION_TIMEOUT,
+            KEEP_ALIVE_INTERVAL: window.clspRouterConfig.KEEP_ALIVE_INTERVAL,
+            PUBLISH_TIMEOUT: window.clspRouterConfig.PUBLISH_TIMEOUT,
+          }
         );
 
         window.router._sendToParentWindow({
