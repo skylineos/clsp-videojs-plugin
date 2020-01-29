@@ -70,7 +70,7 @@ export default class ConduitCollection {
     this.logger.debug('window on message');
 
     if (!this.has(clientId)) {
-      // When the mqtt connection is interupted due to a listener being removed,
+      // When the CLSP connection is interupted due to a listener being removed,
       // a fail event is always sent.  It is not necessary to log this as an error
       // in the console, because it is not an error.
       // @todo - the fail event no longer exists - what is the name of the new

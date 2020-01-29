@@ -221,7 +221,7 @@ export default class IovPlayer {
 
     this.streamConfiguration = streamConfiguration;
 
-    // This MUST be globally unique!  The MQTT server will broadcast the stream
+    // This MUST be globally unique!  The CLSP server will broadcast the stream
     // to a topic that contains this id, so if there is ANY other client
     // connected that has the same id anywhere in the world, the stream to all
     // clients that use that topic will fail.  This is why we use guids rather
@@ -431,7 +431,7 @@ export default class IovPlayer {
     }
   }
 
-  onMoof = (mqttMessage) => {
+  onMoof = (clspMessage) => {
     // @todo - this seems like a hack...
     if (this.stopped) {
       return;
@@ -446,7 +446,7 @@ export default class IovPlayer {
       return;
     }
 
-    this.mseWrapper.append(mqttMessage.payloadBytes);
+    this.mseWrapper.append(clspMessage.payloadBytes);
   };
 
   /**

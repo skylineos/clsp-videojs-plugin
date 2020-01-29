@@ -13,7 +13,7 @@ const DEFAULT_CONNECTION_CHANGE_PLAY_DELAY = 5;
 
 /**
  * Internet of Video client. This module uses the MediaSource API to
- * deliver video content streamed through MQTT from distributed sources.
+ * deliver video content streamed through CLSP from distributed sources.
  */
 export default class Iov {
   static EVENT_NAMES = [

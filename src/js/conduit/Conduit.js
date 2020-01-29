@@ -1,11 +1,11 @@
 'use strict';
 
 /**
- * The Conduit a hidden iframe that is used to establish a dedicated mqtt
+ * The Conduit a hidden iframe that is used to establish a dedicated CLSP
  * websocket for a single video. This is basically an in-browser micro service
  * which uses cross-document communication to route data to and from the iframe.
  *
- * This code is a layer of abstraction on top of the mqtt router, and the
+ * This code is a layer of abstraction on top of the CLSP router, and the
  * controller of the iframe that contains the router.
  */
 
@@ -227,7 +227,7 @@ export default class Conduit {
    *   Rejects upon failure to connect after a number of retries.
    */
   connect (reconnect = true) {
-    this.logger.debug('Connecting to MQTT server...');
+    this.logger.debug('Connecting to CLSP server...');
 
     return new Promise((resolve, reject) => {
       if (this.connected) {
@@ -366,7 +366,7 @@ export default class Conduit {
   }
 
   /**
-   * Disconnect from the mqtt server
+   * Disconnect from the CLSP server
    *
    * @todo - return a promise that resolves when the disconnection is complete!
    */
@@ -540,7 +540,7 @@ export default class Conduit {
     //    promise not a value, then ascychronously find out if it can play this
     //    source after making the call to decrypt the jwt token.22
     // =============================================================================
-    // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+    // Note: this could go away in architecture 2.0 if CLSP was a cluster in this
     // case what is now the sfs ip address in clsp url will always be the same it will
     // be the public ip of cluster gateway.
     const t = response.target_url.split('/');
@@ -591,7 +591,7 @@ export default class Conduit {
     //    promise not a value, then ascychronously find out if it can play this
     //    source after making the call to decrypt the hash token.22
     // =============================================================================
-    // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
+    // Note: this could go away in architecture 2.0 if CLSP was a cluster in this
     // case what is now the sfs ip address in clsp url will always be the same it will
     // be the public ip of cluster gateway.
     const t = response.target_url.split('/');
@@ -731,7 +731,7 @@ export default class Conduit {
       const moofReceivedTopic = `iov/video/${this.guid}/live`;
 
       // Set up the listener for the stream itself (the moof video segments)
-      this.subscribe(moofReceivedTopic, (mqttMessage) => {
+      this.subscribe(moofReceivedTopic, (clspMessage) => {
         if (!hasReceivedFirstMoof) {
           // If we received the first moof after the timeout, do nothing
           if (hasFirstMoofTimedOut) {
@@ -757,7 +757,7 @@ export default class Conduit {
           this.reconnect();
         }, this.MOOF_TIMEOUT_DURATION * 1000);
 
-        onMoof(mqttMessage);
+        onMoof(clspMessage);
       });
     });
   }
@@ -819,7 +819,7 @@ export default class Conduit {
     try {
       switch (eventType) {
         case Conduit.routerEvents.DATA_RECEIVED: {
-          this._onMqttData(event.data);
+          this._onClspData(event.data);
           break;
         }
         case Conduit.routerEvents.CONNECT_FAILURE:
@@ -906,7 +906,7 @@ export default class Conduit {
    *
    * @param {*} message
    */
-  _onMqttData (message) {
+  _onClspData (message) {
     const topic = message.destinationName;
 
     this.logger.debug(`Handling message for topic "${topic}"`);
@@ -1116,7 +1116,7 @@ export default class Conduit {
   /**
    * @private
    *
-   * Generate an iframe with an embedded mqtt router.  The router will be what
+   * Generate an iframe with an embedded CLSP router.  The router will be what
    * this Conduit instance communicates with in subsequent commands.
    *
    * @returns Element
@@ -1141,7 +1141,7 @@ export default class Conduit {
             window.Logger = ${Logger.toString()};
 
             // Configure the CLSP properties
-            window.mqttRouterConfig = {
+            window.clspRouterConfig = {
               logId: '${this.logId}',
               clientId: '${this.clientId}',
               host: '${this.streamConfiguration.host}',
@@ -1262,7 +1262,7 @@ export default class Conduit {
   /**
    * @private
    *
-   * Pass an mqtt command to the iframe.
+   * Pass a CLSP command to the iframe.
    *
    * @param {Object} message
    */

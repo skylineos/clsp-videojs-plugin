@@ -35,7 +35,7 @@ export default function () {
   // management
   var DEFAULT_KEEP_ALIVE_INTERVAL = 30;
   // The number of seconds to wait for a "publish" message to be delivered
-  var DEFAULT_PUBLISH_TIMEOUT = window.mqttRouterConfig.PUBLISH_TIMEOUT;
+  var DEFAULT_PUBLISH_TIMEOUT = window.clspRouterConfig.PUBLISH_TIMEOUT;
 
   /**
    * A Router that can be used to set up an MQTT connection to the specified
@@ -813,11 +813,11 @@ export default function () {
     onload: function () {
       try {
         window.router = Router.factory(
-          window.mqttRouterConfig.logId,
-          window.mqttRouterConfig.clientId,
-          window.mqttRouterConfig.host,
-          window.mqttRouterConfig.port,
-          window.mqttRouterConfig.useSSL,
+          window.clspRouterConfig.logId,
+          window.clspRouterConfig.clientId,
+          window.clspRouterConfig.host,
+          window.clspRouterConfig.port,
+          window.clspRouterConfig.useSSL,
         );
 
         window.router._sendToParentWindow({
