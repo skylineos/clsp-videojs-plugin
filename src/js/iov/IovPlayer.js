@@ -6,6 +6,7 @@ import ConduitCollection from '../conduit/ConduitCollection';
 import MSEWrapper from './MSEWrapper';
 import Logger from '../utils/logger';
 import StreamConfiguration from './StreamConfiguration';
+import utils from '../utils';
 
 const DEFAULT_ENABLE_METRICS = false;
 const DEFAULT_SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
@@ -228,7 +229,9 @@ export default class IovPlayer {
     // than an incrementing integer.
     // It is now prefixed with `clsp-plugin-` to differentiate requests that
     // come from this plugin from others.
-    this.clientId = `clsp-plugin-${uuidv4()}`;
+    // Note - this must not contain the '+' character
+    // @todo - the caller should be able to provide a prefix or something
+    this.clientId = `clsp-plugin-${utils.version.replace('+', '-build-')}-${uuidv4()}`;
 
     this.videoElement.id = this.clientId;
     this.videoElement.dataset.name = streamConfiguration.streamName;
