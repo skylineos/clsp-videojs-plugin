@@ -92,46 +92,38 @@ html, body {
       padding: 1rem;
       background-color: lightgray;
 
-      .url-containers {
+      .stream-configs {
         display: flex;
         flex-grow: 1;
         flex-shrink: 0;
         justify-content: space-between;
 
-        .urls-container {
+        .stream-config {
           display: flex;
           flex-direction: column;
           flex-grow: 1;
           flex-shrink: 0;
           width: 50%;
-        }
 
-        .tour-urls-container {
-          display: flex;
-          flex-direction: column;
-          flex-grow: 1;
-          flex-shrink: 0;
-          width: 50%;
-        }
+          .title {
+            display: flex;
+            justify-content: space-between;
 
-        .urls-options {
-          justify-content: start;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-        }
+            input {
+              width: 25%;
+            }
+          }
 
-        .urls-title {
-          display: flex;
-          justify-content: space-between;
-
-          input {
-            width: 25%;
+          .stream-options {
+            justify-content: start;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
           }
         }
       }
 
-      .controls-container {
+      .options-actions-container {
         display: flex;
         align-items: center;
         justify-content: flex-end;

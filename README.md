@@ -15,9 +15,9 @@ Note - this highest h.264 keyframe/iframe segment frequency this plugin currentl
   - [Via NPM](#via-npm)
   - [Via Git](#via-git)
 - [Usage](#usage)
-  - [&lt;head&gt; Tag](#ltheadgt-tag)
-  - [&lt;video&gt; tag](#ltvideogt-tag)
-  - [&lt;script&gt; Tag](#ltscriptgt-tag)
+  - [`<head>` Tag](#head-tag)
+  - [`<video>` tag](#video-tag)
+  - [`<script>` Tag](#script-tag)
 - [Supported Browsers](#supported-browsers)
 - [Dependencies](#dependencies)
 - [License](#license)
@@ -35,7 +35,7 @@ The new network protocol is handled by specifying the following URI format:
 
 Example stream url:
 
-`clsp://172.28.12.57:9001/FairfaxVideo0520`
+`clsp://172.28.12.57/FairfaxVideo0520`
 
 ### Tokenization
 
@@ -125,8 +125,9 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
 
 ### `<video>` tag
 
-We recommend wrapping the `video` tag in a `div`, as the CLSP plugin needs to
-perform some actions on the `video` element as well as its container.
+We recommend wrapping the `video` tag in a container element (e.g. `div`) that
+the CLSP plugin can mutate as needed.  The CLSP plugin needs to perform some
+actions on the `video` element as well as its container.
 
 On the HTML `video` tag, the `type` attribute must be the following:
 

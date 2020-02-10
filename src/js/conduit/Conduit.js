@@ -310,7 +310,7 @@ export default class Conduit {
    */
 
   /**
-   * If the JWT is valid or if we are not using a JWT, perform the necessary
+   * If the hash is valid or if we are not using a hash, perform the necessary
    * conduit operations to retrieve stream segments (moofs).  The actual
    * "playing" occurs in the player, since it involves taking those received
    * stream segments and using MSE to display them.
@@ -330,10 +330,6 @@ export default class Conduit {
     // @todo - should we have a check to confirm that the conduit has been initialized?
     // @todo - should connect be called here?
     await this.connect();
-
-    if (this.streamConfiguration.jwt && this.streamConfiguration.jwt.length > 0) {
-      this.streamName = await this.validateJwt();
-    }
 
     if (this.streamConfiguration.hash && this.streamConfiguration.hash.length > 0) {
       this.streamName = await this.validateHash();
@@ -509,57 +505,6 @@ export default class Conduit {
   }
 
   /**
-   * Validate the jwt that this conduit was constructed with.
-   *
-   * @async
-   *
-   * @returns {String}
-   *   the stream name
-   */
-  async validateJwt () {
-    this.logger.debug('Validating JWT...');
-
-    // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
-    const {
-      payloadString: response,
-    } = await this.transaction('iov/jwtValidate', {
-      b64_access_url: this.streamConfiguration.b64_jwt_access_url,
-      token: this.streamConfiguration.jwt,
-    });
-
-    if (response.status === 403) {
-      throw new Error('JwtUnAuthorized');
-    }
-
-    if (response.status !== 200) {
-      throw new Error('JwtInvalid');
-    }
-
-    // TODO, figure out how to handle a change in the sfs url from the
-    // clsp-jwt from the target url returned from decrypting the jwt
-    // token.
-    // Example:
-    //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
-    //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-    // --- due to the videojs architecture i don't see a clean way of doing this.
-    // ==============================================================================
-    //    The only way I can see doing this cleanly is to change videojs itself to
-    //    allow the 'canHandleSource' function in MqttSourceHandler to return a
-    //    promise not a value, then ascychronously find out if it can play this
-    //    source after making the call to decrypt the jwt token.22
-    // =============================================================================
-    // Note: this could go away in architecture 2.0 if CLSP was a cluster in this
-    // case what is now the sfs ip address in clsp url will always be the same it will
-    // be the public ip of cluster gateway.
-    const t = response.target_url.split('/');
-
-    // get the actual stream name
-    const streamName = t[t.length - 1];
-
-    return streamName;
-  }
-
-  /**
    * Validate the hash that this conduit was constructed with.
    *
    * @async
@@ -595,7 +540,7 @@ export default class Conduit {
     // --- due to the videojs architecture i don't see a clean way of doing this.
     // ==============================================================================
     //    The only way I can see doing this cleanly is to change videojs itself to
-    //    allow the 'canHandleSource' function in MqttSourceHandler to return a
+    //    allow the 'canHandleSource' function in ClspSourceHandler to return a
     //    promise not a value, then ascychronously find out if it can play this
     //    source after making the call to decrypt the hash token.22
     // =============================================================================
@@ -690,7 +635,6 @@ export default class Conduit {
       {
         initSegmentTopic: this.moovRequestTopic,
         clientId: this.clientId,
-        jwt: this.streamConfiguration.jwt,
       },
       this.MOOV_TIMEOUT_DURATION,
       // We must override the subscribe topic to get the moov

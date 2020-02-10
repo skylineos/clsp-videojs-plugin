@@ -25,6 +25,7 @@ const DEFAULT_DRIFT_CORRECTION_CONSTANT = 2;
 export default class IovPlayer {
   static EVENT_NAMES = [
     'metric',
+    'unsupportedMimeCodec',
     'firstFrameShown',
     'videoReceived',
     'videoInfoReceived',

@@ -4,7 +4,7 @@
 // provide videojs on `window`
 import videojs from 'video.js';
 
-import MqttSourceHandler from './MqttSourceHandler';
+import ClspSourceHandler from './ClspSourceHandler';
 import utils from '../utils/';
 import Logger from '../utils/logger';
 
@@ -32,7 +32,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       throw new Error('You can only register the clsp plugin once, and it has already been registered.');
     }
 
-    const sourceHandler = MqttSourceHandler()('html5');
+    const sourceHandler = ClspSourceHandler()('html5');
 
     videojs.getTech('Html5').registerSourceHandler(sourceHandler, 0);
     videojs.registerPlugin(utils.name, ClspPlugin);
@@ -78,7 +78,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     this._playerOptions = playerOptions;
     this.currentSourceIndex = 0;
 
-    player.addClass('vjs-mse-over-mqtt');
+    player.addClass('vjs-clsp');
 
     if (this.options.customClass) {
       player.addClass(this.options.customClass);
@@ -282,24 +282,24 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     }
   }
 
-  getMqttHandler (player = this.player) {
-    this.logger.debug('getting mqtt handler Iov...');
+  getClspHandler (player = this.player) {
+    this.logger.debug('getting CLSP handler Iov...');
 
-    return player.tech(true).mqtt;
+    return player.tech(true).clsp;
   }
 
   getIov () {
     this.logger.debug('getting Iov...');
 
-    return this.getMqttHandler().iov;
+    return this.getClspHandler().iov;
   }
 
-  onMqttHandlerError = () => {
-    this.logger.debug('handling mqtt error...');
+  onClspHandlerError = () => {
+    this.logger.debug('handling CLSP error...');
 
-    const mqttHandler = this.getMqttHandler();
+    const clspHandler = this.getClspHandler();
 
-    mqttHandler.destroy();
+    clspHandler.destroy();
 
     this.player.error({
       // @todo - change the code to 'INSUFFICIENT_RESOURCES'
@@ -313,16 +313,16 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   async initializeIov (player) {
     this.logger.debug('initializing Iov...');
 
-    const mqttHandler = this.getMqttHandler();
+    const clspHandler = this.getClspHandler();
 
-    if (!mqttHandler) {
-      throw new Error(`VideoJS Player ${player.id()} does not have mqtt tech!`);
+    if (!clspHandler) {
+      throw new Error(`VideoJS Player ${player.id()} does not have CLSP tech!`);
     }
 
-    mqttHandler.off('error', this.onMqttHandlerError);
-    mqttHandler.on('error', this.onMqttHandlerError);
+    clspHandler.off('error', this.onClspHandlerError);
+    clspHandler.on('error', this.onClspHandlerError);
 
-    await mqttHandler.createIov(player);
+    await clspHandler.createIov(player);
 
     const iov = this.getIov();
 
@@ -338,7 +338,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     });
 
     await iov.stop();
-    await iov.changeSrc(mqttHandler.source_.src);
+    await iov.changeSrc(clspHandler.source_.src);
   }
 
   destroy (player = this.player) {
@@ -359,10 +359,10 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
     // @todo - destroy the tech, since it is a player-specific instance
     try {
-      const mqttHandler = this.getMqttHandler(player);
+      const clspHandler = this.getClspHandler(player);
 
-      mqttHandler.destroy();
-      mqttHandler.off('error', this.onMqttHandlerError);
+      clspHandler.destroy();
+      clspHandler.off('error', this.onClspHandlerError);
 
       const {
         visibilityChangeEventName,

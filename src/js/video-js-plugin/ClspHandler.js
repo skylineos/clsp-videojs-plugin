@@ -12,15 +12,15 @@ const Component = videojs.getComponent('Component');
 
 const DEFAULT_CHANGE_SOURCE_MAX_WAIT = 5000;
 
-export default class MqttHandler extends Component {
+export default class ClspHandler extends Component {
   constructor (
     source,
     tech,
     options,
   ) {
-    super(tech, options.mqtt);
+    super(tech, options.clsp);
 
-    this.logger = Logger().factory('MqttHandler');
+    this.logger = Logger().factory('ClspHandler');
 
     this.logger.debug('constructor');
 
@@ -129,6 +129,8 @@ export default class MqttHandler extends Component {
 
     this.updateIov(iov);
 
+    // @todo - is this functionality needed?  if not, remove this commented
+    // block.  also, this particular event is on the iovPlayer, not the iov
     // this.iov.on('unsupportedMimeCodec', (error) => {
     //   this.videoPlayer.errors.extend({
     //     PLAYER_ERR_Iov: {

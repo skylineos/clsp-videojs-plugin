@@ -18,7 +18,6 @@ const DEFAULT_CONNECTION_CHANGE_PLAY_DELAY = 5;
 export default class Iov {
   static EVENT_NAMES = [
     'metric',
-    'unsupportedMimeCodec',
     'firstFrameShown',
     'videoReceived',
     'videoInfoReceived',

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * The Router is the lowest level controller of the actual MQTT connection.
+ * The Router is the lowest level controller of the actual CLSP connection.
  *
  * Note that this is the code that gets duplicated in each iframe.
  * Keep the contents of the exported function light and ES5 only.
@@ -14,7 +14,7 @@
  */
 
 /**
- * This Router will manage an MQTT connection for a given clientId, and pass
+ * This Router will manage a CLSP connection for a given clientId, and pass
  * the relevant data and messages back up to the Conduit.
  *
  * @see - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe
@@ -24,14 +24,14 @@
  * @export - the function that provides the Router and constants
  */
 export default function () {
-  // The error code from Paho MQTT that represents the socket not being
+  // The error code from Paho that represents the socket not being
   // connected
-  var PAHO_MQTT_ERROR_CODE_NOT_CONNECTED = 'AMQJS0011E';
-  var PAHO_MQTT_ERROR_CODE_ALREADY_CONNECTED = 'AMQJS0011E';
+  var PAHO_ERROR_CODE_NOT_CONNECTED = 'AMQJS0011E';
+  var PAHO_ERROR_CODE_ALREADY_CONNECTED = 'AMQJS0011E';
   var Paho = window.parent.Paho;
 
   /**
-   * A Router that can be used to set up an MQTT connection to the specified
+   * A Router that can be used to set up a CLSP connection to the specified
    * host and port, using a Conduit-provided clientId that will be a part of
    * every message that is passed from this iframe window to the parent window,
    * so that the conduit can identify what client the message is for.
@@ -71,7 +71,7 @@ export default function () {
 
       this.Reconnect = null;
 
-      // @todo - there is a "private" method named "_doConnect" in the paho mqtt
+      // @todo - there is a "private" method named "_doConnect" in the paho
       // library that is responsible for instantiating the WebSocket.  We have
       // seen at least 1 instance where the instantiation of the WebSocket fails
       // which was due to the error "ERR_NAME_NOT_RESOLVED", but it does not
@@ -83,16 +83,16 @@ export default function () {
       // and respond to?  I'm not even sure that that would solve the problem.
       // Presumably, the instantiation of the WebSocket would throw, which would
       // be caught by our Router.connect try/catch block...
-      this.mqttClient = new Paho.MQTT.Client(
+      this.clspClient = new Paho.MQTT.Client(
         this.host,
         this.port,
         '/mqtt',
         this.clientId,
       );
 
-      this.mqttClient.onConnectionLost = this._onConnectionLost.bind(this);
-      this.mqttClient.onMessageArrived = this._onMessageArrived.bind(this);
-      this.mqttClient.onMessageDelivered = this._onMessageDelivered.bind(this);
+      this.clspClient.onConnectionLost = this._onConnectionLost.bind(this);
+      this.clspClient.onMessageArrived = this._onMessageArrived.bind(this);
+      this.clspClient.onMessageDelivered = this._onMessageDelivered.bind(this);
 
       this.boundWindowMessageEventHandler = this._windowMessageEventHandler.bind(this);
 
@@ -122,23 +122,23 @@ export default function () {
     CREATE_FAILURE: 'clsp_router_create_failure',
     // Triggered when a segment / moof is transmitted.
     // Can be triggered for as long as the connection is open.
-    DATA_RECEIVED: 'clsp_router_mqtt_data',
+    DATA_RECEIVED: 'clsp_router_clsp_data',
     // Triggered when a message is successfully published to the server
     // Can only be triggered on publish
     PUBLISH_SUCCESS: 'clsp_router_publish_success',
     // Triggered when a message fails to be published to the server
     // Can only be triggered on publish
     PUBLISH_FAIL: 'clsp_router_publish_failure',
-    // Triggered when the connection to the mqtt server is established.
+    // Triggered when the connection to the CLSP server is established.
     // Can only be triggered at time of connection.
     CONNECT_SUCCESS: 'clsp_router_connect_success',
-    // Triggered when trying to connect to the mqtt server fails.
+    // Triggered when trying to connect to the CLSP server fails.
     // Can only be triggered at time of connection.
     CONNECT_FAILURE: 'clsp_router_connect_failure',
-    // Triggered when the connection to the mqtt server has been established, but is later lost.
+    // Triggered when the connection to the CLSP server has been established, but is later lost.
     // Can be triggered for as long as the connection is open.
     CONNECTION_LOST: 'clsp_router_connection_lost',
-    // Triggered when the connection to the mqtt server is terminated normally.
+    // Triggered when the connection to the CLSP server is terminated normally.
     // Can only be triggered at time of disconnection.
     DISCONNECT_SUCCESS: 'clsp_router_disconnect_success',
     // Triggered when trying to subscribe to a topic fails.
@@ -270,7 +270,7 @@ export default function () {
    *
    * To be called when a message has arrived in this Paho.MQTT.client
    *
-   * The idea here is that when the server sends an MQTT message, whether a
+   * The idea here is that when the server sends a CLSP message, whether a
    * moof, moov, or something else, that data needs to be sent to the appropriate
    * player (client).  So when this router gets that chunk of data, it sends it
    * back to the Conduit with the clientId, and the Conduit is then responsible
@@ -278,19 +278,19 @@ export default function () {
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
-   * @param {Paho.MQTT.Message} mqttMessage
+   * @param {Paho.MQTT.Message} clspMessage
    *   The incoming message
    *
    * @returns {void}
    */
-  Router.prototype._onMessageArrived = function (mqttMessage) {
-    this.logger.debug('Received MQTT message...');
+  Router.prototype._onMessageArrived = function (clspMessage) {
+    this.logger.debug('Received CLSP message...');
 
     try {
       var payloadString = '';
 
       try {
-        payloadString = mqttMessage.payloadString;
+        payloadString = clspMessage.payloadString;
       }
       catch (error) {
         // I have no idea what is going on here, but every single time we do the
@@ -302,9 +302,9 @@ export default function () {
 
       this._sendToParentWindow({
         event: Router.events.DATA_RECEIVED,
-        destinationName: mqttMessage.destinationName,
+        destinationName: clspMessage.destinationName,
         payloadString: payloadString, // @todo - why is this necessary when it doesn't exist?
-        payloadBytes: mqttMessage.payloadBytes || null,
+        payloadBytes: clspMessage.payloadBytes || null,
       });
     }
     catch (error) {
@@ -315,27 +315,27 @@ export default function () {
   /**
    * @private
    *
-   * To be called when a message has been published by this mqtt client.
+   * To be called when a message has been published by this CLSP client.
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
-   * @param {Paho.MQTT.Message} mqttMessage
+   * @param {Paho.MQTT.Message} clspMessage
    *   The message that was delivered
    *
    * @returns {void}
    */
-  Router.prototype._onMessageDelivered = function (mqttMessage) {
-    this.logger.debug('Delivered MQTT message...');
+  Router.prototype._onMessageDelivered = function (clspMessage) {
+    this.logger.debug('Delivered CLSP message...');
 
-    if (mqttMessage._onDelivered) {
-      mqttMessage._onDelivered();
+    if (clspMessage._onDelivered) {
+      clspMessage._onDelivered();
     }
   };
 
   /**
    * @private
    *
-   * Called when an mqttClient connection has been lost
+   * Called when an clspClient connection has been lost
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
@@ -345,7 +345,7 @@ export default function () {
    * @returns {void}
    */
   Router.prototype._onConnectionLost = function (response) {
-    this.logger.debug('MQTT connection lost');
+    this.logger.debug('CLSP connection lost');
 
     var errorCode = parseInt(response.errorCode);
 
@@ -358,7 +358,7 @@ export default function () {
       return;
     }
 
-    this.logger.warn('MQTT connection lost improperly!');
+    this.logger.warn('CLSP connection lost improperly!');
 
     this._sendToParentWindow({
       event: Router.events.CONNECTION_LOST,
@@ -446,7 +446,7 @@ export default function () {
   /**
    * @private
    *
-   * Success handler for the mqtt client "connect".  Registers the window
+   * Success handler for the CLSP client "connect".  Registers the window
    * message event handler, and notifies the parent window that this client is
    * "ready".
    *
@@ -461,7 +461,7 @@ export default function () {
    * @returns {void}
    */
   Router.prototype._connect_onSuccess = function (response) {
-    this.logger.info('Successfully established MQTT connection');
+    this.logger.info('Successfully established CLSP connection');
 
     this._sendToParentWindow({
       event: Router.events.CONNECT_SUCCESS,
@@ -471,7 +471,7 @@ export default function () {
   /**
    * @private
    *
-   * Failure handler for mqtt client "connect".  Sends a "fail" message to the
+   * Failure handler for CLSP client "connect".  Sends a "fail" message to the
    * parent window
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
@@ -482,7 +482,7 @@ export default function () {
    * @returns {void}
    */
   Router.prototype._connect_onFailure = function (response) {
-    this.logger.info('MQTT Connection Failure!');
+    this.logger.info('CLSP Connection Failure!');
 
     this._sendToParentWindow({
       event: Router.events.CONNECT_FAILURE,
@@ -493,7 +493,7 @@ export default function () {
   /**
    * @private
    *
-   * Success handler for mqtt client "subscribe".
+   * Success handler for CLSP client "subscribe".
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
    *
@@ -512,7 +512,7 @@ export default function () {
   /**
    * @private
    *
-   * Failure handler for mqtt "subscribe".  Sends a "fail" message to the parent
+   * Failure handler for CLSP "subscribe".  Sends a "fail" message to the parent
    * window
    *
    * @see - https://www.eclipse.org/paho/files/jsdoc/Paho.MQTT.Client.html
@@ -552,7 +552,7 @@ export default function () {
       throw new Error('topic is a required argument when subscribing');
     }
 
-    this.mqttClient.subscribe(topic, {
+    this.clspClient.subscribe(topic, {
       onSuccess: this._subscribe_onSuccess.bind(this, topic),
       onFailure: this._subscribe_onFailure.bind(this, topic),
     });
@@ -620,7 +620,7 @@ export default function () {
       throw new Error('topic is a required argument when unsubscribing');
     }
 
-    this.mqttClient.unsubscribe(topic, {
+    this.clspClient.unsubscribe(topic, {
       onSuccess: this._unsubscribe_onSuccess.bind(this, topic),
       onFailure: this._unsubscribe_onFailure.bind(this, topic),
     });
@@ -655,16 +655,16 @@ export default function () {
 
     var self = this;
 
-    var mqttMessage = new Paho.MQTT.Message(payload);
+    var clspMessage = new Paho.MQTT.Message(payload);
 
-    mqttMessage.destinationName = topic;
+    clspMessage.destinationName = topic;
 
     // I tried setting the quality of service to 2, which has the highest level
-    // of reliability, but it seems that Paho MQTT doesn't clean up after itself
+    // of reliability, but it seems that Paho doesn't clean up after itself
     // or have sane (or any) timeouts or something.  When this is set to 2, over
     // time, local storage will fill up, and all CLSP will cease to work.  Not
     // to mention the fact that local storage refuses additional writes.
-    // mqttMessage.qos = 2; // qos: exactly once
+    // clspMessage.qos = 2; // qos: exactly once
 
     var publishTimeout = setTimeout(function () {
       clearTimeout(publishTimeout);
@@ -678,7 +678,7 @@ export default function () {
     }, this.PUBLISH_TIMEOUT * 1000);
 
     // custom property
-    mqttMessage._onDelivered = function (mqttMessage) {
+    clspMessage._onDelivered = function (clspMessage) {
       if (!publishTimeout) {
         // the publish operation timed out and has already been rejected
         return;
@@ -695,7 +695,7 @@ export default function () {
     };
 
     // @todo - this can fail if the client is not connected
-    this.mqttClient.publish(mqttMessage);
+    this.clspClient.publish(clspMessage);
   };
 
   /**
@@ -730,11 +730,11 @@ export default function () {
     }
 
     try {
-      this.mqttClient.connect(connectionOptions);
+      this.clspClient.connect(connectionOptions);
       this.logger.info('Connected');
     }
     catch (error) {
-      if (error.message.startsWith(PAHO_MQTT_ERROR_CODE_ALREADY_CONNECTED)) {
+      if (error.message.startsWith(PAHO_ERROR_CODE_ALREADY_CONNECTED)) {
         // if we're already connected, there's no error to report
         return;
       }
@@ -761,10 +761,10 @@ export default function () {
     this.logger.info('Disconnecting');
 
     try {
-      this.mqttClient.disconnect();
+      this.clspClient.disconnect();
     }
     catch (error) {
-      if (error.message.startsWith(PAHO_MQTT_ERROR_CODE_NOT_CONNECTED)) {
+      if (error.message.startsWith(PAHO_ERROR_CODE_NOT_CONNECTED)) {
         // if we're not connected when we attempted to disconnect, there's no
         // error to report
         return;
@@ -799,7 +799,7 @@ export default function () {
 
     // @todo - is there a way to "destroy" the client?  I didn't see anything
     // in the documentation
-    this.mqttClient = null;
+    this.clspClient = null;
   };
 
   // This is a series of "controllers" to keep the conduit's iframe as dumb as
@@ -848,7 +848,7 @@ export default function () {
         window.router.logger.info('onunload - Router destroyed in onunload');
       }
       catch (error) {
-        if (error.message.startsWith(PAHO_MQTT_ERROR_CODE_NOT_CONNECTED)) {
+        if (error.message.startsWith(PAHO_ERROR_CODE_NOT_CONNECTED)) {
           // if there wasn't a connection, do not show an error
           return;
         }

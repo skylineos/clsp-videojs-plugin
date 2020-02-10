@@ -120,7 +120,7 @@ export function initializeWall (name, createPlayer, destroyAllPlayers) {
   }
 
   function setMetricsVisibility () {
-    if ($('#wallShowMetrics').prop('checked')) {
+    if ($('#show-metrics').prop('checked')) {
       $('.wall-video-metrics').show();
     } else {
       $('.wall-video-metrics').hide();
@@ -130,17 +130,17 @@ export function initializeWall (name, createPlayer, destroyAllPlayers) {
   function onclick () {
     destroyAllPlayers();
 
-    const urlList = getLocalStorage(name, 'wallUrls').value.split('\n');
-    const urlReplicateCount = getLocalStorage(name, 'wallReplicate').value;
+    const urlList = getLocalStorage(name, 'wall-streams').value.split('\n');
+    const urlReplicateCount = getLocalStorage(name, 'wall-times-to-replicate').value;
 
-    const tourUrlList = getLocalStorage(name, 'wallTourUrls').value.split('\n');
-    const tourUrlReplicateCount = getLocalStorage(name, 'wallTourReplicate').value;
-    const tourReplicateCount = getLocalStorage(name, 'wallTourReplicateInTour').value;
-    const tourInterval = getLocalStorage(name, 'wallTourInterval').value;
+    const tourUrlList = getLocalStorage(name, 'tour-streams').value.split('\n');
+    const tourUrlReplicateCount = getLocalStorage(name, 'tour-times-to-replicate').value;
+    const tourReplicateCount = getLocalStorage(name, 'tour-times-to-repeat').value;
+    const tourInterval = getLocalStorage(name, 'tour-interval').value;
 
     let videoIndex = 0;
 
-    if (getLocalStorage(name, 'wallToursEnabled').value === 'true') {
+    if (getLocalStorage(name, 'tours-enabled').value === 'true') {
       for (let i = 0; i < tourReplicateCount; i++) {
         let sources = [];
 
@@ -165,7 +165,7 @@ export function initializeWall (name, createPlayer, destroyAllPlayers) {
           },
           sources,
           clsp: {
-            enableMetrics: $('#wallEnableMetrics').prop('checked'),
+            enableMetrics: $('#enable-metrics').prop('checked'),
           },
         };
 
@@ -175,7 +175,7 @@ export function initializeWall (name, createPlayer, destroyAllPlayers) {
       }
     }
 
-    if (getLocalStorage(name, 'wallEnabled').value === 'true') {
+    if (getLocalStorage(name, 'wall-enabled').value === 'true') {
       for (let i = 0; i < urlReplicateCount; i++) {
         for (let j = 0; j < urlList.length; j++) {
           const playerOptions = {
@@ -189,7 +189,7 @@ export function initializeWall (name, createPlayer, destroyAllPlayers) {
               type: "video/mp4; codecs='avc1.42E01E'",
             }, ],
             clsp: {
-              enableMetrics: $('#wallEnableMetrics').prop('checked'),
+              enableMetrics: $('#enable-metrics').prop('checked'),
             },
           };
 
@@ -232,32 +232,32 @@ export function initializeWall (name, createPlayer, destroyAllPlayers) {
 
   $('#wallCreate').click(onclick);
   $('#wall-controls-toggle').click(toggleControls);
-  $('#wallShowMetrics').on('change', setMetricsVisibility);
+  $('#show-metrics').on('change', setMetricsVisibility);
 
   initLocalStorage(
-    name, 'wallEnabled', 'checkbox', true,
+    name, 'wall-enabled', 'checkbox', true,
   );
   initLocalStorage(
-    name, 'wallUrls', 'textarea', defaultClspUrls,
+    name, 'wall-streams', 'textarea', defaultClspUrls,
   );
   initLocalStorage(
-    name, 'wallReplicate', 'input', 1,
+    name, 'wall-times-to-replicate', 'input', 1,
   );
 
   initLocalStorage(
-    name, 'wallToursEnabled', 'checkbox', true,
+    name, 'tours-enabled', 'checkbox', true,
   );
   initLocalStorage(
-    name, 'wallTourUrls', 'textarea', defaultClspUrls,
+    name, 'tour-streams', 'textarea', defaultClspUrls,
   );
   initLocalStorage(
-    name, 'wallTourReplicate', 'input', 1,
+    name, 'tour-times-to-replicate', 'input', 1,
   );
   initLocalStorage(
-    name, 'wallTourReplicateInTour', 'input', 1,
+    name, 'tour-times-to-repeat', 'input', 1,
   );
   initLocalStorage(
-    name, 'wallTourInterval', 'input', 10,
+    name, 'tour-interval', 'input', 10,
   );
 }
 

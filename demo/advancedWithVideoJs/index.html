@@ -40,60 +40,67 @@
             <h2 id="wallUsedHeapSize">N/A</h2>
           </div>
         </div>
+
         <div class="controls">
-          <div class="url-containers">
-            <div class="urls-container">
-              <div class="urls-title">
+          <div class="stream-configs">
+            <div class="stream-config wall-stream-config">
+              <div class="title">
                 <span>Urls:</span>
               </div>
               <textarea
-                id="wallUrls"
+                id="wall-streams"
                 rows="25"
               ></textarea>
-              <div class="urls-options">
+              <div class="stream-options">
                 <div>
-                  <label for="wallEnabled">
-                    <input id="wallEnabled" type="checkbox" />
+                  <label for="wall-enabled">
+                    <input
+                      id="wall-enabled"
+                      type="checkbox"
+                    />
                     <span>Enable</span>
                   </label>
                 </div>
                 <div>
                   <span>Times to Replicate</span>
                   <input
-                    id="wallReplicate"
+                    id="wall-times-to-replicate"
                     value="1"
                     type="number"
                   />
                 </div>
               </div>
             </div>
-            <div class="tour-urls-container">
-              <div class="urls-title">
+            <div class="stream-config tours-stream-config">
+              <div class="title">
                 <span>Tour Urls:</span>
               </div>
               <textarea
-                id="wallTourUrls"
+                id="tour-streams"
                 rows="25"
               ></textarea>
-              <div class="urls-options">
+              <div class="stream-options">
                 <div>
-                  <label for="wallToursEnabled">
-                    <input id="wallToursEnabled" type="checkbox" />
+                  <label for="tours-enabled">
+                    <input
+                      id="tours-enabled"
+                      type="checkbox"
+                    />
                     <span>Enable</span>
                   </label>
                 </div>
                 <div>
                   <span>Times to Replicate</span>
                   <input
-                    id="wallTourReplicate"
+                    id="tour-times-to-replicate"
                     value="1"
                     type="number"
                   />
                 </div>
                 <div>
-                  <span>Times to Replicate Within Tour</span>
+                  <span>Times to Repeat Within Tour</span>
                   <input
-                    id="wallTourReplicateInTour"
+                    id="tour-times-to-repeat"
                     value="1"
                     type="number"
                   />
@@ -101,7 +108,7 @@
                 <div>
                   <span>Tour Interval (seconds):</span>
                   <input
-                    id="wallTourInterval"
+                    id="tour-interval"
                     value="10"
                     type="number"
                   />
@@ -109,16 +116,26 @@
               </div>
             </div>
           </div>
-          <div class="controls-container">
-            <label for="wallEnableMetrics">
-              <input id="wallEnableMetrics" type="checkbox" />
-              <span>Enable Metrics</span>
-            </label>
-            <label for="wallShowMetrics">
-              <input id="wallShowMetrics" type="checkbox" />
-              <span>Show Metrics</span>
-            </label>
-            <div>
+          <div class="options-actions-container">
+            <div class="options">
+              <label for="enable-metrics">
+                <input
+                  id="enable-metrics"
+                  type="checkbox"
+                  disabled
+                />
+                <span>Enable Metrics</span>
+              </label>
+              <label for="show-metrics">
+                <input
+                  id="show-metrics"
+                  type="checkbox"
+                  disabled
+                />
+                <span>Show Metrics</span>
+              </label>
+            </div>
+            <div class="actions">
               <button id="wallCreate">Create Video Wall</button>
             </div>
           </div>

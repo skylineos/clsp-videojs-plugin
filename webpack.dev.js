@@ -3,21 +3,11 @@
 const webpack = require('webpack');
 const webpackConfigs = require('./webpack.common');
 
-const devHost = '0.0.0.0';
-const devPort = '8080';
-
 function devConfig (webpackConfig) {
   return {
     ...webpackConfig,
     mode: 'development',
     devtool: 'eval-source-map',
-    // devtool: 'source-map',
-    // entry: {
-    //   ...webpackConfig.entry,
-    //   // @todo - these need to be documented
-    //   [`${webpackConfig.name}.0`]: `webpack-dev-server/client?http://${devHost}:${devPort}`,
-    //   // [`${webpackConfig.name}.1`]: 'webpack/hot/only-dev-server',
-    // },
     output: {
       ...webpackConfig.output,
       pathinfo: true,
@@ -29,7 +19,6 @@ function devConfig (webpackConfig) {
           NODE_ENV: JSON.stringify('development'),
         },
       }),
-      // new webpack.HotModuleReplacementPlugin(),
     ],
   };
 }

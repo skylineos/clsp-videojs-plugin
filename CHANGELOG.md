@@ -1,8 +1,9 @@
 
 # CLSP Changelog
 
-## v0.16.4+ - 2020-01-09 Critical
+## v0.16.4+ - 2020-01-09 - Critical
 
+* change the videojs element class from `vjs-mse-over-mqtt` to `vjs-clsp`
 * update vulnerable dependencies
 * update all outdated dependencies
 * numerous memory leak fixes
@@ -10,7 +11,7 @@
 * add functionality to switch stream source on internal player
 * add externally available tour controller
 * add stream play timeout handling in Conduit
-* add mqtt publishing events
+* add CLSP publishing events
 * handle streams that don't return data (with timeouts)
 * handle invalid urls (with timeouts)
 * rename IOV classes
@@ -118,7 +119,7 @@
 * destroy self on player dispose
 * implement disconnect conduit method
 * WIP destroy player without error
-* do not try to reconnect to mqtt after successful disconnection
+* do not try to reconnect to CLSP after successful disconnection
 * stop trying to send stats to the server on failure
 * reset videojs-errors after responding to recoverable errors
 
@@ -201,7 +202,7 @@
 
 * first stable production-ready build
 * support cycling through multiple clsp streams (tours)
-* can respond to mqtt resync messages
+* can respond to CLSP resync messages
 * use default secure and non-secure ports
 * rudimentary error handling
 * updated demo page

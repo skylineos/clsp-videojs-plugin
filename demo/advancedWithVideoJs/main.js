@@ -127,7 +127,7 @@ $(() => {
 
   // Tours for videojs are not yet implemented
   initLocalStorage(
-    name, 'wallToursEnabled', 'checkbox', false,
+    name, 'tours-enabled', 'checkbox', false,
   );
 
   initializeWall(name, createPlayer, destroyAllPlayers);
