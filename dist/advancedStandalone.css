@@ -1,7 +1,7 @@
 /**
  * video.js and videojs errors style overrides
  */
-.video-js.vjs-mse-over-mqtt {
+.video-js.vjs-clsp {
   display: block; }
 
 /*
@@ -247,40 +247,34 @@ html, body {
       flex-shrink: 0;
       padding: 1rem;
       background-color: lightgray; }
-      .page-body section .controls .url-containers {
+      .page-body section .controls .stream-configs {
         display: flex;
         flex-grow: 1;
         flex-shrink: 0;
         justify-content: space-between; }
-        .page-body section .controls .url-containers .urls-container {
+        .page-body section .controls .stream-configs .stream-config {
           display: flex;
           flex-direction: column;
           flex-grow: 1;
           flex-shrink: 0;
           width: 50%; }
-        .page-body section .controls .url-containers .tour-urls-container {
-          display: flex;
-          flex-direction: column;
-          flex-grow: 1;
-          flex-shrink: 0;
-          width: 50%; }
-        .page-body section .controls .url-containers .urls-options {
-          justify-content: start;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end; }
-        .page-body section .controls .url-containers .urls-title {
-          display: flex;
-          justify-content: space-between; }
-          .page-body section .controls .url-containers .urls-title input {
-            width: 25%; }
-      .page-body section .controls .controls-container {
+          .page-body section .controls .stream-configs .stream-config .title {
+            display: flex;
+            justify-content: space-between; }
+            .page-body section .controls .stream-configs .stream-config .title input {
+              width: 25%; }
+          .page-body section .controls .stream-configs .stream-config .stream-options {
+            justify-content: start;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end; }
+      .page-body section .controls .options-actions-container {
         display: flex;
         align-items: center;
         justify-content: flex-end; }
-        .page-body section .controls .controls-container > * {
+        .page-body section .controls .options-actions-container > * {
           margin: 1rem; }
-        .page-body section .controls .controls-container button {
+        .page-body section .controls .options-actions-container button {
           padding: 1rem; }
     .page-body section #videowall,
     .page-body section #tourwall {
