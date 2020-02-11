@@ -4,8 +4,8 @@
 // provide videojs on `window`
 import videojs from 'video.js';
 
-import MqttSourceHandler from './MqttSourceHandler';
-import utils from '../utils';
+import ClspSourceHandler from './ClspSourceHandler';
+import utils from '../utils/';
 import Logger from '../utils/logger';
 
 const Plugin = videojs.getPlugin('plugin');
@@ -32,7 +32,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       throw new Error('You can only register the clsp plugin once, and it has already been registered.');
     }
 
-    const sourceHandler = MqttSourceHandler()('html5');
+    const sourceHandler = ClspSourceHandler()('html5');
 
     videojs.getTech('Html5').registerSourceHandler(sourceHandler, 0);
     videojs.registerPlugin(utils.name, ClspPlugin);
@@ -78,7 +78,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     this._playerOptions = playerOptions;
     this.currentSourceIndex = 0;
 
-    player.addClass('vjs-mse-over-mqtt');
+    player.addClass('vjs-clsp');
 
     if (this.options.customClass) {
       player.addClass(this.options.customClass);
@@ -162,7 +162,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
           // @todo - investigate how this can be called when the iov has been destroyed
           if (!iov || iov.destroyed) {
-            await this.initializeIOV(player);
+            await this.initializeIov(player);
           }
           else {
             await iov.restart();
@@ -180,7 +180,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
         case 0:
         case 4:
         case 5:
-        case 'PLAYER_ERR_IOV': {
+        case 'PLAYER_ERR_Iov': {
           break;
         }
         default: {
@@ -194,7 +194,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
       // @todo - it is probably unnecessary to have to completely tear down the
       // existing iov and create a new one.  But for now, this works
-      await this.initializeIOV(player);
+      await this.initializeIov(player);
 
       // @todo - this hides it permanently.  it should be re-enabled when the
       // player stops or pauses.  This will likely involve using some videojs
@@ -226,7 +226,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
       document.addEventListener(
         visibilityChangeEventName,
         this.onVisibilityChange,
-        false
+        false,
       );
     }
   }
@@ -234,11 +234,7 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
   onVisibilityChange = () => {
     this.logger.debug('tab visibility changed...');
 
-    const {
-      hiddenStateName,
-    } = utils.windowStateNames;
-
-    if (document[hiddenStateName]) {
+    if (document[utils.windowStateNames.hiddenStateName]) {
       // Continue to update the time, which will prevent videojs-errors from
       // issuing a timeout error
       this.visibilityChangeInterval = setInterval(async () => {
@@ -286,24 +282,24 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     }
   }
 
-  getMqttHandler (player = this.player) {
-    this.logger.debug('getting mqtt handler IOV...');
+  getClspHandler (player = this.player) {
+    this.logger.debug('getting CLSP handler Iov...');
 
-    return player.tech(true).mqtt;
+    return player.tech(true).clsp;
   }
 
   getIov () {
-    this.logger.debug('getting IOV...');
+    this.logger.debug('getting Iov...');
 
-    return this.getMqttHandler().iov;
+    return this.getClspHandler().iov;
   }
 
-  onMqttHandlerError = () => {
-    this.logger.debug('handling mqtt error...');
+  onClspHandlerError = () => {
+    this.logger.debug('handling CLSP error...');
 
-    const mqttHandler = this.getMqttHandler();
+    const clspHandler = this.getClspHandler();
 
-    mqttHandler.destroy();
+    clspHandler.destroy();
 
     this.player.error({
       // @todo - change the code to 'INSUFFICIENT_RESOURCES'
@@ -314,33 +310,36 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     });
   };
 
-  async initializeIOV (player) {
-    this.logger.debug('initializing IOV...');
+  async initializeIov (player) {
+    this.logger.debug('initializing Iov...');
 
-    const mqttHandler = this.getMqttHandler();
+    const clspHandler = this.getClspHandler();
 
-    if (!mqttHandler) {
-      throw new Error(`VideoJS Player ${player.id()} does not have mqtt tech!`);
+    if (!clspHandler) {
+      throw new Error(`VideoJS Player ${player.id()} does not have CLSP tech!`);
     }
 
-    mqttHandler.off('error', this.onMqttHandlerError);
-    mqttHandler.on('error', this.onMqttHandlerError);
+    clspHandler.off('error', this.onClspHandlerError);
+    clspHandler.on('error', this.onClspHandlerError);
 
-    await mqttHandler.createIOV(player, {
-      enableMetrics: this.options.enableMetrics,
-      defaultNonSslPort: this.options.defaultNonSslPort,
-      defaultSslPort: this.options.defaultSslPort,
-    });
+    await clspHandler.createIov(player);
 
-    const iovPlayer = this.getIov();
+    const iov = this.getIov();
+
+    iov.ENABLE_METRICS = this.options.enableMetrics;
 
     this.logger.debug('resgistering "firstFrameShown" event');
-    iovPlayer.on('firstFrameShown', () => {
+
+    // @todo - is this still the correct way to track this?  we may want to use
+    // the onShown handler in the iov instead
+    iov.on('firstFrameShown', () => {
       this.logger.debug('about to trigger "firstFrameShown" event on videojs player');
       player.trigger('firstFrameShown');
     });
 
-    await iovPlayer.restart();
+    await iov.stop();
+
+    await iov.changeSrc(clspHandler.source_.src).firstFrameReceivedPromise;
   }
 
   destroy (player = this.player) {
@@ -361,10 +360,10 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
 
     // @todo - destroy the tech, since it is a player-specific instance
     try {
-      const mqttHandler = this.getMqttHandler(player);
+      const clspHandler = this.getClspHandler(player);
 
-      mqttHandler.destroy();
-      mqttHandler.off('error', this.onMqttHandlerError);
+      clspHandler.destroy();
+      clspHandler.off('error', this.onClspHandlerError);
 
       const {
         visibilityChangeEventName,

@@ -11,9 +11,9 @@ export default function (logLevel) {
     if (logLevel === undefined) {
       // The logLevel may be set in localstorage
       // e.g. localStorage.setItem('skyline.clspPlugin.logLevel', 3), then refresh
-      logLevel = isNaN(Number(window.localStorage.getItem('skyline.clspPlugin.logLevel'))) ?
-        1 :
-        Number(window.localStorage.getItem('skyline.clspPlugin.logLevel'));
+      logLevel = isNaN(Number(window.localStorage.getItem('skyline.clspPlugin.logLevel')))
+        ? 1
+        : Number(window.localStorage.getItem('skyline.clspPlugin.logLevel'));
 
       window.localStorage.setItem('skyline.clspPlugin.logLevel', logLevel);
     }

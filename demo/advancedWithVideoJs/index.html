@@ -40,93 +40,108 @@
             <h2 id="wallUsedHeapSize">N/A</h2>
           </div>
         </div>
+
         <div class="controls">
-          <div class="urls-container">
-            <span>Urls:</span>
-            <br />
-            <textarea
-              id="wallUrls"
-              rows="25"
-              cols="80"
-            ></textarea>
-          </div>
-          <div class="controls-container">
-            <div>
-              <span>Times to Replicate</span>
-              <br />
-              <input
-                id="wallReplicate"
-                value="1"
-                type="number"
-              />
+          <div class="stream-configs">
+            <div class="stream-config wall-stream-config">
+              <div class="title">
+                <span>Urls:</span>
+              </div>
+              <textarea
+                id="wall-streams"
+                rows="25"
+              ></textarea>
+              <div class="stream-options">
+                <div>
+                  <label for="wall-enabled">
+                    <input
+                      id="wall-enabled"
+                      type="checkbox"
+                    />
+                    <span>Enable</span>
+                  </label>
+                </div>
+                <div>
+                  <span>Times to Replicate</span>
+                  <input
+                    id="wall-times-to-replicate"
+                    value="1"
+                    type="number"
+                  />
+                </div>
+              </div>
             </div>
-            <label for="wallEnableMetrics">
-              <input id="wallEnableMetrics" type="checkbox" />
-              <span>Enable Metrics</span>
-            </label>
-            <label for="wallShowMetrics">
-              <input id="wallShowMetrics" type="checkbox" />
-              <span>Show Metrics</span>
-            </label>
-            <div>
+            <div class="stream-config tours-stream-config">
+              <div class="title">
+                <span>Tour Urls:</span>
+              </div>
+              <textarea
+                id="tour-streams"
+                rows="25"
+              ></textarea>
+              <div class="stream-options">
+                <div>
+                  <label for="tours-enabled">
+                    <input
+                      id="tours-enabled"
+                      type="checkbox"
+                    />
+                    <span>Enable</span>
+                  </label>
+                </div>
+                <div>
+                  <span>Times to Replicate</span>
+                  <input
+                    id="tour-times-to-replicate"
+                    value="1"
+                    type="number"
+                  />
+                </div>
+                <div>
+                  <span>Times to Repeat Within Tour</span>
+                  <input
+                    id="tour-times-to-repeat"
+                    value="1"
+                    type="number"
+                  />
+                </div>
+                <div>
+                  <span>Tour Interval (seconds):</span>
+                  <input
+                    id="tour-interval"
+                    value="10"
+                    type="number"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="options-actions-container">
+            <div class="options">
+              <label for="enable-metrics">
+                <input
+                  id="enable-metrics"
+                  type="checkbox"
+                  disabled
+                />
+                <span>Enable Metrics</span>
+              </label>
+              <label for="show-metrics">
+                <input
+                  id="show-metrics"
+                  type="checkbox"
+                  disabled
+                />
+                <span>Show Metrics</span>
+              </label>
+            </div>
+            <div class="actions">
               <button id="wallCreate">Create Video Wall</button>
             </div>
           </div>
         </div>
 
         <div id="videowall"></div>
-      </section>
-
-      <section class="tour">
-        <div class="monitor">
-          <button id="tour-controls-toggle" data-state="shown">Hide Controls</button>
-          <div id="tourSummary" class="summary">
-            <span>Total videos playing:</span>
-            <h2 id="tourTotalVideos">N/A</h2>
-            <span>Time Elapsed:</span>
-            <h2 id="tourDuration">N/A</h2>
-            <span>Time Started:</span>
-            <span id="tourStartTime">N/A</span>
-            <span>Heap Size Limit:</span>
-            <span id="tourHeapSizeLimit">N/A</span>
-            <span>Total Heap Size:</span>
-            <span id="tourTotalHeapSize">N/A</span>
-            <span>Used Heap Size:</span>
-            <h2 id="tourUsedHeapSize">N/A</h2>
-          </div>
-        </div>
-        <div class="controls">
-          <div class="urls-container">
-            <span>Urls:</span>
-            <br />
-            <textarea id="tourUrls" rows="25" cols="80"></textarea>
-          </div>
-          <div class="controls-container">
-            <div>
-              <span>Times to Replicate</span>
-              <br />
-              <input id="tourReplicate" value="1" type="number" />
-            </div>
-            <div>
-              <span>Tour Duration</span>
-              <br />
-              <input id="tourDurationValue" value="10" type="number" />
-            </div>
-            <label for="tourEnableMetrics">
-              <input id="tourEnableMetrics" type="checkbox" />
-              <span>Enable Metrics</span>
-            </label>
-            <label for="tourShowMetrics">
-              <input id="tourShowMetrics" type="checkbox" />
-              <span>Show Metrics</span>
-            </label>
-            <div>
-              <button id="tourCreate">Create Video Tour Wall</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="tourwall"></div>
       </section>
     </div>
 
@@ -144,20 +159,6 @@
           <video class="video-js vjs-default-skin"></video>
         </div>
         <div class="wall-video-metrics video-metrics"></div>
-      </div>
-    </template>
-
-    <template id="tour-video-template">
-      <div id="tour-container-null" class="player-container">
-        <div class="video-stream">
-          <span class="index"></span>
-          <span class="url"></span>
-          <button class="close">&times;</button>
-        </div>
-        <div class="video-container">
-          <video class="video-js vjs-default-skin"></video>
-        </div>
-        <div class="tour-video-metrics video-metrics"></div>
       </div>
     </template>
 

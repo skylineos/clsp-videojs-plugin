@@ -1,4 +1,4 @@
-# videojs-mse-over-clsp Developer Notes
+# videojs-clsp Developer Notes
 
 ## Getting Started
 
@@ -69,33 +69,6 @@ The generated files will be available in the `dist` directory.
 1. navigate to [http://localhost:8080](http://localhost:8080) in Chrome
 1. add a `clsp` url to any of the inputs, then click submit
 1. click play on the video element (if not using an autoplay player)
-
-
-## JWT Instructions Removed From Readme
-
-The content below was removed from the readme. Documentation about how to use
-JWT was added, but presently we do not support JWT authentication. Please
-use this section as a template when/if JWT support is added in the future.
-
-
-#### JWT
-
-JSON Web Tokens provide the ability to attach a payload with authentication.
-To use JWT, use the following URI format:
-
-`[clsp protocol]-jwt://[sfs-ip-address]:[port-number-of-web-socket]/[stream-name]?token=[jwt-token]`
-
-For our spec, we requrire a base 64 encoded access url, base 64 encoded stream url, and a
-time in minutes when the token should expire.
-```
-{
-    "b64accessUrl": "URL the user will use to access the stream",
-    "b64url": "URL of the stream you want to view on the server",
-    "expires": "Time in minutes you want to allow the user to view the stream"
-}
-```
-
-To learn more about JWT, please check out [jwt.io](https://jwt.io).
 
 
 ## Vagrant

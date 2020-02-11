@@ -1,76 +1,124 @@
 'use strict';
 
 /**
- * Creates a hidden iframe that is used to establish a dedicated mqtt websocket
- * for a single video. This is basically an in-browser micro service which
- * uses cross-document communication to route data to and from the iframe.
+ * The Conduit a hidden iframe that is used to establish a dedicated CLSP
+ * websocket for a single video. This is basically an in-browser micro service
+ * which uses cross-document communication to route data to and from the iframe.
  *
- * This code is a layer of abstraction on top of the mqtt router, and the
+ * This code is a layer of abstraction on top of the CLSP router, and the
  * controller of the iframe that contains the router.
  */
 
+import uuidv4 from 'uuid/v4';
+
+import utils from '../utils/';
 import Router from './Router';
 import Logger from '../utils/logger';
+import StreamConfiguration from '../iov/StreamConfiguration';
 
-const MAX_RECONNECTION_ATTEMPTS = 200;
+const DEFAULT_MAX_RECONNECTION_ATTEMPTS = 0;
+const DEFAULT_MAX_RECONNECTION_TIME = 0;
+// When trying to reconnect, try every 5 seconds for the first 2 minutes, then
+// try every 30 seconds after 2 minutes.
+const DEFAULT_IMMEDIATE_RECONNECTION_DELAY = 5;
+const DEFAULT_IMMEDIATE_RECONNECTION_DURATION = 120;
+const DEFAULT_RECONNECTION_DELAY = 30;
+const DEFAULT_STREAM_DATA_TIMEOUT_DURATION = utils.DEFAULT_STREAM_TIMEOUT;
+const DEFAULT_MOOV_TIMEOUT_DURATION = utils.DEFAULT_STREAM_TIMEOUT;
+const DEFAULT_FIRST_MOOF_TIMEOUT_DURATION = utils.DEFAULT_STREAM_TIMEOUT;
+const DEFAULT_MOOF_TIMEOUT_DURATION = utils.DEFAULT_STREAM_TIMEOUT;
+const DEFAULT_PUBLISH_STATS_INTERVAL = 5;
+const DEFAULT_TRANSACTION_TIMEOUT = 5;
+
+const DEFAULT_ROUTER_CONNECTION_TIMEOUT = 120;
+// Setting this to half of the default value to help with SFS memory
+// management
+const DEFAULT_ROUTER_KEEP_ALIVE_INTERVAL = 30;
+// The number of seconds to wait for a "publish" message to be delivered
+const DEFAULT_ROUTER_PUBLISH_TIMEOUT = utils.DEFAULT_STREAM_TIMEOUT;
 
 export default class Conduit {
-  static factory (clientId, {
-    iovId,
-    wsbroker,
-    wsport,
-    useSSL,
-    b64_jwt_access_url,
-    jwt,
-    b64_hash_access_url,
-    hash,
-  }) {
-    return new Conduit(clientId, {
-      iovId,
-      wsbroker,
-      wsport,
-      useSSL,
-      b64_jwt_access_url,
-      jwt,
-      b64_hash_access_url,
-      hash,
-    });
+  static iframeCommands = {
+    SUBSCRIBE: 'subscribe',
+    UNSUBSCRIBE: 'unsubscribe',
+    PUBLISH: 'publish',
+    CONNECT: 'connect',
+    DISCONNECT: 'disconnect',
+    SEND: 'send',
+  };
+
+  static routerEvents = Router().Router.events;
+
+  static factory (
+    logId,
+    clientId,
+    streamConfiguration,
+    containerElement,
+    onReconnect,
+    onMessageError
+  ) {
+    return new Conduit(
+      logId,
+      clientId,
+      streamConfiguration,
+      containerElement,
+      onReconnect,
+      onMessageError
+    );
   }
 
   /**
    * @private
    *
-   * clientId - the guid to be used to construct the topic
-   * iovId - the ID of the parent iov, used for logging purposes
-   * wsbroker - the host (url or ip) of the SFS that is providing the stream
-   * wsport - the port the stream is served over
-   * useSSL - true to request the stream over clsps, false to request the stream over clsp
-   * [b64_jwt_access_url] - the "tokenized" url
-   * [jwt] - the access token
+   * @param {String} logId
+   *   a string that identifies this router in log messages
+   * @param {String} clientId
+   *   the guid to be used to construct the topic
+   * @param {StreamConfiguration} streamConfiguration
+   *   The stream configuration to pull from the CLSP server / SFS
+   * @param {Element} containerElement
+   *   The container of the video element and where the Conduit's iframe will be
+   *   inserted
+   * @param {Function} onReconnect
+   *   The action to perform when a reconnection attempt is successful
+   * @param {Function} onMessageError
+   *   The action to perform when an error is encountered between the Router
+   *   and Conduit instances
    */
-  constructor (clientId, {
-    iovId,
-    wsbroker,
-    wsport,
-    useSSL,
-    b64_jwt_access_url,
-    jwt,
-    b64_hash_access_url,
-    hash,
-  }) {
-    this.iovId = iovId;
+  constructor (
+    logId,
+    clientId,
+    streamConfiguration,
+    containerElement,
+    onReconnect = () => {},
+    onMessageError = () => {}
+  ) {
+    if (!logId) {
+      throw new Error('logId is required to construct a new Conduit instance.');
+    }
+
+    if (!clientId) {
+      throw new Error('clientId is required to construct a new Conduit instance.');
+    }
+
+    if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
+      throw new Error('invalid streamConfiguration passed to Conduit constructor');
+    }
+
+    if (!containerElement) {
+      throw new Error('containerElement is required to construct a new Conduit instance');
+    }
+
+    this.logId = logId;
     this.clientId = clientId;
+    this.streamConfiguration = streamConfiguration;
+    this.containerElement = containerElement;
 
-    this.logger = Logger().factory(`Conduit ${this.iovId}`);
+    this.streamName = this.streamConfiguration.streamName;
+    this.guid = null;
+
+    this.logger = Logger().factory(`Conduit ${this.logId}`);
     this.logger.debug('Constructing...');
-
-    this.wsbroker = wsbroker;
-    this.wsport = wsport;
-    this.useSSL = useSSL;
-    this.b64_jwt_access_url = b64_jwt_access_url;
-    this.jwt = jwt;
-    this.b64_hash_access_url = b64_hash_access_url;
-    this.hash = hash;
 
     this.statsMsg = {
       byteCount: 0,
@@ -84,6 +132,32 @@ export default class Conduit {
     this.reconnectionAttempts = 0;
 
     this.connected = false;
+    this._onMessageError = onMessageError;
+    this._onReconnect = onReconnect;
+
+    this.statsInterval = null;
+    this.firstMoofTimeout = null;
+    this.pendingTransactions = {};
+
+    this.moovRequestTopic = `${this.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
+    this.publishHandlers = {};
+    this.reconnectionInProgress = null;
+
+    // These can be configured manually after construction
+    this.MAX_RECONNECTION_ATTEMPTS = DEFAULT_MAX_RECONNECTION_ATTEMPTS;
+    this.MAX_RECONNECTION_TIME = DEFAULT_MAX_RECONNECTION_TIME;
+    this.IMMEDIATE_RECONNECTION_DELAY = DEFAULT_IMMEDIATE_RECONNECTION_DELAY;
+    this.IMMEDIATE_RECONNECTION_DURATION = DEFAULT_IMMEDIATE_RECONNECTION_DURATION;
+    this.RECONNECTION_DELAY = DEFAULT_RECONNECTION_DELAY;
+    this.STREAM_DATA_TIMEOUT_DURATION = DEFAULT_STREAM_DATA_TIMEOUT_DURATION;
+    this.MOOV_TIMEOUT_DURATION = DEFAULT_MOOV_TIMEOUT_DURATION;
+    this.FIRST_MOOF_TIMEOUT_DURATION = DEFAULT_FIRST_MOOF_TIMEOUT_DURATION;
+    this.MOOF_TIMEOUT_DURATION = DEFAULT_MOOF_TIMEOUT_DURATION;
+    this.PUBLISH_STATS_INTERVAL = DEFAULT_PUBLISH_STATS_INTERVAL;
+    this.TRANSACTION_TIMEOUT = DEFAULT_TRANSACTION_TIMEOUT;
+    this.ROUTER_CONNECTION_TIMEOUT = DEFAULT_ROUTER_CONNECTION_TIMEOUT;
+    this.ROUTER_KEEP_ALIVE_INTERVAL = DEFAULT_ROUTER_KEEP_ALIVE_INTERVAL;
+    this.ROUTER_PUBLISH_TIMEOUT = DEFAULT_ROUTER_PUBLISH_TIMEOUT;
   }
 
   /**
@@ -94,7 +168,7 @@ export default class Conduit {
    *   Resolves when the Router has been successfully created.
    *   Rejects upon failure to create the Router.
    */
-  initialize (videoElementParent) {
+  initialize () {
     this.logger.debug('Initializing...');
 
     return new Promise((resolve, reject) => {
@@ -106,25 +180,29 @@ export default class Conduit {
           return;
         }
 
-        // This message was intended for another conduit
+        // This message was intended for another Conduit instance
         if (this.clientId !== clientId) {
           return;
         }
 
         const eventType = event.data.event;
 
-        // Filter out all other window messages
-        if (eventType !== 'router_created' && eventType !== 'router_create_failure') {
+        // Filter out all other window messages from the Router
+        if (eventType !== Conduit.routerEvents.CREATED && eventType !== Conduit.routerEvents.CREATE_FAILURE) {
           return;
         }
 
-        this.logger.debug(`Message received for "${eventType}" event`);
+        this.logger.debug(`initialize "${eventType}" event`);
 
         // Whether success or failure, remove the event listener
         window.removeEventListener('message', this._onRouterCreate);
+
+        // Once the event listener is removed, remove the listener handler,
+        // since it will not be used again and to prevent the `destroy` method
+        // from trying to unregister it.
         this._onRouterCreate = null;
 
-        if (eventType === 'router_create_failure') {
+        if (eventType === Conduit.routerEvents.CREATE_FAILURE) {
           return reject(event.data.reason);
         }
 
@@ -137,7 +215,12 @@ export default class Conduit {
 
       this.iframe = this._generateIframe();
 
-      videoElementParent.appendChild(this.iframe);
+      // @todo - if the Iov were to create a wrapper around the video element
+      // that it manages (rather than expecting one to already be there), each
+      // video element and iframe could be contained in a single container,
+      // rather than potentially having multiple video elements and multiple
+      // iframes contained in a single parent.
+      this.containerElement.appendChild(this.iframe);
     });
   }
 
@@ -151,10 +234,14 @@ export default class Conduit {
    *   Resolves when the connection is successfully established.
    *   Rejects upon failure to connect after a number of retries.
    */
-  connect () {
-    this.logger.debug('Connecting to MQTT server...');
+  connect (reconnect = true) {
+    this.logger.debug('Connecting to CLSP server...');
 
     return new Promise((resolve, reject) => {
+      if (this.connected) {
+        return resolve();
+      }
+
       this._onConnect = (event) => {
         const clientId = event.data.clientId;
 
@@ -171,41 +258,46 @@ export default class Conduit {
         const eventType = event.data.event;
 
         // Filter out all other window messages
-        if (eventType !== 'connect_success' && eventType !== 'connect_failure') {
+        if (eventType !== Conduit.routerEvents.CONNECT_SUCCESS && eventType !== Conduit.routerEvents.CONNECT_FAILURE) {
           return;
         }
 
-        this.logger.debug(`Message received for "${eventType}" event`);
+        this.logger.debug(`connect "${eventType}" event`);
 
         // Whether success or failure, remove the event listener
         window.removeEventListener('message', this._onConnect);
         this._onConnect = null;
 
-        if (eventType === 'connect_failure') {
+        if (eventType === Conduit.routerEvents.CONNECT_FAILURE) {
           this.logger.error(new Error(event.data.reason));
 
-          this._reconnect()
-            .then(resolve)
-            .catch(reject);
+          if (reconnect) {
+            this.reconnect()
+              .then(resolve)
+              .catch(reject);
 
-          return;
+            return;
+          }
+
+          return reject(new Error('Failed to connect'));
         }
 
         // the mse service will stop streaming to us if we don't send
         // a message to iov/stats within 1 minute.
-        this._statsTimer = setInterval(() => {
-          this._publishStats();
-        }, 5000);
+        this.statsInterval = setInterval(() => {
+          this.publishStats();
+        }, this.PUBLISH_STATS_INTERVAL * 1000);
 
         this.connected = true;
 
+        this.logger.info('Connected');
         resolve();
       };
 
       window.addEventListener('message', this._onConnect);
 
       this._command({
-        method: 'connect',
+        method: Conduit.iframeCommands.CONNECT,
       });
     });
   }
@@ -218,301 +310,138 @@ export default class Conduit {
    */
 
   /**
-   * If the JWT is valid or if we are not using a JWT, perform the necessary
+   * If the hash is valid or if we are not using a hash, perform the necessary
    * conduit operations to retrieve stream segments (moofs).  The actual
    * "playing" occurs in the player, since it involves taking those received
    * stream segments and using MSE to display them.
    *
-   * @param {string} streamName - the name of the stream to get segments for
-   * @param {Conduit-onMoof} onMoof - the function that will handle the moof
+   * @async
+   *
+   * @param {Conduit-onMoof} onMoof
+   *   the function that will handle the moof
+   *
+   * @returns {Promise}
+   *   * Resolves once the first moof has been received
+   *   * Rejects if the moov or first moof time out
    */
-  async play (streamName, onMoof) {
+  async play (onMoof) {
+    this.logger.info('Playing...');
+
     // @todo - should we have a check to confirm that the conduit has been initialized?
     // @todo - should connect be called here?
     await this.connect();
 
-    if (this.jwt.length > 0) {
-      streamName = await this.validateJwt();
-    } else if (this.hash.length > 0) {
-      streamName = await this.validateHash();
+    if (this.streamConfiguration.hash && this.streamConfiguration.hash.length > 0) {
+      this.streamName = await this.validateHash();
     }
 
-    return new Promise((resolve, reject) => {
-      try {
-        this.requestStream(streamName, ({
-          mimeCodec,
-          guid,
-        }) => {
-          this.guid = guid;
+    this.logger.info('Play is requesting stream...');
 
-          const initSegmentTopic = `${this.clientId}/init-segment/${parseInt(Math.random() * 1000000)}`;
+    try {
+      const {
+        guid,
+        mimeCodec,
+      } = await this.requestStreamData();
 
-          // Set up the listener for the stream init
-          this.subscribe(initSegmentTopic, async ({
-            payloadBytes,
-          }) => {
-            const moov = payloadBytes;
+      this.guid = guid;
 
-            this.unsubscribe(initSegmentTopic);
+      // Get the moov first
+      const {
+        moov,
+      } = await this.requestMoov();
 
-            const newTopic = `iov/video/${guid}/live`;
+      // Set up the listener for the moofs
+      await this.requestMoofs(onMoof);
 
-            // Set up the listener for the stream itself
-            this.subscribe(newTopic, (mqttMessage) => {
-              if (onMoof) {
-                onMoof(mqttMessage);
-              }
-            });
+      return {
+        guid,
+        mimeCodec,
+        moov,
+      };
+    }
+    catch (error) {
+      this.logger.error(`Error trying to play stream ${this.streamName}`);
 
-            resolve({
-              guid,
-              mimeCodec,
-              moov,
-            });
-          });
+      // @todo - we could retry
+      this.stop();
 
-          // Ask the server for the stream
-          this.publish(`iov/video/${this.guid}/play`, {
-            initSegmentTopic,
-            clientId: this.clientId,
-            jwt: this.jwt,
-          });
-        });
-      }
-      catch (error) {
-        reject(error);
-      }
-    });
+      throw error;
+    }
   }
 
   /**
-   * Disconnect from the mqtt server
+   * Disconnect from the CLSP server
    *
-   * @todo - return a promise that resolves when the disconnection is complete
+   * @todo - return a promise that resolves when the disconnection is complete!
    */
   disconnect () {
     this.logger.debug('Disconnecting...');
+
+    // If a connection is in progress, cancel it
+    if (this._onConnect) {
+      window.removeEventListener('message', this._onConnect);
+      this._onConnect = null;
+    }
 
     this.connected = false;
 
     // when a stream fails, it no longer needs to send stats to the
     // server, and it may not even be connected to the server
-    clearInterval(this._statsTimer);
+    this.clearStatsInterval();
 
     this._command({
-      method: 'disconnect',
+      method: Conduit.iframeCommands.DISCONNECT,
     });
   }
 
   /**
-   * Stop the playing stream
+   * Stop the playing stream and cancel all requests
    *
-   * @todo - make this async and await the disconnection, and maybe even the
+   * @todo - await the disconnection, and maybe even the
    * unsubscribes
+
    */
   stop () {
     this.logger.debug('Stopping stream...');
 
-    if (!this.guid) {
-      this.logger.warn('No guid, so not stopping stream...');
-      return;
+    for (const [
+      id,
+      pendingTransaction,
+    ] of Object.entries(this.pendingTransactions)) {
+      if (pendingTransaction.timeout) {
+        clearTimeout(pendingTransaction.timeout);
+        pendingTransaction.timeout = null;
+      }
     }
 
-    // Stop listening for moofs
-    this.unsubscribe(`iov/video/${this.guid}/live`);
+    this.pendingTransactions = {};
 
-    // Stop listening for resync events
-    this.unsubscribe(`iov/video/${this.guid}/resync`);
+    this.clearFirstMoofTimeout();
+    this.clearMoofTimeout();
 
-    // Tell the server we've stopped
-    this.publish(`iov/video/${this.guid}/stop`, {
-      clientId: this.clientId,
-    });
+    if (this.guid) {
+      // Stop listening for the moov
+      this.unsubscribe(this.moovRequestTopic);
+
+      // Stop listening for moofs
+      this.unsubscribe(`iov/video/${this.guid}/live`);
+
+      // Stop listening for resync events
+      this.unsubscribe(`iov/video/${this.guid}/resync`);
+
+      // Tell the server we've stopped
+      this.publish(`iov/video/${this.guid}/stop`, {
+        clientId: this.clientId,
+      }).catch((error) => {
+        this.logger.warn('Error while stopping:');
+        this.logger.error(error);
+      });
+    }
+    else {
+      this.logger.info(`Trying to stop stream ${this.streamName} with no guid!`);
+    }
 
     this.disconnect();
-  }
-
-  /**
-   * Validate the jwt that this conduit was constructed with.
-   *
-   * @returns Promise
-   *   Resolves the streamName when the response is received AND is successful.
-   *   Rejects if the transaction fails or if the response code is not 200.
-   */
-  validateJwt () {
-    this.logger.debug('Validating JWT...');
-
-    return new Promise((resolve, reject) => {
-      try {
-        this.transaction(
-          'iov/jwtValidate',
-          {
-            b64_access_url: this.b64_jwt_access_url,
-            token: this.jwt,
-          },
-          (response) => {
-            // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
-
-            if (response.status !== 200) {
-              if (response.status === 403) {
-                return reject(new Error('JwtUnAuthorized'));
-              }
-
-              return reject(new Error('JwtInvalid'));
-            }
-
-            //TODO, figure out how to handle a change in the sfs url from the
-            // clsp-jwt from the target url returned from decrypting the jwt
-            // token.
-            // Example:
-            //    user enters 'clsp-jwt://sfs1/jwt?Start=0&End=...' for source
-            //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-            // --- due to the videojs architecture i don't see a clean way of doing this.
-            // ==============================================================================
-            //    The only way I can see doing this cleanly is to change videojs itself to
-            //    allow the 'canHandleSource' function in MqttSourceHandler to return a
-            //    promise not a value, then ascychronously find out if it can play this
-            //    source after making the call to decrypt the jwt token.22
-            // =============================================================================
-            // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
-            // case what is now the sfs ip address in clsp url will always be the same it will
-            // be the public ip of cluster gateway.
-            const t = response.target_url.split('/');
-
-            // get the actual stream name
-            const streamName = t[t.length - 1];
-
-            resolve(streamName);
-          }
-        );
-      }
-      catch (error) {
-        reject(error);
-      }
-    });
-  }
-  /**
-   * Validate the hash that this conduit was constructed with.
-   *
-   * @returns Promise
-   *   Resolves the streamName when the response is received AND is successful.
-   *   Rejects if the transaction fails or if the response code is not 200.
-   */
-  validateHash () {
-    this.logger.debug('Validating Hash...');
-
-    return new Promise((resolve, reject) => {
-      try {
-        this.transaction(
-          'iov/hashValidate',
-          {
-            b64HashURL: this.b64_hash_access_url,
-            token: this.hash,
-          },
-          (response) => {
-            // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
-
-            if (response.status !== 200) {
-              if (response.status === 403) {
-                return reject(new Error('HashUnAuthorized'));
-              }
-
-              return reject(new Error('HashInvalid'));
-            }
-
-            //TODO, figure out how to handle a change in the sfs url from the
-            // clsp-hash from the target url returned from decrypting the hash
-            // token.
-            // Example:
-            //    user enters 'clsp-hash://sfs1/hash?start=0&end=...&token=...' for source
-            //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
-            // --- due to the videojs architecture i don't see a clean way of doing this.
-            // ==============================================================================
-            //    The only way I can see doing this cleanly is to change videojs itself to
-            //    allow the 'canHandleSource' function in MqttSourceHandler to return a
-            //    promise not a value, then ascychronously find out if it can play this
-            //    source after making the call to decrypt the hash token.22
-            // =============================================================================
-            // Note: this could go away in architecture 2.0 if MQTT was a cluster in this
-            // case what is now the sfs ip address in clsp url will always be the same it will
-            // be the public ip of cluster gateway.
-            const t = response.target_url.split('/');
-
-            // get the actual stream name
-            const streamName = t[t.length - 1];
-
-            resolve(streamName);
-          }
-        );
-      }
-      catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  /**
-   * Get the `guid` and `mimeCodec` for the stream
-   *
-   * @todo - return a Promise
-   *
-   * @param {string} streamName - the name of the stream
-   * @param {Conduit-requestStreamCallback} cb
-   *
-   * @returns {void}
-   */
-  requestStream (streamName, cb) {
-    this.logger.debug('Requesting Stream...');
-
-    this.transaction(
-      `iov/video/${window.btoa(streamName)}/request`,
-      {
-        clientId: this.clientId,
-      },
-      cb
-    );
-  }
-
-  /**
-   * @callback Conduit-resyncStreamCb
-   * @param {any} - @todo - document this
-   */
-
-  /**
-   * @todo - provide method description
-   *
-   * @todo - return a Promise
-   *
-   * @param {Conduit-resyncStreamCb} cb
-   *   The callback for the resync operation
-   */
-  resyncStream (cb) {
-    // subscribe to a sync topic that will be called if the stream that is feeding
-    // the mse service dies and has to be restarted that this player should restart the stream
-    this.subscribe(`iov/video/${this.guid}/resync`, cb);
-  }
-
-  /**
-   * @callback Conduit-getStreamListCallback
-   * @param {any} - the list of available CLSP streams on the SFS
-   */
-
-  /**
-   * Get the list of available CLSP streams from the SFS
-   *
-   * @todo - return a Promise
-   *
-   * @param {Conduit-getStreamListCallback} cb
-   *
-   * @returns {void}
-   */
-  getStreamList (cb) {
-    this.logger.debug('Getting Stream List...');
-
-    this.transaction(
-      'iov/video/list', {},
-      cb
-    );
   }
 
   /**
@@ -534,8 +463,6 @@ export default class Conduit {
 
     this.destroyed = true;
 
-    clearInterval(this._statsTimer);
-
     if (this._onConnect) {
       window.removeEventListener('message', this._onConnect);
       this._onConnect = null;
@@ -546,16 +473,15 @@ export default class Conduit {
       this._onRouterCreate = null;
     }
 
-    this.disconnect();
+    this.stop();
 
     this.clientId = null;
-    this.wsbroker = null;
-    this.wsport = null;
-    this.useSSL = null;
-    this.b64_jwt_access_url = null;
-    this.jwt = null;
+    this.guid = null;
+    // The caller must destroy the streamConfiguration
+    this.streamConfiguration = null;
+    this.containerElement = null;
 
-    // Destroy iframe
+    // The Router will be destroyed along with the iframe
     this.iframe.parentNode.removeChild(this.iframe);
     // this.iframe.remove();
     this.iframe.srcdoc = '';
@@ -563,6 +489,269 @@ export default class Conduit {
 
     this.handlers = null;
     this.reconnectionAttempts = null;
+
+    this.connected = null;
+    this.firstMoofTimeout = null;
+
+    this.moovRequestTopic = null;
+
+    this.statsMsg = null;
+
+    this.publishHandlers = null;
+    this.reconnectionInProgress = null;
+
+    // @todo - can this be safely dereferenced?
+    // this._onMessageError = null;
+  }
+
+  /**
+   * Validate the hash that this conduit was constructed with.
+   *
+   * @async
+   *
+   * @returns {String}
+   *   the stream name
+   */
+  async validateHash () {
+    this.logger.debug('Validating Hash...');
+
+    // response ->  {"status": 200, "target_url": "clsp://sfs1/fakestream", "error": null}
+    const {
+      payloadString: response,
+    } = await this.transaction('iov/hashValidate', {
+      b64HashURL: this.streamConfiguration.b64_hash_access_url,
+      token: this.streamConfiguration.hash,
+    });
+
+    if (response.status === 403) {
+      throw new Error('HashUnAuthorized');
+    }
+
+    if (response.status !== 200) {
+      throw new Error('HashInvalid');
+    }
+
+    // TODO, figure out how to handle a change in the sfs url from the
+    // clsp-hash from the target url returned from decrypting the hash
+    // token.
+    // Example:
+    //    user enters 'clsp-hash://sfs1/hash?start=0&end=...&token=...' for source
+    //    clspUrl = 'clsp://SFS2/streamOnDifferentSfs
+    // --- due to the videojs architecture i don't see a clean way of doing this.
+    // ==============================================================================
+    //    The only way I can see doing this cleanly is to change videojs itself to
+    //    allow the 'canHandleSource' function in ClspSourceHandler to return a
+    //    promise not a value, then ascychronously find out if it can play this
+    //    source after making the call to decrypt the hash token.22
+    // =============================================================================
+    // Note: this could go away in architecture 2.0 if CLSP was a cluster in this
+    // case what is now the sfs ip address in clsp url will always be the same it will
+    // be the public ip of cluster gateway.
+    const t = response.target_url.split('/');
+
+    // get the actual stream name
+    const streamName = t[t.length - 1];
+
+    return streamName;
+  }
+
+  /**
+   * Get the `guid` and `mimeCodec` for the stream.  The guid serves as a stream
+   * instance for a given camera or video feed, and is needed to make requests
+   * for the stream instance.
+   *
+   * @async
+   *
+   * @returns {Object}
+   *   The video metadata, including the `guid` and `mimeCodec` properties.
+   */
+  async requestStreamData () {
+    this.logger.debug('Requesting Stream...');
+
+    const {
+      payloadString: videoMetaData,
+    } = await this.transaction(
+      `iov/video/${window.btoa(this.streamName)}/request`,
+      {
+        clientId: this.clientId,
+      },
+      this.STREAM_DATA_TIMEOUT_DURATION,
+    );
+
+    // @todo - is it possible to do better error handling here?
+    if (!videoMetaData.mimeCodec) {
+      throw new Error('Error while requesting stream: mimeCodec was not received!');
+    }
+
+    if (!videoMetaData.guid) {
+      throw new Error('Error while requesting stream: guid was not received!');
+    }
+
+    return videoMetaData;
+  }
+
+  clearStatsInterval () {
+    if (this.statsInterval) {
+      clearInterval(this.statsInterval);
+      this.statsInterval = null;
+    }
+  }
+
+  clearFirstMoofTimeout () {
+    if (this.firstMoofTimeout) {
+      clearTimeout(this.firstMoofTimeout);
+      this.firstMoofTimeout = null;
+    }
+  }
+
+  clearMoofTimeout () {
+    if (this.moofTimeout) {
+      clearTimeout(this.moofTimeout);
+      this.moofTimeout = null;
+    }
+  }
+
+  /**
+   * Request the moov from the SFS
+   *
+   * @async
+   *
+   * @todo - why is the clientId used here rather than the stream guid?
+   *
+   * @returns {Object}
+   *   The moov
+   */
+  async requestMoov () {
+    this.logger.info('Requesting the moov...');
+
+    if (!this.guid) {
+      throw new Error('The guid must be set before requesting the moov');
+    }
+
+    const {
+      payloadBytes: moov,
+    } = await this.transaction(
+      `iov/video/${this.guid}/play`,
+      {
+        initSegmentTopic: this.moovRequestTopic,
+        clientId: this.clientId,
+      },
+      this.MOOV_TIMEOUT_DURATION,
+      // We must override the subscribe topic to get the moov
+      this.moovRequestTopic,
+    );
+
+    return {
+      moov,
+    };
+  }
+
+  /**
+   * Request moofs from the SFS.  Should only be called after getting the moov.
+   *
+   * @param {Function} onMoof
+   *   The function to call when a moof is received
+   *
+   * @returns {Promise}
+   *   * Resolves when the first moof is received
+   *   * Rejects if the first moof is not received within the time defined by
+   *     FIRST_MOOF_TIMEOUT_DURATION
+   */
+  async requestMoofs (onMoof = () => {}) {
+    this.logger.info('Setting up moof listener...');
+
+    if (!this.guid) {
+      throw new Error('The guid must be set before requesting moofs');
+    }
+
+    return new Promise((resolve, reject) => {
+      let hasFirstMoofTimedOut = false;
+      let hasReceivedFirstMoof = false;
+
+      this.firstMoofTimeout = setTimeout(() => {
+        if (hasFirstMoofTimedOut) {
+          return;
+        }
+
+        hasFirstMoofTimedOut = true;
+
+        this.clearFirstMoofTimeout();
+
+        reject(new Error(`First moof for stream ${this.streamName} timed out after ${this.FIRST_MOOF_TIMEOUT_DURATION} seconds`));
+      }, this.FIRST_MOOF_TIMEOUT_DURATION * 1000);
+
+      const moofReceivedTopic = `iov/video/${this.guid}/live`;
+
+      // Set up the listener for the stream itself (the moof video segments)
+      this.subscribe(moofReceivedTopic, (clspMessage) => {
+        if (!hasReceivedFirstMoof) {
+          // If we received the first moof after the timeout, do nothing
+          if (hasFirstMoofTimedOut) {
+            this.logger.warn('Received first moof, but moofTimeout has already occurred...');
+            return;
+          }
+
+          // If the firstMoofTimeout still exists, cancel it, since the request
+          // did not timeout
+          this.clearFirstMoofTimeout();
+
+          // Since this is the first moof, resolve
+          hasReceivedFirstMoof = true;
+
+          resolve({
+            moofReceivedTopic,
+          });
+        }
+
+        this.clearMoofTimeout();
+
+        this.moofTimeout = setTimeout(() => {
+          this.reconnect();
+        }, this.MOOF_TIMEOUT_DURATION * 1000);
+
+        onMoof(clspMessage);
+      });
+    });
+  }
+
+  /**
+   * @callback Conduit-resyncStreamCb
+   * @param {any} - @todo - document this
+   */
+
+  /**
+   * @todo - provide method description
+   *
+   * @todo - return a Promise
+   *
+   * @param {Conduit-resyncStreamCb} onResync
+   *   The callback for the resync operation
+   */
+  resyncStream (onResync) {
+    // subscribe to a sync topic that will be called if the stream that is
+    // feeding the mse service dies and has to be restarted that this player
+    // should restart the stream
+    this.subscribe(`iov/video/${this.guid}/resync`, onResync);
+  }
+
+  /**
+   * Get the list of available CLSP streams from the SFS
+   *
+   * Note - this isn't currently used anywhere
+   *
+   * @async
+   *
+   * @returns {Object}
+   *   @todo
+   */
+  async getStreamList (cb) {
+    this.logger.debug('Getting Stream List...');
+
+    const {
+      payloadString: streamList,
+    } = await this.transaction('iov/video/list');
+
+    return streamList;
   }
 
   /**
@@ -579,29 +768,66 @@ export default class Conduit {
 
     this.logger.debug(`Message received for "${eventType}" event`);
 
-    switch (eventType) {
-      case 'mqtt_data': {
-        this._onMqttData(event.data);
-        break;
+    try {
+      switch (eventType) {
+        case Conduit.routerEvents.DATA_RECEIVED: {
+          this._onClspData(event.data);
+          break;
+        }
+        case Conduit.routerEvents.CONNECT_FAILURE:
+        case Conduit.routerEvents.CONNECTION_LOST: {
+          if (this.reconnectionInProgress) {
+            return;
+          }
+
+          this.reconnect();
+          break;
+        }
+        case Conduit.routerEvents.WINDOW_MESSAGE_FAIL: {
+          // @todo - do we really need to disconnect? should we reconnect?
+          this.disconnect();
+          break;
+        }
+        case Conduit.routerEvents.PUBLISH_SUCCESS: {
+          const publishId = event.data.publishId;
+
+          if (!publishId || !this.publishHandlers[publishId]) {
+            throw new Error(`No publish handler for ${publishId}`);
+          }
+
+          this.publishHandlers[publishId](
+            null, event.data, event,
+          );
+
+          break;
+        }
+        case Conduit.routerEvents.PUBLISH_FAIL: {
+          const publishId = event.data.publishId;
+
+          if (!publishId || !this.publishHandlers[publishId]) {
+            throw new Error(`No publish handler for ${publishId}`);
+          }
+
+          this.publishHandlers[publishId](
+            new Error(event.data.reason), event.data, event,
+          );
+
+          break;
+        }
+        case Conduit.routerEvents.CREATED:
+        case Conduit.routerEvents.CONNECT_SUCCESS:
+        case Conduit.routerEvents.DISCONNECT_SUCCESS: {
+          break;
+        }
+        default: {
+          this.logger.error(`No match for event: ${eventType}`);
+        }
       }
-      case 'connection_lost': {
-        this.disconnect();
-        this._reconnect();
-        break;
-      }
-      case 'window_message_fail': {
-        // @todo - do we really need to disconnect?
-        this.disconnect();
-        break;
-      }
-      case 'router_created':
-      case 'connect_success':
-      case 'disconnect_success': {
-        break;
-      }
-      default: {
-        this.logger.error(`No match for event: ${eventType}`);
-      }
+    }
+    catch (error) {
+      this.logger.debug('onMessageError');
+
+      this._onMessageError(error);
     }
   }
 
@@ -617,7 +843,7 @@ export default class Conduit {
     // @todo - it appears that this is never used!
     if ((this.LogSourceBuffer === true) && (this.LogSourceBufferTopic !== null)) {
       this.directSend({
-        method: 'send',
+        method: Conduit.iframeCommands.SEND,
         topic: this.LogSourceBufferTopic,
         byteArray,
       });
@@ -632,7 +858,7 @@ export default class Conduit {
    *
    * @param {*} message
    */
-  _onMqttData (message) {
+  _onClspData (message) {
     const topic = message.destinationName;
 
     this.logger.debug(`Handling message for topic "${topic}"`);
@@ -666,7 +892,7 @@ export default class Conduit {
     this.handlers[topic] = handler;
 
     this._command({
-      method: 'subscribe',
+      method: Conduit.iframeCommands.SUBSCRIBE,
       topic,
     });
   }
@@ -682,10 +908,14 @@ export default class Conduit {
   unsubscribe (topic) {
     this.logger.debug(`Unsubscribing from topic "${topic}"`);
 
-    delete this.handlers[topic];
+    // unsubscribes can occur asynchronously, so ensure the handlers object
+    // still exists
+    if (this.handlers) {
+      delete this.handlers[topic];
+    }
 
     this._command({
-      method: 'unsubscribe',
+      method: Conduit.iframeCommands.UNSUBSCRIBE,
       topic,
     });
   }
@@ -693,20 +923,37 @@ export default class Conduit {
   /**
    * @todo - provide method description
    *
-   * @todo - return a Promise
-   *
    * @param {String} topic
    *   The topic to publish to
    * @param {Object} data
    *   The data to publish
+   *
+   * @returns {Promise}
+   *   Resolves when publish operation is successful
+   *   Rejects when publish operation fails
    */
   publish (topic, data) {
+    const publishId = uuidv4();
+
     this.logger.debug(`Publishing to topic "${topic}"`);
 
-    this._command({
-      method: 'publish',
-      topic,
-      data,
+    return new Promise((resolve, reject) => {
+      this.publishHandlers[publishId] = (error) => {
+        delete this.publishHandlers[publishId];
+
+        if (error) {
+          return reject(error);
+        }
+
+        resolve();
+      };
+
+      this._command({
+        method: Conduit.iframeCommands.PUBLISH,
+        publishId,
+        topic,
+        data,
+      });
     });
   }
 
@@ -724,47 +971,104 @@ export default class Conduit {
     this.logger.debug('directSend...');
 
     this._command({
-      method: 'send',
+      method: Conduit.iframeCommands.SEND,
       topic,
       byteArray,
     });
   }
 
   /**
-   * @todo - provide method description
+   * Request
    *
-   * @todo - return a Promise
+   * When asking the server for something, we do not get a response right away.
+   * Instead, we must perform the following steps:
+   *
+   * 1. generate a unique string, which will be sent to the server as the "response topic"
+   * 1. subscribe
    *
    * @param {String} topic
    *   The topic to perform a transaction on
    * @param {Object} messageData
    *   The data to be published
-   * @param {Conduit-transactionCb} cb
+   *
+   * @returns {Promise}
+   *   Resolves when the transaction successfully finishes
+   *   Rejects if there is any error or timeout during the transaction
    */
   transaction (
     topic,
     messageData = {},
-    cb
+    timeoutDuration = this.TRANSACTION_TIMEOUT,
+    subscribeTopic,
   ) {
-    this.logger.debug('transaction...');
+    this.logger.debug(`transaction for ${topic}...`);
 
-    messageData.resp_topic = `${this.clientId}/response/${parseInt(Math.random() * 1000000)}`;
+    const transactionId = uuidv4();
 
-    this.subscribe(messageData.resp_topic, (response) => {
-      if (cb) {
-        cb(JSON.parse(response.payloadString));
-      }
+    if (!subscribeTopic) {
+      subscribeTopic = messageData.resp_topic = `${this.clientId}/response/${transactionId}`;
+    }
 
-      this.unsubscribe(messageData.resp_topic);
+    this.pendingTransactions[transactionId] = {
+      id: transactionId,
+      hasTimedOut: false,
+      timeout: null,
+    };
+
+    return new Promise((resolve, reject) => {
+      const finished = (error, response) => {
+        this.unsubscribe(subscribeTopic);
+
+        if (this.pendingTransactions[transactionId].timeout) {
+          clearTimeout(this.pendingTransactions[transactionId].timeout);
+          this.pendingTransactions[transactionId].timeout = null;
+        }
+
+        if (error) {
+          return reject(error);
+        }
+
+        const payloadString = response.payloadString;
+
+        // @todo - why is this necessary?
+        if (response.payloadString) {
+          try {
+            response.payloadString = JSON.parse(payloadString) || {};
+          }
+          catch (error) {
+            this.logger.warn('Failed to parse payloadString');
+            this.logger.warn(error);
+            response.payloadString = payloadString;
+          }
+        }
+
+        resolve(response);
+      };
+
+      this.pendingTransactions[transactionId].timeout = setTimeout(() => {
+        if (this.pendingTransactions[transactionId].hasTimedOut) {
+          return;
+        }
+
+        this.pendingTransactions[transactionId].hasTimedOut = true;
+
+        finished(new Error(`Transaction for ${topic} timed out after ${timeoutDuration} seconds`));
+      }, timeoutDuration * 1000);
+
+      this.subscribe(subscribeTopic, (response) => {
+        finished(null, response);
+      });
+
+      this.publish(topic, messageData).catch((error) => {
+        finished(error);
+      });
     });
-
-    this.publish(topic, messageData);
   }
 
   /**
    * @private
    *
-   * Generate an iframe with an embedded mqtt router.  The router will be what
+   * Generate an iframe with an embedded CLSP router.  The router will be what
    * this Conduit instance communicates with in subsequent commands.
    *
    * @returns Element
@@ -789,13 +1093,18 @@ export default class Conduit {
             window.Logger = ${Logger.toString()};
 
             // Configure the CLSP properties
-            window.mqttRouterConfig = {
-              iovId: '${this.iovId}',
+            window.clspRouterConfig = {
+              logId: '${this.logId}',
               clientId: '${this.clientId}',
-              host: '${this.wsbroker}',
-              port: ${this.wsport},
-              useSSL: ${this.useSSL},
+              host: '${this.streamConfiguration.host}',
+              port: ${this.streamConfiguration.port},
+              useSSL: ${this.streamConfiguration.useSSL},
+              CONNECTION_TIMEOUT: ${this.ROUTER_CONNECTION_TIMEOUT},
+              KEEP_ALIVE_INTERVAL: ${this.ROUTER_KEEP_ALIVE_INTERVAL},
+              PUBLISH_TIMEOUT: ${this.ROUTER_PUBLISH_TIMEOUT},
             };
+
+            window.conduitCommands = ${JSON.stringify(Conduit.iframeCommands)};
 
             window.iframeEventHandlers = ${Router.toString()}();
           </script>
@@ -813,34 +1122,101 @@ export default class Conduit {
   }
 
   /**
-   * Attempt to reconnect a certain number of times
+   * @private
+   * @async
    *
-   * @returns Promise
-   *   Resolves when the connection is successfully established
-   *   Rejects when the connection fails
+   * Do not call this method directly!  Only use the `reconnect` method.
    */
-  async _reconnect () {
+  async _reconnect (reconnectionStartedAt, stopTryingToReconnectAt, onSuccess, onFailure) {
+    this.logger.info('Reconnecting...');
+
     this.reconnectionAttempts++;
 
-    if (this.reconnectionAttempts > MAX_RECONNECTION_ATTEMPTS) {
-      throw new Error(`Failed to reconnect after ${this.reconnectionAttempts} attempts.`);
+    if (this.MAX_RECONNECTION_ATTEMPTS && this.reconnectionAttempts > this.MAX_RECONNECTION_ATTEMPTS) {
+      return onFailure(new Error(`Failed to reconnect after ${this.reconnectionAttempts} attempts.`));
+    }
+
+    if (this.MAX_RECONNECTION_TIME && Date.now() > stopTryingToReconnectAt) {
+      return onFailure(new Error(`Failed to reconnect after ${this.MAX_RECONNECTION_TIME} seconds.`));
     }
 
     try {
-      await this.connect();
+      this.disconnect();
+      await this.connect(false);
 
+      // After successfully connecting, reset the reconnection attempts and
       this.reconnectionAttempts = 0;
+      this.reconnectionInProgress = null;
+
+      onSuccess();
     }
     catch (error) {
       this.logger.error(error);
-      this._reconnect();
+
+      const reconnectionDelay = (Date.now() - reconnectionStartedAt > (this.IMMEDIATE_RECONNECTION_DURATION * 1000))
+        ? this.RECONNECTION_DELAY
+        : this.IMMEDIATE_RECONNECTION_DELAY
+
+      setTimeout(() => {
+        // @todo - do we need to worry about recursion overflowing the stack?
+        this._reconnect(
+          reconnectionStartedAt,
+          stopTryingToReconnectAt,
+          onSuccess,
+          onFailure
+        );
+      }, reconnectionDelay * 1000);
     }
+  }
+
+  /**
+   * Attempt to reconnect a certain number of times
+   *
+   * @returns {Promise}
+   */
+  reconnect () {
+    this.logger.info('Reconnecting...');
+
+    // If we're already trying to reconnect, don't try again
+    if (this.reconnectionInProgress) {
+      return this.reconnectionInProgress;
+    }
+
+    const reconnectionStartedAt = Date.now();
+
+    const stopTryingToReconnectAt = this.MAX_RECONNECTION_TIME
+      ? reconnectionStartedAt + (this.MAX_RECONNECTION_TIME * 1000)
+      : 0;
+
+    this.reconnectionInProgress = new Promise((resolve, reject) => {
+      this.logger.info('First reconnection attempt...');
+
+      this._reconnect(
+        reconnectionStartedAt,
+        stopTryingToReconnectAt,
+        () => {
+          this.logger.info('reconnected!')
+
+          // After successfully connecting, clear the reconnectionInProgress
+          this.reconnectionInProgress = null;
+
+          this._onReconnect();
+          resolve();
+        },
+        (error) => {
+          this._onReconnect(error);
+          reject(error);
+        }
+      );
+    });
+
+    return this.reconnectionInProgress;
   }
 
   /**
    * @private
    *
-   * Pass an mqtt command to the iframe.
+   * Pass a CLSP command to the iframe.
    *
    * @param {Object} message
    */
@@ -863,14 +1239,27 @@ export default class Conduit {
   /**
    * @private
    *
+   * @async
+   *
    * Send stats to the server
    */
-  _publishStats () {
+  async publishStats () {
     this.statsMsg.inkbps = (this.statsMsg.byteCount * 8) / 30000.0;
     this.statsMsg.byteCount = 0;
 
-    this.publish('iov/stats', this.statsMsg);
+    try {
+      await this.publish('iov/stats', this.statsMsg);
 
-    this.logger.debug('iov status', this.statsMsg);
+      this.logger.debug('iov status', this.statsMsg);
+    }
+    catch (error) {
+      this.logger.error('Error while publishing stats!');
+      this.logger.error(error);
+
+      // if the stats cannot be published, treat that as an unexpected
+      // disconnection
+      this.clearStatsInterval();
+      this.reconnect();
+    }
   }
 }

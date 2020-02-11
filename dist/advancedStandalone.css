@@ -1,5 +1,5 @@
 /**
- * Sass for clsp with videojs and videojs-errors
+ * video.js and videojs errors style overrides
  */
 .video-js.vjs-mse-over-mqtt {
   display: block; }
@@ -160,8 +160,23 @@
   .vjs-errors-flashmessage {
     display: none; } }
 
+.clsp-video-container {
+  position: relative;
+  width: 100%;
+  height: 100%; }
+  .clsp-video-container video:first-of-type {
+    z-index: 2 !important; }
+  .clsp-video-container .clsp-video {
+    z-index: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black; }
+
 * {
-  box-sizing: border-box; }
+  box-sizing: border-box !important; }
 
 html, body {
   width: 100%;
@@ -173,11 +188,6 @@ html, body {
   overflow: auto;
   border: 1px solid black;
   background-color: black; }
-
-video {
-  width: 100%;
-  height: 100%;
-  object-fit: fill; }
 
 .tour,
 .headless {
@@ -203,14 +213,15 @@ video {
 
 .page-body {
   display: flex;
-  flex-direction: column; }
+  flex-direction: column;
+  flex-grow: 1;
+  flex-shrink: 0; }
   .page-body section {
     border: solid 3px black;
     padding: 5px;
     padding: 0;
     display: flex;
     flex-direction: column;
-    width: 100%;
     overflow: auto;
     flex-grow: 1;
     flex-shrink: 0; }
@@ -231,10 +242,46 @@ video {
           margin: auto; }
     .page-body section .controls {
       display: flex;
-      background-color: lightgray;
-      padding: 1rem; }
-      .page-body section .controls .controls-container > div {
-        margin: 20px; }
+      flex-direction: column;
+      flex-grow: 1;
+      flex-shrink: 0;
+      padding: 1rem;
+      background-color: lightgray; }
+      .page-body section .controls .url-containers {
+        display: flex;
+        flex-grow: 1;
+        flex-shrink: 0;
+        justify-content: space-between; }
+        .page-body section .controls .url-containers .urls-container {
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          flex-shrink: 0;
+          width: 50%; }
+        .page-body section .controls .url-containers .tour-urls-container {
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          flex-shrink: 0;
+          width: 50%; }
+        .page-body section .controls .url-containers .urls-options {
+          justify-content: start;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end; }
+        .page-body section .controls .url-containers .urls-title {
+          display: flex;
+          justify-content: space-between; }
+          .page-body section .controls .url-containers .urls-title input {
+            width: 25%; }
+      .page-body section .controls .controls-container {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end; }
+        .page-body section .controls .controls-container > * {
+          margin: 1rem; }
+        .page-body section .controls .controls-container button {
+          padding: 1rem; }
     .page-body section #videowall,
     .page-body section #tourwall {
       display: grid;
@@ -245,7 +292,7 @@ video {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 0.5rem;
+      padding: 0.25rem;
       border: 2px solid grey;
       overflow: hidden; }
       .page-body section .player-container .video-stream {
@@ -253,14 +300,14 @@ video {
         width: 100%;
         align-items: center;
         justify-content: space-between;
-        padding: 10px;
         text-align: center;
         background-color: black;
         color: white; }
         .page-body section .player-container .video-stream .url {
           padding: 0 0.5rem;
           text-overflow: ellipsis;
-          overflow: hidden; }
+          overflow: hidden;
+          white-space: nowrap; }
         .page-body section .player-container .video-stream .close {
           background-color: red;
           border-color: red;
@@ -269,7 +316,16 @@ video {
           color: white;
           border-radius: 50%; }
       .page-body section .player-container .video-container {
-        display: flex; }
+        display: flex;
+        flex-grow: 1;
+        flex-shrink: 0; }
+        .page-body section .player-container .video-container .clsp-video-container {
+          height: 100%;
+          width: 100%; }
+          .page-body section .player-container .video-container .clsp-video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: fill; }
       .page-body section .player-container .video-metrics {
         display: flex;
         flex-direction: column;
@@ -290,5 +346,3 @@ video {
             flex-shrink: 0;
             text-align: left;
             overflow: hidden; }
-
-/*# sourceMappingURL=advancedStandalone.css.map*/

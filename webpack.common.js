@@ -143,7 +143,7 @@ function generateClspConfig () {
   };
 }
 
-function generateAdvancedWithVideoJsDemoConfig() {
+function generateAdvancedWithVideoJsDemoConfig () {
   const name = 'advancedWithVideoJs';
   const srcPath = path.resolve(
     __dirname,

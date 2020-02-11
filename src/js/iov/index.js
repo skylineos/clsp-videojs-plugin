@@ -2,8 +2,13 @@
 
 import 'srcdoc-polyfill';
 
-import IovCollection from './collection';
+import IovCollection from './IovCollection';
+import TourController from './TourController';
 
 window.IovCollection = IovCollection;
+window.TourController = TourController;
 
-export default IovCollection;
+export default {
+  IovCollection,
+  TourController,
+};

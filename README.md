@@ -1,4 +1,4 @@
-# videojs-mse-over-clsp
+# videojs-mse-over-clsp <!-- omit in toc -->
 
 A videojs plugin that adds support for video served over the `clsp` protocol.
 Currently, this protocol is available only via Skyline's SFS solutions.
@@ -6,15 +6,17 @@ Currently, this protocol is available only via Skyline's SFS solutions.
 Note - this plugin currently only works in Chrome and Firefox.  Chrome is recommended for performance.
 Note - this highest h.264 keyframe/iframe segment frequency this plugin currently supports is 2 per second.  This is different from frames per second.
 
-## Table of Contents
+## Table of Contents <!-- omit in toc -->
 
-- [URL structure](#url-structure)
+- [URL Structure](#url-structure)
+  - [Tokenization](#tokenization)
+    - [Hash](#hash)
 - [Installation](#installation)
   - [Via NPM](#via-npm)
   - [Via Git](#via-git)
 - [Usage](#usage)
   - [`<head>` Tag](#head-tag)
-  - [`<video>` Tag](#video-tag)
+  - [`<video>` tag](#video-tag)
   - [`<script>` Tag](#script-tag)
 - [Supported Browsers](#supported-browsers)
 - [Dependencies](#dependencies)
@@ -33,7 +35,7 @@ The new network protocol is handled by specifying the following URI format:
 
 Example stream url:
 
-`clsp://172.28.12.57:9001/FairfaxVideo0520`
+`clsp://172.28.12.57/FairfaxVideo0520`
 
 ### Tokenization
 
@@ -105,7 +107,7 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
   <!-- VideoJS styles -->
   <link
     rel="stylesheet"
-    href="//vjs.zencdn.net/7.5.4/video-js.min.css"
+    href="//vjs.zencdn.net/7.6.6/video-js.min.css"
   >
   <!-- CLSP styles -->
   <link
@@ -115,13 +117,17 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
   <!-- Babel Polyfill -->
   <script
     type="text/javascript"
-    src="//cdn.jsdelivr.net/npm/@babel/polyfill@7.4.4/dist/polyfill.min.js"
+    src="//cdn.jsdelivr.net/npm/@babel/polyfill@7.7.0/dist/polyfill.min.js"
   ></script>
 <head>
 ```
 
 
 ### `<video>` tag
+
+We recommend wrapping the `video` tag in a container element (e.g. `div`) that
+the CLSP plugin can mutate as needed.  The CLSP plugin needs to perform some
+actions on the `video` element as well as its container.
 
 On the HTML `video` tag, the `type` attribute must be the following:
 
@@ -134,22 +140,24 @@ H.264 baseline 3.0 is a least common denominator codec supported on all browsers
 Here is a sample video element that defines a CLSP and an HLS stream
 
 ```html
-<video
-  id="my-video"
-  class="video-js vjs-default-skin"
-  controls
->
-  <!-- CLSP Stream -->
-  <source
-    src="clsp://8.15.251.53/FairfaxVideo0510"
-    type="video/mp4; codecs='avc1.42E01E'"
-  />
-  <!-- HLS Stream -->
-  <source
-    src="http://8.15.251.53:1935/rtplive/FairfaxVideo0510/playlist.m3u8"
-    type="application/x-mpegURL"
-  />
-</video>
+<div>
+  <video
+    id="my-video"
+    class="video-js vjs-default-skin"
+    controls
+  >
+    <!-- CLSP Stream -->
+    <source
+      src="clsp://8.15.251.53/FairfaxVideo0510"
+      type="video/mp4; codecs='avc1.42E01E'"
+    />
+    <!-- HLS Stream -->
+    <source
+      src="http://8.15.251.53:1935/rtplive/FairfaxVideo0510/playlist.m3u8"
+      type="application/x-mpegURL"
+    />
+  </video>
+</div>
 ```
 
 
@@ -159,7 +167,7 @@ This is the simplest case. Get the script in whatever way you prefer and include
 
 ```html
 <!-- VideoJS -->
-<script src="//vjs.zencdn.net/7.5.4/video.min.js"></script>
+<script src="//vjs.zencdn.net/7.6.6/video.min.js"></script>
 <!-- CLSP Plugin -->
 <script src="../dist/videojs-mse-over-clsp.min.js"></script>
 
@@ -182,9 +190,9 @@ Chrome 52+ or Firefox are the browsers that this plugin currently supports.  All
 
 ## Dependencies
 
-`@babel/polyfill` `7.4.4` is required.
+`@babel/polyfill` `7.7.0` is required.
 
-`video.js` `7.5.4` is the recommended version.  Version `6.x` is not recommended due to it being less performant over time.
+`video.js` `7.6.6` is the recommended version.  Version `6.x` is not recommended due to it being less performant over time.
 
 If using `videojs-errors`, which is recommended, `4.2.0` is the recommended version, as it allows us to re-register successive errors to respond to successfive failures as necessary to support stream recovery.
 

@@ -1,9 +1,16 @@
 'use strict';
 
-import defaults from 'lodash/defaults';
+import uuidv4 from 'uuid/v4';
 
+import ConduitCollection from '../conduit/ConduitCollection';
 import MSEWrapper from './MSEWrapper';
 import Logger from '../utils/logger';
+import StreamConfiguration from './StreamConfiguration';
+import utils from '../utils';
+
+const DEFAULT_ENABLE_METRICS = false;
+const DEFAULT_SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
+const DEFAULT_DRIFT_CORRECTION_CONSTANT = 2;
 
 /**
  * Responsible for receiving stream input and routing it to the media source
@@ -14,13 +21,11 @@ import Logger from '../utils/logger';
  * it is supposed to be capable of playing video by itself.  The plugin that
  * uses this player should have all of the videojs logic, and none should
  * exist here.
- *
- * var player = IOVPlayer.factory(iov);
- * player.play( video_element_id, stream_name );
 */
-export default class IOVPlayer {
+export default class IovPlayer {
   static EVENT_NAMES = [
     'metric',
+    'unsupportedMimeCodec',
     'firstFrameShown',
     'videoReceived',
     'videoInfoReceived',
@@ -35,27 +40,28 @@ export default class IOVPlayer {
     'video.segmentIntervalAverage',
   ];
 
-  static SEGMENT_INTERVAL_SAMPLE_SIZE = 5;
-  static DRIFT_CORRECTION_CONSTANT = 2;
-
   static factory (
-    iov,
+    logId,
     videoElement,
-    options = {}
+    onConduitMessageError,
+    onPlayerError,
   ) {
-    return new IOVPlayer(
-      iov,
+    return new IovPlayer(
+      logId,
       videoElement,
-      options
+      onConduitMessageError,
+      onPlayerError,
     );
   }
 
   constructor (
-    iov,
+    logId,
     videoElement,
-    options
+    onConduitMessageError = this.onConduitMessageError,
+    onPlayerError = this.onPlayerError,
   ) {
-    this.logger = Logger().factory(`IOV Player ${iov.id}`);
+    this.logId = logId;
+    this.logger = Logger().factory(`Iov Player ${this.logId}`);
 
     this.logger.debug('constructor');
 
@@ -64,23 +70,18 @@ export default class IOVPlayer {
     // @todo - there must be a more proper way to do events than this...
     this.events = {};
 
-    for (let i = 0; i < IOVPlayer.EVENT_NAMES.length; i++) {
-      this.events[IOVPlayer.EVENT_NAMES[i]] = [];
+    for (let i = 0; i < IovPlayer.EVENT_NAMES.length; i++) {
+      this.events[IovPlayer.EVENT_NAMES[i]] = [];
     }
 
-    this.iov = iov;
     this.videoElement = videoElement;
 
-    this.options = defaults(
-      {},
-      options,
-      {
-        segmentIntervalSampleSize: IOVPlayer.SEGMENT_INTERVAL_SAMPLE_SIZE,
-        driftCorrectionConstant: IOVPlayer.DRIFT_CORRECTION_CONSTANT,
-        enableMetrics: false,
-      }
-    );
+    this.conduitCount = 0;
+    this.conduit = null;
+    this.streamConfiguration = null;
 
+    this.onConduitMessageError = onConduitMessageError;
+    this.onPlayerError = onPlayerError;
     this.firstFrameShown = false;
     this.stopped = false;
 
@@ -96,13 +97,18 @@ export default class IOVPlayer {
     this.segmentIntervals = [];
 
     this.mseWrapper = null;
-    this.moovBox = null;
+    this.moov = null;
+
+    // These can be configured manually after construction
+    this.ENABLE_METRICS = DEFAULT_ENABLE_METRICS;
+    this.SEGMENT_INTERVAL_SAMPLE_SIZE = DEFAULT_SEGMENT_INTERVAL_SAMPLE_SIZE;
+    this.DRIFT_CORRECTION_CONSTANT = DEFAULT_DRIFT_CORRECTION_CONSTANT;
   }
 
   on (name, action) {
     this.logger.debug(`Registering Listener for ${name} event...`);
 
-    if (!IOVPlayer.EVENT_NAMES.includes(name)) {
+    if (!IovPlayer.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -130,7 +136,7 @@ export default class IOVPlayer {
       return;
     }
 
-    if (!IOVPlayer.EVENT_NAMES.includes(name)) {
+    if (!IovPlayer.EVENT_NAMES.includes(name)) {
       throw new Error(`"${name}" is not a valid event."`);
     }
 
@@ -140,11 +146,11 @@ export default class IOVPlayer {
   }
 
   metric (type, value) {
-    if (!this.options.enableMetrics) {
+    if (!this.ENABLE_METRICS) {
       return;
     }
 
-    if (!IOVPlayer.METRIC_TYPES.includes(type)) {
+    if (!IovPlayer.METRIC_TYPES.includes(type)) {
       // @todo - should this throw?
       return;
     }
@@ -173,14 +179,74 @@ export default class IOVPlayer {
   _onError (
     type,
     message,
-    error
+    error,
   ) {
     this.logger.warn(
       type,
       ':',
-      message
+      message,
     );
     this.logger.error(error);
+  }
+
+  generateConduitLogId () {
+    return `${this.logId}.conduit:${++this.conduitCount}`;
+  }
+
+  onConduitReconnect = (error) => {
+    if (error) {
+      this.logger.error(error);
+      // @todo - should we do anything else on error?
+      return;
+    }
+
+    // @todo - is there a more performant way to do this?
+    this.restart();
+  };
+
+  onPlayerError = (error) => {
+    this.logger.error('Player Error!');
+    this.logger.error(error);
+  };
+
+  onConduitMessageError = (error) => {
+    this.logger.error('Conduit Message Error!');
+    this.logger.error(error);
+  };
+
+  async initialize (streamConfiguration = this.streamConfiguration) {
+    if (!StreamConfiguration.isStreamConfiguration(streamConfiguration)) {
+      throw new Error('streamConfiguration is not valid');
+    }
+
+    this.logger.debug(`Initializing with ${streamConfiguration.streamName}`);
+
+    this.streamConfiguration = streamConfiguration;
+
+    // This MUST be globally unique!  The CLSP server will broadcast the stream
+    // to a topic that contains this id, so if there is ANY other client
+    // connected that has the same id anywhere in the world, the stream to all
+    // clients that use that topic will fail.  This is why we use guids rather
+    // than an incrementing integer.
+    // It is now prefixed with `clsp-plugin-` to differentiate requests that
+    // come from this plugin from others.
+    // Note - this must not contain the '+' character
+    // @todo - the caller should be able to provide a prefix or something
+    this.clientId = `clsp-plugin-${utils.version.replace('+', '-build-')}-${uuidv4()}`;
+
+    this.videoElement.id = this.clientId;
+    this.videoElement.dataset.name = streamConfiguration.streamName;
+
+    this.conduit = await ConduitCollection.asSingleton().create(
+      this.generateConduitLogId(),
+      this.clientId,
+      this.streamConfiguration,
+      this.videoElement.parentNode,
+      this.onConduitReconnect,
+      this.onConduitMessageError
+    );
+
+    await this.conduit.initialize();
   }
 
   _html5Play () {
@@ -193,7 +259,7 @@ export default class IOVPlayer {
           this._onError(
             'play.promise',
             'Error while trying to play clsp video',
-            error
+            error,
           );
         });
       }
@@ -202,7 +268,7 @@ export default class IOVPlayer {
       this._onError(
         'play.notPromise',
         'Error while trying to play clsp video - the play operation was NOT a promise!',
-        error
+        error,
       );
     }
   }
@@ -232,7 +298,8 @@ export default class IOVPlayer {
           onAppendStart: (byteArray) => {
             this.logger.silly('On Append Start...');
 
-            this.iov.onAppendStart(byteArray);
+            // onAppendStart
+            this.conduit.segmentUsed(byteArray);
           },
           onAppendFinish: (info) => {
             this.logger.silly('On Append Finish...');
@@ -248,7 +315,7 @@ export default class IOVPlayer {
             this.metric('video.currentTime', this.videoElement.currentTime);
             this.metric('video.drift', this.drift);
 
-            if (this.drift > ((this.segmentIntervalAverage / 1000) + this.options.driftCorrectionConstant)) {
+            if (this.drift > ((this.segmentIntervalAverage / 1000) + this.DRIFT_CORRECTION_CONSTANT)) {
               this.metric('video.driftCorrection', 1);
               this.videoElement.currentTime = info.bufferTimeEnd;
             }
@@ -270,7 +337,7 @@ export default class IOVPlayer {
             this._onError(
               'sourceBuffer.append',
               'Error while appending to sourceBuffer',
-              error
+              error,
             );
 
             await this.reinitializeMseWrapper(mimeCodec);
@@ -287,7 +354,7 @@ export default class IOVPlayer {
             this._onError(
               'sourceBuffer.remove',
               'Error while removing segments from sourceBuffer',
-              error
+              error,
             );
           },
           onStreamFrozen: async () => {
@@ -299,7 +366,7 @@ export default class IOVPlayer {
             this._onError(
               'mediaSource.sourceBuffer.generic',
               'mediaSource sourceBuffer error',
-              error
+              error,
             );
 
             await this.reinitializeMseWrapper(mimeCodec);
@@ -308,8 +375,7 @@ export default class IOVPlayer {
 
         this.trigger('videoInfoReceived');
 
-        // @todo - the moovBox is currently set in the IOV - do something else
-        this.mseWrapper.appendMoov(this.moovBox);
+        this.mseWrapper.appendMoov(this.moov);
       },
       onSourceEnded: async () => {
         this.logger.debug('on mediaSource sourceended');
@@ -325,7 +391,7 @@ export default class IOVPlayer {
           // needs to be accounted for in the MSEWrapper, and the actual error
           // that was thrown must ALWAYS be the first argument here.  As a
           // shortcut, we can log `...args` here instead.
-          error
+          error,
         );
       },
     });
@@ -340,29 +406,36 @@ export default class IOVPlayer {
   async restart () {
     this.logger.debug('restart');
 
-    await this.iov.stop();
-    await this.iov.play();
-  }
+    // @todo - this has not yet been tested for memory leaks
 
-  onMoov = async (mimeCodec, moov) => {
-    // @todo - this seems like a hack...
-    if (this.stopped) {
-      return;
+    // If the src attribute is missing, it means we must reinitialize.  This can
+    // happen if the video was loaded while the page was not visible, e.g.
+    // document.hidden === true, which can happen when switching tabs.
+    // @todo - is there a more "proper" way to do this?
+    const needToReinitialize = !this.videoElement.src;
+
+    await this.stop();
+
+    if (needToReinitialize) {
+      if (this.conduit) {
+        ConduitCollection.asSingleton().remove(this.clientId);
+      }
+
+      await this.initialize();
     }
 
-    this.moovBox = moov;
+    const playError = await this.play();
 
-    // this.trigger('firstChunk');
+    if (playError) {
+      return playError;
+    }
 
-    await this.reinitializeMseWrapper(mimeCodec);
+    if (needToReinitialize) {
+      this._html5Play();
+    }
+  }
 
-    this.iov.resyncStream(() => {
-      // console.log('sync received re-initialize media source buffer');
-      this.reinitializeMseWrapper(mimeCodec);
-    });
-  };
-
-  onMoof = (mqttMessage) => {
+  onMoof = (clspMessage) => {
     // @todo - this seems like a hack...
     if (this.stopped) {
       return;
@@ -370,24 +443,76 @@ export default class IOVPlayer {
 
     this.trigger('videoReceived');
     this.getSegmentIntervalMetrics();
-    this.mseWrapper.append(mqttMessage.payloadBytes);
+
+    // Sometimes, the first moof arrives before the mseWrapper has finished
+    // being initialized, so we will need to drop those frames
+    if (!this.mseWrapper) {
+      return;
+    }
+
+    this.mseWrapper.append(clspMessage.payloadBytes);
   };
 
+  /**
+   * Note that if an error is thrown during play, the IovPlayer instance should
+   * be destroyed to free resources.
+   */
   async play () {
     this.logger.debug('play');
 
     this.stopped = false;
 
-    await this.iov._play(this.onMoov, this.onMoof);
+    if (!this.streamConfiguration) {
+      this.logger.error('Cannot play a stream without a stream configuration');
+      return;
+    }
+
+    let mimeCodec;
+    let moov;
+
+    try {
+      ({
+        // guid,
+        mimeCodec,
+        moov,
+      } = await this.conduit.play(this.onMoof));
+    }
+    catch (error) {
+      this.onPlayerError(error);
+
+      // Don't throw here, since the error was handled.  Return the error to the
+      // caller.
+      return error;
+    }
+
+    if (!MSEWrapper.isMimeCodecSupported(mimeCodec)) {
+      this.trigger('unsupportedMimeCodec', `Unsupported mime codec: ${mimeCodec}`);
+
+      throw new Error(`Unsupported mime codec: ${mimeCodec}`);
+    }
+
+    this.moov = moov;
+
+    await this.reinitializeMseWrapper(mimeCodec);
+
+    this.conduit.resyncStream(() => {
+      // console.log('sync received re-initialize media source buffer');
+      this.reinitializeMseWrapper(mimeCodec);
+    });
   }
 
+  /**
+   * @returns {Promise}
+   */
   stop () {
     this.logger.debug('stop...');
 
-    this.stopped = true;
-    this.moovBox = null;
+    if (this.stopped) {
+      return Promise.resolve();
+    }
 
-    this.iov._stop();
+    this.stopped = true;
+    this.moov = null;
 
     this.logger.debug('stop about to finish synchronous operations and return promise...');
 
@@ -396,25 +521,33 @@ export default class IOVPlayer {
     // promise here rather than using await.  We return this promise so
     // that the caller has the option of waiting, but is not forced to
     // wait.
-    return new Promise((resolve, reject) => {
-      // Don't wait until the next play event or the destruction of this player
-      // to clear the MSE
-      if (this.mseWrapper) {
-        this.mseWrapper.destroy()
-          .then(() => {
-            this.mseWrapper = null;
-            this.logger.debug('stop succeeded asynchronously...');
-            resolve();
-          })
-          .catch((error) => {
-            this.mseWrapper = null;
-            this.logger.error('stop failed asynchronously...');
-            reject(error);
-          });
-      }
-      else {
+    return new Promise(async (resolve, reject) => {
+      try {
+        try {
+          await this.conduit.stop();
+        }
+        catch (error) {
+          this.logger.error('failed to stop the conduit');
+          this.logger.error(error);
+        }
+
+        if (!this.mseWrapper) {
+          this.logger.debug('stop succeeded asynchronously...');
+          return resolve();
+        }
+
+        // Don't wait until the next play event or the destruction of this player
+        // to clear the MSE
+        await this.mseWrapper.destroy();
+
+        this.mseWrapper = null;
+
         this.logger.debug('stop succeeded asynchronously...');
         resolve();
+      }
+      catch (error) {
+        this.logger.error('stop failed asynchronously...');
+        reject(error);
       }
     });
   }
@@ -428,7 +561,7 @@ export default class IOVPlayer {
     }
 
     if (this.segmentInterval) {
-      if (this.segmentIntervals.length >= this.options.segmentIntervalSampleSize) {
+      if (this.segmentIntervals.length >= this.SEGMENT_INTERVAL_SAMPLE_SIZE) {
         this.segmentIntervals.shift();
       }
 
@@ -447,12 +580,37 @@ export default class IOVPlayer {
     }
   }
 
+  enterFullscreen () {
+    if (!window.document.fullscreenElement) {
+      // Since the iov and player take control of the video element and its
+      // parent, ask the parent for fullscreen since the video elements will be
+      // destroyed and recreated when changing sources
+      this.videoElement.parentNode.requestFullscreen();
+    }
+  }
+
+  exitFullscreen () {
+    if (window.document.exitFullscreen) {
+      window.document.exitFullscreen();
+    }
+  }
+
+  toggleFullscreen () {
+    if (!window.document.fullscreenElement) {
+      this.enterFullscreen();
+    }
+    else {
+      this.exitFullscreen();
+    }
+  }
+
   _freeAllResources () {
     this.logger.debug('_freeAllResources...');
 
-    // Note you will need to destroy the iov yourself.  The child should
-    // probably not destroy the parent
-    this.iov = null;
+    ConduitCollection.asSingleton().remove(this.clientId);
+    this.conduit = null;
+    // The caller must destroy the streamConfiguration
+    this.streamConfiguration = null;
 
     this.firstFrameShown = null;
 
@@ -467,11 +625,14 @@ export default class IOVPlayer {
     this.segmentInterval = null;
     this.segmentIntervals = null;
 
-    this.moovBox = null;
+    this.moov = null;
 
     this.logger.debug('_freeAllResources finished...');
   }
 
+  /**
+   * @returns {Promise}
+   */
   destroy () {
     this.logger.debug('destroy...');
 
@@ -488,7 +649,23 @@ export default class IOVPlayer {
     // do not support asynchronous destruction.  See the comments in the destroy
     // method on the MSEWrapper for a more detailed explanation.
     this.logger.debug('about to stop...');
-    this.stop()
+
+    const stopPromise = this.stop();
+
+    // Setting the src of the video element to an empty string is
+    // the only reliable way we have found to ensure that MediaSource,
+    // SourceBuffer, and various Video elements are properly dereferenced
+    // to avoid memory leaks
+    // @todo - should these occur after stop? is there a reason they're done
+    // in this order?
+    this.videoElement.src = '';
+    this.videoElement.parentNode.removeChild(this.videoElement);
+    this.videoElement.remove();
+    this.videoElement = null;
+
+    this.logger.debug('exiting destroy, asynchronous destroy logic in progress...');
+
+    return stopPromise
       .then(() => {
         this.logger.debug('stopped successfully...');
         this._freeAllResources();
@@ -501,14 +678,5 @@ export default class IOVPlayer {
         this._freeAllResources();
         this.logger.debug('destroy unsuccessfully finished...');
       });
-
-    // Setting the src of the video element to an empty string is
-    // the only reliable way we have found to ensure that MediaSource,
-    // SourceBuffer, and various Video elements are properly dereferenced
-    // to avoid memory leaks
-    this.videoElement.src = '';
-    this.videoElement = null;
-
-    this.logger.debug('exiting destroy, asynchronous destroy logic in progress...');
   }
 }

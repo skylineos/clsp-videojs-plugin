@@ -5,13 +5,12 @@
 import videojs from 'video.js';
 
 import Logger from '../utils/logger';
-import MqttHandler from './MqttHandler';
-import utils from '../utils';
+import ClspHandler from './ClspHandler';
 
 const SUPPORTED_MIME_TYPE = "video/mp4; codecs='avc1.42E01E'";
 
 export default function () {
-  const logger = Logger().factory('MqttSourceHandler');
+  const logger = Logger().factory('ClspSourceHandler');
 
   return function (mode) {
     const obj = {
@@ -40,7 +39,7 @@ export default function () {
       handleSource: function (
         source,
         tech,
-        options = {}
+        options = {},
       ) {
         logger.debug('handleSource');
 
@@ -48,19 +47,19 @@ export default function () {
           videojs.options,
           options,
           {
-            mqtt: {
+            clsp: {
               mode,
             },
-          }
+          },
         );
 
-        tech.mqtt = new MqttHandler(
+        tech.clsp = new ClspHandler(
           source,
           tech,
-          localOptions
+          localOptions,
         );
 
-        return tech.mqtt;
+        return tech.clsp;
       },
       canPlayType: function (type) {
         logger.debug('canPlayType');

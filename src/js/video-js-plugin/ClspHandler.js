@@ -5,22 +5,22 @@
 import videojs from 'video.js';
 import uuidv4 from 'uuid/v4';
 
-import IovCollection from '../iov/collection';
+import IovCollection from '../iov/IovCollection';
 import Logger from '../utils/logger';
 
 const Component = videojs.getComponent('Component');
 
 const DEFAULT_CHANGE_SOURCE_MAX_WAIT = 5000;
 
-export default class MqttHandler extends Component {
+export default class ClspHandler extends Component {
   constructor (
     source,
     tech,
-    options
+    options,
   ) {
-    super(tech, options.mqtt);
+    super(tech, options.clsp);
 
-    this.logger = Logger().factory('MqttHandler');
+    this.logger = Logger().factory('ClspHandler');
 
     this.logger.debug('constructor');
 
@@ -34,43 +34,45 @@ export default class MqttHandler extends Component {
     this.player = null;
   }
 
-  onChangeSource = (event, { url }) => {
+  onChangeSource = (event, {
+    url,
+  }) => {
     this.logger.debug(`changeSource on player "${this.id}""`);
 
     if (!url) {
       throw new Error('Unable to change source because there is no url!');
     }
 
-    const clone = this.iov.cloneFromUrl(url);
+    const clone = this.iov.clone(url);
 
     clone.initialize();
 
     // When the tab is not in focus, chrome doesn't handle things the same
     // way as when the tab is in focus, and it seems that the result of that
-    // is that the "firstFrameShown" event never fires.  Having the IOV be
+    // is that the "firstFrameShown" event never fires.  Having the Iov be
     // updated on a delay in case the "firstFrameShown" takes too long will
-    // ensure that the old IOVs are destroyed, ensuring that unnecessary
+    // ensure that the old Iovs are destroyed, ensuring that unnecessary
     // socket connections, etc. are not being used, as this can cause the
     // browser to crash.
     // Note that if there is a better way to do this, it would likely reduce
-    // the number of try/catch blocks and null checks in the IOVPlayer and
+    // the number of try/catch blocks and null checks in the IovPlayer and
     // MSEWrapper, but I don't think that is likely to happen until the MSE
     // is standardized, and even then, we may be subject to non-intuitive
     // behavior based on tab switching, etc.
     setTimeout(() => {
-      this.updateIOV(clone);
+      this.updateIov(clone);
     }, this.changeSourceMaxWait);
 
     // Under normal circumstances, meaning when the tab is in focus, we want
-    // to respond by switching the IOV when the new IOV Player has something
+    // to respond by switching the Iov when the new Iov Player has something
     // to display
     clone.player.on('firstFrameShown', () => {
-      this.updateIOV(clone);
+      this.updateIov(clone);
     });
   };
 
-  async createIOV (player) {
-    this.logger.debug('createIOV');
+  async createIov (player) {
+    this.logger.debug('createIov');
 
     this.player = player;
 
@@ -88,7 +90,7 @@ export default class MqttHandler extends Component {
 
     videoElementParent.insertBefore(videoElement, videoJsVideoElement);
 
-    const iov = await IovCollection.asSingleton().create(this.source_.src, videoElement);
+    const iov = await IovCollection.asSingleton().create(videoId, this.source_.src);
 
     this.player.on('ready', () => {
       if (this.onReadyAlreadyCalled) {
@@ -125,27 +127,29 @@ export default class MqttHandler extends Component {
       this.player.on('changesrc', this.onChangeSource);
     });
 
-    this.updateIOV(iov);
+    this.updateIov(iov);
 
+    // @todo - is this functionality needed?  if not, remove this commented
+    // block.  also, this particular event is on the iovPlayer, not the iov
     // this.iov.on('unsupportedMimeCodec', (error) => {
     //   this.videoPlayer.errors.extend({
-    //     PLAYER_ERR_IOV: {
+    //     PLAYER_ERR_Iov: {
     //       headline: 'Error Playing Stream',
     //       message: error,
     //     },
     //   });
 
     //   this.videoPlayer.error({
-    //     code: 'PLAYER_ERR_IOV',
+    //     code: 'PLAYER_ERR_Iov',
     //   });
     // });
   }
 
-  updateIOV (iov) {
-    this.logger.debug('updateIOV');
+  updateIov (iov) {
+    this.logger.debug('updateIov');
 
     if (this.iov) {
-      // If the IOV is the same, do nothing
+      // If the Iov is the same, do nothing
       if (this.iov.id === iov.id) {
         return;
       }

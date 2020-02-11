@@ -3,6 +3,7 @@
 import Debug from 'debug';
 import defaults from 'lodash/defaults';
 import noop from 'lodash/noop';
+import utils from '../utils/';
 // import { mp4toJSON } from './mp4-inspect';
 
 const DEBUG_PREFIX = 'skyline:clsp:iov';
@@ -71,18 +72,20 @@ export default class MSEWrapper {
 
     this.videoElement = videoElement;
 
-    this.options = defaults({}, options, {
-      // These default buffer value provide the best results in my testing.
-      // It keeps the memory usage as low as is practical, and rarely causes
-      // the video to stutter
-      bufferSizeLimit: 90 + Math.floor(Math.random() * (200)),
-      bufferTruncateFactor: 2,
-      bufferTruncateValue: null,
-      driftThreshold: 2000,
-      duration: 10,
-      enableMetrics: false,
-      appendsWithSameTimeEndThreshold: 1,
-    });
+    this.options = defaults(
+      {}, options, {
+        // These default buffer values provide the best results in my testing.
+        // It keeps the memory usage as low as is practical, and rarely causes
+        // the video to stutter
+        bufferSizeLimit: 90 + Math.floor(Math.random() * (200)),
+        bufferTruncateFactor: 2,
+        bufferTruncateValue: null,
+        driftThreshold: 2000,
+        duration: 10,
+        enableMetrics: false,
+        appendsWithSameTimeEndThreshold: 1,
+      },
+    );
 
     this.segmentQueue = [];
     this.sequenceNumber = 0;
@@ -156,7 +159,7 @@ export default class MSEWrapper {
         break;
       }
       default: {
-        if (!this.metrics.hasOwnProperty(type)) {
+        if (!Object.prototype.hasOwnProperty.call(this.metrics, type)) {
           this.metrics[type] = 0;
         }
 
@@ -173,11 +176,13 @@ export default class MSEWrapper {
   initializeMediaSource (options = {}) {
     debug('Initializing mediaSource...');
 
-    options = defaults({}, options, {
-      onSourceOpen: noop,
-      onSourceEnded: noop,
-      onError: noop,
-    });
+    options = defaults(
+      {}, options, {
+        onSourceOpen: noop,
+        onSourceEnded: noop,
+        onError: noop,
+      },
+    );
 
     this.metric('mediaSource.created', 1);
 
@@ -277,16 +282,18 @@ export default class MSEWrapper {
   async initializeSourceBuffer (mimeCodec, options = {}) {
     debug('initializeSourceBuffer...');
 
-    options = defaults({}, options, {
-      onAppendStart: noop,
-      onAppendFinish: noop,
-      onRemoveFinish: noop,
-      onAppendError: noop,
-      onRemoveError: noop,
-      onStreamFrozen: noop,
-      onError: noop,
-      retry: true,
-    });
+    options = defaults(
+      {}, options, {
+        onAppendStart: noop,
+        onAppendFinish: noop,
+        onRemoveFinish: noop,
+        onAppendError: noop,
+        onRemoveError: noop,
+        onStreamFrozen: noop,
+        onError: noop,
+        retry: true,
+      },
+    );
 
     if (!this.isMediaSourceReady()) {
       throw new Error('Cannot create the sourceBuffer if the mediaSource is not ready.');
@@ -319,7 +326,7 @@ export default class MSEWrapper {
       debug(`Queueing segment.  The queue currently has ${this.segmentQueue.length} segments.`);
     }
     else {
-      silly(`Queueing segment.  The queue is currently empty.`);
+      silly('Queueing segment.  The queue is currently empty.');
     }
 
     this.metric('queue.added', 1);
@@ -351,7 +358,9 @@ export default class MSEWrapper {
     }
   }
 
-  _append ({ timestamp, byteArray }) {
+  _append ({
+    timestamp, byteArray,
+  }) {
     silly('Appending to the sourceBuffer...');
 
     try {
@@ -397,7 +406,7 @@ export default class MSEWrapper {
       return;
     }
 
-    if (document.hidden) {
+    if (document[utils.windowStateNames.hiddenStateName]) {
       debug('Tab not in focus - dropping frame...');
       this.metric('frameDrop.hiddenTab', 1);
       this.metric('queue.cannotProcessNext', 1);
@@ -568,7 +577,7 @@ export default class MSEWrapper {
       this.appendsSinceTimeEndUpdated += 1;
       this.metric('sourceBuffer.updateEnd.bufferFrozen', 1);
 
-      //append threshold with same time end has been crossed.  Reinitialize frozen stream.
+      // append threshold with same time end has been crossed.  Reinitialize frozen stream.
       if (this.appendsSinceTimeEndUpdated > this.options.appendsWithSameTimeEndThreshold) {
         debug('stream frozen!');
         this.eventListeners.sourceBuffer.onStreamFrozen();
