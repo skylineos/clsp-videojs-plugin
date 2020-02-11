@@ -6,6 +6,8 @@ var videoElementId = 'my-video';
 var durationDisplayInterval = null;
 
 function _getTourList () {
+  // @todo - how can we make this easier for clients to be able to set up their
+  // own demos with functional urls without changing the source code?
   var initialStreams = [
     'clsps://172.28.12.57/FairfaxVideo0520',
     'clsps://172.28.12.57/FairfaxVideo0420',

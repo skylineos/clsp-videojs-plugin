@@ -157,15 +157,18 @@ export default class TourController {
       }, stopTryingToPlayerAfter * 1000);
 
       try {
-        const changeSrcResults = await this.iov.changeSrc(streamConfiguration, false);
+        const {
+          id: _changeSrcId,
+          firstFrameReceivedPromise,
+        } = this.iov.changeSrc(streamConfiguration, false);
 
-        changeSrcId = changeSrcResults.id;
+        changeSrcId = _changeSrcId;
         this.pendingChangeSrcs[changeSrcId] = {
           id: changeSrcId,
           timeout: changeSrcTimeout,
         };
 
-        await changeSrcResults.firstFrameReceivedPromise;
+        await firstFrameReceivedPromise;
 
         onSuccess();
       }

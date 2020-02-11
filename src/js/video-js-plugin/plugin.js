@@ -338,7 +338,8 @@ export default (defaultOptions = {}) => class ClspPlugin extends Plugin {
     });
 
     await iov.stop();
-    await iov.changeSrc(clspHandler.source_.src);
+
+    await iov.changeSrc(clspHandler.source_.src).firstFrameReceivedPromise;
   }
 
   destroy (player = this.player) {

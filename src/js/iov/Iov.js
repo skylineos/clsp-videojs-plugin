@@ -417,7 +417,9 @@ export default class Iov {
     // still reliable) way to restart the player as opposed to destroying it and
     // creating a new one?
     this.logger.debug('Restart');
-    await this.changeSrc(this.streamConfiguration);
+
+    // @todo - do we need to handle firstFrameReceivedPromise rejecting here?
+    await this.changeSrc(this.streamConfiguration).firstFrameReceivedPromise;
   }
 
   enterFullscreen (iovPlayer = this.iovPlayer) {

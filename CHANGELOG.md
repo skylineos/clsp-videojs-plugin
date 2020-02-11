@@ -1,7 +1,7 @@
 
 # CLSP Changelog
 
-## v0.16.4+ - 2020-01-09 - Critical
+## v0.17.0 - 2020-02-11 - Critical
 
 * change the videojs element class from `vjs-mse-over-mqtt` to `vjs-clsp`
 * update vulnerable dependencies
