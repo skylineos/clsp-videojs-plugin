@@ -1,4 +1,4 @@
-# videojs-mse-over-clsp
+# videojs-mse-over-clsp <!-- omit in toc -->
 
 A videojs plugin that adds support for video served over the `clsp` protocol.
 Currently, this protocol is available only via Skyline's SFS solutions.
@@ -6,9 +6,11 @@ Currently, this protocol is available only via Skyline's SFS solutions.
 Note - this plugin currently only works in Chrome and Firefox.  Chrome is recommended for performance.
 Note - this highest h.264 keyframe/iframe segment frequency this plugin currently supports is 2 per second.  This is different from frames per second.
 
-## Table of Contents
+## Table of Contents <!-- omit in toc -->
 
-- [URL structure](#url-structure)
+- [URL Structure](#url-structure)
+  - [Tokenization](#tokenization)
+    - [Hash](#hash)
 - [Installation](#installation)
   - [Via NPM](#via-npm)
   - [Via Git](#via-git)
@@ -75,7 +77,7 @@ Add the following entry to your `package.json` `dependencies` object:
 ```javascript
 "dependencies": {
   // ...
-  "videojs-mse-over-clsp": "git+https://github.com/skylineos/clsp-videojs-plugin.git#v0.15.0",
+  "videojs-mse-over-clsp": "git+https://github.com/skylineos/clsp-videojs-plugin.git#v0.16.3",
 }
 ```
 
@@ -121,7 +123,7 @@ In the `<head>` of your page, include a line for the videojs and the clsp plugin
 ```
 
 
-### `<video>` tag
+### `<video>` Tag
 
 On the HTML `video` tag, the `type` attribute must be the following:
 
