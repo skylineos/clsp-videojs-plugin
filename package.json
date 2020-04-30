@@ -43,7 +43,7 @@
     "eslint-plugin-standard": "4.0.0",
     "extract-text-webpack-plugin": "4.0.0-beta.0",
     "humanize": "0.0.9",
-    "jquery": "3.4.1",
+    "jquery": "3.5.0",
     "moment": "2.24.0",
     "node-sass": "4.12.0",
     "pre-commit": "1.2.2",
