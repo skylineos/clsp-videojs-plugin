@@ -1,4 +1,12 @@
-# videojs-mse-over-clsp <!-- omit in toc -->
+# DEPRECATION NOTICE
+
+**This project has been DEPRECATED.  See below for the up-to-date, current CLSP projects.**
+
+* If you are using `video.js` to play CLSP video, see [https://github.com/skylineos/videojs-clsp](https://github.com/skylineos/videojs-clsp) for the most recent CLSP plugin for `video.js`.
+* If you are NOT using `video.js` to play CLSP video, see [https://github.com/skylineos/clsp-player](https://github.com/skylineos/clsp-player), which provides performance improvements over the `video.js` plugin.
+
+
+# videojs-mse-over-clsp
 
 A videojs plugin that adds support for video served over the `clsp` protocol.
 Currently, this protocol is available only via Skyline's SFS solutions.
@@ -6,21 +14,24 @@ Currently, this protocol is available only via Skyline's SFS solutions.
 Note - this plugin currently only works in Chrome and Firefox.  Chrome is recommended for performance.
 Note - this highest h.264 keyframe/iframe segment frequency this plugin currently supports is 2 per second.  This is different from frames per second.
 
-## Table of Contents <!-- omit in toc -->
+## Table of Contents <!-- omit in TOC -->
 
-- [URL Structure](#url-structure)
-  - [Tokenization](#tokenization)
-    - [Hash](#hash)
-- [Installation](#installation)
-  - [Via NPM](#via-npm)
-  - [Via Git](#via-git)
-- [Usage](#usage)
-  - [`<head>` Tag](#head-tag)
-  - [`<video>` Tag](#video-tag)
-  - [`<script>` Tag](#script-tag)
-- [Supported Browsers](#supported-browsers)
-- [Dependencies](#dependencies)
-- [License](#license)
+- [DEPRECATION NOTICE](#deprecation-notice)
+- [videojs-mse-over-clsp](#videojs-mse-over-clsp)
+  - [URL Structure](#url-structure)
+    - [Tokenization](#tokenization)
+      - [Hash](#hash)
+  - [Installation](#installation)
+    - [Via NPM](#via-npm)
+    - [Via Git](#via-git)
+  - [Usage](#usage)
+    - [`<head>` Tag](#head-tag)
+    - [`<video>` Tag](#video-tag)
+    - [`<script>` Tag](#script-tag)
+  - [Supported Browsers](#supported-browsers)
+  - [Dependencies](#dependencies)
+  - [License](#license)
+
 
 ## URL Structure
 
